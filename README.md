@@ -190,10 +190,10 @@ You should then be able to run the code snippet:
 `python examples/code_snippet.py`
 
 # Roadmap 🗺️
+We are currently working on a large refactor of OG-MARL to get rid of the dependency on reverb and launchpad. This will make the code a lot easier to work with. The current progress on the refactor can be followed on the branch `refactor/remove-reverb-and-launchpad`.
 
 Offline MARL also lends itself well to the new wave of hardware-accelerated research and development in the
 field of RL. In the near future we hope to add JAX support to our baselines.
-
 
 # Troubleshoot ⚙️
 
