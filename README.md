@@ -102,7 +102,7 @@ You should replace `<environment_name>` with the name of the environment you wan
 
 Installing several different environments dependencies in the same python virtual environment (or conda environment) may work in some cases but in others, they may have conflicting requirements. So we reccomend maintaining a different virtual environment for each environment.
 
-## Instructions: Profiling Datasets 
+## Profiling Datasets 
 First lets work through loading datasets.
 
 First you should install og-marl with the `datasets` option.
