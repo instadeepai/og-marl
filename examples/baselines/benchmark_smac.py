@@ -23,9 +23,9 @@ SMAC in the README. After that you can run the script as follows:
 
 `python examples/baselines/benchmark_smac.py --algo_name=qmix --dataset_quality=Good --env_name=3m`
 
-    --algo_name can be used to change the algorithm you want to run (bc, itd3, itd3+cql, itd3+bc, omar)
+    --algo_name can be used to change the algorithm you want to run (bc, qmix, qmix+cql)
     --dataset_quality is used to change wich dataset type to run (Good, Medium and Poor)
-    --env_name is used to change the scenario (2ant, 4ant, 2halfcheetah)
+    --env_name is used to change the scenario (3m, 8m, 5m_vs_6m)
 
 You will need to make sure you download the datasets from the OG-MARL website.
 https://sites.google.com/view/og-marl
