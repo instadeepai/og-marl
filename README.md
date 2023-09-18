@@ -4,8 +4,12 @@
     </a>
 </p>
 
-[![Python Versions](https://upload.wikimedia.org/wikipedia/commons/a/a5/Blue_Python_3.8_Shield_Badge.svg)](https://www.python.org/doc/versions/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://opensource.org/licenses/Apache-2.0)
+<p align="center">
+<a href="https://arxiv.org/abs/2302.00521">ArXiv Paper</a> 📃
+<a href="(https://sites.google.com/view/og-marl">Website</a> 🌐
+
+<!-- [![Python Versions](https://upload.wikimedia.org/wikipedia/commons/a/a5/Blue_Python_3.8_Shield_Badge.svg)](https://www.python.org/doc/versions/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://opensource.org/licenses/Apache-2.0) -->
 
 <!-- [**Environments**](#environments)
 | [**Datasets**](#environments)
@@ -15,7 +19,6 @@
 | [**Citation**](#citing)
 | [**Docs**](https://instadeepai.github.io/og-marl) -->
 
----
 
 <p align="center"> 
     <a href="docs/assets/offline_marl_diagram.jpg">
@@ -25,12 +28,11 @@
 
 ## Going Off-the-Grid! 🤖 ⚡ 🔌 🔋
 
-Multi-Agent Reinforcement Learning is a reach field of research with a lot of potential for real-world impact by promising robust, decentralised controlers for challenging multi-agent systems. However, MARL is typically very sample inefficient, requireing a lot of environment interactions. In practice this can be a significant obstacle to applying MARL in the real-world where environment interactions can be slow or dangerous to collect. As a  consequence MARL research has largely been focused on quick to simulate grid-world tasks and video-games. 
+Multi-Agent Reinforcement Learning (MARL) is a field of research with a lot of potential for real-world impact, promising robust, decentralised controlers for challenging multi-agent systems. However, MARL is typically very sample inefficient, requireing a significant amount of environment interactions. In practice, this can be a significant obstacle to applying MARL in the real-world where environment interactions can be slow or dangerous to collect. As a  consequence, MARL research has largely been focused on quick-to-simulate grid-world tasks and video-games. 
 
-But recently the field of Offline RL has offered a promising way to overcome the challenges with collecting large amounts of experience in the real-world. Namely, in offline RL policies are trained on static, pre-collected data. Similarly, in offline MARL the goal is to apply MARL algorithms to large static datasets of experience inorder to learn decentralised policies without any environment interactions. Offline MARL has the potential to help the field go beyond the current MARL research settings (e.g. gridworlds and video games) and towards real-world settings.
+But recently the field of Offline RL has offered a promising way to overcome the challenges associated with collecting large amounts of online experience in the real-world. Namely, in offline RL, policies are trained from static, pre-collected data. Similarly, in offline MARL the goal is to apply MARL algorithms to large static datasets in order to learn decentralised policies without any environment interactions. Offline MARL has the potential to help the field go beyond the current MARL research settings (e.g. grid-worlds and video games) and towards real-world applications.
 
-However, offline MARL is currently an under-researched area that lacks standardised benchmark datasets. In order to help drive this nacent field forward, Off-the-Grid MARL (OG-MARL) fills this gap by providing a diverse suite of dataset with baselines on popular MARL benchmark environments. In addition we include a comprehensive set of baseline implementations from the literature and benchmark their performance on all of our datasets.
-
+However, offline MARL is currently an under-researched area that lacks standardised benchmark datasets. In order to help drive this nacent field forward, Off-the-Grid MARL (OG-MARL) fills the gap by providing a diverse suite of dataset with baselines on popular MARL benchmark environments. In addition we include a comprehensive set of baseline implementations from the literature and benchmark their performance on all of our datasets.
 
 Originating in the Research Team at
 [InstaDeep](https://www.instadeep.com/), OG-MARL is now developed jointly with the open-source
