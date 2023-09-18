@@ -6,7 +6,7 @@
 
 <p align="center">
 <a href="https://arxiv.org/abs/2302.00521">ArXiv Paper</a> 📃
-<a href="(https://sites.google.com/view/og-marl">Website</a> 🌐
+<a href="https://sites.google.com/view/og-marl">Website</a> 🌐
 
 <!-- [![Python Versions](https://upload.wikimedia.org/wikipedia/commons/a/a5/Blue_Python_3.8_Shield_Badge.svg)](https://www.python.org/doc/versions/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://opensource.org/licenses/Apache-2.0) -->
