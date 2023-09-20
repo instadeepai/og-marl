@@ -49,7 +49,7 @@ community. To join us in these efforts, reach out, raise issues and read our
 [contribution guidelines](https://github.com/instadeepai/og-marl/blob/main/CONTRIBUTING.md) or just
 🌟 to stay up to date with the latest developments!
 
-# Datasets 🎥
+## Datasets 🎥
 
 We have generated datasets on a diverse set of popular MARL environments. A list of currently supported environments is included in the table below. It is well known from the single-agent offline RL literature that the quality of experience in offline datasets can play a large role in the final performance of offline RL algorithms. Therefore in OG-MARL, for each environment and scenario, we include a range of dataset distributions including `Good`, `Medium`, `Poor` and `Replay` datasets in order to benchmark offline MARL algorithms on a range of different dataset qualities. For more information on why we chose to include each environment and its task properties, please read our accompanying [paper](https://arxiv.org/abs/2302.00521).
 
@@ -87,7 +87,7 @@ We have generated datasets on a diverse set of popular MARL environments. A list
 
 <h2 name="install" id="install">Installation 🎬</h2>
 
-## Using Conda 🐍
+### Using Conda 🐍
 Because we support many different environments, each with their own set of dependencies which are often conflicting, you will need to follow slightly different instalation instruction for each environment. 
 
 To manage the different dependencies, we reccomend using `miniconda` as a python virtual environment manager. Follow these instructions to install `conda`. 
@@ -96,22 +96,22 @@ To manage the different dependencies, we reccomend using `miniconda` as a python
 
 🚨 In the near future we will also be releasing Dockerfiles! 🚨
 
-## Installing Datasets and/or Baselines 🀄
+### Installing Datasets and/or Baselines 🀄
 There are two options for installing OG-MARL. The first is to install the datasets only. The second is to optionally also install the baseline algorithm implementations.
 
 Installing the datasets only is a lot easier and will likely work on most computer setups. Installing the baselines is a bit more complicated because of some additional dependencies. Unfortunatly baselines are unlikely to work on Windows and Mac because of our dependency on DeepMind's `reverb` and `launchpad` packages. In future we hope to relax these requirements.
 
-### Installing OG-MARL Datasets (minimal requirements) 🧮
+#### Installing OG-MARL Datasets (minimal requirements) 🧮
 Install og-marl with the `datasets` option.
 
 `pip install -e .["datasets"]`
 
-### Installing OG-MARL Baselines 🔱
+#### Installing OG-MARL Baselines 🔱
 Install og-marl with the `baselines` option.
 
 `pip install -e .["datasets","baselines"]`
 
-### Installing Environments ⛰️
+#### Installing Environments ⛰️
 Depending on the environment you want to use, you should install that environments dependencies. We provide convenient shell scripts for this.
 
 `bash install_environments/<environment_name>.sh`
@@ -120,7 +120,7 @@ You should replace `<environment_name>` with the name of the environment you wan
 
 Installing several different environments dependencies in the same python virtual environment (or conda environment) may work in some cases but in others, they may have conflicting requirements. So we reccomend maintaining a different virtual environment for each environment.
 
-# Downloading Datasets ⏬
+### Downloading Datasets ⏬
 
 Next you need to download the dataset you want to use and add it to the correct file path. Go to the OG-MARL website (https://sites.google.com/view/og-marl) and download the dataset. Once the zip file is downloaded add it to a directory called `datasets` on the same level as the `og-marl/` directory. The folder structure should look like this:
 
@@ -170,10 +170,10 @@ dataset = env.get_dataset("Good")
 system.run_offline(dataset)
 ```
 
-# Tutorials 💯
+## Tutorials 💯
 We provide various examples of how to use OG-MARL. 
 
-## Overview 🗼
+### Overview 🗼
 In the `examples/` directory we include scripts to load and profile each of our datasets.
 * `examples/profile_datasets/profile_smacv1.py`
 * `examples/profile_datasets/profile_smacv2.py`
@@ -192,7 +192,7 @@ We also include scripts for replicating our benchmarking results:
 * `examples/benchmark_mamujoco.py`
 * `examples/benchmark_smac.py`
 
-## Profiling Datasets 📊
+### Profiling Datasets 📊
 In order to profile a dataset you will need to install og-marl with the `datasets` option, as well as the corresponding environment. You should then be able to run the dataset profiling script for the environement/scenario you just installed and downloaded the datases. 
 
 `python examples/profile_datasets/profile_<environment_name>.py`
@@ -201,10 +201,10 @@ Once again, replace `<environment_name>` with the name of the environment you ju
 
 Be patient while it runs. It can take a minute or two to loop through the whole dataset. At the end statistics about the dataset will be printed out and a sample of the dataset will also be printed. A violin plot of the data will also be generated and saved alongside the `og_marl/` directory.
 
-## Dataset Generation Quickstart 🎥
+### Dataset Generation Quickstart 🎥
 In order to run the datasets generation quickstart tutorial you will need to also install the og-marl with the `datasets` and `baselines` options. You are now ready to run through the quickstart tutorial. Open the file `examples/quickstart/generate_dataset.py` and read the comments throughout to do the tutorial.
 
-## Running Baselines 🏃
+### Running Baselines 🏃
 We provide scripts to reproduce the MAMuJoCo and SMAC baseline results. Inorder to run them you will need to install OG-MARL with the `datasets` and `baselines` options. Then install the corresponding environment. 
 
 After that you can run the SMAC script as follows:
@@ -231,13 +231,13 @@ You should then be able to run the code snippet:
 
 `python examples/code_snippet.py`
 
-# Roadmap 🗺️
+## Roadmap 🗺️
 We are currently working on a large refactor of OG-MARL to get rid of the dependency on reverb and launchpad. This will make the code a lot easier to work with. The current progress on the refactor can be followed on the branch `refactor/remove-reverb-and-launchpad`.
 
 Offline MARL also lends itself well to the new wave of hardware-accelerated research and development in the
 field of RL. In the near future we hope to add JAX support to our baselines.
 
-# Troubleshoot ⚙️
+## Troubleshoot ⚙️
 
 We will document common problems encountered while using OG-MARL and their solutions in our [TROUBLESHOOTING](TROUBLESHOOTING.md) document.
 
