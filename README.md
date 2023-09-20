@@ -73,15 +73,15 @@ We have generated datasets on a diverse set of popular MARL environments. A list
 
 <div align="center">
 
-| Environment | Scenario | Agents | Actions | Obs | Reward | Agent Type | Behaviour | Repository
-| --- | ---| --- | --- | --- | --- | --- | --- | --- |
-| 🔫SMAC v1 | 3m <br/> 8m <br/> 2s3z <br/> 5m_vs_6m <br/> 27m_vs_30m <br/> 3s5z_vs_3s6z <br/> 2c_vs_64zg| 3 <br/> 8 <br/> 2s3z <br/> 5 <br/> 27 <br/> 8 <br/> 2 | Discrete  | Vector   |  Dense | Homog <br/> Homog <br/> Heterog <br/> Homog <br/> Homog <br/> Heterog <br/> Homog | QMIX   |[source](https://github.com/oxwhirl/smac) |
-| 💣SMAC v2 | terran_5_vs_5 <br/> zerg_5_vs_5 <br/> terran_10_vs_10 | 5 <br/> 5 <br/> 10 | Discrete | Vector | Dense | Heterog | QMIX | [source](https://github.com/oxwhirl/smacv2) |
-| 🐻PettingZoo | Pursuit  <br/> Cooperative Pong <br/> PistonBall | 8 <br/> 2 <br/> 15 | Discrete <br/> Discrete <br/> Continuous | Pixels | Dense | Homog <br/> Heterog <br/> Homog | QMIX <br/> IDQN <br/> MATD3 | [source](https://pettingzoo.farama.org/) | 
-| 🚅Flatland | 3 Trains  <br/> 5 Trains | 3 <br/> 5 | Discrete | Vector | Dense | Homog | IDQN | [source](https://flatland.aicrowd.com/intro.html) | 
-| 🐜MAMuJoCo | 2-HalfCheetah <br/> 2-Ant <br/> 4-Ant | 2 <br/> 2 <br/> 4 | Continuous | Vector | Dense | Heterog <br/> Homog <br/> Homog | MATD3 | [source](https://github.com/schroederdewitt/multiagent_mujoco) | 
-| 🏙️CityLearn | 2022_all_phases | 17 | Continuous | Vector | Dense | Homog | ITD3 | [source](https://github.com/intelligent-environments-lab/CityLearn) | 
-| 🔌Voltage Control | case33_3min_final | 6 | Continuous | Vector | Dense | Homog | ITD3 | [source](https://github.com/Future-Power-Networks/MAPDN) |
+| Environment | Scenario | Agents | Act | Obs | Reward | Types | Repo
+| --- | ---| --- | --- | --- | --- | --- | --- |
+| 🔫SMAC v1 | 3m <br/> 8m <br/> 2s3z <br/> 5m_vs_6m <br/> 27m_vs_30m <br/> 3s5z_vs_3s6z <br/> 2c_vs_64zg| 3 <br/> 8 <br/> 5 <br/> 5 <br/> 27 <br/> 8 <br/> 2 | Discrete  | Vector   |  Dense | Homog <br/> Homog <br/> Heterog <br/> Homog <br/> Homog <br/> Heterog <br/> Homog |[source](https://github.com/oxwhirl/smac) |
+| 💣SMAC v2 | terran_5_vs_5 <br/> zerg_5_vs_5 <br/> terran_10_vs_10 | 5 <br/> 5 <br/> 10 | Discrete | Vector | Dense | Heterog | [source](https://github.com/oxwhirl/smacv2) |
+| 🐻PettingZoo | Pursuit  <br/> Co-op Pong <br/> PistonBall | 8 <br/> 2 <br/> 15 | Discrete <br/> Discrete <br/> Cont. | Pixels | Dense | Homog <br/> Heterog <br/> Homog | [source](https://pettingzoo.farama.org/) | 
+| 🚅Flatland | 3 Trains  <br/> 5 Trains | 3 <br/> 5 | Discrete | Vector | Dense | Homog | [source](https://flatland.aicrowd.com/intro.html) | 
+| 🐜MAMuJoCo | 2-HalfCheetah <br/> 2-Ant <br/> 4-Ant | 2 <br/> 2 <br/> 4 | Cont. | Vector | Dense | Heterog <br/> Homog <br/> Homog | [source](https://github.com/schroederdewitt/multiagent_mujoco) | 
+| 🏙️CityLearn | 2022_all_phases | 17 | Cont. | Vector | Dense | Homog | [source](https://github.com/intelligent-environments-lab/CityLearn) | 
+| 🔌Voltage Control | case33_3min_final | 6 | Cont. | Vector | Dense | Homog | [source](https://github.com/Future-Power-Networks/MAPDN) |
 
 </div>
 
