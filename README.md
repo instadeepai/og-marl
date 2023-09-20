@@ -4,12 +4,10 @@
     </a>
 </p>
 
-<p align="center">
-<a href="https://arxiv.org/abs/2302.00521">ArXiv Paper</a> 📃
-<a href="https://sites.google.com/view/og-marl">Website</a> 🌐
-
-<!-- [![Python Versions](https://upload.wikimedia.org/wikipedia/commons/a/a5/Blue_Python_3.8_Shield_Badge.svg)](https://www.python.org/doc/versions/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://opensource.org/licenses/Apache-2.0) -->
+[![Python Versions](https://upload.wikimedia.org/wikipedia/commons/a/a5/Blue_Python_3.8_Shield_Badge.svg)](https://www.python.org/doc/versions/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://opensource.org/licenses/Apache-2.0)
+[![ArXiv](https://img.shields.io/badge/PrePrint-ArXiv-red)](https://arxiv.org/abs/2302.00521)
+[![Website](https://img.shields.io/badge/Datasets-Download-green)](https://sites.google.com/view/og-marl)
 
 <!-- [**Environments**](#environments)
 | [**Datasets**](#environments)
@@ -28,11 +26,11 @@
 
 ## Going Off-the-Grid! 🤖 ⚡ 🔌 🔋
 
-Multi-Agent Reinforcement Learning (MARL) is a field of research with a lot of potential for real-world impact, promising robust, decentralised controlers for challenging multi-agent systems. However, MARL is typically very sample inefficient, requireing a significant amount of environment interactions. In practice, this can be a significant obstacle to applying MARL in the real-world where environment interactions can be slow or dangerous to collect. As a  consequence, MARL research has largely been focused on quick-to-simulate grid-world tasks and video-games. 
+Multi-Agent Reinforcement Learning (MARL) is a field of research with a lot of potential for real-world impact, promising robust, decentralised controlers for complex multi-agent systems. However, MARL is typically very sample inefficient, requireing a significant amount of environment interactions. In practice, this can be a significant obstacle to applying MARL in the real-world where environment interactions can be slow or dangerous to collect. As a  consequence, MARL research has largely been focused on quick-to-simulate grid-world tasks and video-games. 
 
-But recently the field of Offline RL has offered a promising way to overcome the challenges associated with collecting large amounts of online experience in the real-world. Namely, in offline RL, policies are trained from static, pre-collected data. Similarly, in offline MARL the goal is to apply MARL algorithms to large static datasets in order to learn decentralised policies without any environment interactions. Offline MARL has the potential to help the field go beyond the current MARL research settings (e.g. grid-worlds and video games) and towards real-world applications.
+But recently the field of Offline RL has offered a promising way to overcome these challenges. Offline MARL has the potential to help the field go beyond the current MARL research settings (e.g. grid-worlds and video games) and towards real-world applications.
 
-However, offline MARL is currently an under-researched area that lacks standardised benchmark datasets. In order to help drive this nacent field forward, Off-the-Grid MARL (OG-MARL) fills the gap by providing a diverse suite of dataset with baselines on popular MARL benchmark environments. In addition we include a comprehensive set of baseline implementations from the literature and benchmark their performance on all of our datasets.
+However, offline MARL is currently an under-researched area that lacks standardised benchmark datasets. In order to help drive this nacent field forward, Off-the-Grid MARL (OG-MARL) fills the gap by providing a diverse suite of dataset with baselines on popular MARL benchmark environments.
 
 Originating in the Research Team at
 [InstaDeep](https://www.instadeep.com/), OG-MARL is now developed jointly with the open-source
@@ -43,31 +41,26 @@ community. To join us in these efforts, reach out, raise issues and read our
 # Environments 🌍
 We have generated datasets on a diverse set of popular MARL environments. A list of currently supported environments are included in the table below. For more information on why we chose to include each environment and their properties, please read our accompanying [paper](https://arxiv.org/abs/2302.00521). 
 
-<p align="center"> 
-    <a href="docs/assets/og_marl_environments.jpg">
-        <img src="docs/assets/og_marl_environments.jpg" alt="OG-MARL environments" width="80%"/>
-    </a>
-</p>
-
-## Sources 🔗
-| Environment | Source |
-| --- | ---|
-| SMAC v1 | https://github.com/oxwhirl/smac |
-| SMAC v2 | https://github.com/oxwhirl/smacv2 |
-| PettingZoo | https://pettingzoo.farama.org/ |
-| Flatland | https://flatland.aicrowd.com/intro.html |
-| MAMuJoCo | https://github.com/schroederdewitt/multiagent_mujoco |
-| CityLearn | https://github.com/intelligent-environments-lab/CityLearn |
-| Voltage Control | https://github.com/Future-Power-Networks/MAPDN |
+| Environment | Source | Image |
+| --- | ---| --- |
+| SMAC v1 | https://github.com/oxwhirl/smac | <img src="docs/assets/smac.png" alt="SMAC v1" width="50%"/> |
+| SMAC v2 | https://github.com/oxwhirl/smacv2 | <img src="docs/assets/smacv2.png" alt="SMAC v2" width="50%"/> |
+| PistonBall | https://pettingzoo.farama.org/ | <img src="docs/assets/pistonball.png" alt="Pistonball" width="50%"/> |
+| Cooperative Pong | https://pettingzoo.farama.org/ | <img src="docs/assets/coop_pong.png" alt="Cooperative Pong" width="50%"/> |
+| Pursuit | https://pettingzoo.farama.org/ | <img src="docs/assets/pursuit.png" alt="Pursuit" width="50%"/> |
+| Flatland | https://flatland.aicrowd.com/intro.html | <img src="docs/assets/flatland.png" alt="Flatland" width="50%"/> |
+| MAMuJoCo | https://github.com/schroederdewitt/multiagent_mujoco | <img src="docs/assets/mamujoco.png" alt="MAMuJoCo" width="50%"/> |
+| CityLearn | https://github.com/intelligent-environments-lab/CityLearn | <img src="docs/assets/city_learn.png" alt="CityLearn" width="50%"/> |
+| Voltage Control | https://github.com/Future-Power-Networks/MAPDN | <img src="docs/assets/voltage.png" alt="Voltage Control" width="50%"/> |
 
 # Datasets 📚
-It is well known from the single-agent offline RL literature that the quality of experience in offline datasets can play a large role in the final performance of offline RL algorithms. In OG-MARL, we include a range of dataset distributions including `Good`, `Medium`, `Poor` and `Replay` datasets in order to benchmark offline MARL algorithms on a range of different dataset qualities. The dataset types are characterised by the quality of the joint policy that generated the trajectories in the dataset. For each dataset we provided a violin plot of the distribution of episode returns in the dataset. For all of the violin plots, please refer to our accompanying [paper](https://arxiv.org/abs/2302.00521).
+It is well known from the single-agent offline RL literature that the quality of experience in offline datasets can play a large role in the final performance of offline RL algorithms. In OG-MARL, we include a range of dataset distributions including `Good`, `Medium`, `Poor` and `Replay` datasets in order to benchmark offline MARL algorithms on a range of different dataset qualities. For each dataset we provided a violin plot of the distribution of episode returns in the dataset. For all of the violin plots, please refer to our accompanying [paper](https://arxiv.org/abs/2302.00521).
 
-<p align="center"> 
-    <a href="docs/assets/og_marl_datasets.jpg">
-        <img src="docs/assets/og_marl_datasets.jpg" alt="OG-MARL environments" width="80%"/>
-    </a>
-</p>
+| Environment | Violin Plot |
+| --- | --- |
+| SMAC 27m_vs_30m | <img src="docs/assets/27m_vs_30m_all_violin.png" alt="OG-MARL environments" width="35%"/> |
+| Cooperative Pong | <img src="docs/assets/coop_pong_all_violin.png" alt="OG-MARL environments" width="35%"/> |
+| Pursuit | <img src="docs/assets/pursuit_all_violin.png" alt="OG-MARL environments" width="35%"/> |
 
 # Installation 🛠️
 
@@ -169,9 +162,9 @@ After that you can run the SMAC script as follows:
 
 `python examples/baselines/benchmark_smac.py --algo_name=qmix --dataset_quality=Good --env_name=3m`
 
-    --algo_name can be used to change the algorithm you want to run
-    --dataset_quality is used to change wich dataset type to run
-    --env_name is used to change the scenario
+    --algo_name [used to change the algorithm you want to run]
+    --dataset_quality [is used to change wich dataset type to run]
+    --env_name [is used to change the scenario]
 
 You will need to make sure you download the datasets from the OG-MARL website.
 
@@ -197,16 +190,17 @@ field of RL. In the near future we hope to add JAX support to our baselines.
 
 # Troubleshoot ⚙️
 
-In MAMuJoCo you may need to export the following environment variables.
+We will document common problems encountered while using OG-MARL and their solutions in our [TROUBLESHOOTING](TROUBLESHOOTING.md) document.
 
-`export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu/:$MUJOCOPATH/mujoco210/bin:/usr/lib/nvidia`
+# Citation
 
-`export LD_PRELOAD=$LD_PRELOAD:/usr/lib/x86_64-linux-gnu/libGLEW.so`
-
-Error:
-
-`ImportError: libpython3.8.so.1.0: cannot open shared object file: No such file or directory`
-
-Solution:
-
-`export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:\$LD_LIBRARY_PATH`
+```
+@misc{formanek2023offthegrid,
+      title={Off-the-Grid MARL: a Framework for Dataset Generation with Baselines for Cooperative Offline Multi-Agent Reinforcement Learning}, 
+      author={Claude Formanek and Asad Jeewa and Jonathan Shock and Arnu Pretorius},
+      year={2023},
+      eprint={2302.00521},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
+```
