@@ -1,3 +1,5 @@
+## Troubleshooting
+
 In MAMuJoCo you may need to export the following environment variables.
 
 `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu/:$MUJOCOPATH/mujoco210/bin:/usr/lib/nvidia`
