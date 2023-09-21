@@ -1,177 +1,72 @@
-# Copyright 2023 InstaDeep Ltd. All rights reserved.
-
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-
-#     http://www.apache.org/licenses/LICENSE-2.0
-
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 """Base wraper for Cooperative Pettingzoo environments."""
-from typing import Dict, List
-import dm_env
 import numpy as np
-from og_marl.environments.base import parameterized_restart, BaseEnvironment, OLT, convert_space_to_spec
-
+from gymnasium.spaces import Discrete, Box
+from og_marl.environments.base import BaseEnvironment
 
 class PettingZooBase(BaseEnvironment):
-    """Environment wrapper for MARL environments."""
+    """Environment wrapper for PettingZoo environments."""
 
     def __init__(self):
-        """Constructor for parallel wrapper."""
+        """Constructor."""
         self._environment = None
-        self._agents = None
+        self.possible_agents = None
 
-        self.num_actions = None
-        self.action_dim = None
-        self.max_trajectory_length = None
+        self._num_actions = None
 
-        self._reset_next_step = True
-        self._done = False
+        self.action_spaces = {agent: None for agent in self.possible_agents}
+        self.observation_spaces = {agent: None for agent in self.possible_agents}
 
-    def reset(self) -> dm_env.TimeStep:
-        """Resets the env.
+        self.info_spec = {}
 
-        Returns:
-            dm_env.TimeStep: dm timestep.
-        """
+
+    def reset(self):
+        """Resets the env."""
+
         # Reset the environment
         observations = self._environment.reset()
-        self._done = False
-        self._reset_next_step = False
-        self._step_type = dm_env.StepType.FIRST
 
         # Global state
-        state = self._create_state_representation(observations)
-        if state is not None:
-            extras = {"s_t": state}
-        else:
-            extras = {}
+        env_state = self._create_state_representation(observations)
+
+        # Infos
+        info = {"state": env_state}
 
         # Convert observations to OLT format
-        observations = self._convert_observations(observations, self._done)
+        observations = self._convert_observations(observations)
 
-        # Set env discount to 1 for all agents and all non-terminal timesteps
-        self._discounts = {agent: np.array(1, "float32") for agent in self._agents}
+        return observations, info
 
-        # Set reward to zero for all agents
-        rewards = {agent: np.array(0, "float32") for agent in self._agents}
 
-        return parameterized_restart(rewards, self._discounts, observations), extras
-
-    def step(self, actions: Dict[str, np.ndarray]) -> dm_env.TimeStep:
-        """Steps in env.
-
-        Args:
-            actions (Dict[str, np.ndarray]): actions per agent.
-
-        Returns:
-            dm_env.TimeStep: dm timestep
-        """
-        # Possibly reset the environment
-        if self._reset_next_step:
-            return self.reset()
-
-        actions = self._preprocess_actions(actions)
+    def step(self, actions):
+        """Steps in env."""
 
         # Step the environment
-        next_observations, pz_rewards, dones, truncated, _ = self._environment.step(
+        observations, rewards, terminals, truncations, _ = self._environment.step(
             actions
         )
 
-        # Add zero-observations to missing agents
-        next_observations = self._add_zero_obs_for_missing_agent(next_observations)
-
-        rewards = {}
-        for agent in self._agents:
-            if agent in pz_rewards:
-                rewards[agent] = np.array(pz_rewards[agent], "float32")
-            else:
-                rewards[agent] = np.array(0, "float32")
-
-        # Set done flag
-        self._done = all(dones.values()) or all(truncated.values())
-
         # Global state
-        state = self._create_state_representation(next_observations)
-        if state is not None:
-            extras = {"s_t": state}
-        else:
-            extras = {}
+        env_state = self._create_state_representation(observations)
+        
+        # Extra infos
+        info = {"state": env_state}
 
-        # for i in range(4):
-        #     plt.imshow(state[:,:,i])
-        #     plt.savefig(f"state_{i}.png")
+        return observations, rewards, terminals, truncations, info
 
-        # Convert next observations to OLT format
-        next_observations = self._convert_observations(next_observations, self._done)
-
-        # for i, observation in enumerate(next_observations.values()):
-        #     plt.imshow(observation.observation)
-        #     plt.savefig(f"obs_{i}.png")
-
-        if self._done:
-            self._step_type = dm_env.StepType.LAST
-            self._reset_next_step = True
-
-            # Discount on last timestep set to zero
-            self._discounts = {agent: np.array(0, "float32") for agent in self._agents}
-        else:
-            self._step_type = dm_env.StepType.MID
-
-        # Create timestep object
-        timestep = dm_env.TimeStep(
-            observation=next_observations,
-            reward=rewards,
-            discount=self._discounts,
-            step_type=self._step_type,
-        )
-
-        return timestep, extras
 
     def _add_zero_obs_for_missing_agent(self, observations):
         for agent in self._agents:
             if agent not in observations:
-                observations[agent] = np.zeros_like(self.observation_spec()[agent].observation)
+                observations[agent] = np.zeros(self.observation_spaces[agent].shape, self.observation_spaces[agent].dtype)
         return observations
 
-    def _preprocess_actions(self, actions):
-        return actions
 
     def _convert_observations(
-        self, observations: List, done: bool
+        self, observations
     ):
-        """Convert observation so it's dm_env compatible.
-
-        Args:
-            observes (Dict[str, np.ndarray]): observations per agent.
-            dones (Dict[str, bool]): dones per agent.
-
-        Returns:
-            types.Observation: dm compatible observations.
-        """
+        """Convert observations"""
         raise NotImplementedError
 
     def _create_state_representation(self, observations):
-
+        """Create global state representation from agent observations."""
         raise NotImplementedError
-
-    def action_spec(
-        self,
-    ) -> Dict:
-        """Action spec.
-
-        Returns:
-            spec for actions.
-        """
-        action_specs = {}
-        for agent in self._agents:
-            action_specs[agent] = convert_space_to_spec(
-                self._environment.action_space(agent)
-            )
-        return action_specs
