@@ -11,6 +11,20 @@ from mava.utils.loggers import logger_utils
 
 from og_marl.systems.maicq import MAICQSystemBuilder, IdentityNetwork, LocalObservationStateCriticNetwork
 from og_marl.systems.bc import BCSystemBuilder 
+# Copyright 2023 InstaDeep Ltd. All rights reserved.
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from og_marl.systems.qmix import QMIXSystemBuilder, QMIXCQLSystemBuilder, QMIXBCQSystemBuilder, QMixer
 from og_marl.environments.smac import SMAC
 from og_marl.utils.loggers import WandbLogger
