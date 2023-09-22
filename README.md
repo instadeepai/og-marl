@@ -1,7 +1,9 @@
 <p align="center">
-    <a href="docs/assets/og_marl_logo_short.png">
-        <img src="docs/assets/og_marl_logo_short.png" alt="OG-MARL logo" width="50%"/>
-    </a>
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/assets/og_marl_logo_short_dm.png">
+        <source media="(prefers-color-scheme: light)" srcset="docs/assets/og_marl_logo_short.png">
+        <img alt="OG-MARL logo" src="docs/assets/og_marl_logo_short.png", width="50%">
+    </picture>
 </p>
 
 <h2 align="center">
