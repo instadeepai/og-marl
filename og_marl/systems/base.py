@@ -105,6 +105,7 @@ class BaseMARLSystem:
 
                 # Bookkeeping
                 episode_return += np.mean(list(rewards.values()))
+                self._env_step_ctr  += 1
 
                 if self._env_step_ctr > 100 and self._env_step_ctr % train_period == 0: # TODO burn in period
                     # Sample replay buffer

@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-from og_marl.systems.base import BaseMARLSystem
-
 def get_environment(env_name, scenario):
     if env_name == "smac_v1":
         from og_marl.environments.smacv1 import SMACv1
@@ -22,8 +19,14 @@ def get_environment(env_name, scenario):
     elif env_name == "smac_v2":
         from og_marl.environments.smacv2 import SMACv2
         return SMACv2(scenario)
+    elif env_name == "mamujoco":
+        from og_marl.environments.mamujoco import MAMuJoCo
+        return MAMuJoCo(scenario)
+    elif env_name == "gymnasium_mamujoco":
+        from og_marl.environments.gymnasium_mamujoco import MAMuJoCo
+        return MAMuJoCo(scenario)
     
-def get_system(system_name, environment, logger, kwargs) -> BaseMARLSystem :
+def get_system(system_name, environment, logger, **kwargs) :
     if system_name == "idrqn":
         from og_marl.systems.idrqn import IDRQNSystem
         return IDRQNSystem(environment, logger, **kwargs)
@@ -42,3 +45,6 @@ def get_system(system_name, environment, logger, kwargs) -> BaseMARLSystem :
     elif system_name == "qmix+bcq":
         from og_marl.systems.qmix_bcq import QMIXBCQSystem
         return QMIXBCQSystem(environment, logger, **kwargs)
+    elif system_name == "omar":
+        from og_marl.systems.omar import OMARSystem
+        return OMARSystem(environment, logger, **kwargs)

@@ -201,7 +201,6 @@ class IDDPGSystem(BaseMARLSystem):
         logger,
         linear_layer_dim=100,
         recurrent_layer_dim=100,
-        batch_size=64,
         discount=0.99,
         target_update_rate=0.005,
         critic_learning_rate=3e-4,
@@ -214,7 +213,6 @@ class IDDPGSystem(BaseMARLSystem):
             environment,
             logger,
             add_agent_id_to_obs=add_agent_id_to_obs,
-            batch_size=batch_size,
             discount=discount
         )
 
