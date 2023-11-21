@@ -12,17 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from og_marl.environments.wrappers import PadObsandActs, Dtype
 from og_marl.loggers import WandbLogger
-from og_marl.systems.idrqn import IDRQNSystem
-from og_marl.environments.smacv1 import SMACv1
+from og_marl.tf2.systems.iddpg import IDDPGSystem
+from og_marl.environments.mamujoco import MAMuJoCo
 from og_marl.replay_buffers import SequenceCPPRB
 
-env = SMACv1("3m")
+env = MAMuJoCo("4ant")
+
+env = PadObsandActs(env)
+
+env = Dtype(env, "float32")
 
 logger = WandbLogger(entity="claude_formanek")
 
-system = IDRQNSystem(env, logger)
+system = IDDPGSystem(env, logger)
 
-rb = SequenceCPPRB(env, batch_size=64)
+rb = SequenceCPPRB(env)
 
-system.train_online(rb)
+system.train_online(rb, 3e6)

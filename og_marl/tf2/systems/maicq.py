@@ -17,8 +17,8 @@ import tensorflow as tf
 import sonnet as snt
 import tree
 
-from og_marl.systems.qmix import QMIXSystem
-from og_marl.utils import (
+from og_marl.tf2.systems.qmix import QMIXSystem
+from og_marl.tf2.utils import (
     concat_agent_id_to_obs,
     gather,
     batch_concat_agent_id_to_obs,

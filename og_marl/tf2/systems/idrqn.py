@@ -12,56 +12,136 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implementation of QMIX"""
+"""Implementation of independent Q-learning (DRQN style)"""
+import copy
 import tensorflow as tf
 import sonnet as snt
+import tree
 
-from og_marl.systems.idrqn import IDRQNSystem
-from og_marl.utils import (
+from og_marl.tf2.systems.base import BaseMARLSystem
+from og_marl.tf2.utils import (
+    batched_agents,
     gather,
     batch_concat_agent_id_to_obs,
     switch_two_leading_dims,
     merge_batch_and_agent_dim_of_time_major_sequence,
     expand_batch_and_agent_dim_of_time_major_sequence,
     set_growing_gpu_memory,
-    batched_agents
+    concat_agent_id_to_obs
 )
 
 set_growing_gpu_memory()
 
 
-class QMIXSystem(IDRQNSystem):
-    """QMIX System"""
+class IDRQNSystem(BaseMARLSystem):
+    """Independent Deep Recurrent Q-Networs System"""
 
     def __init__(
         self,
         environment,
         logger,
-        linear_layer_dim=128,
-        recurrent_layer_dim=64,
-        mixer_embed_dim=32,
-        mixer_hyper_dim=64,
+        linear_layer_dim=100,
+        recurrent_layer_dim=100,
         discount=0.99,
         target_update_period=200,
-        learning_rate=5e-4,
+        learning_rate=3e-4,
+        eps_min=0.05,
         eps_decay_timesteps=50_000,
         add_agent_id_to_obs=True,
     ):
-
         super().__init__(
             environment,
             logger,
-            linear_layer_dim=linear_layer_dim,
-            recurrent_layer_dim=recurrent_layer_dim,
             add_agent_id_to_obs=add_agent_id_to_obs,
-            discount=discount,
-            target_update_period=target_update_period,
-            learning_rate=learning_rate,
-            eps_decay_timesteps=eps_decay_timesteps,
+            discount=discount
         )
 
-        self._mixer = QMixer(len(self._environment.possible_agents), mixer_embed_dim, mixer_hyper_dim)
-        self._target_mixer = QMixer(len(self._environment.possible_agents), mixer_embed_dim, mixer_hyper_dim)
+        self._linear_layer_dim = linear_layer_dim
+        self._recurrent_layer_dim = recurrent_layer_dim
+
+        # Exploration
+        self._eps_dec_timesteps = eps_decay_timesteps
+        self._eps_min = eps_min
+        self._eps_dec = (1.0-self._eps_min) / self._eps_dec_timesteps
+
+        # Q-network
+        self._q_network =snt.DeepRNN(
+            [
+                snt.Linear(linear_layer_dim),
+                tf.nn.relu,
+                snt.GRU(recurrent_layer_dim),
+                tf.nn.relu,
+                snt.Linear(self._environment._num_actions)
+            ]
+        ) # shared network for all agents
+
+        # Target Q-network
+        self._target_q_network = copy.deepcopy(self._q_network)
+        self._target_update_period = target_update_period
+        self._train_step_ctr = 0
+
+        # Optimizer
+        self._optimizer=snt.optimizers.Adam(learning_rate=learning_rate)
+
+        # Reset the recurrent neural network
+        self._rnn_states = {agent: self._q_network.initial_state(1) for agent in self._environment.possible_agents}
+
+    def reset(self):
+        """Called at the start of a new episode."""
+
+        # Reset the recurrent neural network
+        self._rnn_states = {agent: self._q_network.initial_state(1) for agent in self._environment.possible_agents}
+
+        return
+
+    def select_actions(self, observations, legal_actions=None, explore=True):
+        if explore:
+            self._env_step_ctr += 1.0
+
+        env_step_ctr, observations, legal_actions = tree.map_structure(tf.convert_to_tensor, (self._env_step_ctr, observations, legal_actions))
+        actions, next_rnn_states = self._tf_select_actions(env_step_ctr, observations, legal_actions, self._rnn_states, explore)
+        self._rnn_states = next_rnn_states
+        return tree.map_structure(lambda x: x.numpy(), actions) # convert to numpy and squeeze batch dim
+
+    @tf.function(jit_compile=True)
+    def _tf_select_actions(self, env_step_ctr, observations, legal_actions, rnn_states, explore):
+        actions = {}
+        next_rnn_states = {}
+        for i, agent in enumerate(self._environment.possible_agents):
+            agent_observation = observations[agent]
+            if self._add_agent_id_to_obs:
+                agent_observation = concat_agent_id_to_obs(agent_observation, i, len(self._environment.possible_agents))
+            agent_observation = tf.expand_dims(agent_observation, axis=0) # add batch dimension
+            q_values, next_rnn_states[agent] = self._q_network(agent_observation, rnn_states[agent])
+
+            agent_legal_actions = legal_actions[agent]
+            masked_q_values = tf.where(
+                tf.equal(agent_legal_actions, 1),
+                q_values[0],
+                -99999999,
+            )
+            greedy_action = tf.argmax(masked_q_values)
+
+            epsilon = tf.maximum(1.0 - self._eps_dec * env_step_ctr, self._eps_min)
+
+            greedy_logits = tf.math.log(tf.one_hot(greedy_action, masked_q_values.shape[-1]))
+            logits = (1.0-epsilon) * greedy_logits + epsilon * tf.math.log(agent_legal_actions)
+            logits = tf.expand_dims(logits, axis=0)
+
+            if explore:
+                action = tf.random.categorical(logits, 1)
+            else:
+                action = greedy_action
+
+            # Max Q-value over legal actions
+            actions[agent] = action
+
+        return actions, next_rnn_states
+    
+    def train_step(self, batch):
+        self._train_step_ctr += 1
+        logs = self._tf_train_step(tf.convert_to_tensor(self._train_step_ctr), batch)
+        return logs
 
     @tf.function(jit_compile=True) # NOTE: comment this out if using debugger
     def _tf_train_step(self, train_step_ctr, batch):
@@ -130,12 +210,6 @@ class QMIXSystem(IDRQNSystem):
             cur_max_actions = tf.argmax(qs_out_selector, axis=3)
             target_max_qs = gather(target_qs_out, cur_max_actions, axis=-1, keepdims=False)
 
-            # Q-MIXING
-            chosen_action_qs, target_max_qs, rewards = self._mixing(chosen_action_qs, target_max_qs, env_states, rewards)
-
-            # Reduce Agent Dim
-            done = tf.reduce_mean(done, axis=2, keepdims=True) # NOTE Assumes all the same
-
             # Compute targets
             targets = rewards[:, :-1] + (1-done[:, :-1]) * self._discount * target_max_qs[:, 1:]
             targets = tf.stop_gradient(targets)
@@ -152,13 +226,10 @@ class QMIXSystem(IDRQNSystem):
         # Get trainable variables
         variables = (
             *self._q_network.trainable_variables,
-            *self._mixer.trainable_variables
         )
 
         # Compute gradients.
         gradients = tape.gradient(loss, variables)
-
-        gradients, _ = tf.clip_by_global_norm(gradients, 5.0)
 
         # Apply gradients.
         self._optimizer.apply(gradients, variables)
@@ -166,13 +237,11 @@ class QMIXSystem(IDRQNSystem):
         # Online variables
         online_variables = (
             *self._q_network.variables,
-            *self._mixer.variables,
         )
 
         # Get target variables
         target_variables = (
             *self._target_q_network.variables,
-            *self._target_mixer.variables,
         )
 
         # Maybe update target network
@@ -183,108 +252,23 @@ class QMIXSystem(IDRQNSystem):
             "Mean Q-values": tf.reduce_mean(qs_out),
             "Mean Chosen Q-values": tf.reduce_mean(chosen_action_qs),
         }
-
-    def _mixing(self, chosen_action_qs, target_max_qs, states, rewards):
-        """QMIX"""
-
-        # VDN 
-        # chosen_action_qs = tf.reduce_sum(chosen_action_qs, axis=2, keepdims=True)
-        # target_max_qs = tf.reduce_sum(target_max_qs, axis=2, keepdims=True)
-        # VDN
-        
-        chosen_action_qs = self._mixer(chosen_action_qs, states)
-        target_max_qs = self._target_mixer(target_max_qs, states)
-        rewards = tf.reduce_mean(rewards, axis=2, keepdims=True)
-        return chosen_action_qs, target_max_qs, rewards
     
-class QMixer(snt.Module):
-    """QMIX mixing network."""
+    def get_stats(self):
+        return {"Epsilon": max(1.0 - self._env_step_ctr * self._eps_dec, self._eps_min)}
 
-    def __init__(
-        self, num_agents, embed_dim = 32, hypernet_embed = 64, preprocess_network = None, non_monotonic=False
-    ) -> None:
-        """Inialize QMIX mixing network
+    def _apply_mask(self, loss, mask):
+        mask = tf.expand_dims(mask, axis=-1)
+        mask = tf.broadcast_to(mask[:, :-1], loss.shape)
+        loss = tf.reduce_sum(loss * mask) / tf.reduce_sum(mask)
+        return loss
 
-        Args:
-            num_agents: Number of agents in the enviroment
-            state_dim: Dimensions of the global environment state
-            embed_dim: The dimension of the output of the first layer
-                of the mixer.
-            hypernet_embed: Number of units in the hyper network
-        """
+    def _update_target_network(self, train_step, online_variables, target_variables):
+        """Update the target networks."""
 
-        super().__init__()
-        self.num_agents = num_agents
-        self.embed_dim = embed_dim
-        self.hypernet_embed = hypernet_embed
-        self._non_monotonic = non_monotonic
+        if train_step % self._target_update_period == 0:
+            for src, dest in zip(online_variables, target_variables):
+                dest.assign(src)
 
-        self.hyper_w_1 = snt.Sequential(
-            [
-                snt.Linear(self.hypernet_embed),
-                tf.nn.relu,
-                snt.Linear(self.embed_dim * self.num_agents),
-            ]
-        )
-
-        self.hyper_w_final = snt.Sequential(
-            [snt.Linear(self.hypernet_embed), tf.nn.relu, snt.Linear(self.embed_dim)]
-        )
-
-        # State dependent bias for hidden layer
-        self.hyper_b_1 = snt.Linear(self.embed_dim)
-
-        # V(s) instead of a bias for the last layers
-        self.V = snt.Sequential([snt.Linear(self.embed_dim), tf.nn.relu, snt.Linear(1)])
-
-    def __call__(self, agent_qs: tf.Tensor, states: tf.Tensor) -> tf.Tensor:
-        """Forward method."""
-        
-        B = agent_qs.shape[0] # batch size
-        state_dim = states.shape[2:]
-
-
-        agent_qs = tf.reshape(agent_qs, (-1, 1, self.num_agents))
-
-        # states = tf.ones_like(states)
-        states = tf.reshape(states, (-1, *state_dim))
-
-        # First layer
-        w1 = self.hyper_w_1(states)
-        if not self._non_monotonic:
-            w1 = tf.abs(w1)
-        b1 = self.hyper_b_1(states)
-        w1 = tf.reshape(w1, (-1, self.num_agents, self.embed_dim))
-        b1 = tf.reshape(b1, (-1, 1, self.embed_dim))
-        hidden = tf.nn.elu(tf.matmul(agent_qs, w1) + b1)
-
-        # Second layer
-        w_final = self.hyper_w_final(states)
-        if not self._non_monotonic:
-            w_final = tf.abs(w_final)
-        w_final = tf.reshape(w_final, (-1, self.embed_dim, 1))
-
-        # State-dependent bias
-        v = tf.reshape(self.V(states), (-1, 1, 1))
-
-        # Compute final output
-        y = tf.matmul(hidden, w_final) + v
-
-        # Reshape and return
-        q_tot = tf.reshape(y, (B, -1, 1))
-
-        return q_tot
-    
-    def k(self, states):
-        """Method used by MAICQ."""
-
-        B, T = states.shape[:2]
-
-        w1 = tf.math.abs(self.hyper_w_1(states))
-        w_final = tf.math.abs(self.hyper_w_final(states))
-        w1 = tf.reshape(w1, shape=(-1, self.num_agents, self.embed_dim))
-        w_final = tf.reshape(w_final, shape=(-1, self.embed_dim, 1))
-        k = tf.matmul(w1,w_final)
-        k = tf.reshape(k, shape=(B, -1, self.num_agents))
-        k = k / (tf.reduce_sum(k, axis=2, keepdims=True) + 1e-10)
-        return k
+        # tau = self._target_update_rate
+        # for src, dest in zip(online_variables, target_variables):
+        #     dest.assign(dest * (1.0 - tau) + src * tau)

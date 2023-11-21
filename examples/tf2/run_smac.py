@@ -1,6 +1,6 @@
 from absl import flags, app
 
-from og_marl.running_utils import get_environment, get_system
+from og_marl.tf2.running_utils import get_environment, get_system
 from og_marl.loggers import WandbLogger
 from og_marl.offline_dataset import OfflineMARLDataset
 

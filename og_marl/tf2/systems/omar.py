@@ -20,9 +20,9 @@ import numpy as np
 import tree
 import tensorflow_probability as tfp 
 
-from og_marl.systems.base import BaseMARLSystem
-from og_marl.systems.iddpg_cql import IDDPGCQLSystem
-from og_marl.utils import (
+from og_marl.tf2.systems.base import BaseMARLSystem
+from og_marl.tf2.systems.iddpg_cql import IDDPGCQLSystem
+from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
     batched_agents,
     switch_two_leading_dims,

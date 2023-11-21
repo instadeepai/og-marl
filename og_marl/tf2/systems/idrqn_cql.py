@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implementation of QMIX+CQL"""
+"""Implementation of IDRQN+CQL"""
 import tensorflow as tf
 import sonnet as snt
 
-from og_marl.systems.qmix import QMIXSystem
-from og_marl.utils import (
+from og_marl.tf2.systems.qmix import QMIXSystem
+from og_marl.tf2.utils import (
     gather,
     batch_concat_agent_id_to_obs,
     switch_two_leading_dims,
@@ -30,8 +30,8 @@ from og_marl.utils import (
 set_growing_gpu_memory()
 
 
-class QMIXCQLSystem(QMIXSystem):
-    """QMIX+CQL System"""
+class IDRQNCQLSystem(QMIXSystem):
+    """IDRQN+CQL System"""
 
     def __init__(
         self,
@@ -132,11 +132,6 @@ class QMIXCQLSystem(QMIXSystem):
             cur_max_actions = tf.argmax(qs_out_selector, axis=3)
             target_max_qs = gather(target_qs_out, cur_max_actions, axis=-1)
 
-            # Maybe do mixing (e.g. QMIX) but not in independent system
-            chosen_action_qs, target_max_qs, rewards = self._mixing(
-                chosen_action_qs, target_max_qs, env_states, rewards
-            )
-
             # Compute targets
             targets = rewards[:, :-1] + tf.expand_dims((1-done[:, :-1]), axis=-1) * self._discount * target_max_qs[:, 1:]
             targets = tf.stop_gradient(targets)
@@ -155,7 +150,7 @@ class QMIXCQLSystem(QMIXSystem):
                                 dtype=tf.dtypes.int64
             ) # [Ra, B, T, N]
 
-            all_mixed_ood_qs = []
+            all_ood_qs = []
             for i in range(self._num_ood_actions):
                 # Gather
                 one_hot_indices = tf.one_hot(random_ood_actions[i], depth=qs_out.shape[-1])
@@ -164,13 +159,12 @@ class QMIXCQLSystem(QMIXSystem):
                 ) # [B, T, N]
 
                 # Mixing
-                mixed_ood_qs = self._mixer(ood_qs, env_states) # [B, T, 1]
-                all_mixed_ood_qs.append(mixed_ood_qs) # [B, T, Ra]
+                all_ood_qs.append(ood_qs) # [B, T, Ra]
 
-            all_mixed_ood_qs.append(chosen_action_qs) # [B, T, Ra + 1]
-            all_mixed_ood_qs = tf.concat(all_mixed_ood_qs, axis=-1)
+            all_ood_qs.append(chosen_action_qs) # [B, T, Ra + 1]
+            all_ood_qs = tf.concat(all_ood_qs, axis=-1)
 
-            cql_loss = self._apply_mask(tf.reduce_logsumexp(all_mixed_ood_qs, axis=-1, keepdims=True)[:, :-1], zero_padding_mask) - self._apply_mask(chosen_action_qs[:, :-1], zero_padding_mask)
+            cql_loss = self._apply_mask(tf.reduce_logsumexp(all_ood_qs, axis=-1, keepdims=True)[:, :-1], zero_padding_mask) - self._apply_mask(chosen_action_qs[:, :-1], zero_padding_mask)
 
             #############
             #### end ####
@@ -182,7 +176,6 @@ class QMIXCQLSystem(QMIXSystem):
         # Get trainable variables
         variables = (
             *self._q_network.trainable_variables,
-            *self._mixer.trainable_variables
         )
 
         # Compute gradients.
@@ -194,13 +187,11 @@ class QMIXCQLSystem(QMIXSystem):
         # Online variables
         online_variables = (
             *self._q_network.variables,
-            *self._mixer.variables,
         )
 
         # Get target variables
         target_variables = (
             *self._target_q_network.variables,
-            *self._target_mixer.variables,
         )
 
         # Maybe update target network

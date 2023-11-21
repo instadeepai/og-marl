@@ -14,7 +14,7 @@
 
 from og_marl.environments.wrappers import PadObsandActs, Dtype
 from og_marl.loggers import WandbLogger
-from og_marl.systems.omar import OMARSystem
+from og_marl.tf2.systems.omar import OMARSystem
 from og_marl.environments.mamujoco import MAMuJoCo
 from og_marl.replay_buffers import SequenceCPPRB
 

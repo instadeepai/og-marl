@@ -19,9 +19,9 @@ import sonnet as snt
 import numpy as np
 import tree
 
-from og_marl.systems.base import BaseMARLSystem
-from og_marl.systems.iddpg import IDDPGSystem
-from og_marl.utils import (
+from og_marl.tf2.systems.base import BaseMARLSystem
+from og_marl.tf2.systems.iddpg import IDDPGSystem
+from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
     batched_agents,
     switch_two_leading_dims,

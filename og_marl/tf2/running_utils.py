@@ -28,23 +28,23 @@ def get_environment(env_name, scenario):
     
 def get_system(system_name, environment, logger, **kwargs) :
     if system_name == "idrqn":
-        from og_marl.systems.idrqn import IDRQNSystem
+        from og_marl.tf2.systems.idrqn import IDRQNSystem
         return IDRQNSystem(environment, logger, **kwargs)
     elif system_name == "idrqn+cql":
-        from og_marl.systems.idrqn_cql import IDRQNCQLSystem
+        from og_marl.tf2.systems.idrqn_cql import IDRQNCQLSystem
         return IDRQNCQLSystem(environment, logger, **kwargs)
     elif system_name == "idrqn+bcq":
-        from og_marl.systems.idrqn_bcq import IDRQNBCQSystem
+        from og_marl.tf2.systems.idrqn_bcq import IDRQNBCQSystem
         return IDRQNBCQSystem(environment, logger, **kwargs)
     elif system_name == "qmix":
-        from og_marl.systems.qmix import QMIXSystem
+        from og_marl.tf2.systems.qmix import QMIXSystem
         return QMIXSystem(environment, logger, **kwargs)
     elif system_name == "qmix+cql":
-        from og_marl.systems.qmix_cql import QMIXCQLSystem
+        from og_marl.tf2.systems.qmix_cql import QMIXCQLSystem
         return QMIXCQLSystem(environment, logger, **kwargs)
     elif system_name == "qmix+bcq":
-        from og_marl.systems.qmix_bcq import QMIXBCQSystem
+        from og_marl.tf2.systems.qmix_bcq import QMIXBCQSystem
         return QMIXBCQSystem(environment, logger, **kwargs)
     elif system_name == "omar":
-        from og_marl.systems.omar import OMARSystem
+        from og_marl.tf2.systems.omar import OMARSystem
         return OMARSystem(environment, logger, **kwargs)
