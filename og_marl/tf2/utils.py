@@ -16,6 +16,32 @@ import tensorflow as tf
 from collections import namedtuple
 import os
 
+def get_system(system_name, environment, logger, **kwargs) :
+    if system_name == "idrqn":
+        from og_marl.tf2.systems.idrqn import IDRQNSystem
+        return IDRQNSystem(environment, logger, **kwargs)
+    elif system_name == "idrqn+cql":
+        from og_marl.tf2.systems.idrqn_cql import IDRQNCQLSystem
+        return IDRQNCQLSystem(environment, logger, **kwargs)
+    elif system_name == "idrqn+bcq":
+        from og_marl.tf2.systems.idrqn_bcq import IDRQNBCQSystem
+        return IDRQNBCQSystem(environment, logger, **kwargs)
+    elif system_name == "qmix":
+        from og_marl.tf2.systems.qmix import QMIXSystem
+        return QMIXSystem(environment, logger, **kwargs)
+    elif system_name == "qmix+cql":
+        from og_marl.tf2.systems.qmix_cql import QMIXCQLSystem
+        return QMIXCQLSystem(environment, logger, **kwargs)
+    elif system_name == "maicq":
+        from og_marl.tf2.systems.maicq import MAICQSystem
+        return MAICQSystem(environment, logger, **kwargs)
+    elif system_name == "qmix+bcq":
+        from og_marl.tf2.systems.qmix_bcq import QMIXBCQSystem
+        return QMIXBCQSystem(environment, logger, **kwargs)
+    elif system_name == "omar":
+        from og_marl.tf2.systems.omar import OMARSystem
+        return OMARSystem(environment, logger, **kwargs)
+
 def set_growing_gpu_memory() -> None:
     """Solve gpu mem issues."""
     os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"

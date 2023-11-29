@@ -19,6 +19,7 @@ import tree
 
 from og_marl.tf2.systems.qmix import QMIXSystem
 from og_marl.tf2.utils import (
+    batched_agents,
     concat_agent_id_to_obs,
     gather,
     batch_concat_agent_id_to_obs,
@@ -26,10 +27,7 @@ from og_marl.tf2.utils import (
     merge_batch_and_agent_dim_of_time_major_sequence,
     expand_batch_and_agent_dim_of_time_major_sequence,
     set_growing_gpu_memory,
-    dict_to_tensor,
 )
-
-set_growing_gpu_memory()
 
 
 class MAICQSystem(QMIXSystem):
@@ -41,13 +39,12 @@ class MAICQSystem(QMIXSystem):
         logger,
         icq_advantages_beta = 0.1,  # from MAICQ code
         icq_target_q_taken_beta = 1000,  # from MAICQ code
-        linear_layer_dim=100,
-        recurrent_layer_dim=100,
-        mixer_embed_dim=64,
-        mixer_hyper_dim=32,
-        batch_size=64,
+        linear_layer_dim=64,
+        recurrent_layer_dim=64,
+        mixer_embed_dim=32,
+        mixer_hyper_dim=64,
         discount=0.99,
-        target_update_rate=0.005,
+        target_update_period=200,
         learning_rate=3e-4,
         add_agent_id_to_obs=False,
     ):
@@ -57,13 +54,13 @@ class MAICQSystem(QMIXSystem):
             logger,
             linear_layer_dim=linear_layer_dim,
             recurrent_layer_dim=recurrent_layer_dim,
-            mixer_embed_dim=mixer_embed_dim,
-            mixer_hyper_dim=mixer_hyper_dim,
             add_agent_id_to_obs=add_agent_id_to_obs,
-            batch_size=batch_size,
             discount=discount,
-            target_update_rate=target_update_rate,
-            learning_rate=learning_rate
+            target_update_period=target_update_period,
+            learning_rate=learning_rate,
+            eps_decay_timesteps=50_000,
+            mixer_embed_dim=mixer_embed_dim,
+            mixer_hyper_dim=mixer_hyper_dim
         )
 
         # ICQ
@@ -77,7 +74,7 @@ class MAICQSystem(QMIXSystem):
                 tf.nn.relu,
                 snt.GRU(self._recurrent_layer_dim),
                 tf.nn.relu,
-                snt.Linear(self._environment.num_actions),
+                snt.Linear(self._environment._num_actions),
                 tf.nn.softmax,
             ]
         )
@@ -86,27 +83,27 @@ class MAICQSystem(QMIXSystem):
         """Called at the start of a new episode."""
 
         # Reset the recurrent neural network
-        self._rnn_states = {agent: self._policy_network.initial_state(1) for agent in self._environment._agents}
+        self._rnn_states = {agent: self._policy_network.initial_state(1) for agent in self._environment.possible_agents}
 
         return
 
-    def select_actions(self, observations):
+    def select_actions(self, observations, legal_actions=None, explore=False):
         observations = tree.map_structure(tf.convert_to_tensor, observations)
-        actions, next_rnn_states = self._tf_select_actions(observations, self._rnn_states)
+        actions, next_rnn_states = self._tf_select_actions(observations, legal_actions, self._rnn_states)
         self._rnn_states = next_rnn_states
         return tree.map_structure(lambda x: x.numpy(), actions) # convert to numpy and squeeze batch dim
 
     @tf.function()
-    def _tf_select_actions(self, observations, rnn_states):
+    def _tf_select_actions(self, observations, legal_actions, rnn_states):
         actions = {}
         next_rnn_states = {}
-        for i, agent in enumerate(self._environment._agents):
-            agent_observation = observations[agent].observation
-            agent_observation = concat_agent_id_to_obs(agent_observation, i, len(self._environment._agents))
+        for i, agent in enumerate(self._environment.possible_agents):
+            agent_observation = observations[agent]
+            agent_observation = concat_agent_id_to_obs(agent_observation, i, len(self._environment.possible_agents))
             agent_observation = tf.expand_dims(agent_observation, axis=0) # add batch dimension
             probs, next_rnn_states[agent] = self._policy_network(agent_observation, rnn_states[agent])
 
-            agent_legal_actions = observations[agent].legal_actions
+            agent_legal_actions = legal_actions[agent]
             masked_probs = tf.where(
                 tf.equal(agent_legal_actions, 1),
                 probs[0],
@@ -119,17 +116,20 @@ class MAICQSystem(QMIXSystem):
         return actions, next_rnn_states
 
     @tf.function(jit_compile=True)
-    def _tf_train_step(self, batch):
-        batch = dict_to_tensor(self._environment._agents, batch)
+    def _tf_train_step(self, train_step_ctr, batch):
+        batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
-        observations = batch.observations # (B,T,N,O)
-        actions = batch.actions # (B,T,N,A)
-        legal_actions = batch.legal_actions # (B,T,N,A)
-        env_states = batch.env_state # (B,T,S)
-        rewards = batch.rewards # (B,T,N)
-        done = batch.done # (B,T)
-        zero_padding_mask = batch.zero_padding_mask # (B,T)
+        observations = batch["observations"] # (B,T,N,O)
+        actions = tf.cast(batch["actions"], "int32") # (B,T,N)
+        env_states = batch["state"] # (B,T,S)
+        rewards = batch["rewards"] # (B,T,N)
+        truncations = batch["truncations"] # (B,T,N)
+        terminals = batch["terminals"] # (B,T,N)
+        zero_padding_mask = batch["mask"] # (B,T)
+        legal_actions = batch["legals"]  # (B,T,N,A)
+
+        done = terminals
 
         # Get dims
         B, T, N, A = legal_actions.shape
@@ -198,12 +198,12 @@ class MAICQSystem(QMIXSystem):
             advantages = tf.stop_gradient(advantages)
 
             pi_taken = gather(probs_out, actions, keepdims=False)
-            pi_taken = tf.where(tf.cast(zero_padding_mask, "bool"), pi_taken, 1.0)
+            pi_taken = tf.where(tf.cast(tf.expand_dims(zero_padding_mask, axis=-1), "bool"), pi_taken, 1.0)
             log_pi_taken = tf.math.log(pi_taken)
 
             coe = self._mixer.k(env_states)
 
-            coma_mask = tf.concat([zero_padding_mask] * N, axis=2)
+            coma_mask = tf.concat([tf.expand_dims(zero_padding_mask, axis=-1)] * N, axis=2)
             coma_loss = -tf.reduce_sum(
                 coe * (len(advantages) * advantages * log_pi_taken) * coma_mask
             ) / tf.reduce_sum(coma_mask)
@@ -222,7 +222,7 @@ class MAICQSystem(QMIXSystem):
             target_q_taken = len(advantage_Q) * advantage_Q * target_q_taken
 
             # Compute targets
-            targets = rewards[:, :-1] + tf.expand_dims((1-done[:, :-1]), axis=-1) * self._discount * target_q_taken[:, 1:]
+            targets = rewards[:, :-1] + (1-done[:, :-1]) * self._discount * target_q_taken[:, 1:]
             targets = tf.stop_gradient(targets)
 
             # TD error
@@ -230,7 +230,7 @@ class MAICQSystem(QMIXSystem):
             q_loss = 0.5 * tf.square(td_error)
 
             # Masking
-            q_loss = tf.reduce_sum(q_loss * zero_padding_mask[:, :-1]) / tf.reduce_sum(
+            q_loss = tf.reduce_sum(q_loss * tf.expand_dims(zero_padding_mask[:, :-1], axis=-1)) / tf.reduce_sum(
                 zero_padding_mask[:, :-1]
             )
 
@@ -263,7 +263,7 @@ class MAICQSystem(QMIXSystem):
         )
 
         # Maybe update target network
-        self._update_target_network(online_variables, target_variables)
+        self._update_target_network(train_step_ctr, online_variables, target_variables)
 
         return {
             "Critic Loss": q_loss,

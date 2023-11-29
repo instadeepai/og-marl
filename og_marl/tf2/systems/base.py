@@ -141,7 +141,7 @@ class BaseMARLSystem:
                 break
 
 
-    def train_offline(self, dataset, max_trainer_steps=1e5, evaluate_every=None, num_eval_episodes=4, shuffle_buffer_size=5000):
+    def train_offline(self, batched_dataset, max_trainer_steps=1e5, evaluate_every=None, num_eval_episodes=4, shuffle_buffer_size=5000, batch_size=32):
         """Method to train the system offline.
         
         WARNING: make sure evaluate_every % log_every == 0 and log_every < evaluate_every, else you wont log evaluation.
@@ -150,16 +150,15 @@ class BaseMARLSystem:
         # batched_dataset = dataset.shuffle(buffer_size=shuffle_buffer_size, reshuffle_each_iteration=False).repeat().batch(self._batch_size)
         # batched_dataset = iter(batched_dataset)
 
-        batched_dataset = SequenceCPPRB(self._environment, max_size=100_000, batch_size=32)
-
-        batched_dataset.populate_from_dataset(dataset)
-
         trainer_step_ctr = 0
         while trainer_step_ctr < max_trainer_steps:
 
             if evaluate_every is not None and trainer_step_ctr % evaluate_every == 0:
                 print("EVALUATION")
                 eval_logs = self.evaluate(num_eval_episodes)
+                eval_logs["Trainer Steps"] = trainer_step_ctr
+                if trainer_step_ctr != 0:
+                    eval_logs["Train SPS"] = train_steps_per_second
                 self._logger.write(eval_logs, force=True)
 
             start_time = time.time()
@@ -174,11 +173,16 @@ class BaseMARLSystem:
             
             train_steps_per_second = 1 / (time_train_step + time_to_sample)
 
-            logs = {**train_logs, "Trainer Steps": trainer_step_ctr, "Time to Sample": time_to_sample, "Time for Train Step": time_train_step, "Train Steps Per Second": train_steps_per_second}
+            # logs = {**train_logs, "Trainer Steps": trainer_step_ctr, "Time to Sample": time_to_sample, "Time for Train Step": time_train_step, "Train Steps Per Second": train_steps_per_second}
             
-            self._logger.write(logs)
+            # self._logger.write(logs)
 
             trainer_step_ctr += 1
+
+        print("EVALUATION")
+        eval_logs = self.evaluate(num_eval_episodes)
+        eval_logs["Trainer Steps"] = trainer_step_ctr
+        self._logger.write(eval_logs, force=True)
 
     def reset():
         """Called at the start of each new episode."""
