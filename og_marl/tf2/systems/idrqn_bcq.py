@@ -34,11 +34,10 @@ class IDRQNBCQSystem(IDRQNSystem):
         environment,
         logger,
         bc_threshold=0.4,
-        linear_layer_dim=100,
-        recurrent_layer_dim=100,
-        batch_size=64,
+        linear_layer_dim=64,
+        recurrent_layer_dim=64,
         discount=0.99,
-        target_update_rate=0.005,
+        target_update_period=200,
         learning_rate=3e-4,
         add_agent_id_to_obs=False,
     ):
@@ -49,9 +48,8 @@ class IDRQNBCQSystem(IDRQNSystem):
             linear_layer_dim=linear_layer_dim,
             recurrent_layer_dim=recurrent_layer_dim,
             add_agent_id_to_obs=add_agent_id_to_obs,
-            batch_size=batch_size,
             discount=discount,
-            target_update_rate=target_update_rate,
+            target_update_period=target_update_period,
             learning_rate=learning_rate
         )
 
@@ -68,7 +66,7 @@ class IDRQNBCQSystem(IDRQNSystem):
         )
 
     @tf.function(jit_compile=True)
-    def _tf_train_step(self, batch):
+    def _tf_train_step(self, train_step, batch):
         batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
@@ -81,7 +79,6 @@ class IDRQNBCQSystem(IDRQNSystem):
         zero_padding_mask = batch["mask"] # (B,T)
         legal_actions = batch["legals"]  # (B,T,N,A)
 
-        # done = tf.cast(tf.logical_or(tf.cast(truncations, "bool"), tf.cast(terminals, "bool")), "float32")
         done = terminals
 
         # Get dims
@@ -212,7 +209,7 @@ class IDRQNBCQSystem(IDRQNSystem):
         )
 
         # Maybe update target network
-        self._update_target_network(online_variables, target_variables)
+        self._update_target_network(train_step, online_variables, target_variables)
 
         return {
             "Loss": loss,

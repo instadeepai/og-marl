@@ -24,7 +24,7 @@ from og_marl.tf2.utils import (
     merge_batch_and_agent_dim_of_time_major_sequence,
     expand_batch_and_agent_dim_of_time_major_sequence,
     set_growing_gpu_memory,
-    dict_to_tensor,
+    batched_agents
 )
 
 set_growing_gpu_memory()
@@ -39,13 +39,12 @@ class QMIXCQLSystem(QMIXSystem):
         logger,
         num_ood_actions=5,
         cql_weight=1.0,
-        linear_layer_dim=100,
-        recurrent_layer_dim=100,
-        mixer_embed_dim=64,
-        mixer_hyper_dim=32,
-        batch_size=64,
+        linear_layer_dim=64,
+        recurrent_layer_dim=64,
+        mixer_embed_dim=32,
+        mixer_hyper_dim=64,
         discount=0.99,
-        target_update_rate=0.005,
+        target_update_period=200,
         learning_rate=3e-4,
         add_agent_id_to_obs=False,
     ):
@@ -58,9 +57,8 @@ class QMIXCQLSystem(QMIXSystem):
             mixer_embed_dim=mixer_embed_dim,
             mixer_hyper_dim=mixer_hyper_dim,
             add_agent_id_to_obs=add_agent_id_to_obs,
-            batch_size=batch_size,
             discount=discount,
-            target_update_rate=target_update_rate,
+            target_update_period=target_update_period,
             learning_rate=learning_rate
         )
 
@@ -69,18 +67,20 @@ class QMIXCQLSystem(QMIXSystem):
         self._cql_weight = cql_weight
 
     @tf.function(jit_compile=True)
-    def _tf_train_step(self, batch):
-        batch = dict_to_tensor(self._environment._agents, batch)
-
+    def _tf_train_step(self, train_step, batch):
+        batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
-        observations = batch.observations # (B,T,N,O)
-        actions = batch.actions # (B,T,N,A)
-        legal_actions = batch.legal_actions # (B,T,N,A)
-        env_states = batch.env_state # (B,T,S)
-        rewards = batch.rewards # (B,T,N)
-        done = batch.done # (B,T)
-        zero_padding_mask = batch.zero_padding_mask # (B,T)
+        observations = batch["observations"] # (B,T,N,O)
+        actions = tf.cast(batch["actions"], "int32") # (B,T,N)
+        env_states = batch["state"] # (B,T,S)
+        rewards = batch["rewards"] # (B,T,N)
+        truncations = batch["truncations"] # (B,T,N)
+        terminals = batch["terminals"] # (B,T,N)
+        zero_padding_mask = batch["mask"] # (B,T)
+        legal_actions = batch["legals"]  # (B,T,N,A)
+
+        done = terminals
 
         # Get dims
         B, T, N, A = legal_actions.shape
@@ -138,7 +138,7 @@ class QMIXCQLSystem(QMIXSystem):
             )
 
             # Compute targets
-            targets = rewards[:, :-1] + tf.expand_dims((1-done[:, :-1]), axis=-1) * self._discount * target_max_qs[:, 1:]
+            targets = rewards[:, :-1] + (1-done[:, :-1]) * self._discount * target_max_qs[:, 1:]
             targets = tf.stop_gradient(targets)
 
             # TD-Error Loss
@@ -204,7 +204,7 @@ class QMIXCQLSystem(QMIXSystem):
         )
 
         # Maybe update target network
-        self._update_target_network(online_variables, target_variables)
+        self._update_target_network(train_step, online_variables, target_variables)
 
         return {
             "Loss": loss,

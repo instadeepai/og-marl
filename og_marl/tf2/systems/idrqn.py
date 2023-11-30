@@ -40,14 +40,14 @@ class IDRQNSystem(BaseMARLSystem):
         self,
         environment,
         logger,
-        linear_layer_dim=100,
-        recurrent_layer_dim=100,
+        linear_layer_dim=64,
+        recurrent_layer_dim=64,
         discount=0.99,
         target_update_period=200,
         learning_rate=3e-4,
         eps_min=0.05,
         eps_decay_timesteps=50_000,
-        add_agent_id_to_obs=True,
+        add_agent_id_to_obs=False,
     ):
         super().__init__(
             environment,

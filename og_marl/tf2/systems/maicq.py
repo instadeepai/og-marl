@@ -26,7 +26,6 @@ from og_marl.tf2.utils import (
     switch_two_leading_dims,
     merge_batch_and_agent_dim_of_time_major_sequence,
     expand_batch_and_agent_dim_of_time_major_sequence,
-    set_growing_gpu_memory,
 )
 
 
@@ -58,7 +57,6 @@ class MAICQSystem(QMIXSystem):
             discount=discount,
             target_update_period=target_update_period,
             learning_rate=learning_rate,
-            eps_decay_timesteps=50_000,
             mixer_embed_dim=mixer_embed_dim,
             mixer_hyper_dim=mixer_hyper_dim
         )

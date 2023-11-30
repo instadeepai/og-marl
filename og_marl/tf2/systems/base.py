@@ -147,18 +147,12 @@ class BaseMARLSystem:
         WARNING: make sure evaluate_every % log_every == 0 and log_every < evaluate_every, else you wont log evaluation.
         """
 
-        # batched_dataset = dataset.shuffle(buffer_size=shuffle_buffer_size, reshuffle_each_iteration=False).repeat().batch(self._batch_size)
-        # batched_dataset = iter(batched_dataset)
-
         trainer_step_ctr = 0
         while trainer_step_ctr < max_trainer_steps:
 
             if evaluate_every is not None and trainer_step_ctr % evaluate_every == 0:
                 print("EVALUATION")
                 eval_logs = self.evaluate(num_eval_episodes)
-                eval_logs["Trainer Steps"] = trainer_step_ctr
-                if trainer_step_ctr != 0:
-                    eval_logs["Train SPS"] = train_steps_per_second
                 self._logger.write(eval_logs, force=True)
 
             start_time = time.time()
@@ -173,15 +167,14 @@ class BaseMARLSystem:
             
             train_steps_per_second = 1 / (time_train_step + time_to_sample)
 
-            # logs = {**train_logs, "Trainer Steps": trainer_step_ctr, "Time to Sample": time_to_sample, "Time for Train Step": time_train_step, "Train Steps Per Second": train_steps_per_second}
+            logs = {**train_logs, "Trainer Steps": trainer_step_ctr, "Time to Sample": time_to_sample, "Time for Train Step": time_train_step, "Train Steps Per Second": train_steps_per_second}
             
-            # self._logger.write(logs)
+            self._logger.write(logs)
 
             trainer_step_ctr += 1
 
         print("EVALUATION")
         eval_logs = self.evaluate(num_eval_episodes)
-        eval_logs["Trainer Steps"] = trainer_step_ctr
         self._logger.write(eval_logs, force=True)
 
     def reset():

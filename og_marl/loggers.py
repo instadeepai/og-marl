@@ -24,7 +24,7 @@ class WandbLogger:
         project="default_project",
         notes="",
         tags=["default"],
-        entity="arkalim",
+        entity=None,
         log_every=2 # seconds
     ):
         wandb.init(project=project, notes=notes, tags=tags, entity=entity, config=config)

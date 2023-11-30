@@ -12,15 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implementation of TD3"""
-import copy
+"""Implementation of OMAR"""
 import tensorflow as tf
 import sonnet as snt
 import numpy as np
-import tree
 import tensorflow_probability as tfp 
 
-from og_marl.tf2.systems.base import BaseMARLSystem
 from og_marl.tf2.systems.iddpg_cql import IDDPGCQLSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
@@ -28,7 +25,6 @@ from og_marl.tf2.utils import (
     switch_two_leading_dims,
     merge_batch_and_agent_dim_of_time_major_sequence,
     expand_batch_and_agent_dim_of_time_major_sequence,
-    concat_agent_id_to_obs
 )
 
 class OMARSystem(IDDPGCQLSystem):
@@ -37,14 +33,13 @@ class OMARSystem(IDDPGCQLSystem):
         self, 
         environment,
         logger,
-        linear_layer_dim=100,
-        recurrent_layer_dim=100,
+        linear_layer_dim=64,
+        recurrent_layer_dim=64,
         discount=0.99,
         target_update_rate=0.005,
         critic_learning_rate=3e-4,
         policy_learning_rate=1e-3,
-        add_agent_id_to_obs=True,
-        random_exploration_timesteps=50_000,
+        add_agent_id_to_obs=False,
         num_ood_actions=4, # CQL
         cql_weight=10.0, # CQL  
         cql_sigma=0.2, # CQL
@@ -66,7 +61,6 @@ class OMARSystem(IDDPGCQLSystem):
             critic_learning_rate=critic_learning_rate,
             policy_learning_rate=policy_learning_rate,
             add_agent_id_to_obs=add_agent_id_to_obs,
-            random_exploration_timesteps=random_exploration_timesteps,
             num_ood_actions=num_ood_actions,
             cql_weight=cql_weight,
             cql_sigma=cql_sigma,
@@ -174,8 +168,8 @@ class OMARSystem(IDDPGCQLSystem):
         return {"policy_loss": policy_loss}
 
 
-    @tf.function(jit_compile=True) # NOTE: comment this out if using debugger
-    def _tf_train_step(self, batch):
+    @tf.function(jit_compile=True)
+    def _tf_train_step(self, train_step, batch):
         batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch

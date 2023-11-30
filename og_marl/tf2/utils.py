@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import tensorflow as tf
-from collections import namedtuple
 import os
 
 def get_system(system_name, environment, logger, **kwargs) :
@@ -38,6 +37,12 @@ def get_system(system_name, environment, logger, **kwargs) :
     elif system_name == "qmix+bcq":
         from og_marl.tf2.systems.qmix_bcq import QMIXBCQSystem
         return QMIXBCQSystem(environment, logger, **kwargs)
+    elif system_name == "iddpg":
+        from og_marl.tf2.systems.iddpg import IDDPGSystem
+        return IDDPGSystem(environment, logger, **kwargs)
+    elif system_name == "iddpg+cql":
+        from og_marl.tf2.systems.iddpg_cql import IDDPGCQLSystem
+        return IDDPGCQLSystem(environment, logger, **kwargs)
     elif system_name == "omar":
         from og_marl.tf2.systems.omar import OMARSystem
         return OMARSystem(environment, logger, **kwargs)

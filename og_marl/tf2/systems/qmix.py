@@ -37,15 +37,15 @@ class QMIXSystem(IDRQNSystem):
         self,
         environment,
         logger,
-        linear_layer_dim=128,
+        linear_layer_dim=64,
         recurrent_layer_dim=64,
         mixer_embed_dim=32,
         mixer_hyper_dim=64,
         discount=0.99,
         target_update_period=200,
-        learning_rate=5e-4,
+        learning_rate=3e-4,
         eps_decay_timesteps=50_000,
-        add_agent_id_to_obs=True,
+        add_agent_id_to_obs=False,
     ):
 
         super().__init__(
@@ -77,7 +77,6 @@ class QMIXSystem(IDRQNSystem):
         zero_padding_mask = batch["mask"] # (B,T)
         legal_actions = batch["legals"]  # (B,T,N,A)
 
-        # done = tf.cast(tf.logical_or(tf.cast(truncations, "bool"), tf.cast(terminals, "bool")), "float32")
         done = terminals
 
         # Get dims
