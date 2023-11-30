@@ -15,7 +15,7 @@
 import numpy as np
 import time
 
-from og_marl.replay_buffers import SequenceCPPRB
+from og_marl.loggers import JsonWriter
 
 class BaseMARLSystem:
     def __init__(
@@ -64,7 +64,7 @@ class BaseMARLSystem:
                 episode_return += np.mean(list(rewards.values()))
                 done = all(terminals.values()) or all(truncations.values())
             episode_returns.append(episode_return)
-        logs = {"Episode Return": np.mean(episode_returns)}
+        logs = {"evaluator/episode_return": np.mean(episode_returns)}
         return logs
     
     def train_online(self, replay_buffer, max_env_steps=1e6, train_period=20):
@@ -141,12 +141,11 @@ class BaseMARLSystem:
                 break
 
 
-    def train_offline(self, batched_dataset, max_trainer_steps=1e5, evaluate_every=None, num_eval_episodes=4, shuffle_buffer_size=5000, batch_size=32):
+    def train_offline(self, batched_dataset, max_trainer_steps=1e5, evaluate_every=1000, num_eval_episodes=4, json_writer=None):
         """Method to train the system offline.
         
         WARNING: make sure evaluate_every % log_every == 0 and log_every < evaluate_every, else you wont log evaluation.
         """
-
         trainer_step_ctr = 0
         while trainer_step_ctr < max_trainer_steps:
 
@@ -154,6 +153,13 @@ class BaseMARLSystem:
                 print("EVALUATION")
                 eval_logs = self.evaluate(num_eval_episodes)
                 self._logger.write(eval_logs, force=True)
+                if json_writer is not None:
+                    json_writer.write(
+                        trainer_step_ctr,
+                        "evaluator/episode_return",
+                        eval_logs["evaluator/episode_return"],
+                        trainer_step_ctr // evaluate_every
+                    )
 
             start_time = time.time()
             batch = next(batched_dataset)
@@ -173,9 +179,17 @@ class BaseMARLSystem:
 
             trainer_step_ctr += 1
 
-        print("EVALUATION")
+        print("FINAL EVALUATION")
         eval_logs = self.evaluate(num_eval_episodes)
         self._logger.write(eval_logs, force=True)
+        if json_writer is not None:
+            eval_logs = {f"absolute/{key.split('/')[1]}": value for key, value in eval_logs.items()}
+            json_writer.write(
+                trainer_step_ctr,
+                "absolute/episode_return",
+                eval_logs["absolute/episode_return"],
+                trainer_step_ctr // evaluate_every
+            )
 
     def reset():
         """Called at the start of each new episode."""

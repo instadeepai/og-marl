@@ -226,7 +226,7 @@ class IDDPGSystem(BaseMARLSystem):
                 tf.nn.relu,
                 snt.GRU(recurrent_layer_dim),
                 tf.nn.relu,
-                snt.Linear(self._environment._act_dim),
+                snt.Linear(self._environment._num_actions),
                 tf.nn.tanh
             ]
         ) # shared network for all agents
@@ -235,7 +235,7 @@ class IDDPGSystem(BaseMARLSystem):
         self._target_policy_network = copy.deepcopy(self._policy_network)
 
         # Critic network
-        self._critic_network_1 = StateAndJointActionCritic(len(self._environment.possible_agents), self._environment._act_dim) # shared network for all agents
+        self._critic_network_1 = StateAndActionCritic(len(self._environment.possible_agents), self._environment._num_actions) # shared network for all agents
         self._critic_network_2 = copy.deepcopy(self._critic_network_1)
 
         # Target critic network

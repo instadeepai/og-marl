@@ -21,11 +21,12 @@ import tree
 Sample = namedtuple('Sample', ['observations', 'actions', 'rewards', 'done', 'episode_return', 'legal_actions', 'env_state', 'zero_padding_mask'])
 
 def get_schema_dtypes(environment):
+    act_type = list(environment.action_spaces.values())[0].dtype
     schema = {}
     for agent in environment.possible_agents:
         schema[agent + "_observations"] = tf.float32
         schema[agent + "_legal_actions"] = tf.float32
-        schema[agent + "_actions"] = tf.int64
+        schema[agent + "_actions"] = act_type
         schema[agent + "_rewards"] = tf.float32
         schema[agent + "_discounts"] = tf.float32
 
@@ -66,6 +67,12 @@ class OfflineMARLDataset:
             deterministic=False,
             block_length=None,
         )
+
+    def get_sequence_length(self):
+        for sample in self._tf_dataset:
+            T = sample["mask"].shape[0]
+            break
+        return T
 
     def _decode_fn(self, record_bytes):
         example = tf.io.parse_single_example(

@@ -26,8 +26,9 @@ from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 
 from og_marl.jax.dataset import FlashbaxBufferStore
 
-def train_maicq(
+def train_maicq_system(
     environment,
+    logger,
     dataset_path,
     seed: int = 42,
     learning_rate: float = 3e-4,
@@ -45,6 +46,7 @@ def train_maicq(
     maicq_target_beta: float = 1e3,
     qmixer_embed_dim: int = 32,
     qmixer_hyper_dim: int = 64,
+    json_writer=None
 ):
     # GLOBAL Variables
     NUM_ACTS = environment._num_actions
@@ -335,7 +337,7 @@ def train_maicq(
                 done = all(trunc.values()) or all(term.values())
                 episode_return += sum(list(rew.values())) / len(list(rew.values())) # mean over agents
             episode_returns.append(episode_return)
-        return {"Episode Return": sum(episode_returns)/NUM_EVALS}
+        return {"evaluator/episode_return": sum(episode_returns)/NUM_EVALS}
 
     ################
     ##### MAIN #####
@@ -370,10 +372,17 @@ def train_maicq(
 
     opt_state = optax.chain(optax.clip_by_global_norm(10), optax.adam(LR)).init(params["online"])
 
-    eval_logs = evaluation(init_policy_carry, params["online"]["policy"], environment)
-    wandb.log({**eval_logs, **{"Trainer Steps": 0}})
-    print(f"First Eval Episode Return: {eval_logs['Episode Return']}")
     for i in range(NUM_EPOCHS):
+        eval_logs = evaluation(init_policy_carry, params["online"]["policy"], environment)
+        logger.write(eval_logs, force=True)
+        if json_writer is not None:
+            json_writer.write(
+                (i+1) * NUM_TRAIN_STEPS_PER_EPOCH,
+                "evaluator/episode_return",
+                eval_logs["evaluator/episode_return"],
+                i
+            )
+
         start_time = time.time()
         rng_key, train_key = jax.random.split(rng_key)
         params, opt_state, logs = jax.jit(train_epoch)(train_key, params, opt_state, buffer_state)
@@ -386,10 +395,15 @@ def train_maicq(
         if i != 0: # don't log SPC when tracing
             logs["Train SPS"] = 1 / ((end_time - start_time) / NUM_TRAIN_STEPS_PER_EPOCH)
 
-        eval_logs = evaluation(init_policy_carry, params["online"]["policy"], environment)
-
-        wandb.log({**logs, **eval_logs})
-
-        print(f"Epoch: {i}  |   critic_loss: {round(float(jnp.mean(logs['critic_loss'])), 3)} | policy_loss: {round(float(jnp.mean(logs['policy_loss'])), 3)}   |   Eval Episode Return: {round(eval_logs['Episode Return'], 3)}")
+    eval_logs = evaluation(init_policy_carry, params["online"]["policy"], environment)
+    logger.write(eval_logs, force=True)
+    if json_writer is not None:
+        eval_logs = {f"absolute/{key.split('/')[1]}": value for key, value in eval_logs.items()}
+        json_writer.write(
+            (i+1) * NUM_TRAIN_STEPS_PER_EPOCH,
+            "absolute/episode_return",
+            eval_logs["absolute/episode_return"],
+            i
+        )
 
     print("Done")

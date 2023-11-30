@@ -11,9 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
-from datetime import datetime
+import json
+import os
 import wandb
 import time
 
@@ -50,3 +49,92 @@ class WandbLogger:
 
     def close(self):
         wandb.finish()
+
+class JsonWriter:
+    """
+    Writer to create json files for reporting experiment results according to marl-eval
+
+    Follows conventions from https://github.com/instadeepai/marl-eval/tree/main#usage-
+    This writer was adapted from the implementation found in BenchMARL. For the original
+    implementation please see https://tinyurl.com/2t6fy548
+
+    Args:
+        path (str): where to write the file
+        algorithm_name (str): algorithm name
+        task_name (str): task name
+        environment_name (str): environment name
+        seed (int): random seed of the experiment
+    """
+
+    def __init__(
+        self,
+        path: str,
+        algorithm_name: str,
+        task_name: str,
+        environment_name: str,
+        seed: int,
+    ):
+        self.path = path
+        self.file_name = "metrics.json"
+        self.run_data = {"absolute_metrics": {}}
+
+        # If the file already exists, load it
+        if os.path.isfile(f"{self.path}/{self.file_name}"):
+            with open(f"{self.path}/{self.file_name}", "r") as f:
+                data = json.load(f)
+
+        else:
+            # Create the logging directory if it doesn't exist
+            os.makedirs(self.path, exist_ok=True)
+            data = {}
+
+        # Merge the existing data with the new data
+        self.data = data
+        if environment_name not in self.data:
+            self.data[environment_name] = {}
+        if task_name not in self.data[environment_name]:
+            self.data[environment_name][task_name] = {}
+        if algorithm_name not in self.data[environment_name][task_name]:
+            self.data[environment_name][task_name][algorithm_name] = {}
+        self.data[environment_name][task_name][algorithm_name][f"seed_{seed}"] = self.run_data
+
+        with open(f"{self.path}/{self.file_name}", "w") as f:
+            json.dump(self.data, f, indent=4)
+
+    def write(
+        self,
+        timestep: int,
+        key: str,
+        value: float,
+        evaluation_step = None,
+    ) -> None:
+        """
+        Writes a step to the json reporting file
+
+        Args:
+            timestep (int): the current environment timestep
+            key (str): the metric that should be logged
+            value (str): the value of the metric that should be logged
+            evaluation_step (int): the evaluation step
+        """
+
+        logging_prefix, *metric_key = key.split("/")
+        metric_key = "/".join(metric_key)
+
+        metrics = {metric_key: [value]}
+
+        if logging_prefix == "evaluator":
+            step_metrics = {"step_count": timestep}
+            step_metrics.update(metrics)  # type: ignore
+            step_str = f"step_{evaluation_step}"
+            if step_str in self.run_data:
+                self.run_data[step_str].update(step_metrics)
+            else:
+                self.run_data[step_str] = step_metrics
+
+        # Store the absolute metrics
+        if logging_prefix == "absolute":
+            self.run_data["absolute_metrics"].update(metrics)
+
+        with open(f"{self.path}/{self.file_name}", "w") as f:
+            json.dump(self.data, f, indent=4)

@@ -13,13 +13,10 @@
 # limitations under the License.
 
 """Implementation of TD3"""
-import copy
 import tensorflow as tf
 import sonnet as snt
 import numpy as np
-import tree
 
-from og_marl.tf2.systems.base import BaseMARLSystem
 from og_marl.tf2.systems.iddpg import IDDPGSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
@@ -27,7 +24,6 @@ from og_marl.tf2.utils import (
     switch_two_leading_dims,
     merge_batch_and_agent_dim_of_time_major_sequence,
     expand_batch_and_agent_dim_of_time_major_sequence,
-    concat_agent_id_to_obs
 )
 
 class IDDPGCQLSystem(IDDPGSystem):
@@ -36,15 +32,15 @@ class IDDPGCQLSystem(IDDPGSystem):
         self, 
         environment,
         logger,
-        linear_layer_dim=100,
-        recurrent_layer_dim=100,
+        linear_layer_dim=64,
+        recurrent_layer_dim=64,
         discount=0.99,
         target_update_rate=0.005,
         critic_learning_rate=3e-4,
-        policy_learning_rate=1e-3,
-        add_agent_id_to_obs=True,
-        random_exploration_timesteps=50_000,
-        num_ood_actions=4, # CQL
+        policy_learning_rate=1e-5,
+        add_agent_id_to_obs=False,
+        random_exploration_timesteps=0,
+        num_ood_actions=10, # CQL
         cql_weight=10.0, # CQL  
         cql_sigma=0.2, # CQL
         target_action_gap=10.0, # CQL
@@ -70,52 +66,36 @@ class IDDPGCQLSystem(IDDPGSystem):
         self._cql_log_alpha = tf.Variable(0.0, trainable=True)
         self._cql_alpha_optimizer = snt.optimizers.Adam(cql_alpha_learning_rate)
 
-    def _policy_loss(self, observations, actions, env_states, zero_padding_mask):
-        T,B,N,A = actions.shape[:4]
-        
-        with tf.GradientTape() as tape:
-            # Unroll online policy
-            onlin_actions, _ = snt.static_unroll(
-                self._policy_network,
-                merge_batch_and_agent_dim_of_time_major_sequence(observations),
-                self._policy_network.initial_state(B*N)
-            )
-            online_actions = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
+    @tf.function(jit_compile=True) # NOTE: comment this out if using debugger
+    def _tf_train_step(self, batch):
+        batch = batched_agents(self._environment.possible_agents, batch)
 
-            qs_1 = self._critic_network_1(observations, env_states, online_actions, actions)
-            qs_2 = self._critic_network_2(observations, env_states, online_actions, actions)
-            qs = tf.minimum(qs_1, qs_2)
-            
-            policy_loss = - tf.squeeze(qs, axis=-1)
+        # Unpack the batch
+        observations = batch["observations"] # (B,T,N,O)
+        actions = batch["actions"] # (B,T,N,A)
+        env_states = batch["state"] # (B,T,S)
+        rewards = batch["rewards"] # (B,T,N)
+        truncations = batch["truncations"] # (B,T,N)
+        terminals = batch["terminals"] # (B,T,N)
+        zero_padding_mask = batch["mask"] # (B,T)
 
-            # Masked mean
-            policy_mask = tf.squeeze(tf.stack([zero_padding_mask] * N, axis=2))
-            policy_loss = tf.reduce_sum(policy_loss * policy_mask) / tf.reduce_sum(policy_mask)
+        # done = tf.cast(tf.logical_or(tf.cast(truncations, "bool"), tf.cast(terminals, "bool")), "float32")
+        done = terminals
 
-        # Train policy
-        variables = (
-            *self._policy_network.trainable_variables,
-        )
-        gradients = tape.gradient(policy_loss, variables)
-        self._policy_optimizer.apply(gradients, variables)
-
-        # Update target networks
-        online_variables = (
-            *self._policy_network.variables,
-        )
-        target_variables = (
-            *self._target_policy_network.variables,
-        )   
-        self._update_target_network(
-            online_variables,
-            target_variables,
-        )
-
-        return {"policy_loss": policy_loss}
-
-    def _critic_loss(self, observations, actions, rewards, env_states, done, zero_padding_mask):
         # Get dims
-        T,B,N,A = actions.shape[:4]
+        B, T, N = actions.shape[:3]
+
+        # Maybe add agent ids to observation
+        if self._add_agent_id_to_obs:
+            observations = batch_concat_agent_id_to_obs(observations)
+        
+        # Make time-major
+        observations = switch_two_leading_dims(observations)
+        replay_actions = switch_two_leading_dims(actions)
+        rewards = switch_two_leading_dims(rewards)
+        done = switch_two_leading_dims(done)
+        zero_padding_mask = switch_two_leading_dims(zero_padding_mask)
+        env_states = switch_two_leading_dims(env_states)
 
         # Unroll target policy
         target_actions, _ = snt.static_unroll(
@@ -139,14 +119,14 @@ class IDDPGCQLSystem(IDDPGSystem):
         with tf.GradientTape(persistent=True) as tape:
 
             # Online critics
-            qs_1 = tf.squeeze(self._critic_network_1(observations, env_states, actions, actions), axis=-1)
-            qs_2 = tf.squeeze(self._critic_network_2(observations, env_states, actions, actions), axis=-1)
+            qs_1 = tf.squeeze(self._critic_network_1(observations, env_states, replay_actions, replay_actions), axis=-1)
+            qs_2 = tf.squeeze(self._critic_network_2(observations, env_states, replay_actions, replay_actions), axis=-1)
 
             # Squared TD-error
             critic_loss_1 = 0.5 * (targets - qs_1[:-1]) ** 2
             critic_loss_2 = 0.5 * (targets - qs_2[:-1]) ** 2
 
-            ###########
+                        ###########
             ### CQL ###
             ###########
 
@@ -222,8 +202,30 @@ class IDDPGCQLSystem(IDDPGSystem):
 
             ### END CQL ###
 
+            # Masked mean
+            critic_mask = tf.squeeze(tf.stack([zero_padding_mask[:-1]]*N, axis=2))
+            critic_loss_1 = tf.reduce_sum(critic_loss_1 * critic_mask) / tf.reduce_sum(critic_mask)
+            critic_loss_2 = tf.reduce_sum(critic_loss_2 * critic_mask) / tf.reduce_sum(critic_mask)
             critic_loss = (critic_loss_1 + critic_loss_2) / 2
-            critic_loss = tf.reduce_sum(critic_loss * tf.expand_dims(zero_padding_mask[:-1],axis=-1)) / tf.reduce_sum(zero_padding_mask[:-1])
+
+            # Policy Loss
+            # Unroll online policy
+            onlin_actions, _ = snt.static_unroll(
+                self._policy_network,
+                merge_batch_and_agent_dim_of_time_major_sequence(observations),
+                self._policy_network.initial_state(B*N)
+            )
+            online_actions = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
+
+            qs_1 = self._critic_network_1(observations, env_states, online_actions, replay_actions)
+            qs_2 = self._critic_network_2(observations, env_states, online_actions,replay_actions)
+            qs = tf.reduce_mean((qs_1, qs_2), axis=0)
+            
+            policy_loss = - tf.squeeze(qs, axis=-1)
+
+            # Masked mean
+            policy_mask = tf.squeeze(tf.stack([zero_padding_mask] * N, axis=2))
+            policy_loss = tf.reduce_sum(policy_loss * policy_mask) / tf.reduce_sum(policy_mask)
 
         # Train critics
         variables = (
@@ -238,62 +240,37 @@ class IDDPGCQLSystem(IDDPGSystem):
         gradients = tape.gradient(cql_alpha_loss, variables)
         self._cql_alpha_optimizer.apply(gradients, variables)
 
-        del tape
+        # Train policy
+        variables = (
+            *self._policy_network.trainable_variables,
+        )
+        gradients = tape.gradient(policy_loss, variables)
+        self._policy_optimizer.apply(gradients, variables)
 
         # Update target networks
         online_variables = (
             *self._critic_network_1.variables,
             *self._critic_network_2.variables,
+            *self._policy_network.variables
         )
         target_variables = (
             *self._target_critic_network_1.variables,
             *self._target_critic_network_2.variables,
+            *self._target_policy_network.variables
         )   
         self._update_target_network(
             online_variables,
             target_variables,
         )
 
+        del tape
+
         logs = {
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),
-            "Mean Critic Loss": critic_loss,
+            "Mean Critic Loss": (critic_loss),
+            "Policy Loss": policy_loss,
             "CQL Alpha Loss": cql_alpha_loss,
             "CQL Loss": cql_loss_1
         }
-
-        return logs
-
-    @tf.function(jit_compile=True) # NOTE: comment this out if using debugger
-    def _tf_train_step(self, batch):
-        batch = batched_agents(self._environment.possible_agents, batch)
-
-        # Unpack the batch
-        observations = batch["observations"] # (B,T,N,O)
-        actions = batch["actions"] # (B,T,N,A)
-        env_states = batch["state"] # (B,T,S)
-        rewards = batch["rewards"] # (B,T,N)
-        truncations = batch["truncations"] # (B,T,N)
-        terminals = batch["terminals"] # (B,T,N)
-        zero_padding_mask = batch["mask"] # (B,T)
-
-        # Maybe add agent ids to observation
-        if self._add_agent_id_to_obs:
-            observations = batch_concat_agent_id_to_obs(observations)
-
-        done = terminals 
-
-        # Make time-major
-        observations = switch_two_leading_dims(observations)
-        actions = switch_two_leading_dims(actions)
-        rewards = switch_two_leading_dims(rewards)
-        done = switch_two_leading_dims(done)
-        zero_padding_mask = switch_two_leading_dims(zero_padding_mask)
-        env_states = switch_two_leading_dims(env_states)
-
-        critic_logs = self._critic_loss(observations, actions, rewards, env_states, done, zero_padding_mask)
-
-        policy_logs = self._policy_loss(observations, actions, env_states, zero_padding_mask)
-
-        logs = {**critic_logs, **policy_logs}
 
         return logs

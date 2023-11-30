@@ -11,22 +11,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from absl import flags, app
 
 from og_marl.environments.utils import get_environment
 from og_marl.replay_buffers import SequenceCPPRB
 from og_marl.tf2.utils import get_system, set_growing_gpu_memory
-from og_marl.loggers import WandbLogger
+from og_marl.loggers import JsonWriter, WandbLogger
 from og_marl.offline_dataset import OfflineMARLDataset
 
 set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("env", "smac_v1", "Environment name.")
-flags.DEFINE_string("scenario", "8m", "Environment scenario name.")
-flags.DEFINE_string("dataset", "Good", "Dataset type. 'Good', 'Medium', 'Poor' or '' for combined. ")
-flags.DEFINE_string("system", "maicq", "System name.")
+flags.DEFINE_string("env", "mamujoco", "Environment name.")
+flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
+flags.DEFINE_string("dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' or '' for combined. ")
+flags.DEFINE_string("system", "iddpg", "System name.")
+flags.DEFINE_integer("seed", 42, "Seed.")
+flags.DEFINE_float("trainer_steps", 1e5, "Number of training steps.")
+flags.DEFINE_integer("batch_size", 32, "Number of training steps.")
+flags.DEFINE_integer("num_offline_sequences", 100_000, "Number of sequences to load from the offline dataset into the replay buffer.")
 
 def main(_):
     config = {
@@ -40,11 +43,15 @@ def main(_):
     env = get_environment(FLAGS.env, FLAGS.scenario)
 
     dataset = OfflineMARLDataset(env, f"datasets/{FLAGS.env}/{FLAGS.scenario}/{FLAGS.dataset}")
+    dataset_sequence_length = dataset.get_sequence_length()
+    
+    batched_dataset = SequenceCPPRB(env, max_size=FLAGS.num_offline_sequences, batch_size=FLAGS.batch_size, sequence_length=dataset_sequence_length)
 
-    batched_dataset = SequenceCPPRB(env, max_size=100_000, batch_size=256)
     batched_dataset.populate_from_dataset(dataset)
 
     logger = WandbLogger(project="tf2-og-marl", config=config)
+
+    json_writer = JsonWriter("json_logs", FLAGS.system, FLAGS.scenario, FLAGS.env, FLAGS.seed)
 
     system_kwargs = {
         "add_agent_id_to_obs": True
@@ -53,10 +60,8 @@ def main(_):
 
     system.train_offline(
         batched_dataset, 
-        max_trainer_steps=5e4,
-        evaluate_every=1000,
-        num_eval_episodes=4,
-        batch_size=256,
+        max_trainer_steps=FLAGS.trainer_steps,
+        json_writer=json_writer
     )
 
 if __name__ == "__main__":

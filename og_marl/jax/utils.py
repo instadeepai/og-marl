@@ -11,23 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from og_marl.environments.wrappers import PadObsandActs, Dtype
-from og_marl.loggers import WandbLogger
-from og_marl.tf2.systems.iddpg_cql import IDDPGCQLSystem
-from og_marl.environments.old_mamujoco import MAMuJoCo
-from og_marl.replay_buffers import SequenceCPPRB
-
-env = MAMuJoCo("4ant")
-
-env = PadObsandActs(env)
-
-env = Dtype(env, "float32")
-
-logger = WandbLogger(entity="claude_formanek")
-
-system = IDDPGCQLSystem(env, logger)
-
-rb = SequenceCPPRB(env)
-
-system.train_online(rb, 3e6)
+from functools import partial
+def get_system(system_name, environment, logger, **kwargs) :
+    if system_name == "bc":
+        from og_marl.jax.systems.bc import train_bc_system
+        return partial(train_bc_system, environment, logger)
+    elif system_name == "maicq":
+        from og_marl.jax.systems.maicq import train_maicq_system
+        return partial(train_maicq_system, environment, logger)
+    else:
+        raise ValueError("System name not recognised.")

@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Implementation of IDRQN+CQL"""
 import tensorflow as tf
 import sonnet as snt
@@ -23,11 +22,8 @@ from og_marl.tf2.utils import (
     switch_two_leading_dims,
     merge_batch_and_agent_dim_of_time_major_sequence,
     expand_batch_and_agent_dim_of_time_major_sequence,
-    set_growing_gpu_memory,
+    batched_agents
 )
-
-set_growing_gpu_memory()
-
 
 class IDRQNCQLSystem(QMIXSystem):
     """IDRQN+CQL System"""
@@ -67,6 +63,8 @@ class IDRQNCQLSystem(QMIXSystem):
 
     @tf.function(jit_compile=True)
     def _tf_train_step(self, train_step, batch):
+        batch = batched_agents(self._environment.possible_agents, batch)
+
         # Unpack the batch
         observations = batch["observations"] # (B,T,N,O)
         actions = tf.cast(batch["actions"], "int32") # (B,T,N)
@@ -77,7 +75,6 @@ class IDRQNCQLSystem(QMIXSystem):
         zero_padding_mask = batch["mask"] # (B,T)
         legal_actions = batch["legals"]  # (B,T,N,A)
 
-        # done = tf.cast(tf.logical_or(tf.cast(truncations, "bool"), tf.cast(terminals, "bool")), "float32")
         done = terminals
 
         # Get dims
@@ -131,7 +128,7 @@ class IDRQNCQLSystem(QMIXSystem):
             target_max_qs = gather(target_qs_out, cur_max_actions, axis=-1)
 
             # Compute targets
-            targets = rewards[:, :-1] + tf.expand_dims((1-done[:, :-1]), axis=-1) * self._discount * target_max_qs[:, 1:]
+            targets = rewards[:, :-1] + (1-done[:, :-1]) * self._discount * target_max_qs[:, 1:]
             targets = tf.stop_gradient(targets)
 
             # TD-Error Loss

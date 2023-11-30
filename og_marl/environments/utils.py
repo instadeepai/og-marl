@@ -20,7 +20,7 @@ def get_environment(env_name, scenario):
         from og_marl.environments.smacv2 import SMACv2
         return SMACv2(scenario)
     elif env_name == "mamujoco":
-        from og_marl.environments.mamujoco import MAMuJoCo
+        from og_marl.environments.old_mamujoco import MAMuJoCo
         return MAMuJoCo(scenario)
     elif env_name == "gymnasium_mamujoco":
         from og_marl.environments.gymnasium_mamujoco import MAMuJoCo
