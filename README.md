@@ -108,7 +108,11 @@ We have generated datasets on a diverse set of popular MARL environments. A list
 
 To install og-marl run the following command.
 
-`pip install -e .["datasets","baselines"]`
+`pip install -e .`
+
+To run the JAX based systems include the extra requirements.
+
+`pip install -e .[jax]`
 
 ### Installing Environments ⛰️
 
@@ -118,11 +122,19 @@ Depending on the environment you want to use, you should install that environmen
 
 You should replace `<environment_name>` with the name of the environment you want to install.
 
-Installing several different environments dependencies in the same python virtual environment (or conda environment) may work in some cases but in others, they may have conflicting requirements. So we recommend maintaining a different virtual environment for each environment.
+Installing several different environments dependencies in the same python virtual environment (or conda environment) may work in some cases but in others, they may have conflicting requirements. So we recommend maintaining a different virtual environment for each environment. For more information, we recommend reading the [detailed installation guide](docs/INSTALL.md).
 
 ### Downloading Datasets ⏬
 
-Next you need to download the dataset you want to use and add it to the correct file path. Go to the OG-MARL website (<https://sites.google.com/view/og-marl>) and download the dataset. Once the zip file is downloaded add it to a directory called `datasets` on the same level as the `og-marl/` directory. The folder structure should look like this:
+Next you need to download the dataset you want to use and add it to the correct file path. We provided a utility for easily downloading and extracting datasets. Below is an example of how to download the dataset for the "3m" map in SMACv1.
+
+```python
+from og_marl.offline_dataset import download_and_unzip_dataset
+
+download_and_unzip_dataset("smac_v1", "3m")
+```
+
+Alternativly, go to the OG-MARL website (<https://sites.google.com/view/og-marl>) and download the dataset. Once the zip file is downloaded add it to a directory called `datasets` on the same level as the `og-marl/` directory. The folder structure should look like this:
 
 ```
 examples/
@@ -130,62 +142,50 @@ examples/
 og_marl/
     |_> ...
 datasets/
-    |_> smacv1/
+    |_> smac_v1/
         |_> 3m/
         |   |_> Good/
         |   |_> Medium/
         |   |_> Poor/
         |_> ...
-    |_> smacv2/
+    |_> smac_v2/
         |_> terran_5_vs_5/
         |   |_> Good/
         |   |_> Medium/
         |   |_> Poor/
         |_> ...
+...
 ```
 
-**Note:** because we support many different environments, each with their own set of dependencies which are often conflicting, it might be required that you follow slightly different installation instructions for each environment. For this, we recommend reading the [detailed installation guide](docs/INSTALL.md).
+### Launching Experiments 🚀
+We include scripts (`examples/tf2/main.py` and `examples/jax/main.py`) for easily launching experiments.
 
-<h2 name="quickstart" id="quickstart">Quickstart ⚡</h2>
+`python examples/<backend>/main.py --system=<system_name> --env=<env_name> --scenario=<scenario_name>`
 
-Below we provide a code snippet demonstrating the ease of use of OG-MARL. The code shows how to record and load datasets in a simple example using the `3m` scenario from SMAC. We also provide a detailed [tutorial](docs/TUTORIALS.md) for a step-by-step guide across multiple environments.
+`<backend>` should be replaced with either `jax` or `tf2`.
 
-```python
-from og_marl import SMAC
-from og_marl import QMIX
-from og_marl import OfflineLogger
+`<system_name>` should be replaced with one of `maicq`, `qmix`, `qmix+cql`, `qmix+bcq`, `idrqn`, `iddpg` etc.
 
-# Instantiate environment
-env = SMAC("3m")
+`<env_name>` should be replaced with one of `smac_v1`, `smac_v2`, `mamujoco` etc.
 
-# Wrap env in offline logger
-env = OfflineLogger(env)
+`<scenario_name>` should be replaced with one of `3m`, `8m`, `terran_5_vs_5`, `2halfcheetah` etc.
 
-# Make multi-agent system
-system = QMIX(env)
-
-# Collect data
-system.run_online()
-
-# Load dataset
-dataset = env.get_dataset("Good")
-
-# Train offline
-system.run_offline(dataset)
-```
+**Note:** We have not implemented any check to make sure the combination of `env`, `scenario` and `system` is valid. For example, certain algorithms can only be run on discreteaction environments. We hope to implement more guard rails in the future. For now, please refer to the code and the paper for clarification. We are also still in the process of migrating all the experiments to this unified launcher. So if some configuration is not supported yet, please reach out in the issues and we will be happy to help. 
 
 <h2 name="citing" id="citing">Citing OG-MARL ✏️</h2>
 
 If you use OG-MARL in your work, please cite the library using:
 
 ```
-@misc{formanek2023offthegrid,
-      title={Off-the-Grid MARL: Datasets with Baselines for Offline Multi-Agent Reinforcement Learning}, 
-      author={Claude Formanek and Asad Jeewa and Jonathan Shock and Arnu Pretorius},
-      year={2023},
-      eprint={2302.00521},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
+@inproceedings{formanek2023ogmarl,
+    author = {Formanek, Claude and Jeewa, Asad and Shock, Jonathan and Pretorius, Arnu},
+    title = {Off-the-Grid MARL: Datasets and Baselines for Offline Multi-Agent Reinforcement Learning},
+    year = {2023},
+    publisher = {International Foundation for Autonomous Agents and Multiagent Systems},
+    booktitle = {Proceedings of the 2023 International Conference on Autonomous Agents and Multiagent Systems},
+    keywords = {offline reinforcement learning, multi-agent reinforcement learning, reinforcement learning},
+    location = {London, United Kingdom},
+    series = {AAMAS '23}
 }
 ```
 
