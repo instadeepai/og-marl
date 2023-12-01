@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Wraper for Cooperative Pong."""
+"""Wrapper for Cooperative Pong."""
 from typing import Dict, List, Union
 
 import dm_env

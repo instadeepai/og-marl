@@ -50,7 +50,7 @@ class TD3SystemBuilder(SystemBuilderBase):
         sequence_length=20,
         period=10,
         samples_per_insert=32,
-        variable_update_period=1,  # Update varibles every episode
+        variable_update_period=1,  # Update variables every episode
         max_gradient_norm=20.0,
         discount=0.99,
         sigma=0.1,

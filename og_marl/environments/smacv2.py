@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Wraper for SMAC."""
+"""Wrapper for SMAC."""
 from typing import Dict, List, Optional, Union
 import dm_env
 import numpy as np

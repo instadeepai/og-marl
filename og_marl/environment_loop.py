@@ -88,7 +88,7 @@ class EnvironmentLoop:
             # Have the agents observe the timestep
             self._executor.observe(actions, timestep, extras)
 
-            # Every couple timesteps update the varibale client
+            # Every couple timesteps update the variable client
             self._executor.update()
 
             # Book-keeping.
@@ -135,7 +135,7 @@ class EnvironmentLoop:
         return logs
 
     def run(self):
-        """Perform the run loop. Used when run on seperate process."""
+        """Perform the run loop. Used when run on separate process."""
 
         while True:
             logs = self.run_episode()
@@ -181,7 +181,7 @@ class EvaluationEnvironmentLoop:
         self._current_best_return = -float("inf")
 
     def run(self):
-        """Perform the run loop. Used when run on seperate process."""
+        """Perform the run loop. Used when run on separate process."""
 
         while True:
             trainer_steps = self._trainer.get_steps()

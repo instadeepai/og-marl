@@ -132,7 +132,7 @@ class MAOfflineDataset:
             key=-1, probability=-1.0, table_size=-1, priority=-1.0
         )  # TODO only a place holder for now
 
-        # Rever sample
+        # Reverb sample
         reverb_sample = reverb.ReplaySample(
             info=reverb_sample_info, data=reverb_sample_data
         )

@@ -107,7 +107,7 @@ class IQLSystemBuilder(SystemBuilderBase):
         self._trainer_fn = IQLTrainer
         self._executor_fn = IQLExecutor
 
-        # Wheter to log experience into an offline dataset
+        # Whether to log experience into an offline dataset
         self._offline_environment_logging = offline_environment_logging
         self._trajectories_per_file = trajectories_per_file
         self._offline_env_log_dir = offline_env_log_dir

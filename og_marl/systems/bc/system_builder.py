@@ -226,7 +226,7 @@ class BCSystemBuilder(SystemBuilderBase):
         # Initialize behaviour cloning network
         dummy_core_state = behaviour_cloning_network.initial_state(
             1
-        )  # Dummy recurent core state
+        )  # Dummy recurrent core state
         behaviour_cloning_network(dummy_observation, dummy_core_state)
 
         return {"bc_network": behaviour_cloning_network}

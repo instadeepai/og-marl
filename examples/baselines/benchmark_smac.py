@@ -32,13 +32,13 @@ from og_marl.utils.loggers import WandbLogger
 
 """This script can be used to re-produce the results reported in the OG-MARL paper.
 
-To run the script make sure you follow the OG-MARL instalation instructions for
+To run the script make sure you follow the OG-MARL installation instructions for
 SMAC in the README. After that you can run the script as follows:
 
 `python examples/baselines/benchmark_smac.py --algo_name=qmix --dataset_quality=Good --env_name=3m`
 
     --algo_name can be used to change the algorithm you want to run (bc, qmix, qmix+cql)
-    --dataset_quality is used to change wich dataset type to run (Good, Medium and Poor)
+    --dataset_quality is used to change which dataset type to run (Good, Medium and Poor)
     --env_name is used to change the scenario (3m, 8m, 5m_vs_6m)
 
 You will need to make sure you download the datasets from the OG-MARL website.
@@ -190,7 +190,7 @@ def build_qmix_bcq_system(num_agents, num_actions, environment_factory, logger_f
         ),
         optimizer=snt.optimizers.Adam(1e-3),
         target_update_rate=0.01,
-        threshold=0.4, # BC threshhold
+        threshold=0.4, # BC threshold
         batch_size=32,
         add_agent_id_to_obs=True,
         max_trainer_steps=int(FLAGS.max_trainer_steps),

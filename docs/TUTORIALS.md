@@ -27,7 +27,7 @@ We also include scripts for replicating our benchmarking results:
 
 ### Profiling Datasets 📊
 
-In order to profile a dataset you will need to install og-marl with the `datasets` option, as well as the corresponding environment. You should then be able to run the dataset profiling script for the environement/scenario you just installed and downloaded the datases.
+In order to profile a dataset you will need to install og-marl with the `datasets` option, as well as the corresponding environment. You should then be able to run the dataset profiling script for the environment/scenario you just installed and downloaded the datases.
 
 `python examples/profile_datasets/profile_<environment_name>.py`
 
@@ -48,7 +48,7 @@ After that you can run the SMAC script as follows:
 `python examples/baselines/benchmark_smac.py --algo_name=qmix --dataset_quality=Good --env_name=3m`
 
     --algo_name [used to change the algorithm you want to run]
-    --dataset_quality [is used to change wich dataset type to run]
+    --dataset_quality [is used to change which dataset type to run]
     --env_name [is used to change the scenario]
 
 You will need to make sure you download the datasets from the OG-MARL website.
@@ -62,7 +62,7 @@ Make sure the unzip the dataset and add it to the path
 
 Inorder to run the code snippet you will need to also install the OG-MARL with `baselines`. You will then also need to install SMAC.
 
-Finally, download the "3m" dataset from the website and put it in the apropriate directory as above.
+Finally, download the "3m" dataset from the website and put it in the appropriate directory as above.
 
 You should then be able to run the code snippet:
 
