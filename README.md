@@ -52,14 +52,16 @@ But in the interest of moving quickly, we believe this is an acceptable trade-of
 
 The following is a list of the latest updates to OG-MARL:
 
-✅ We have removed several cumbersome dependencies from OG-MARL, including `reverb` and `launchpad`. This means that its significantly easier to install and use OG-MARL.
+✅ We have **removed several cumbersome dependencies** from OG-MARL, including `reverb` and `launchpad`. This means that its significantly easier to install and use OG-MARL.
 
-✅ We added functionality to pre-load the TF Record datasets into a [Cpprb](https://ymd_h.gitlab.io/cpprb/) replay buffer. This speeds up the time to sample the replay buffer by several orders of magnitude.
+✅ We added **functionality to pre-load the TF Record datasets into a [Cpprb](https://ymd_h.gitlab.io/cpprb/) replay buffer**. This speeds up the time to sample the replay buffer by several orders of magnitude.
 
-✅ We have implemented our first set of JAX-based systems in OG-MARL. Our JAX systems use [Flashbax](https://github.com/instadeepai/flashbax) as the replay buffer backend. Flashbax buffers are completly jit-able, which means that our JAX systems have fully intergrated and jitted training and data sampling.
+✅ We have implemented our **first set of JAX-based systems in OG-MARL**. Our JAX systems use [Flashbax](https://github.com/instadeepai/flashbax) as the replay buffer backend. Flashbax buffers are completly jit-able, which means that our JAX systems have fully intergrated and jitted training and data sampling.
 
 ## Need for Speed 🏎️
-We have made our TF2 systems compatible with jit compilation. This combined with our new `cpprb` replay buffers have made our systems significantly faster. Furthermore, our JAX systems with with tightly integrated replay sampling and training using Flashbax is even faster. Below is a demonstrative speed comparison of MAICQ on the 8m dataset. In each case we trained the system for 10_000 training steps, evaluated for 4 episodes every 1000 training steps and used a batch size of 256.
+We have made our TF2 systems compatible with jit compilation. This combined with our new `cpprb` replay buffers have made our systems significantly faster. Furthermore, our JAX systems with tightly integrated replay sampling and training using Flashbax are even faster. 
+
+**Speed comparison: for each setup, we trained MAICQ on the 8m dataset for 10k training steps and evaluated every 1k training steps for 4 episodes using a batch size of 256.**
 
 <img src="docs/assets/system_speed_comparison.png" alt="OG-MARL Speed Comparison" width="80%"/>
 
@@ -174,10 +176,7 @@ system.run_offline(dataset)
 
 ## Roadmap 🗺️
 
-We are currently working on a large refactor of OG-MARL to get rid of the dependency on reverb and launchpad. This will make the code a lot easier to work with. The current progress on the refactor can be followed on the branch `refactor/remove-reverb-and-launchpad`.
-
-Offline MARL also lends itself well to the new wave of hardware-accelerated research and development in the
-field of RL. **In the near future, we plan to release a JAX version of OG-MARL.**
+TODO...
 
 <h2 name="citing" id="citing">Citing OG-MARL ✏️</h2>
 
@@ -196,7 +195,7 @@ If you use OG-MARL in your work, please cite the library using:
 
 ## See Also 🔎
 
-Other works that form part of InstaDeep's MARL ecosystem in JAX.
+Other works that form part of **InstaDeep's MARL ecosystem in JAX**.
 In particular, we suggest users check out the following sister repositories:
 
 * 🦁 [Mava](https://github.com/instadeepai/Mava) is a research-friendly codebase for fast experimentation of multi-agent reinforcement learning in JAX.
