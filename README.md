@@ -50,9 +50,16 @@ But in the interest of moving quickly, we believe this is an acceptable trade-of
 
 The following is a list of the latest updates to OG-MARL:
 
-✅ We have removed several cumbersome dependencies from OG-MARL, including `reverb` and `launchpad`. 
-✅ We intergrated `cpprb` into OG-MARL as our new replay buffer backend for tf2 systems. `cpprb` is a lightweight and very fast.
-✅ We added the functionality to pre-load the TF Record datasets into a `cpprb` replay buffer. This speeds up the time to sample the replay buffer by several orders of magnitude.
+✅ We have removed several cumbersome dependencies from OG-MARL, including `reverb` and `launchpad`. This means that its significantly easier to install and use OG-MARL.
+
+✅ We added the functionality to pre-load the TF Record datasets into a [Cpprb](https://ymd_h.gitlab.io/cpprb/) replay buffer. This speeds up the time to sample the replay buffer by several orders of magnitude.
+
+✅ We have implemented our first set of JAX-based systems in OG-MARL. Our JAX systems use [Flashbax](https://github.com/instadeepai/flashbax) as the replay buffer backend. Flashbax buffers are completly jit-able, which means that our JAX systems have fully intergrated and jitted training and data sampling.
+
+## Need for Speed 🏎️
+We have made our `tf2` systems compatible with jit compilation. This combined with our new `cpprb` replay buffers have made our systems significantly faster. Furthermore, our JAX systems with with tighly integrated replay sampling and training using FLashbax is even faster. Below is a demonstrative speed comparison of MAICQ on the 8m dataset.
+
+<img src="docs/assets/system_speed_comparison.png" alt="SMAC v2" width="80%"/>
 
 ## Datasets 🎥
 

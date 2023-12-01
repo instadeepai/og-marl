@@ -17,6 +17,7 @@ import time
 import copy
 import wandb
 import jax
+import chex
 import optax
 import tree
 import jax.numpy as jnp
@@ -41,7 +42,7 @@ def train_maicq_system(
     discount: float = 0.99,
     num_epochs: int = 100,
     num_training_steps_per_epoch: int = 1000,
-    num_episodes_per_evaluation: int = 10,
+    num_episodes_per_evaluation: int = 4,
     maicq_advantage_beta: float = 0.1,
     maicq_target_beta: float = 1e3,
     qmixer_embed_dim: int = 32,
@@ -260,6 +261,8 @@ def train_maicq_system(
 
         return loss, {"policy_loss": policy_loss, "critic_loss": critic_loss}
 
+    @jax.jit
+    @chex.assert_max_traces(n=1)
     def train_epoch(rng_key, params, opt_state, buffer_state):
         buffer = fbx.make_trajectory_buffer(
             max_length_time_axis=10_000_000, # NOTE: we set this to an arbitrary large number > buffer_state.current_index.
@@ -385,13 +388,12 @@ def train_maicq_system(
 
         start_time = time.time()
         rng_key, train_key = jax.random.split(rng_key)
-        params, opt_state, logs = jax.jit(train_epoch)(train_key, params, opt_state, buffer_state)
+        params, opt_state, logs = train_epoch(train_key, params, opt_state, buffer_state)
         end_time = time.time()
 
         logs["critic_loss"] = jnp.mean(logs["critic_loss"])
         logs["policy_loss"] = jnp.mean(logs["policy_loss"])
         logs["Trainer Steps"] = (i+1) * NUM_TRAIN_STEPS_PER_EPOCH
-
         if i != 0: # don't log SPC when tracing
             logs["Train SPS"] = 1 / ((end_time - start_time) / NUM_TRAIN_STEPS_PER_EPOCH)
 
