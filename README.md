@@ -174,10 +174,6 @@ dataset = env.get_dataset("Good")
 system.run_offline(dataset)
 ```
 
-## Roadmap 🗺️
-
-TODO...
-
 <h2 name="citing" id="citing">Citing OG-MARL ✏️</h2>
 
 If you use OG-MARL in your work, please cite the library using:
@@ -195,15 +191,16 @@ If you use OG-MARL in your work, please cite the library using:
 
 ## See Also 🔎
 
-**InstaDeep's MARL ecosystem in JAX**
-In particular, we suggest users check out the following sister repositories:
+**InstaDeep's MARL ecosystem in JAX.** In particular, we suggest users check out the following sister repositories:
 
-* 🦁 [Mava](https://github.com/instadeepai/Mava) is a research-friendly codebase for fast experimentation of multi-agent reinforcement learning in JAX.
-* 🌴 [Jumanji](https://github.com/instadeepai/jumanji) is a diverse suite of scalable reinforcement learning environments in JAX.
-* 😎 [Matrax](https://github.com/instadeepai/matrax) is a collection of matrix games in JAX.
-* 🔦 [Flashbax](https://github.com/instadeepai/flashbax) provides accelerated replay buffers in JAX.
+* 🦁 [Mava](https://github.com/instadeepai/Mava): a research-friendly codebase for distributed MARL in JAX.
+* 🌴 [Jumanji](https://github.com/instadeepai/jumanji): a diverse suite of scalable reinforcement learning environments in JAX.
+* 😎 [Matrax](https://github.com/instadeepai/matrax): a collection of matrix games in JAX.
+* 🔦 [Flashbax](https://github.com/instadeepai/flashbax): accelerated replay buffers in JAX.
 
-**Related**
-Other libraries related to accelerated MARL in JAX.\
+**Related.** Other libraries related to accelerated MARL in JAX.\
 
-* TODO...
+* 🦊 [JaxMARL](https://github.com/flairox/jaxmarl): accelerated MARL environments with baselines in JAX.
+* 🏋️‍♀️ [Gymnax](https://github.com/RobertTLange/gymnax): Implementations of classic RL tasks including classic control, bsuite and MinAtar.
+* ♟️  [Pgx](https://github.com/sotetsuk/pgx): JAX implementations of classic board games, such as Chess, Go and Shogi.
+* 🔼 [Minimax](https://github.com/facebookresearch/minimax/): JAX implementations of autocurricula baselines for RL.
