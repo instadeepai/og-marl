@@ -184,7 +184,7 @@ If you use OG-MARL in your work, please cite the library using:
 
 ```
 @misc{formanek2023offthegrid,
-      title={Off-the-Grid MARL: a Framework for Dataset Generation with Baselines for Cooperative Offline Multi-Agent Reinforcement Learning}, 
+      title={Off-the-Grid MARL: Datasets with Baselines for Offline Multi-Agent Reinforcement Learning}, 
       author={Claude Formanek and Asad Jeewa and Jonathan Shock and Arnu Pretorius},
       year={2023},
       eprint={2302.00521},
@@ -195,9 +195,15 @@ If you use OG-MARL in your work, please cite the library using:
 
 ## See Also 🔎
 
-Other works that form part of **InstaDeep's MARL ecosystem in JAX**.
+**InstaDeep's MARL ecosystem in JAX**
 In particular, we suggest users check out the following sister repositories:
 
 * 🦁 [Mava](https://github.com/instadeepai/Mava) is a research-friendly codebase for fast experimentation of multi-agent reinforcement learning in JAX.
 * 🌴 [Jumanji](https://github.com/instadeepai/jumanji) is a diverse suite of scalable reinforcement learning environments in JAX.
 * 😎 [Matrax](https://github.com/instadeepai/matrax) is a collection of matrix games in JAX.
+* 🔦 [Flashbax](https://github.com/instadeepai/flashbax) provides accelerated replay buffers in JAX.
+
+**Related**
+Other libraries related to accelerated MARL in JAX.\
+
+* TODO...
