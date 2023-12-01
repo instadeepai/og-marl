@@ -35,7 +35,7 @@
 <div align="center">
 <h3>
 
-[**Installation**](#installation-) | [**Quickstart**](#quickstart-)
+[**Download**](#download) | [**Quickstart**](#quick)
 
 </div>
 
@@ -104,7 +104,9 @@ We have generated datasets on a diverse set of popular MARL environments. A list
 
 </div>
 
-<h2 name="install" id="install">Installation 🎬</h2>
+<h2 name="quick" id="quick">Quickstart 🏁</h2>
+
+### Instalation 🛠️
 
 To install og-marl run the following command.
 
@@ -114,7 +116,7 @@ To run the JAX based systems include the extra requirements.
 
 `pip install -e .[jax]`
 
-### Installing Environments ⛰️
+### Environments ⛰️
 
 Depending on the environment you want to use, you should install that environments dependencies. We provide convenient shell scripts for this.
 
@@ -124,7 +126,7 @@ You should replace `<environment_name>` with the name of the environment you wan
 
 Installing several different environments dependencies in the same python virtual environment (or conda environment) may work in some cases but in others, they may have conflicting requirements. So we recommend maintaining a different virtual environment for each environment. For more information, we recommend reading the [detailed installation guide](docs/INSTALL.md).
 
-### Downloading Datasets ⏬
+<h2 name="download" id="download">Downloading Datasets ⏬</h3>
 
 Next you need to download the dataset you want to use and add it to the correct file path. We provided a utility for easily downloading and extracting datasets. Below is an example of how to download the dataset for the "3m" map in SMACv1.
 
