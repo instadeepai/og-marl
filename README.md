@@ -1,7 +1,9 @@
 <p align="center">
-    <a href="docs/assets/og_marl_logo_short.png">
-        <img src="docs/assets/og_marl_logo_short.png" alt="OG-MARL logo" width="50%"/>
-    </a>
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/assets/og_marl_logo_short_dm.png">
+        <source media="(prefers-color-scheme: light)" srcset="docs/assets/og_marl_logo_short.png">
+        <img alt="OG-MARL logo" src="docs/assets/og_marl_logo_short.png", width="50%">
+    </picture>
 </p>
 
 <h2 align="center">
@@ -37,7 +39,7 @@
 
 </div>
 
-Offline MARL holds great promise for real-world applications by utilising static datasets to build decentralised controllers of complex multi-agent systems. However, currently offline MARL lacks a standardised benchmark for measuring meaningful research progress. Off-the-Grid MARL (OG-MARL) fill this gap by providing a diverse suite of datasets with baselines on popular MARL benchmark environments in one place, with a unified API and easy-to-use set of tools.
+Offline MARL holds great promise for real-world applications by utilising static datasets to build decentralised controllers of complex multi-agent systems. However, currently offline MARL lacks a standardised benchmark for measuring meaningful research progress. Off-the-Grid MARL (OG-MARL) fills this gap by providing a diverse suite of datasets with baselines on popular MARL benchmark environments in one place, with a unified API and an easy-to-use set of tools.
 
 OG-MARL forms part of the [InstaDeep](https://www.instadeep.com/) MARL [ecosystem](#see-also-🔎), developed jointly with the open-source
 community. To join us in these efforts, reach out, raise issues and read our
@@ -114,7 +116,7 @@ Depending on the environment you want to use, you should install that environmen
 
 You should replace `<environment_name>` with the name of the environment you want to install.
 
-Installing several different environments dependencies in the same python virtual environment (or conda environment) may work in some cases but in others, they may have conflicting requirements. So we reccomend maintaining a different virtual environment for each environment.
+Installing several different environments dependencies in the same python virtual environment (or conda environment) may work in some cases but in others, they may have conflicting requirements. So we recommend maintaining a different virtual environment for each environment.
 
 ### Downloading Datasets ⏬
 

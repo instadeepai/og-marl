@@ -42,7 +42,7 @@ We ask you to help us develop a positive working environment. Behaviours that co
 * Showing empathy towards other community members
 
 ### Testing
-Please make sure that you do sufficent testing of your new feature and provide evidence in your PR.
+Please make sure that you do sufficient testing of your new feature and provide evidence in your PR.
 
 ### Contributor License Agreement
 Contributions to this project must be accompanied by a Contributor License Agreement.

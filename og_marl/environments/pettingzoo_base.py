@@ -11,10 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Base wraper for Cooperative Pettingzoo environments."""
 import numpy as np
-from gymnasium.spaces import Discrete, Box
 from og_marl.environments.base import BaseEnvironment
 
 class PettingZooBase(BaseEnvironment):

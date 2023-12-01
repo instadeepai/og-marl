@@ -2,9 +2,9 @@
 
 ### Using Conda 🐍
 
-Because we support many different environments, each with their own set of dependencies which are often conflicting, you will need to follow slightly different instalation instruction for each environment.
+Because we support many different environments, each with their own set of dependencies which are often conflicting, you will need to follow slightly different installation instruction for each environment.
 
-To manage the different dependencies, we reccomend using `miniconda` as a python virtual environment manager. Follow these instructions to install `conda`.
+To manage the different dependencies, we recommend using `miniconda` as a python virtual environment manager. Follow these instructions to install `conda`.
 
 * <https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html>
 
@@ -14,7 +14,7 @@ To manage the different dependencies, we reccomend using `miniconda` as a python
 
 There are two options for installing OG-MARL. The first is to install the datasets only. The second is to optionally also install the baseline algorithm implementations.
 
-Installing the datasets only is a lot easier and will likely work on most computer setups. Installing the baselines is a bit more complicated because of some additional dependencies. Unfortunatly baselines are unlikely to work on Windows and Mac because of our dependency on DeepMind's `reverb` and `launchpad` packages. In future we hope to relax these requirements.
+Installing the datasets only is a lot easier and will likely work on most computer setups. Installing the baselines is a bit more complicated because of some additional dependencies. Unfortunately baselines are unlikely to work on Windows and Mac because of our dependency on DeepMind's `reverb` and `launchpad` packages. In future we hope to relax these requirements.
 
 #### Installing OG-MARL Datasets (minimal requirements) 🧮
 
@@ -36,7 +36,7 @@ Depending on the environment you want to use, you should install that environmen
 
 You should replace `<environment_name>` with the name of the environment you want to install.
 
-Installing several different environments dependencies in the same python virtual environment (or conda environment) may work in some cases but in others, they may have conflicting requirements. So we reccomend maintaining a different virtual environment for each environment.
+Installing several different environments dependencies in the same python virtual environment (or conda environment) may work in some cases but in others, they may have conflicting requirements. So we recommend maintaining a different virtual environment for each environment.
 
 ### Downloading Datasets ⏬
 
