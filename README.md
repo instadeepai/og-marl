@@ -198,7 +198,7 @@ If you use OG-MARL in your work, please cite the library using:
 * 😎 [Matrax](https://github.com/instadeepai/matrax): a collection of matrix games in JAX.
 * 🔦 [Flashbax](https://github.com/instadeepai/flashbax): accelerated replay buffers in JAX.
 
-**Related.** Other libraries related to accelerated MARL in JAX.\
+**Related.** Other libraries related to accelerated MARL in JAX.
 
 * 🦊 [JaxMARL](https://github.com/flairox/jaxmarl): accelerated MARL environments with baselines in JAX.
 * 🏋️‍♀️ [Gymnax](https://github.com/RobertTLange/gymnax): Implementations of classic RL tasks including classic control, bsuite and MinAtar.
