@@ -172,7 +172,7 @@ We include scripts (`examples/tf2/main.py` and `examples/jax/main.py`) for easil
 
 `<scenario_name>` should be replaced with one of `3m`, `8m`, `terran_5_vs_5`, `2halfcheetah` etc.
 
-**Note:** We have not implemented any check to make sure the combination of `env`, `scenario` and `system` is valid. For example, certain algorithms can only be run on discreteaction environments. We hope to implement more guard rails in the future. For now, please refer to the code and the paper for clarification. We are also still in the process of migrating all the experiments to this unified launcher. So if some configuration is not supported yet, please reach out in the issues and we will be happy to help. 
+**Note:** We have not implemented any checks to make sure the combination of `env`, `scenario` and `system` is valid. For example, certain algorithms can only be run on discrete action environments. We hope to implement more guard rails in the future. For now, please refer to the code and the paper for clarification. We are also still in the process of migrating all the experiments to this unified launcher. So if some configuration is not supported yet, please reach out in the issues and we will be happy to help. 
 
 <h2 name="citing" id="citing">Citing OG-MARL ✏️</h2>
 
