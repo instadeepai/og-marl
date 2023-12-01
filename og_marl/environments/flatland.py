@@ -131,7 +131,7 @@ class Flatland(BaseEnvironment):
 
         self.reset_cells()
 
-        # Reset the rendering sytem
+        # Reset the rendering system
         self._env_renderer.reset()
 
         legal_actions = self._get_legal_actions(observations, info)
@@ -441,7 +441,7 @@ def norm_obs_clip(
     :param obs: Observation that should be normalized
     :param clip_min: min value where observation will be clipped
     :param clip_max: max value where observation will be clipped
-    :return: returnes normalized and clipped observatoin
+    :return: returns normalized and clipped observatoin
     """
     if fixed_radius > 0:
         max_obs = fixed_radius

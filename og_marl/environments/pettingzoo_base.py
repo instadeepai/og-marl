@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Base wraper for Cooperative Pettingzoo environments."""
+"""Base wrapper for Cooperative Pettingzoo environments."""
 from typing import Dict, List
 import dm_env
 import numpy as np

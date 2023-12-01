@@ -32,13 +32,13 @@ from og_marl.environments.mamujoco import Mujoco
 
 """This script can be used to re-produce the results reported in the OG-MARL paper.
 
-To run the script make sure you follow the OG-MARL instalation instructions for
+To run the script make sure you follow the OG-MARL installation instructions for
 MAMuJoCo in the README. After that you can run the script as follows:
 
 `python examples/baselines/benchmark_mamujoco.py --algo_name=itd3 --dataset_quality=Good --env_name=2halfcheetah`
 
     --algo_name can be used to change the algorithm you want to run (bc, itd3, itd3+cql, itd3+bc, omar)
-    --dataset_quality is used to change wich dataset type to run (Good, Medium and Poor)
+    --dataset_quality is used to change which dataset type to run (Good, Medium and Poor)
     --env_name is used to change the scenario (2ant, 4ant, 2halfcheetah)
 
 You will need to make sure you download the datasets you want to use from the OG-MARL website.

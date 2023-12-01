@@ -21,10 +21,10 @@ class QMixer(snt.Module):
     def __init__(
         self, num_agents, embed_dim = 32, hypernet_embed = 64, preprocess_network = None, non_monotonic=False
     ) -> None:
-        """Inialize QMIX mixing network
+        """Initialize QMIX mixing network
 
         Args:
-            num_agents: Number of agents in the enviroment
+            num_agents: Number of agents in the environment
             state_dim: Dimensions of the global environment state
             embed_dim: The dimension of the output of the first layer
                 of the mixer.

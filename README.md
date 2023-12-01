@@ -96,7 +96,7 @@ Depending on the environment you want to use, you should install that environmen
 
 You should replace `<environment_name>` with the name of the environment you want to install.
 
-Installing several different environments dependencies in the same python virtual environment (or conda environment) may work in some cases but in others, they may have conflicting requirements. So we reccomend maintaining a different virtual environment for each environment.
+Installing several different environments dependencies in the same python virtual environment (or conda environment) may work in some cases but in others, they may have conflicting requirements. So we recommend maintaining a different virtual environment for each environment.
 
 ### Downloading Datasets ⏬
 

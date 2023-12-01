@@ -230,7 +230,7 @@ class MAICQSystemBuilder(SystemBuilderBase):
         # Initialize observation networks
         critic_network(dummy_observation, dummy_state)
 
-        # Dummy recurent core state
+        # Dummy recurrent core state
         dummy_core_state = policy_network.initial_state(1)
 
         # Initialize policy network variables

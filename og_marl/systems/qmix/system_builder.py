@@ -40,7 +40,7 @@ class QMIXSystemBuilder(IQLSystemBuilder):
         eps_start=1.0,
         eps_min=0.05,
         eps_dec=1e-5,
-        variable_update_period=3,  # Update varibles every 3 episodes
+        variable_update_period=3,  # Update variables every 3 episodes
         max_gradient_norm=20.0,
         discount=0.99,
         lambda_=0.6,
@@ -132,7 +132,7 @@ class QMIXSystemBuilder(IQLSystemBuilder):
         )  # add dummy batch dim
 
         # Initialise q-network
-        dummy_core_state = q_network.initial_state(1)  # Dummy recurent core state
+        dummy_core_state = q_network.initial_state(1)  # Dummy recurrent core state
         q_network(dummy_observation, dummy_core_state)
 
         return {"q_network": q_network}
@@ -158,7 +158,7 @@ class QMIXBCQSystemBuilder(QMIXSystemBuilder):
         eps_start=1.0,
         eps_min=0.05,
         eps_dec=1e-5,
-        variable_update_period=3,  # Update varibles every 3 episodes
+        variable_update_period=3,  # Update variables every 3 episodes
         max_gradient_norm=20.0,
         discount=0.99,
         lambda_=0.6,
@@ -259,11 +259,11 @@ class QMIXBCQSystemBuilder(QMIXSystemBuilder):
         )  # add dummy batch dim
 
         # Initialise q-network
-        dummy_core_state = q_network.initial_state(1)  # Dummy recurent core state
+        dummy_core_state = q_network.initial_state(1)  # Dummy recurrent core state
         q_network(dummy_observation, dummy_core_state)
 
         # Initialize bc-network
-        dummy_core_state = bc_network.initial_state(1)  # Dummy recurent core state
+        dummy_core_state = bc_network.initial_state(1)  # Dummy recurrent core state
         bc_network(dummy_observation, dummy_core_state)
 
         return {"q_network": q_network, "bc_network": bc_network}
