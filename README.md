@@ -197,6 +197,7 @@ If you use OG-MARL in your work, please cite the library using:
 * 🌴 [Jumanji](https://github.com/instadeepai/jumanji): a diverse suite of scalable reinforcement learning environments in JAX.
 * 😎 [Matrax](https://github.com/instadeepai/matrax): a collection of matrix games in JAX.
 * 🔦 [Flashbax](https://github.com/instadeepai/flashbax): accelerated replay buffers in JAX.
+* 📈 [MARL-eval](https://github.com/instadeepai/marl-eval): standardised experiment data aggregation and visualisation for MARL.
 
 **Related.** Other libraries related to accelerated MARL in JAX.
 
