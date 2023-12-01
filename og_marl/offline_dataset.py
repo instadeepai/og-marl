@@ -16,6 +16,9 @@ from pathlib import Path
 import tensorflow as tf
 from collections import namedtuple
 import tree
+import zipfile
+import os
+import requests
 
 Sample = namedtuple('Sample', ['observations', 'actions', 'rewards', 'done', 'episode_return', 'legal_actions', 'env_state', 'zero_padding_mask'])
 
@@ -111,3 +114,37 @@ class OfflineMARLDataset:
             return self.__getattribute__(name)
         else:
             return getattr(self._tf_dataset, name)
+        
+
+DATASET_URLS = {
+    "smac_v1": {
+        "3m": "https://tinyurl.com/3m-dataset",
+        "8m": "https://tinyurl.com/8m-dataset",
+    },
+    "smac_v2": {
+        "terran_5_vs_5": "https://tinyurl.com/terran-5-vs-5-dataset",
+        "zerg_5_": "https://tinyurl.com/zerg-5-vs-5-dataset",
+    }
+}
+def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./datasets"):
+    dataset_download_url = DATASET_URLS[env_name][scenario_name]
+
+    os.makedirs(f'{dataset_base_dir}/tmp/', exist_ok=True)
+    os.makedirs(f'{dataset_base_dir}/{env_name}/{scenario_name}', exist_ok=True)
+
+    zip_file_path = f'{dataset_base_dir}/tmp/tmp_dataset.zip'
+
+    extraction_path = f'{dataset_base_dir}/{env_name}/{scenario_name}'
+
+    response = requests.get(dataset_download_url)
+    with open(zip_file_path, 'wb') as file:
+        file.write(response.content)
+
+    # Step 2: Unzip the file
+    with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+        zip_ref.extractall(extraction_path)
+
+    # Optionally, delete the zip file after extraction
+    os.remove(zip_file_path)
+
+

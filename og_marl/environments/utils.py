@@ -25,3 +25,5 @@ def get_environment(env_name, scenario):
     elif env_name == "gymnasium_mamujoco":
         from og_marl.environments.gymnasium_mamujoco import MAMuJoCo
         return MAMuJoCo(scenario)
+    else:
+        raise ValueError("Environment not recognised.")
