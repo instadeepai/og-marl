@@ -27,8 +27,9 @@ setup(
     install_requires=[
         "numpy",
         "dm_tree",
-        "tensorflow~=2.8.0",
+        "tensorflow==2.8.*",
         "tensorflow_io",
+        "tensorflow_probability==0.16.*",
         "dm_sonnet",
         "wandb",
         "cpprb",
