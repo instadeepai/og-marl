@@ -61,9 +61,12 @@ The following is a list of the latest updates to OG-MARL:
 ## Need for Speed 🏎️
 We have made our TF2 systems compatible with jit compilation. This combined with our new `cpprb` replay buffers have made our systems significantly faster. Furthermore, our JAX systems with tightly integrated replay sampling and training using Flashbax are even faster. 
 
-**Speed comparison: for each setup, we trained MAICQ on the 8m dataset for 10k training steps and evaluated every 1k training steps for 4 episodes using a batch size of 256.**
+**Speed Comparison: for each setup, we trained MAICQ on the 8m Good dataset for 10k training steps and evaluated every 1k training steps for 4 episodes using a batch size of 256.**
 
 <img src="docs/assets/system_speed_comparison.png" alt="OG-MARL Speed Comparison" width="80%"/>
+
+**Performance Comparison: In order to make sure performance between the TF2 system and the JAX system is the same, we trained both varients on each of the three datasets for 8m (Good, Medium and Poor). We then normalised the scores and aggregated the results using MARL-eval. The sample efficiency curves and the performance profiles are given below.**
+
 <img src="docs/assets/sample_efficiency.png" alt="Sample Efficiency" width="80%"/>
 <img src="docs/assets/performance_profile.png" alt="Performance Profile" width="80%"/>
 
