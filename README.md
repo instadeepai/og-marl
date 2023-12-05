@@ -58,6 +58,9 @@ The following is a list of the latest updates to OG-MARL:
 
 ✅ We have implemented our **first set of JAX-based systems in OG-MARL**. Our JAX systems use [Flashbax](https://github.com/instadeepai/flashbax) as the replay buffer backend. Flashbax buffers are completly jit-able, which means that our JAX systems have fully intergrated and jitted training and data sampling.
 
+
+✅ We have intergrated [MARL-eval](https://github.com/instadeepai/marl-eval/tree/main) into OG-MARL to standardise and simplify the reporting of experimental results. 
+
 ## Need for Speed 🏎️
 We have made our TF2 systems compatible with jit compilation. This combined with our new `cpprb` replay buffers have made our systems significantly faster. Furthermore, our JAX systems with tightly integrated replay sampling and training using Flashbax are even faster. 
 
