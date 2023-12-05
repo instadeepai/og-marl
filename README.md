@@ -63,9 +63,9 @@ We have made our TF2 systems compatible with jit compilation. This combined with
 
 **Speed comparison: for each setup, we trained MAICQ on the 8m dataset for 10k training steps and evaluated every 1k training steps for 4 episodes using a batch size of 256.**
 
-<img src="docs/assets/system_speed_comparison.png" alt="OG-MARL Speed Comparison" width="32%"/>
-<img src="docs/assets/sample_efficiency.png" alt="Sample Efficiency" width="32%"/>
-<img src="docs/assets/performance_profile.png" alt="Performance Profile" width="32%"/>
+<img src="docs/assets/system_speed_comparison.png" alt="OG-MARL Speed Comparison" width="80%"/>
+<img src="docs/assets/sample_efficiency.png" alt="Sample Efficiency" width="80%"/>
+<img src="docs/assets/performance_profile.png" alt="Performance Profile" width="80%"/>
 
 ## Datasets 🎥
 
