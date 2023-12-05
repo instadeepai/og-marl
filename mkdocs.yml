@@ -5,23 +5,36 @@ site_dir: public
 
 theme: 
   name: material
-  features:
-    - navigation.tabs
-    - navigation.sections
-    - toc.integrate
-    - search.suggest
-    - search.highlight
-    - content.tabs.link
-    - content.code.annotation
-    - content.code.copy
+  logo: assets/instadeep_logo.png
+  favicon: assets/instadeep_logo.png
   language: en
+  features:
+    - navigation.tracking # the URL is automatically updated with the active anchor
+    - navigation.sections # top-level sections are rendered as groups in the sidebar
+    - navigation.tabs # horizontal tabs at the top of the page
+    - navigation.tabs.sticky # navigation tabs will lock below the header and always remain visible when scrolling
+    - navigation.indexes # documents can be directly attached to sections
+    - search.highlight # highlight search result
+    - search.share # share button
+    - search.suggest # smart suggestion
+    - toc.integrate
+    - toc.follow
+    - content.code.annotate
+    - navigation.tabs
+    - navigation.top
   palette:
     - scheme: default
       primary: white
-      accent: purple 
-    - scheme: slate 
-      primary: teal
+      accent: purple
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - scheme: slate
+      primary: black
       accent: lime
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
 
 markdown_extensions:
   - attr_list
