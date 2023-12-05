@@ -1,4 +1,8 @@
 site_name: OG-MARL Documentation
+site_author: InstaDeep Research
+site_url: https://instadeepai.github.io/og-marl/
+site_dir: public
+
 theme: 
   name: material
   features:
