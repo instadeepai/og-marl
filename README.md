@@ -168,7 +168,7 @@ We include scripts (`examples/tf2/main.py` and `examples/jax/main.py`) for easil
 
 **Note:** We have not implemented any checks to make sure the combination of `env`, `scenario` and `system` is valid. For example, certain algorithms can only be run on discrete action environments. We hope to implement more guard rails in the future. For now, please refer to the code and the paper for clarification. We are also still in the process of migrating all the experiments to this unified launcher. So if some configuration is not supported yet, please reach out in the issues and we will be happy to help. 
 
-## Citing OG-MARL :pencil:
+## Citing OG-MARL :pencil2:
 
 If you use OG-MARL in your work, please cite the library using:
 
