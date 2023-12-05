@@ -42,7 +42,7 @@ def main(_):
 
     train_system_fn = get_system(FLAGS.system, env, logger)
 
-    json_writer = JsonWriter("json_logs", f"jax+{FLAGS.system}", FLAGS.scenario, FLAGS.env, FLAGS.seed)
+    json_writer = JsonWriter("logs", f"jax+{FLAGS.system}", f"{FLAGS.scenario}_{FLAGS.dataset}", FLAGS.env, FLAGS.seed)
 
     dataset_path = f"datasets/flashbax/{FLAGS.env}/{FLAGS.scenario}/{FLAGS.dataset}"
 

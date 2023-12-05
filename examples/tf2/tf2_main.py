@@ -51,7 +51,7 @@ def main(_):
 
     logger = WandbLogger(project="tf2-og-marl", config=config)
 
-    json_writer = JsonWriter("json_logs", FLAGS.system, FLAGS.scenario, FLAGS.env, FLAGS.seed)
+    json_writer = JsonWriter("logs", f"tf2+{FLAGS.system}", f"{FLAGS.scenario}_{FLAGS.dataset}", FLAGS.env, FLAGS.seed)
 
     system_kwargs = {
         "add_agent_id_to_obs": True

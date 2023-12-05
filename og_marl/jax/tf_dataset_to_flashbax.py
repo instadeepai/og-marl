@@ -103,7 +103,7 @@ def make_decode_fn(schema, agents):
 
 if __name__=="__main__":
     SCENARIO = "8m"
-    DATASET = "Good"
+    DATASET = "Poor"
 
     # set_growing_gpu_memory()
 
@@ -114,7 +114,7 @@ if __name__=="__main__":
     environment = get_environment("smac_v1", SCENARIO)
 
     # First define hyper-parameters of the buffer.
-    max_length_time_axis = 20000 * 20 # Maximum length of the buffer along the time axis. 
+    max_length_time_axis = 30000 * 20 # Maximum length of the buffer along the time axis. 
     min_length_time_axis = 16 # Minimum length across the time axis before we can sample.
     sample_batch_size = 4 # Batch size of trajectories sampled from the buffer.
     add_batch_size = 1 # Batch size of trajectories added to the buffer.
@@ -141,7 +141,7 @@ if __name__=="__main__":
     path_to_dataset = f"datasets/smac_v1/{SCENARIO}/{DATASET}"
     contents = os.listdir(path_to_dataset)
     directories = [content for content in contents if os.path.isdir(os.path.join(path_to_dataset, content))]
-
+    jitted_add = jax.jit(buffer.add)
     first_sample = True
     for dir in directories:
         filenames = Path(os.path.join(path_to_dataset, dir)).glob("**/*.tfrecord")
@@ -163,7 +163,7 @@ if __name__=="__main__":
                     state = buffer.init(init_sample)
                 
                 add_sample = tree.map_structure(lambda x: jnp.expand_dims(x, axis=0), sample)
-                state = buffer.add(state, add_sample)
+                state = jitted_add(state, add_sample)
 
                 if (state.current_index % 1000) == 0:
                     print(round(state.current_index / max_length_time_axis, 4)*100)
