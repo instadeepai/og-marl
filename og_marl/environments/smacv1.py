@@ -12,93 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Wraper for SMACv2."""
+"""Wraper for SMAC."""
 import numpy as np
+from og_marl.environments.base import BaseEnvironment
+from smac.env import StarCraft2Env
 from gymnasium.spaces import Discrete, Box
 
-from smacv2.env.starcraft2.wrapper import StarCraftCapabilityEnvWrapper
-from og_marl.environments.base import BaseEnvironment
-
-DISTRIBUTION_CONFIGS = {
-    "terran_5_vs_5": {
-        "n_units": 5,
-        "n_enemies": 5,
-        "team_gen": {
-            "dist_type": "weighted_teams",
-            "unit_types": ["marine", "marauder", "medivac"],
-            "exception_unit_types": ["baneling"],
-            "weights": [0.45, 0.45, 0.1],
-            "observe": True,
-        },
-        "start_positions": {
-            "dist_type": "surrounded_and_reflect",
-            "p": 0.5,
-            "n_enemies": 5,
-            "map_x": 32,
-            "map_y": 32,
-        },
-    },
-    "zerg_5_vs_5": {
-        "n_units": 5,
-        "n_enemies": 5,
-        "team_gen": {
-            "dist_type": "weighted_teams",
-            "unit_types": ["zergling", "baneling", "hydralisk"],
-            "exception_unit_types": ["baneling"],
-            "weights": [0.45, 0.1, 0.45],
-            "observe": True,
-        },
-        "start_positions": {
-            "dist_type": "surrounded_and_reflect",
-            "p": 0.5,
-            "n_enemies": 5,
-            "map_x": 32,
-            "map_y": 32,
-        },
-    },
-    "terran_10_vs_10": {
-        "n_units": 10,
-        "n_enemies": 10,
-        "team_gen": {
-            "dist_type": "weighted_teams",
-            "unit_types": ["marine", "marauder", "medivac"],
-            "exception_unit_types": ["baneling"],
-            "weights": [0.45, 0.45, 0.1],
-            "observe": True,
-        },
-        "start_positions": {
-            "dist_type": "surrounded_and_reflect",
-            "p": 0.5,
-            "n_enemies": 5,
-            "map_x": 32,
-            "map_y": 32,
-        },
-    },
-}
-
-MAP_NAMES = {
-    "terran_5_vs_5": "10gen_terran",
-    "zerg_5_vs_5": "10gen_zerg",
-    "terran_10_vs_10": "10gen_terran",
-}
-
-class SMACv2(BaseEnvironment):
-    """Environment wrapper SMAC."""
+class SMACv1(BaseEnvironment):
+    """Environment wrapper SMACv1."""
 
     def __init__(
         self,
-        scenario
+        map_name: str, 
     ):
-        self._environment = StarCraftCapabilityEnvWrapper(
-            capability_config=DISTRIBUTION_CONFIGS[scenario],
-            map_name=MAP_NAMES[scenario],
-            debug=False,
-            conic_fov=False,
-            obs_own_pos=True,
-            use_unit_ranges=True,
-            min_attack_range=2,
-        )
-
+        self._environment = StarCraft2Env(map_name=map_name)
         self.possible_agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
 
         self._num_agents = len(self.possible_agents)
@@ -181,3 +108,4 @@ class SMACv2(BaseEnvironment):
     def get_stats(self):
         """Return extra stats to be logged."""
         return self._environment.get_stats()
+    

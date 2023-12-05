@@ -1,0 +1,48 @@
+site_name: OG-MARL Documentation
+theme: 
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotation
+    - content.code.copy
+  language: en
+  palette:
+    - scheme: default
+      primary: white
+      accent: purple 
+    - scheme: slate 
+      primary: teal
+      accent: lime
+
+markdown_extensions:
+  - attr_list
+  - md_in_html
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:pymdownx.emoji.to_svg
+      emoji_index: !!python/name:pymdownx.emoji.gemoji
+  - pymdownx.snippets:
+      base_path: ./
+  - pymdownx.pathconverter:
+      base_path: ./
+      relative_path: docs
+  - toc:
+      permalink: "#"
+      toc_depth: 3
+  - pymdownx.highlight:
+      linenums: true
+  - def_list
+  - admonition
+  - pymdownx.details
+
+# Git repo
+repo_name: instadeepai/og-marl
+repo_url: https://github.com/instadeepai/og-marl
+edit_uri: edit/develop/docs/
+
+# Copyright
+copyright: InstaDeep © 2022 Copyright, all rights reserved.
