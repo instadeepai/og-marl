@@ -1,9 +1,7 @@
 <p align="center">
-    <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/assets/og_marl_logo_short_dm.png">
-        <source media="(prefers-color-scheme: light)" srcset="docs/assets/og_marl_logo_short.png">
-        <img alt="OG-MARL logo" src="docs/assets/og_marl_logo_short.png", width="50%">
-    </picture>
+    <a href="docs/assets/offline_marl_diagram.jpg">
+        <img src="docs/assets/og_marl_logo.png" alt="Offline MARL diagram" width="70%"/>
+    </a>
 </p>
 
 <h2 align="center">
@@ -32,18 +30,10 @@
 
 ## Going Off-the-Grid! 🤖 ⚡ 🔌 🔋
 
-<div align="center">
-<h3>
-
-[**Download**](#download) | [**Quickstart**](#quick)
-
-</div>
-
 Offline MARL holds great promise for real-world applications by utilising static datasets to build decentralised controllers of complex multi-agent systems. However, currently offline MARL lacks a standardised benchmark for measuring meaningful research progress. Off-the-Grid MARL (OG-MARL) fills this gap by providing a diverse suite of datasets with baselines on popular MARL benchmark environments in one place, with a unified API and an easy-to-use set of tools.
 
 OG-MARL forms part of the [InstaDeep](https://www.instadeep.com/) MARL [ecosystem](#see-also-🔎), developed jointly with the open-source
-community. To join us in these efforts, reach out, raise issues and read our
-[contribution guidelines](docs/CONTRIBUTING.md) or just
+community. To join us in these efforts, reach out, raise issues or just
 🌟 to stay up to date with the latest developments!
 
 ## Updates 📰
@@ -97,10 +87,8 @@ We have generated datasets on a diverse set of popular MARL environments. A list
 
 <br/>
 
-<div align="center">
-
-| Environment | Scenario | Agents | Act | Obs | Reward | Types | Repo
-| --- | ---| --- | --- | --- | --- | --- | --- |
+| Environment | Scenario | Agents | Act | Obs | Reward | Types | Repo |
+|-----|----|----|-----|-----|----|----|-----|
 | 🔫SMAC v1 | 3m <br/> 8m <br/> 2s3z <br/> 5m_vs_6m <br/> 27m_vs_30m <br/> 3s5z_vs_3s6z <br/> 2c_vs_64zg| 3 <br/> 8 <br/> 5 <br/> 5 <br/> 27 <br/> 8 <br/> 2 | Discrete  | Vector   |  Dense | Homog <br/> Homog <br/> Heterog <br/> Homog <br/> Homog <br/> Heterog <br/> Homog |[source](https://github.com/oxwhirl/smac) |
 | 💣SMAC v2 | terran_5_vs_5 <br/> zerg_5_vs_5 <br/> terran_10_vs_10 | 5 <br/> 5 <br/> 10 | Discrete | Vector | Dense | Heterog | [source](https://github.com/oxwhirl/smacv2) |
 | 🐻PettingZoo | Pursuit  <br/> Co-op Pong <br/> PistonBall <br/> KAZ| 8 <br/> 2 <br/> 15 <br/> 2| Discrete <br/> Discrete <br/> Cont. <br/> Discrete | Pixels <br/> Pixels <br/> Pixels <br/> Vector | Dense | Homog <br/> Heterog <br/> Homog <br/> Heterog| [source](https://pettingzoo.farama.org/) |
@@ -110,9 +98,7 @@ We have generated datasets on a diverse set of popular MARL environments. A list
 | 🔌Voltage Control | case33_3min_final | 6 | Cont. | Vector | Dense | Homog | [source](https://github.com/Future-Power-Networks/MAPDN) |
 | 🔴MPE | simple_adversary | 3 | Discrete. | Vector | Dense | Competative | [source](https://pettingzoo.farama.org/environments/mpe/simple_adversary/) |
 
-</div>
-
-<h2 name="quick" id="quick">Quickstart 🏁</h2>
+## Quickstart 🏁
 
 ### Instalation 🛠️
 
@@ -132,9 +118,9 @@ Depending on the environment you want to use, you should install that environmen
 
 You should replace `<environment_name>` with the name of the environment you want to install.
 
-Installing several different environments dependencies in the same python virtual environment (or conda environment) may work in some cases but in others, they may have conflicting requirements. So we recommend maintaining a different virtual environment for each environment. For more information, we recommend reading the [detailed installation guide](docs/INSTALL.md).
+Installing several different environments dependencies in the same python virtual environment (or conda environment) may work in some cases but in others, they may have conflicting requirements. So we recommend maintaining a different virtual environment for each environment.
 
-<h2 name="download" id="download">Downloading Datasets ⏬</h3>
+### Downloading Datasets ⏬
 
 Next you need to download the dataset you want to use and add it to the correct file path. We provided a utility for easily downloading and extracting datasets. Below is an example of how to download the dataset for the "3m" map in SMACv1.
 
@@ -182,7 +168,7 @@ We include scripts (`examples/tf2/main.py` and `examples/jax/main.py`) for easil
 
 **Note:** We have not implemented any checks to make sure the combination of `env`, `scenario` and `system` is valid. For example, certain algorithms can only be run on discrete action environments. We hope to implement more guard rails in the future. For now, please refer to the code and the paper for clarification. We are also still in the process of migrating all the experiments to this unified launcher. So if some configuration is not supported yet, please reach out in the issues and we will be happy to help. 
 
-<h2 name="citing" id="citing">Citing OG-MARL ✏️</h2>
+## Citing OG-MARL :pencil:
 
 If you use OG-MARL in your work, please cite the library using:
 
