@@ -56,12 +56,20 @@ We have made our TF2 systems compatible with jit compilation. This combined with
 
 **Speed Comparison: for each setup, we trained MAICQ on the 8m Good dataset for 10k training steps and evaluated every 1k training steps for 4 episodes using a batch size of 256.**
 
-<img src="docs/assets/system_speed_comparison.png" alt="OG-MARL Speed Comparison" width="80%"/>
+<div class="collage">
+    <div class="row" align="center">
+        <img src="docs/assets/system_speed_comparison.png" alt="OG-MARL Speed Comparison" width="65%"/>
+  </div>
+</div>
 
 **Performance Comparison: In order to make sure performance between the TF2 system and the JAX system is the same, we trained both varients on each of the three datasets for 8m (Good, Medium and Poor). We then normalised the scores and aggregated the results using MARL-eval. The sample efficiency curves and the performance profiles are given below.**
 
-<img src="docs/assets/sample_efficiency.png" alt="Sample Efficiency" width="80%"/>
-<img src="docs/assets/performance_profile.png" alt="Performance Profile" width="80%"/>
+<div class="collage">
+  <div class="row" align="center">
+    <img src="docs/assets/sample_efficiency.png" alt="Sample Efficiency" width="45%"/>
+    <img src="docs/assets/performance_profile.png" alt="Performance Profile" width="35%"/>
+  </div>
+</div>
 
 ## Datasets 🎥
 
