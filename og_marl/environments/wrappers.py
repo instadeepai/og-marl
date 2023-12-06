@@ -56,14 +56,14 @@ class PadObsandActs:
         self._environment = environment
 
         self._obs_dim = 0
-        self._act_dim = 0
+        self._num_actions = 0
 
         for agent in self._environment.possible_agents:
             act_dim = self._environment.action_spaces[agent].shape[0]
             obs_dim = self._environment.observation_spaces[agent].shape[0]
 
-            if act_dim > self._act_dim:
-                self._act_dim = act_dim
+            if act_dim > self._num_actions:
+                self._num_actions = act_dim
 
             if obs_dim > self._obs_dim:
                 self._obs_dim = obs_dim

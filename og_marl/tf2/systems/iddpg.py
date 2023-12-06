@@ -206,7 +206,7 @@ class IDDPGSystem(BaseMARLSystem):
         critic_learning_rate=3e-4,
         policy_learning_rate=1e-3,
         add_agent_id_to_obs=True,
-        random_exploration_timesteps=50_000
+        random_exploration_timesteps=50_000 
     ):
 
         super().__init__(
