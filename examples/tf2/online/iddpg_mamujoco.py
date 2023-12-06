@@ -28,6 +28,6 @@ logger = WandbLogger()
 
 system = IDDPGSystem(env, logger)
 
-rb = SequenceCPPRB(env)
+rb = SequenceCPPRB(env, max_size=50_000)
 
-system.train_online(rb, 3e6)
+system.train_online(rb, 10e6)

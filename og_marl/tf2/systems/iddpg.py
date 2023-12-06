@@ -283,7 +283,7 @@ class IDDPGSystem(BaseMARLSystem):
                     action = tf.random.uniform(action.shape, -1, 1, dtype=action.dtype)
                     self._random_exploration_timesteps.assign_sub(1)
                 else:            
-                    noise = tf.random.normal(action.shape, 0.0, 0.3) # TODO: make variable
+                    noise = tf.random.normal(action.shape, 0.0, 0.2) # TODO: make variable
                     action = tf.clip_by_value(action + noise, -1, 1)
 
             # Store agent action
@@ -372,9 +372,9 @@ class IDDPGSystem(BaseMARLSystem):
 
             qs_1 = self._critic_network_1(observations, env_states, online_actions, replay_actions)
             qs_2 = self._critic_network_2(observations, env_states, online_actions,replay_actions)
-            qs = tf.reduce_mean((qs_1, qs_2), axis=0)
+            qs = tf.minimum(qs_1, qs_2)
             
-            policy_loss = - tf.squeeze(qs, axis=-1)
+            policy_loss = - tf.squeeze(qs, axis=-1) + 1e-3 * tf.reduce_mean(online_actions**2)
 
             # Masked mean
             policy_mask = tf.squeeze(tf.stack([zero_padding_mask] * N, axis=2))
