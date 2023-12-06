@@ -36,7 +36,8 @@ OG-MARL forms part of the [InstaDeep](https://www.instadeep.com/) MARL [ecosyste
 community. To join us in these efforts, reach out, raise issues or just
 🌟 to stay up to date with the latest developments!
 
-## Updates 📰
+## Updates [06/12/2023] 📰
+
 OG-MARL is a research tool that is under active development and therefore evolving quickly. We have several very exciting new features on the roadmap but sometimes when we introduce a new feature we may abruptly change how things work in OG-MARL.
 But in the interest of moving quickly, we believe this is an acceptable trade-off and ask our users to kindly be aware of this.
 
@@ -48,11 +49,11 @@ The following is a list of the latest updates to OG-MARL:
 
 ✅ We have implemented our **first set of JAX-based systems in OG-MARL**. Our JAX systems use [Flashbax](https://github.com/instadeepai/flashbax) as the replay buffer backend. Flashbax buffers are completly jit-able, which means that our JAX systems have fully intergrated and jitted training and data sampling.
 
-
-✅ We have intergrated [MARL-eval](https://github.com/instadeepai/marl-eval/tree/main) into OG-MARL to standardise and simplify the reporting of experimental results. 
+✅ We have **intergrated [MARL-eval](https://github.com/instadeepai/marl-eval/tree/main)** into OG-MARL to standardise and simplify the reporting of experimental results.
 
 ## Need for Speed 🏎️
-We have made our TF2 systems compatible with jit compilation. This combined with our new `cpprb` replay buffers have made our systems significantly faster. Furthermore, our JAX systems with tightly integrated replay sampling and training using Flashbax are even faster. 
+
+We have made our TF2 systems compatible with jit compilation. This combined with our new `cpprb` replay buffers have made our systems significantly faster. Furthermore, our JAX systems with tightly integrated replay sampling and training using Flashbax are even faster.
 
 **Speed Comparison: for each setup, we trained MAICQ on the 8m Good dataset for 10k training steps and evaluated every 1k training steps for 4 episodes using a batch size of 256.**
 
@@ -162,19 +163,19 @@ datasets/
 ```
 
 ### Launching Experiments 🚀
-We include scripts (`examples/tf2/main.py` and `examples/jax/main.py`) for easily launching experiments.
+
+We include scripts (`examples/tf2/main.py` and `examples/jax/main.py`) for easily launching experiments using the command below:
 
 `python examples/<backend>/main.py --system=<system_name> --env=<env_name> --scenario=<scenario_name>`
 
-`<backend>` should be replaced with either `jax` or `tf2`.
+Example options for each placeholder are given below:
 
-`<system_name>` should be replaced with one of `maicq`, `qmix`, `qmix+cql`, `qmix+bcq`, `idrqn`, `iddpg` etc.
+* `<backend>`      : {`jax`, `tf2`}
+* `<system_name>`  : {`maicq`, `qmix`, `qmix+cql`, `qmix+bcq`, `idrqn`, `iddpg`, ...}
+* `<env_name>`     : {`smac_v1`, `smac_v2`, `mamujoco`, ...}
+* `<scenario_name>`: {`3m`, `8m`, `terran_5_vs_5`, `2halfcheetah`, ...}
 
-`<env_name>` should be replaced with one of `smac_v1`, `smac_v2`, `mamujoco` etc.
-
-`<scenario_name>` should be replaced with one of `3m`, `8m`, `terran_5_vs_5`, `2halfcheetah` etc.
-
-**Note:** We have not implemented any checks to make sure the combination of `env`, `scenario` and `system` is valid. For example, certain algorithms can only be run on discrete action environments. We hope to implement more guard rails in the future. For now, please refer to the code and the paper for clarification. We are also still in the process of migrating all the experiments to this unified launcher. So if some configuration is not supported yet, please reach out in the issues and we will be happy to help. 
+**Note:** We have not implemented any checks to make sure the combination of `env`, `scenario` and `system` is valid. For example, certain algorithms can only be run on discrete action environments. We hope to implement more guard rails in the future. For now, please refer to the code and the paper for clarification. We are also still in the process of migrating all the experiments to this unified launcher. So if some configuration is not supported yet, please reach out in the issues and we will be happy to help.
 
 ## Citing OG-MARL :pencil2:
 
@@ -185,11 +186,8 @@ If you use OG-MARL in your work, please cite the library using:
     author = {Formanek, Claude and Jeewa, Asad and Shock, Jonathan and Pretorius, Arnu},
     title = {Off-the-Grid MARL: Datasets and Baselines for Offline Multi-Agent Reinforcement Learning},
     year = {2023},
-    publisher = {International Foundation for Autonomous Agents and Multiagent Systems},
-    booktitle = {Proceedings of the 2023 International Conference on Autonomous Agents and Multiagent Systems},
-    keywords = {offline reinforcement learning, multi-agent reinforcement learning, reinforcement learning},
-    location = {London, United Kingdom},
-    series = {AAMAS '23}
+    publisher = {AAMAS},
+    booktitle = {Extended Abstract at the 2023 International Conference on Autonomous Agents and Multiagent Systems},
 }
 ```
 
