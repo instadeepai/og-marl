@@ -22,7 +22,9 @@ setup(
     packages=find_packages(),
     url='https://sites.google.com/view/og-marl',
     license='',
-    description='Off-the-Grid MARL: a Framework for Dataset Generation with Baselines for Cooperative Offline Multi-Agent Reinforcement Learning',
+    description='Off-the-Grid MARL: a Framework for Dataset \
+        Generation with Baselines for Cooperative Offline \
+        Multi-Agent Reinforcement Learning',
     long_description="",
     install_requires=[
         "numpy",
