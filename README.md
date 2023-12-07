@@ -177,20 +177,6 @@ Example options for each placeholder are given below:
 
 **Note:** We have not implemented any checks to make sure the combination of `env`, `scenario` and `system` is valid. For example, certain algorithms can only be run on discrete action environments. We hope to implement more guard rails in the future. For now, please refer to the code and the paper for clarification. We are also still in the process of migrating all the experiments to this unified launcher. So if some configuration is not supported yet, please reach out in the issues and we will be happy to help.
 
-## Citing OG-MARL :pencil2:
-
-If you use OG-MARL in your work, please cite the library using:
-
-```
-@inproceedings{formanek2023ogmarl,
-    author = {Formanek, Claude and Jeewa, Asad and Shock, Jonathan and Pretorius, Arnu},
-    title = {Off-the-Grid MARL: Datasets and Baselines for Offline Multi-Agent Reinforcement Learning},
-    year = {2023},
-    publisher = {AAMAS},
-    booktitle = {Extended Abstract at the 2023 International Conference on Autonomous Agents and Multiagent Systems},
-}
-```
-
 ## See Also 🔎
 
 **InstaDeep's MARL ecosystem in JAX.** In particular, we suggest users check out the following sister repositories:
@@ -206,3 +192,17 @@ If you use OG-MARL in your work, please cite the library using:
 * 🦊 [JaxMARL](https://github.com/flairox/jaxmarl): accelerated MARL environments with baselines in JAX.
 * ♟️  [Pgx](https://github.com/sotetsuk/pgx): JAX implementations of classic board games, such as Chess, Go and Shogi.
 * 🔼 [Minimax](https://github.com/facebookresearch/minimax/): JAX implementations of autocurricula baselines for RL.
+
+## Citing OG-MARL :pencil2:
+
+If you use OG-MARL in your work, please cite the library using:
+
+```
+@inproceedings{formanek2023ogmarl,
+    author = {Formanek, Claude and Jeewa, Asad and Shock, Jonathan and Pretorius, Arnu},
+    title = {Off-the-Grid MARL: Datasets and Baselines for Offline Multi-Agent Reinforcement Learning},
+    year = {2023},
+    publisher = {AAMAS},
+    booktitle = {Extended Abstract at the 2023 International Conference on Autonomous Agents and Multiagent Systems},
+}
+```
