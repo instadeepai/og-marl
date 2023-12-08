@@ -191,12 +191,12 @@ from og_marl.tf2.systems.maicq import MAICQSystem
 env = SMACv1("3m")
 dataset = OfflineMARLDataset(env, "datasets/smac_v1/3m/Good")
 dataset_sequence_length = dataset.get_sequence_length()
-batched_dataset = SequenceCPPRB(env, max_size=FLAGS.num_offline_sequences, 
-    batch_size=FLAGS.batch_size, sequence_length=dataset_sequence_length
+batched_dataset = SequenceCPPRB(env, max_size=100_000, 
+    batch_size=32, sequence_length=dataset_sequence_length
 )
 batched_dataset.populate_from_dataset(dataset)
 logger = WandbLogger()
-system = MAICQSystem(env, logger)
+system = MAICQSystem(env, logger, add_agent_id_to_obs=True)
 system.train_offline(
     batched_dataset, 
 )
