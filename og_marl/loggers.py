@@ -17,6 +17,29 @@ import os
 import wandb
 import time
 
+class TerminalLogger:
+
+    def __init__(
+            self,
+            log_every=2 # seconds
+    ):
+        self._log_every = log_every
+        self._ctr = 0
+        self._last_log = time.time()
+
+    def write(self, logs, force=False):
+        
+        if time.time() - self._last_log > self._log_every or force:
+
+            for key, log in logs.items():
+                print(f"{key}: {float(log)} |", end=" ")
+            print()
+
+            if not force:
+                self._last_log = time.time()
+
+        self._ctr += 1
+
 class WandbLogger:
     def __init__(
         self,

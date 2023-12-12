@@ -182,24 +182,27 @@ Example options for each placeholder are given below:
 ### Code Snippet 🧙‍♂️
 
 ```python
+from og_marl.offline_dataset import download_flashbax_dataset
 from og_marl.environments.smacv1 import SMACv1
-from og_marl.replay_buffers import SequenceCPPRB
-from og_marl.offline_dataset import OfflineMARLDataset
-from og_marl.loggers import WandbLogger
-from og_marl.tf2.systems.maicq import MAICQSystem
+from og_marl.jax.systems.maicq import train_maicq_system
+from og_marl.loggers import TerminalLogger
 
-env = SMACv1("3m")
-dataset = OfflineMARLDataset(env, "datasets/smac_v1/3m/Good")
-dataset_sequence_length = dataset.get_sequence_length()
-batched_dataset = SequenceCPPRB(env, max_size=100_000, 
-    batch_size=32, sequence_length=dataset_sequence_length
+# Download the dataset
+download_flashbax_dataset(
+    env_name="smac_v1", 
+    scenario_name="8m",
+    base_dir="datasets/flashbax"
 )
-batched_dataset.populate_from_dataset(dataset)
-logger = WandbLogger()
-system = MAICQSystem(env, logger, add_agent_id_to_obs=True)
-system.train_offline(
-    batched_dataset, 
-)
+dataset_path = "datasets/flashbax/smac_v1/8m/Good"
+
+# Instantiate environment for evaluation
+env = SMACv1("8m")
+
+# Setup a logger to write to terminal
+logger = TerminalLogger()
+
+# Train system
+train_maicq_system(env, logger, dataset_path)
 ```
 
 ## See Also 🔎

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 from pathlib import Path
 import tensorflow as tf
 from collections import namedtuple
@@ -136,9 +137,21 @@ def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./data
 
     extraction_path = f'{dataset_base_dir}/{env_name}/{scenario_name}'
 
-    response = requests.get(dataset_download_url)
+    response = requests.get(dataset_download_url, stream=True)
+    total_length = response.headers.get('content-length')
+
     with open(zip_file_path, 'wb') as file:
-        file.write(response.content)
+        if total_length is None: # no content length header
+            file.write(response.content)
+        else:
+            dl = 0
+            total_length = int(total_length)
+            for data in response.iter_content(chunk_size=4096):
+                dl += len(data)
+                file.write(data)
+                done = int(50 * dl / total_length)
+                sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)) )    
+                sys.stdout.flush()
 
     # Step 2: Unzip the file
     with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
@@ -147,4 +160,43 @@ def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./data
     # Optionally, delete the zip file after extraction
     os.remove(zip_file_path)
 
+FLASHBAX_DATASET_URLS = {
+    "smac_v1": {
+        "8m": "https://s3.kao.instadeep.io/offline-marl-dataset/flashbax_8m.zip"
+    }
+}
+def download_flashbax_dataset(env_name, scenario_name, base_dir="./datasets/flashbax"):
+    dataset_download_url = FLASHBAX_DATASET_URLS[env_name][scenario_name]
 
+    os.makedirs(f'{base_dir}/tmp/', exist_ok=True)
+    os.makedirs(f'{base_dir}/{env_name}/{scenario_name}', exist_ok=True)
+
+    zip_file_path = f'{base_dir}/tmp/tmp_dataset.zip'
+
+    extraction_path = f'{base_dir}/{env_name}/{scenario_name}'
+
+    print("Downloading dataset. This could take a few minutes.")
+    
+    response = requests.get(dataset_download_url, stream=True)
+    total_length = response.headers.get('content-length')
+
+    with open(zip_file_path, 'wb') as file:
+        if total_length is None: # no content length header
+            file.write(response.content)
+        else:
+            dl = 0
+            total_length = int(total_length)
+            for data in response.iter_content(chunk_size=4096):
+                dl += len(data)
+                file.write(data)
+                done = int(50 * dl / total_length)
+                sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)) )    
+                sys.stdout.flush()
+
+
+    # Step 2: Unzip the file
+    with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+        zip_ref.extractall(extraction_path)
+
+    # Optionally, delete the zip file after extraction
+    os.remove(zip_file_path)
