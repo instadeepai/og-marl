@@ -234,3 +234,8 @@ If you use OG-MARL in your work, please cite the library using:
     booktitle = {Extended Abstract at the 2023 International Conference on Autonomous Agents and Multiagent Systems},
 }
 ```
+
+## Acknowledgements 🙏
+
+The development of this library was supported with Cloud TPUs
+from Google's [TPU Research Cloud](https://sites.research.google/trc/about/) (TRC) 🌤.
