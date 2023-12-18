@@ -66,7 +66,7 @@ class QMIXCQLSystem(QMIXSystem):
         self._num_ood_actions = num_ood_actions
         self._cql_weight = cql_weight
 
-    @tf.function(jit_compile=True)
+    # @tf.function(jit_compile=True)
     def _tf_train_step(self, train_step, batch):
         batch = batched_agents(self._environment.possible_agents, batch)
 

@@ -22,14 +22,14 @@ from og_marl.offline_dataset import OfflineMARLDataset
 set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("env", "mamujoco", "Environment name.")
-flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
-flags.DEFINE_string("dataset", "Medium", "Dataset type.: 'Good', 'Medium', 'Poor' or '' for combined. ")
-flags.DEFINE_string("system", "omar", "System name.")
+flags.DEFINE_string("env", "flatland", "Environment name.")
+flags.DEFINE_string("scenario", "3_trains", "Environment scenario name.")
+flags.DEFINE_string("dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' or '' for combined. ")
+flags.DEFINE_string("system", "maicq", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 1e5, "Number of training steps.")
-flags.DEFINE_integer("batch_size", 256, "Number of training steps.")
-flags.DEFINE_integer("num_offline_sequences", 100_000, "Number of sequences to load from the offline dataset into the replay buffer.")
+flags.DEFINE_integer("batch_size", 32, "Number of training steps.")
+flags.DEFINE_integer("num_offline_sequences", 10_000, "Number of sequences to load from the offline dataset into the replay buffer.")
 
 def main(_):
     config = {

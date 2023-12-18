@@ -141,7 +141,7 @@ from og_marl.offline_dataset import download_and_unzip_dataset
 download_and_unzip_dataset("smac_v1", "3m")
 ```
 
-Alternativly, go to the OG-MARL [website](<https://sites.google.com/view/og-marl>) and download the dataset. Once the zip file is downloaded add it to a directory called `datasets` on the same level as the `og-marl/` directory. The folder structure should look like this:
+After running the download function you should check that the datasets were extracted to the correct location, as below. Alternativly, go to the OG-MARL [website](<https://sites.google.com/view/og-marl>) and download the dataset manually. Once the zip file is downloaded, extract the datasets from it and add them to a directory called `datasets` on the same level as the `og-marl/` directory. The folder structure should look like this:
 
 ```
 examples/
