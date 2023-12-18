@@ -121,10 +121,20 @@ DATASET_URLS = {
     "smac_v1": {
         "3m": "https://tinyurl.com/3m-dataset",
         "8m": "https://tinyurl.com/8m-dataset",
+        "5m_vs_6m": "https://tinyurl.com/5m-vs-6m-dataset",
+        "2s3z": "https://tinyurl.com/2s3z-dataset",
+        "3s5z_vs_3s6z": "ttps://tinyurl.com/3s5z-vs-3s6z-dataset3",
+        "2c_vs_64zg": "https://tinyurl.com/2c-vs-64zg-dataset",
+        "27m_vs_30m": "https://tinyurl.com/27m-vs-30m-dataset"
     },
     "smac_v2": {
         "terran_5_vs_5": "https://tinyurl.com/terran-5-vs-5-dataset",
-        "zerg_5_": "https://tinyurl.com/zerg-5-vs-5-dataset",
+        "zerg_5_vs_5": "https://tinyurl.com/zerg-5-vs-5-dataset",
+        "terran_10_vs_10": "https://tinyurl.com/terran-10-vs-10-dataset"
+    },
+    "flatland": {
+        "3_trains": "https://tinyurl.com/3trains-dataset",
+        "5_trains": "https://tinyurl.com/5trains-dataset"
     }
 }
 def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./datasets"):
