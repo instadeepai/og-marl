@@ -135,6 +135,14 @@ DATASET_URLS = {
     "flatland": {
         "3_trains": "https://tinyurl.com/3trains-dataset",
         "5_trains": "https://tinyurl.com/5trains-dataset"
+    },
+    "mamujoco": {
+        "2_halfcheetah": "",
+        "2_ant": "",
+        "4_ant": ""
+    },
+    "voltage_control": {
+        "case33_3min_final": "https://tinyurl.com/case33-3min-final-dataset",
     }
 }
 def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./datasets"):

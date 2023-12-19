@@ -28,5 +28,8 @@ def get_environment(env_name, scenario):
     elif env_name == "flatland":
         from og_marl.environments.flatland_wrapper import Flatland
         return Flatland(scenario)
+    elif env_name == "voltage_control":
+        from og_marl.environments.voltage_control import VoltageControlEnv
+        return VoltageControlEnv()
     else:
         raise ValueError("Environment not recognised.")
