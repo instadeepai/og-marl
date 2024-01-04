@@ -21,8 +21,6 @@ import zipfile
 import os
 import requests
 
-Sample = namedtuple('Sample', ['observations', 'actions', 'rewards', 'done', 'episode_return', 'legal_actions', 'env_state', 'zero_padding_mask'])
-
 def get_schema_dtypes(environment):
     act_type = list(environment.action_spaces.values())[0].dtype
     schema = {}
@@ -99,6 +97,7 @@ class OfflineMARLDataset:
             
         sample["mask"] = example["zero_padding_mask"]
         sample["state"] = example["env_state"]
+        sample["episode_return"] = example["episode_return"]
 
         return sample
 
