@@ -134,7 +134,7 @@ class BaseMARLSystem:
                     break
 
             episodes += 1
-            if episodes % 20 == 0: # TODO: make variable
+            if episodes % 1 == 0: # TODO: make variable
                 self._logger.write({"Episodes": episodes, "Episode Return": episode_return, "Environment Steps": self._env_step_ctr}, force=True)
 
             if self._env_step_ctr > max_env_steps:

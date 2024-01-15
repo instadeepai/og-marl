@@ -22,10 +22,10 @@ from og_marl.offline_dataset import OfflineMARLDataset
 set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("env", "voltage_control", "Environment name.")
-flags.DEFINE_string("scenario", "case33_3min_final", "Environment scenario name.")
-flags.DEFINE_string("dataset", "Replay", "Dataset type.: 'Good', 'Medium', 'Poor' or '' for combined. ")
-flags.DEFINE_string("system", "iddpg", "System name.")
+flags.DEFINE_string("env", "mamujoco", "Environment name.")
+flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
+flags.DEFINE_string("dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' or '' for combined. ")
+flags.DEFINE_string("system", "iddpg+cql", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 1e5, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 32, "Number of training steps.")

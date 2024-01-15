@@ -60,16 +60,16 @@ class MAMuJoCo:
 
     def reset(self):
 
-        observations, info = self._environment.reset()
+        observations, _ = self._environment.reset()
 
-        info["state"] = self._environment.state().astype("float32")
+        info = {"state": self._environment.state().astype("float32")}
 
         return observations, info
 
     def step(self, actions):
-        observations, rewards, terminals, trunctations, info = self._environment.step(actions)
+        observations, rewards, terminals, trunctations, _ = self._environment.step(actions)
 
-        info["state"] = self._environment.state().astype("float32")
+        info = {"state": self._environment.state().astype("float32")}
 
         return observations, rewards, terminals, trunctations, info
 

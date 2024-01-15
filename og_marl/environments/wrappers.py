@@ -12,7 +12,109 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import jax
 import numpy as np
+import flashbax as fbx
+from flashbax.vault import Vault
+
+BUFFER_TIME_AXIS_LEN = 100_000
+
+class ExperienceRecorder:
+
+    def __init__(self, environment, vault_name: str, write_to_vault_every=10_000):
+
+        self._environment = environment
+        # self._buffer = fbx.make_trajectory_buffer(
+        #     add_batch_size=1,
+        #     max_length_time_axis=BUFFER_TIME_AXIS_LEN,
+        #     min_length_time_axis=1,
+        #     # Unused, as we are not sampling
+        #     sample_batch_size=1,
+        #     sample_sequence_length=1,
+        #     period=1,
+        # )
+        self._buffer = fbx.make_flat_buffer(
+            max_length=2*10_000,
+            min_length=1,
+            # Unused:
+            sample_batch_size=1,
+        )
+        self._buffer_state = None
+        self._add_to_buffer = jax.jit(self._buffer.add, donate_argnums=0)
+
+        self._vault = None
+        self.vault_name = vault_name
+        self._has_initialised = False
+
+        self._write_to_vault_every = write_to_vault_every
+        self._step_count = 0
+
+
+    def _pack_timestep(self, observations, actions, rewards, terminals, truncations, infos):
+        packed_timestep = {
+            "observations": observations,
+            "actions": actions,
+            "rewards": rewards,
+            "terminals": terminals,
+            "truncations": truncations,
+            "infos": infos,
+        }
+        packed_timestep = jax.tree_map(lambda x: np.array(x), packed_timestep)
+        return packed_timestep
+
+    def reset(self):
+        observations, infos = self._environment.reset()
+
+        self._observations = observations
+        self._infos = infos
+
+        return observations, infos
+    
+    def step(self, actions):
+        observations, rewards, terminals, truncations, infos = self._environment.step(actions)
+
+        packed_timestep = self._pack_timestep(
+            observations=self._observations,
+            actions=actions,
+            rewards=rewards,
+            terminals=terminals,
+            truncations=truncations,
+            infos=self._infos,
+        )
+        
+        # Log stuff to vault/flashbax
+        if not self._has_initialised:
+            self._buffer_state = self._buffer.init(packed_timestep)
+            self._vault = Vault(
+                vault_name=self.vault_name,
+                init_fbx_state=self._buffer_state,
+            )
+            self._has_initialised = True
+
+        self._buffer_state = self._add_to_buffer(
+            self._buffer_state,
+            packed_timestep,
+            # jax.tree_map(lambda x: np.expand_dims(np.expand_dims(np.array(x), axis=0), axis=0), packed_timestep), # NOTE add time dimension and batch dimension. should we use flat buffer? 
+        )
+
+        # Store new observations and infos
+        self._observations = observations
+        self._info = infos
+
+        self._step_count += 1
+        if self._step_count % self._write_to_vault_every == 0:
+            self._vault.write(self._buffer_state)
+
+        return observations, rewards, terminals, truncations, infos
+    
+    def __getattr__(self, name: str):
+        """Expose any other attributes of the underlying environment."""
+        if hasattr(self.__class__, name):
+            return self.__getattribute__(name)
+        else:
+            return getattr(self._environment, name)
+
+
 
 class Dtype:
 
