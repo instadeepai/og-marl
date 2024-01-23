@@ -13,16 +13,16 @@
 # limitations under the License.
 
 from og_marl.loggers import WandbLogger
+from og_marl.replay_buffers import FlashbaxReplayBuffer
 from og_marl.tf2.systems.idrqn import IDRQNSystem
 from og_marl.environments.smacv1 import SMACv1
-from og_marl.replay_buffers import SequenceCPPRB
 
 env = SMACv1("3m")
 
 logger = WandbLogger(entity="claude_formanek")
 
-system = IDRQNSystem(env, logger)
+system = IDRQNSystem(env, logger, eps_decay_timesteps=10_000)
 
-rb = SequenceCPPRB(env, batch_size=64)
+replay_buffer = FlashbaxReplayBuffer(sequence_length=20)
 
-system.train_online(rb)
+system.train_online(replay_buffer)

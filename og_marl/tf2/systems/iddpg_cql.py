@@ -24,6 +24,7 @@ from og_marl.tf2.utils import (
     switch_two_leading_dims,
     merge_batch_and_agent_dim_of_time_major_sequence,
     expand_batch_and_agent_dim_of_time_major_sequence,
+    unroll_rnn,
 )
 
 class IDDPGCQLSystem(IDDPGSystem):
@@ -36,15 +37,13 @@ class IDDPGCQLSystem(IDDPGSystem):
         recurrent_layer_dim=64,
         discount=0.99,
         target_update_rate=0.005,
-        critic_learning_rate=3e-4,
-        policy_learning_rate=1e-5,
+        critic_learning_rate=1e-3,
+        policy_learning_rate=1e-3,
         add_agent_id_to_obs=False,
         random_exploration_timesteps=0,
         num_ood_actions=10, # CQL
         cql_weight=5.0, # CQL  
         cql_sigma=0.2, # CQL
-        target_action_gap=10.0, # CQL
-        cql_alpha_learning_rate=3e-4 # CQL
     ):
         super().__init__(
             environment=environment,
@@ -62,9 +61,6 @@ class IDDPGCQLSystem(IDDPGSystem):
         self._num_ood_actions = num_ood_actions
         self._cql_weight = cql_weight
         self._cql_sigma = cql_sigma
-        self._target_action_gap = target_action_gap
-        self._cql_log_alpha = tf.Variable(0.0, trainable=True)
-        self._cql_alpha_optimizer = snt.optimizers.Adam(cql_alpha_learning_rate)
 
     @tf.function(jit_compile=True) # NOTE: comment this out if using debugger
     def _tf_train_step(self, batch):
@@ -75,12 +71,12 @@ class IDDPGCQLSystem(IDDPGSystem):
         actions = batch["actions"] # (B,T,N,A)
         env_states = batch["state"] # (B,T,S)
         rewards = batch["rewards"] # (B,T,N)
-        truncations = batch["truncations"] # (B,T,N)
-        terminals = batch["terminals"] # (B,T,N)
+        truncations = tf.cast(batch["truncations"], "float32") # (B,T,N)
+        terminals = tf.cast(batch["terminals"], "float32") # (B,T,N)
         zero_padding_mask = batch["mask"] # (B,T)
 
-        # done = tf.cast(tf.logical_or(tf.cast(truncations, "bool"), tf.cast(terminals, "bool")), "float32")
-        done = terminals
+        # When to reset the RNN hidden state
+        resets = tf.maximum(terminals, truncations) # equivalent to logical 'or'
 
         # Get dims
         B, T, N = actions.shape[:3]
@@ -93,15 +89,17 @@ class IDDPGCQLSystem(IDDPGSystem):
         observations = switch_two_leading_dims(observations)
         replay_actions = switch_two_leading_dims(actions)
         rewards = switch_two_leading_dims(rewards)
-        done = switch_two_leading_dims(done)
+        terminals = switch_two_leading_dims(terminals)
         zero_padding_mask = switch_two_leading_dims(zero_padding_mask)
         env_states = switch_two_leading_dims(env_states)
+        resets = switch_two_leading_dims(resets)
+
 
         # Unroll target policy
-        target_actions, _ = snt.static_unroll(
+        target_actions = unroll_rnn(
             self._target_policy_network,
             merge_batch_and_agent_dim_of_time_major_sequence(observations),
-            self._target_policy_network.initial_state(B*N)
+            merge_batch_and_agent_dim_of_time_major_sequence(resets)
         )
         target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
@@ -113,7 +111,7 @@ class IDDPGCQLSystem(IDDPGSystem):
         target_qs = tf.minimum(target_qs_1, target_qs_2)
 
         # Compute Bellman targets
-        targets = rewards[:-1] + self._discount * (1-done[:-1]) * tf.squeeze(target_qs[1:], axis=-1)
+        targets = rewards[:-1] + self._discount * (1-terminals[:-1]) * tf.squeeze(target_qs[1:], axis=-1)
 
         # Do forward passes through the networks and calculate the losses
         with tf.GradientTape(persistent=True) as tape:
@@ -130,10 +128,10 @@ class IDDPGCQLSystem(IDDPGSystem):
             ### CQL ###
             ###########
 
-            online_actions, _ = snt.static_unroll(
+            online_actions = unroll_rnn(
                 self._policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
-                self._policy_network.initial_state(B*N)
+                merge_batch_and_agent_dim_of_time_major_sequence(resets)
             )
             online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
 
@@ -177,7 +175,7 @@ class IDDPGCQLSystem(IDDPGSystem):
             current_ood_qs_2 = self._critic_network_2(repeat_observations[:-1], repeat_env_states[:-1], current_ood_actions[:-1], current_ood_actions[:-1]) - ood_actions_log_prob[:-1]
 
             next_current_ood_qs_1 = self._critic_network_1(repeat_observations[:-1], repeat_env_states[:-1], current_ood_actions[1:], current_ood_actions[1:]) - ood_actions_log_prob[1:]
-            next_current_ood_qs_2 = self._critic_network_2(repeat_observations[:-1], repeat_env_states[:-1], current_ood_actions[1:], current_ood_actions[ 1:]) - ood_actions_log_prob[1:]
+            next_current_ood_qs_2 = self._critic_network_2(repeat_observations[:-1], repeat_env_states[:-1], current_ood_actions[1:], current_ood_actions[1:]) - ood_actions_log_prob[1:]
 
             # Reshape
             ood_qs_1 = tf.reshape(ood_qs_1, (T-1, B, self._num_ood_actions, N))
@@ -196,14 +194,8 @@ class IDDPGCQLSystem(IDDPGSystem):
             cql_loss_1 = masked_mean(tf.reduce_logsumexp(all_ood_qs_1, axis=2, keepdims=False)) - masked_mean(qs_1[:-1])
             cql_loss_2 = masked_mean(tf.reduce_logsumexp(all_ood_qs_2, axis=2, keepdims=False)) - masked_mean(qs_2[:-1])
 
-            # cql_alpha = tf.exp(self._cql_log_alpha)
-            # cql_loss_1 = cql_alpha * (cql_loss_1 - self._target_action_gap)
-            # cql_loss_2 = cql_alpha * (cql_loss_2 - self._target_action_gap)
-
             critic_loss_1 += self._cql_weight * cql_loss_1
             critic_loss_2 += self._cql_weight * cql_loss_2
-
-            # cql_alpha_loss = (- cql_loss_1 - cql_loss_2) * 0.5
 
             ### END CQL ###
 
@@ -215,15 +207,15 @@ class IDDPGCQLSystem(IDDPGSystem):
 
             # Policy Loss
             # Unroll online policy
-            onlin_actions, _ = snt.static_unroll(
-                self._policy_network,
+            target_online_actions = unroll_rnn(
+                self._target_policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
-                self._policy_network.initial_state(B*N)
+                merge_batch_and_agent_dim_of_time_major_sequence(resets)
             )
-            online_actions = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
+            target_online_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_online_actions, B, N)
 
-            qs_1 = self._critic_network_1(observations, env_states, online_actions, replay_actions)
-            qs_2 = self._critic_network_2(observations, env_states, online_actions,replay_actions)
+            qs_1 = self._critic_network_1(observations, env_states, online_actions, target_online_actions)
+            qs_2 = self._critic_network_2(observations, env_states, online_actions, target_online_actions)
             qs = tf.minimum(qs_1, qs_2)
             
             policy_loss = - tf.squeeze(qs, axis=-1) + 1e-3 * tf.reduce_mean(tf.square(online_actions))
@@ -239,11 +231,6 @@ class IDDPGCQLSystem(IDDPGSystem):
         )
         gradients = tape.gradient(critic_loss, variables)
         self._critic_optimizer.apply(gradients, variables)
-
-        # # Optimise CQL alpha
-        # variables = [self._cql_log_alpha]
-        # gradients = tape.gradient(cql_alpha_loss, variables)
-        # self._cql_alpha_optimizer.apply(gradients, variables)
 
         # Train policy
         variables = (

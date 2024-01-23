@@ -86,18 +86,18 @@ class OfflineMARLDataset:
         for key, dtype in self._schema.items():
             example[key] = tf.io.parse_tensor(example[key], dtype)
 
-        sample = {}
+        sample = {"observations": {}, "actions": {}, "rewards": {}, "terminals": {}, "truncations": {}, "infos": {"legals":{}}}
         for agent in self._agents:
-            sample[f"{agent}_observations"] = example[f"{agent}_observations"]
-            sample[f"{agent}_actions"] = example[f"{agent}_actions"]
-            sample[f"{agent}_rewards"] = example[f"{agent}_rewards"]
-            sample[f"{agent}_terminals"] = 1 - example[f"{agent}_discounts"]
-            sample[f"{agent}_truncations"] = tf.zeros_like(example[f"{agent}_discounts"])
-            sample[f"{agent}_legals"] = example[f"{agent}_legal_actions"]
+            sample["observations"][agent] = example[f"{agent}_observations"]
+            sample["actions"][agent] = example[f"{agent}_actions"]
+            sample["rewards"][agent] = example[f"{agent}_rewards"]
+            sample["terminals"][agent] = 1 - example[f"{agent}_discounts"]
+            sample["truncations"][agent] = tf.zeros_like(example[f"{agent}_discounts"])
+            sample["infos"]["legals"][agent] = example[f"{agent}_legal_actions"]
             
-        sample["mask"] = example["zero_padding_mask"]
-        sample["state"] = example["env_state"]
-        sample["episode_return"] = example["episode_return"]
+        sample["infos"]["mask"] = example["zero_padding_mask"]
+        sample["infos"]["state"] = example["env_state"]
+        sample["infos"]["episode_return"] = example["episode_return"]
 
         return sample
 
@@ -122,7 +122,7 @@ DATASET_URLS = {
         "8m": "https://tinyurl.com/8m-dataset",
         "5m_vs_6m": "https://tinyurl.com/5m-vs-6m-dataset",
         "2s3z": "https://tinyurl.com/2s3z-dataset",
-        "3s5z_vs_3s6z": "ttps://tinyurl.com/3s5z-vs-3s6z-dataset3",
+        "3s5z_vs_3s6z": "https://tinyurl.com/3s5z-vs-3s6z-dataset3",
         "2c_vs_64zg": "https://tinyurl.com/2c-vs-64zg-dataset",
         "27m_vs_30m": "https://tinyurl.com/27m-vs-30m-dataset"
     },
@@ -136,9 +136,9 @@ DATASET_URLS = {
         "5_trains": "https://tinyurl.com/5trains-dataset"
     },
     "mamujoco": {
-        "2_halfcheetah": "",
-        "2_ant": "",
-        "4_ant": ""
+        "2_halfcheetah": "https://tinyurl.com/2halfcheetah-dataset",
+        "2_ant": "https://tinyurl.com/2ant-dataset",
+        "4_ant": "https://tinyurl.com/4ant-dataset"
     },
     "voltage_control": {
         "case33_3min_final": "https://tinyurl.com/case33-3min-final-dataset",

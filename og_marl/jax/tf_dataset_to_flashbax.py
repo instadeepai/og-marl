@@ -16,6 +16,7 @@ import jax
 import os
 import jax.numpy as jnp
 import flashbax as fbx
+from flashbax.vault import Vault
 from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 from pathlib import Path
 import tensorflow as tf
@@ -57,7 +58,7 @@ def get_schema_dtypes(environment):
     for agent in environment.possible_agents:
         schema[agent + "_observations"] = tf.float32
         schema[agent + "_legal_actions"] = tf.float32
-        schema[agent + "_actions"] = tf.int64
+        schema[agent + "_actions"] = tf.float32
         schema[agent + "_rewards"] = tf.float32
         schema[agent + "_discounts"] = tf.float32
 
@@ -102,8 +103,8 @@ def make_decode_fn(schema, agents):
     return _decode_fn
 
 if __name__=="__main__":
-    SCENARIO = "8m"
-    DATASET = "Poor"
+    SCENARIO = "2halfcheetah"
+    DATASET = "Good"
 
     # set_growing_gpu_memory()
 
@@ -111,7 +112,7 @@ if __name__=="__main__":
     os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
 
-    environment = get_environment("smac_v1", SCENARIO)
+    environment = get_environment("mamujoco", SCENARIO)
 
     # First define hyper-parameters of the buffer.
     max_length_time_axis = 30000 * 20 # Maximum length of the buffer along the time axis. 
@@ -119,7 +120,6 @@ if __name__=="__main__":
     sample_batch_size = 4 # Batch size of trajectories sampled from the buffer.
     add_batch_size = 1 # Batch size of trajectories added to the buffer.
     sample_sequence_length = 20 # Sequence length of trajectories sampled from the buffer.
-    add_sequence_length = 20 # Sequence length of trajectories added to the buffer.
     period = 20 # Period at which we sample trajectories from the buffer.
 
     # Instantiate the trajectory buffer, which is a NamedTuple of pure functions.
@@ -138,15 +138,18 @@ if __name__=="__main__":
     agents = environment.possible_agents
     decode_fn = make_decode_fn(schema, agents)
 
-    path_to_dataset = f"datasets/smac_v1/{SCENARIO}/{DATASET}"
+    path_to_dataset = f"datasets/mamujoco/{SCENARIO}/{DATASET}"
     contents = os.listdir(path_to_dataset)
     directories = [content for content in contents if os.path.isdir(os.path.join(path_to_dataset, content))]
-    jitted_add = jax.jit(buffer.add)
+    jitted_add = jax.jit(buffer.add, donate_argnums=0)
     first_sample = True
+
+    sample_count = 0
+
     for dir in directories:
         filenames = Path(os.path.join(path_to_dataset, dir)).glob("**/*.tfrecord")
         filenames = list(filenames)
-        filenames.sort(key=lambda x: int(str(x).split("executor_sequence_log_")[-1][:-9]))
+        filenames.sort(key=lambda x: int(str(x).split("executor_<built-in function id>_sequence_log_")[-1][:-9]))
     
         for filename in filenames:
             print(filename)
@@ -154,32 +157,35 @@ if __name__=="__main__":
                 decode_fn
             )
             for sample in tf_record_dataset:
+                sample_count += 1
+
                 sample = tree.map_structure(lambda x: jnp.array(x.numpy()), sample)
+                mask_index = int(jnp.sum(sample['mask']))
+                masked_sample = jax.tree_map(lambda x: x[None, :mask_index, ...], sample)
 
                 if first_sample:
                     first_sample = False
 
-                    init_sample = tree.map_structure(lambda x: jnp.array(x[0]), sample)
+                    init_sample = tree.map_structure(lambda x: jnp.array(x[0, 0]), masked_sample)
                     state = buffer.init(init_sample)
-                
-                add_sample = tree.map_structure(lambda x: jnp.expand_dims(x, axis=0), sample)
-                state = jitted_add(state, add_sample)
 
-                if (state.current_index % 1000) == 0:
-                    print(round(state.current_index / max_length_time_axis, 4)*100)
+                    vault = Vault(
+                        vault_name=path_to_dataset,
+                        init_fbx_state=state,
+                    )
 
-                if (state.current_index % 100_000) == 0:
-                    t = state.current_index // 100_000
-                    store.save(t, state)
+                state = jitted_add(state, masked_sample)
 
-                if state.is_full:
-                    break
-            if state.is_full:
-                break
-        if state.is_full:
-            break
-    
-        store.save(t, state)
+                # if (state.current_index % 1000) == 0:
+                #     print(round(state.current_index / max_length_time_axis, 4)*100)
+
+                # if (state.current_index % 100_000) == 0:
+                # t = state.current_index // 100_000
+
+            write_length = vault.write(state)
+            print(f"Wrote {write_length}, new vault index = {vault.vault_index}, sample count = {sample_count}")
+
+        vault.write(state)
 
     rng_key = jax.random.PRNGKey(0)
     batch = buffer.sample(state, rng_key)

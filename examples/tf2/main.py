@@ -14,7 +14,7 @@
 from absl import flags, app
 
 from og_marl.environments.utils import get_environment
-from og_marl.replay_buffers import SequenceCPPRB
+from og_marl.replay_buffers import FlashbaxReplayBuffer, SequenceCPPRB
 from og_marl.tf2.utils import get_system, set_growing_gpu_memory
 from og_marl.loggers import JsonWriter, WandbLogger
 from og_marl.offline_dataset import OfflineMARLDataset
@@ -25,7 +25,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "mamujoco", "Environment name.")
 flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
 flags.DEFINE_string("dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' or '' for combined. ")
-flags.DEFINE_string("system", "iddpg+cql", "System name.")
+flags.DEFINE_string("system", "facmac+cql", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 1e5, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 32, "Number of training steps.")
@@ -43,9 +43,8 @@ def main(_):
     env = get_environment(FLAGS.env, FLAGS.scenario)
 
     dataset = OfflineMARLDataset(env, f"datasets/{FLAGS.env}/{FLAGS.scenario}/{FLAGS.dataset}")
-    dataset_sequence_length = dataset.get_sequence_length()
     
-    batched_dataset = SequenceCPPRB(env, max_size=FLAGS.num_offline_sequences, batch_size=FLAGS.batch_size, sequence_length=dataset_sequence_length)
+    batched_dataset = FlashbaxReplayBuffer(sequence_length=20, sample_period=20, max_size=200_000)
 
     batched_dataset.populate_from_dataset(dataset)
 

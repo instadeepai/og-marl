@@ -28,15 +28,15 @@ setup(
     install_requires=[
         "numpy",
         "dm_tree",
-        "tensorflow==2.8.*",
+        "tensorflow[and-cuda]",
         "tensorflow_io",
-        "tensorflow_probability==0.16.*",
+        "tensorflow_probability",
         "dm_sonnet",
         "wandb",
-        "cpprb",
         "absl-py",
         "gymnasium",
-        "requests"
+        "requests",
+        "jax[cpu]"
     ],
     extras_require={
         'jax': ['flashbax', 'optax', "jax", "flax", "orbax-checkpoint"],

@@ -16,7 +16,7 @@ from og_marl.environments.wrappers import PadObsandActs, Dtype, ExperienceRecord
 from og_marl.loggers import WandbLogger
 from og_marl.tf2.systems.iddpg import IDDPGSystem
 from og_marl.environments.gymnasium_mamujoco import MAMuJoCo
-from og_marl.replay_buffers import SequenceCPPRB
+from og_marl.replay_buffers import FlashbaxReplayBuffer
 
 env = MAMuJoCo("4ant")
 
@@ -24,12 +24,12 @@ env = PadObsandActs(env)
 
 env = Dtype(env, "float32")
 
-env = ExperienceRecorder(env, "mamujoco")
+# env = ExperienceRecorder(env, "mamujoco")
 
 logger = WandbLogger()
 
 system = IDDPGSystem(env, logger)
 
-rb = SequenceCPPRB(env, max_size=50_000)
+rb = FlashbaxReplayBuffer(sequence_length=20, max_size=50_000)
 
 system.train_online(rb, 10e6)

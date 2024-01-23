@@ -26,10 +26,9 @@ from og_marl.tf2.utils import (
     merge_batch_and_agent_dim_of_time_major_sequence,
     expand_batch_and_agent_dim_of_time_major_sequence,
     set_growing_gpu_memory,
-    concat_agent_id_to_obs
+    concat_agent_id_to_obs,
+    unroll_rnn
 )
-
-set_growing_gpu_memory()
 
 class StateAndJointActionCritic(snt.Module):
 
@@ -64,13 +63,13 @@ class StateAndJointActionCritic(snt.Module):
         joint_actions = make_joint_action(agent_actions, other_actions)
 
         # Repeat states for each agent
-        states = tf.stack([states]*self.N, axis=2) # [T,B,S] -> [T,B,N,S]
+        # states = tf.stack([states]*self.N, axis=2) # [T,B,S] -> [T,B,N,S]
 
         # Concat states and joint actions
         critic_input = tf.concat([states, joint_actions], axis=-1)
 
         # Concat agent IDs to critic input
-        critic_input = batch_concat_agent_id_to_obs(critic_input)
+        # critic_input = batch_concat_agent_id_to_obs(critic_input)
 
         q_values = self._critic_network(critic_input)
         return q_values
@@ -84,67 +83,15 @@ def make_joint_action(agent_actions, other_actions):
     other_actions [[T,B,N,A]]: tensor of actions the agent took. Usually
         the actions from the replay buffer.
     """
-    N = agent_actions.shape[2]
-    joint_actions = []
+    T,B,N,A = agent_actions.shape[:4] # (B,N,A)
+    all_joint_actions = []
     for i in range(N):
-        if N > 2:
-            if i > 0 and i < N - 1:
-                joint_action = tf.concat(
-                    [
-                        other_actions[:, :, :i],
-                        tf.expand_dims(agent_actions[:, :, i], axis=2),
-                        other_actions[:, :, i + 1 :],
-                    ],
-                    axis=2,  # along agent dim
-                )
-            elif i == 0:
-                joint_action = tf.concat(
-                    [
-                        tf.expand_dims(agent_actions[:, :, i], axis=2),
-                        other_actions[:, :, i + 1 :],
-                    ],
-                    axis=2,  # along agent dim
-                )
-            else:
-                joint_action = tf.concat(
-                    [
-                        other_actions[:, :, :i],
-                        tf.expand_dims(agent_actions[:, :, i], axis=2),
-                    ],
-                    axis=2,  # along agent dim
-                )
-        elif N == 2:
-            if i == 0:
-                joint_action = tf.concat(
-                    [
-                        tf.expand_dims(agent_actions[:, :, i], axis=2),
-                        tf.expand_dims(other_actions[:, :, i + 1], axis=2),
-                    ],
-                    axis=2,  # along agent dim
-                )
-            else:
-                joint_action = tf.concat(
-                    [
-                        tf.expand_dims(other_actions[:, :, i], axis=2),
-                        tf.expand_dims(agent_actions[:, :, i], axis=2),
-                    ],
-                    axis=2,  # along agent dim
-                )
-        else:
-            joint_action = agent_actions
-
-        joint_action = tf.reshape(
-            joint_action,
-            (
-                *joint_action.shape[:2],
-                joint_action.shape[2] * joint_action.shape[3],
-            ),
-        )
-
-        joint_actions.append(joint_action)
-    joint_actions = tf.stack(joint_actions, axis=2)
-
-    return joint_actions
+        one_hot = tf.expand_dims(tf.cast(tf.stack([tf.stack([tf.one_hot(i, N)]*B,axis=0)]*T,axis=0), "bool"), axis=-1)
+        joint_action = tf.where(one_hot, agent_actions, agent_actions)
+        joint_action = tf.reshape(joint_action, (T,B,N*A))
+        all_joint_actions.append(joint_action)
+    all_joint_actions = tf.stack(all_joint_actions, axis=2)
+    return tf.reshape(agent_actions, (T,B,N*A))#all_joint_actions
 
 class StateAndActionCritic(snt.Module):
 
@@ -187,7 +134,7 @@ class StateAndActionCritic(snt.Module):
         critic_input = tf.concat([states, agent_actions], axis=-1)
 
         # Concat agent IDs to critic input
-        critic_input = batch_concat_agent_id_to_obs(critic_input)
+        # critic_input = batch_concat_agent_id_to_obs(critic_input)
 
         q_values = self._critic_network(critic_input)
         return q_values
@@ -235,7 +182,7 @@ class IDDPGSystem(BaseMARLSystem):
         self._target_policy_network = copy.deepcopy(self._policy_network)
 
         # Critic network
-        self._critic_network_1 = StateAndActionCritic(len(self._environment.possible_agents), self._environment._num_actions) # shared network for all agents
+        self._critic_network_1 = StateAndJointActionCritic(len(self._environment.possible_agents), self._environment._num_actions) # shared network for all agents
         self._critic_network_2 = copy.deepcopy(self._critic_network_1)
 
         # Target critic network
@@ -291,25 +238,25 @@ class IDDPGSystem(BaseMARLSystem):
 
         return actions, next_rnn_states
     
-    def train_step(self, batch):
-        logs = self._tf_train_step(batch)
+    def train_step(self, experience):
+        logs = self._tf_train_step(experience)
         return logs
 
     @tf.function(jit_compile=True) # NOTE: comment this out if using debugger
-    def _tf_train_step(self, batch):
-        batch = batched_agents(self._environment.possible_agents, batch)
+    def _tf_train_step(self, experience):
+        batch = batched_agents(self._environment.possible_agents, experience)
 
         # Unpack the batch
         observations = batch["observations"] # (B,T,N,O)
         actions = batch["actions"] # (B,T,N,A)
         env_states = batch["state"] # (B,T,S)
         rewards = batch["rewards"] # (B,T,N)
-        truncations = batch["truncations"] # (B,T,N)
-        terminals = batch["terminals"] # (B,T,N)
+        truncations = tf.cast(batch["truncations"], "float32") # (B,T,N)
+        terminals = tf.cast(batch["terminals"], "float32") # (B,T,N)
         zero_padding_mask = batch["mask"] # (B,T)
 
-        # done = tf.cast(tf.logical_or(tf.cast(truncations, "bool"), tf.cast(terminals, "bool")), "float32")
-        done = terminals
+        # When to reset the RNN hidden state
+        resets = tf.maximum(terminals, truncations) # equivalent to logical 'or'
 
         # Get dims
         B, T, N = actions.shape[:3]
@@ -322,15 +269,16 @@ class IDDPGSystem(BaseMARLSystem):
         observations = switch_two_leading_dims(observations)
         replay_actions = switch_two_leading_dims(actions)
         rewards = switch_two_leading_dims(rewards)
-        done = switch_two_leading_dims(done)
+        terminals = switch_two_leading_dims(terminals)
         zero_padding_mask = switch_two_leading_dims(zero_padding_mask)
         env_states = switch_two_leading_dims(env_states)
+        resets = switch_two_leading_dims(resets)
 
         # Unroll target policy
-        target_actions, _ = snt.static_unroll(
+        target_actions = unroll_rnn(
             self._target_policy_network,
             merge_batch_and_agent_dim_of_time_major_sequence(observations),
-            self._target_policy_network.initial_state(B*N)
+            merge_batch_and_agent_dim_of_time_major_sequence(resets)
         )
         target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
@@ -342,7 +290,7 @@ class IDDPGSystem(BaseMARLSystem):
         target_qs = tf.minimum(target_qs_1, target_qs_2)
 
         # Compute Bellman targets
-        targets = rewards[:-1] + self._discount * (1-done[:-1]) * tf.squeeze(target_qs[1:], axis=-1)
+        targets = rewards[:-1] + self._discount * (1-terminals[:-1]) * tf.squeeze(target_qs[1:], axis=-1)
 
         # Do forward passes through the networks and calculate the losses
         with tf.GradientTape(persistent=True) as tape:
@@ -363,10 +311,10 @@ class IDDPGSystem(BaseMARLSystem):
 
             # Policy Loss
             # Unroll online policy
-            onlin_actions, _ = snt.static_unroll(
+            onlin_actions = unroll_rnn(
                 self._policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
-                self._policy_network.initial_state(B*N)
+                merge_batch_and_agent_dim_of_time_major_sequence(resets)
             )
             online_actions = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
 
