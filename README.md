@@ -111,9 +111,16 @@ We have generated datasets on a diverse set of popular MARL environments. A list
 
 ## Quickstart 🏁
 
-### Instalation 🛠️
+### Installation 🛠️
 
-To install og-marl run the following command.
+Start by cloning this repository:
+`git clone https://github.com/instadeepai/og-marl.git`
+
+Navigate into the og-marl directory.
+
+`cd og-marl`
+
+To install og-marl and its dependencies run the following command in a virtual environment (e.g. conda).
 
 `pip install -e .`
 
