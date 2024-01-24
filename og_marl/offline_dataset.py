@@ -135,13 +135,25 @@ DATASET_URLS = {
         "3_trains": "https://tinyurl.com/3trains-dataset",
         "5_trains": "https://tinyurl.com/5trains-dataset"
     },
+    "pettingzoo": {
+        "pursuit": "https://tinyurl.com/pursuit-dataset",
+        "pistonball":"https://tinyurl.com/pistonball-dataset",
+        "coop_pong":"https://tinyurl.com/coop-pong-dataset",
+        "kaz":"https://tinyurl.com/kaz-dataset"
+    },
     "mamujoco": {
-        "2_halfcheetah": "",
-        "2_ant": "",
-        "4_ant": ""
+        "2_halfcheetah": "https://tinyurl.com/2halfcheetah-dataset",
+        "2_ant": "https://tinyurl.com/2ant-dataset",
+        "4_ant": "https://tinyurl.com/4ant-dataset"
     },
     "voltage_control": {
         "case33_3min_final": "https://tinyurl.com/case33-3min-final-dataset",
+    },
+    "city_learn": {
+        "2022_all_phases":"https://tinyurl.com/2022-all-phases-dataset"
+    },
+    "mpe": {
+        "simple_adversary":"https://tinyurl.com/simple-adversary-dataset"
     }
 }
 def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./datasets"):
