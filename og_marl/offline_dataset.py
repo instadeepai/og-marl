@@ -122,7 +122,7 @@ DATASET_URLS = {
         "8m": "https://tinyurl.com/8m-dataset",
         "5m_vs_6m": "https://tinyurl.com/5m-vs-6m-dataset",
         "2s3z": "https://tinyurl.com/2s3z-dataset",
-        "3s5z_vs_3s6z": "ttps://tinyurl.com/3s5z-vs-3s6z-dataset3",
+        "3s5z_vs_3s6z": "https://tinyurl.com/3s5z-vs-3s6z-dataset3",
         "2c_vs_64zg": "https://tinyurl.com/2c-vs-64zg-dataset",
         "27m_vs_30m": "https://tinyurl.com/27m-vs-30m-dataset"
     },
@@ -148,11 +148,11 @@ def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./data
     dataset_download_url = DATASET_URLS[env_name][scenario_name]
 
     os.makedirs(f'{dataset_base_dir}/tmp/', exist_ok=True)
-    os.makedirs(f'{dataset_base_dir}/{env_name}/{scenario_name}', exist_ok=True)
+    os.makedirs(f'{dataset_base_dir}/{env_name}', exist_ok=True)
 
     zip_file_path = f'{dataset_base_dir}/tmp/tmp_dataset.zip'
 
-    extraction_path = f'{dataset_base_dir}/{env_name}/{scenario_name}'
+    extraction_path = f'{dataset_base_dir}/{env_name}/'
 
     response = requests.get(dataset_download_url, stream=True)
     total_length = response.headers.get('content-length')
