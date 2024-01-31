@@ -40,11 +40,6 @@ nav:
   - Home: 'index.md'
   - Datasets: 'datasets.md'
 
-  nav:
-  - Home: '../'
-  - 'User Guide': 'user-guide.md'
-  - 'Bug Tracker': '/bugs/'
-
 markdown_extensions:
   - attr_list
   - md_in_html
