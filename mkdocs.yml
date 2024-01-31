@@ -36,6 +36,10 @@ theme:
         icon: material/weather-night
         name: Switch to light mode
 
+nav:
+  -Home: 'index.md'
+    -Datasets: 'datasets.md'
+
 markdown_extensions:
   - attr_list
   - md_in_html

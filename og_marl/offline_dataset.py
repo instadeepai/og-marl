@@ -122,7 +122,7 @@ DATASET_URLS = {
         "8m": "https://tinyurl.com/8m-dataset",
         "5m_vs_6m": "https://tinyurl.com/5m-vs-6m-dataset",
         "2s3z": "https://tinyurl.com/2s3z-dataset",
-        "3s5z_vs_3s6z": "ttps://tinyurl.com/3s5z-vs-3s6z-dataset3",
+        "3s5z_vs_3s6z": "https://tinyurl.com/3s5z-vs-3s6z-dataset3",
         "2c_vs_64zg": "https://tinyurl.com/2c-vs-64zg-dataset",
         "27m_vs_30m": "https://tinyurl.com/27m-vs-30m-dataset"
     },
@@ -135,24 +135,36 @@ DATASET_URLS = {
         "3_trains": "https://tinyurl.com/3trains-dataset",
         "5_trains": "https://tinyurl.com/5trains-dataset"
     },
+    "pettingzoo": {
+        "pursuit": "https://tinyurl.com/pursuit-dataset",
+        "pistonball":"https://tinyurl.com/pistonball-dataset",
+        "coop_pong":"https://tinyurl.com/coop-pong-dataset",
+        "kaz":"https://tinyurl.com/kaz-dataset"
+    },
     "mamujoco": {
-        "2_halfcheetah": "",
-        "2_ant": "",
-        "4_ant": ""
+        "2_halfcheetah": "https://tinyurl.com/2halfcheetah-dataset",
+        "2_ant": "https://tinyurl.com/2ant-dataset",
+        "4_ant": "https://tinyurl.com/4ant-dataset"
     },
     "voltage_control": {
         "case33_3min_final": "https://tinyurl.com/case33-3min-final-dataset",
+    },
+    "city_learn": {
+        "2022_all_phases":"https://tinyurl.com/2022-all-phases-dataset"
+    },
+    "mpe": {
+        "simple_adversary":"https://tinyurl.com/simple-adversary-dataset"
     }
 }
 def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./datasets"):
     dataset_download_url = DATASET_URLS[env_name][scenario_name]
 
     os.makedirs(f'{dataset_base_dir}/tmp/', exist_ok=True)
-    os.makedirs(f'{dataset_base_dir}/{env_name}/{scenario_name}', exist_ok=True)
+    os.makedirs(f'{dataset_base_dir}/{env_name}', exist_ok=True)
 
     zip_file_path = f'{dataset_base_dir}/tmp/tmp_dataset.zip'
 
-    extraction_path = f'{dataset_base_dir}/{env_name}/{scenario_name}'
+    extraction_path = f'{dataset_base_dir}/{env_name}/'
 
     response = requests.get(dataset_download_url, stream=True)
     total_length = response.headers.get('content-length')
