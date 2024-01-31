@@ -38,7 +38,7 @@ theme:
 
 nav:
   -Home: 'index.md'
-    -Datasets: 'datasets.md'
+  -Datasets: 'datasets.md'
 
 markdown_extensions:
   - attr_list
