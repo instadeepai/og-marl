@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import jax
 import os
+
+import jax
 import jax.numpy as jnp
-from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 import orbax.checkpoint
+from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
+
 
 class FlashbaxBufferStore:
     def __init__(

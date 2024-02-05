@@ -14,8 +14,10 @@
 
 import json
 import os
-import wandb
 import time
+
+import wandb
+
 
 class TerminalLogger:
 

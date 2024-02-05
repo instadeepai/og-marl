@@ -6,24 +6,26 @@
 
 #     http://www.apache.org/licenses/LICENSE-2.0
 
+import time
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import Sequence
-import time
-import wandb
+
+import flashbax as fbx
 import jax
 import jax.numpy as jnp
-from flax import linen as nn
-import flashbax as fbx
-from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 import optax
 import tree
+import wandb
+from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
+from flax import linen as nn
 
 from og_marl.environments.utils import get_environment
 from og_marl.jax.tf_dataset_to_flashbax import FlashbaxBufferStore
+
 
 def train_bc_system(
     environment,
@@ -123,7 +125,7 @@ def train_bc_system(
         """
         Args:
             params: a container of params for the behaviour cloning network which is shared between 
-                all agents in the sustem.
+                all agents in the system.
             obs_seq: an array of a sequence of observations for all agents. Shape (B,N,T,O) where
                 B is the batch dim, N is the number of agents, T is the time dimension and O is
                 the observation dim.

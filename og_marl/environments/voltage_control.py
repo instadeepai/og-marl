@@ -1,9 +1,11 @@
 """MAPDN Environment Wrapper."""
 from typing import Dict, List
+
 import numpy as np
-from og_marl.environments.base import BaseEnvironment
 from gymnasium.spaces import Box
-from var_voltage_control.voltage_control_env import VoltageControl 
+from var_voltage_control.voltage_control_env import VoltageControl
+
+from og_marl.environments.base import BaseEnvironment
 
 
 class VoltageControlEnv(BaseEnvironment):

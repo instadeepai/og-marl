@@ -12,20 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Sequence
-import time
 import copy
-import wandb
-import jax
+import time
+from typing import Sequence
+
 import chex
+import flashbax as fbx
+import jax
+import jax.numpy as jnp
 import optax
 import tree
-import jax.numpy as jnp
-from flax import linen as nn
-import flashbax as fbx
+import wandb
 from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
+from flax import linen as nn
 
 from og_marl.jax.dataset import FlashbaxBufferStore
+
 
 def train_maicq_system(
     environment,
@@ -205,7 +207,7 @@ def train_maicq_system(
         """
         B,T,N = obs.shape[:3]
 
-        # Collaps agent dim into batch dim
+        # Collapse agent dim into batch dim
         obs = jnp.swapaxes(obs, 1, 2)
         obs = jnp.reshape(obs, (B*N, T, obs.shape[-1])) # (B*N,T,O)
 
@@ -219,7 +221,7 @@ def train_maicq_system(
         probs = probs * legals  # Mask illegal actions
         probs_sum = (
             jnp.sum(probs, axis=-1, keepdims=True) + 1e-9
-        )  # avoid div by zero by ading small number
+        )  # avoid div by zero by adding small number
         probs = probs / probs_sum # renormalise
 
         # Compute advantage

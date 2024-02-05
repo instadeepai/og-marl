@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import flashbax as fbx
 import jax
 import numpy as np
-import flashbax as fbx
 from flashbax.vault import Vault
 
 BUFFER_TIME_AXIS_LEN = 100_000

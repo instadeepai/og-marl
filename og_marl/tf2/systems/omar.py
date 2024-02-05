@@ -13,19 +13,17 @@
 # limitations under the License.
 
 """Implementation of OMAR"""
-import tensorflow as tf
-import sonnet as snt
 import numpy as np
-import tensorflow_probability as tfp 
+import sonnet as snt
+import tensorflow as tf
+import tensorflow_probability as tfp
 
 from og_marl.tf2.systems.iddpg_cql import IDDPGCQLSystem
 from og_marl.tf2.utils import (
-    batch_concat_agent_id_to_obs,
-    batched_agents,
-    switch_two_leading_dims,
-    merge_batch_and_agent_dim_of_time_major_sequence,
+    batch_concat_agent_id_to_obs, batched_agents,
     expand_batch_and_agent_dim_of_time_major_sequence,
-)
+    merge_batch_and_agent_dim_of_time_major_sequence, switch_two_leading_dims)
+
 
 class OMARSystem(IDDPGCQLSystem):
 

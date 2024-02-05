@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
 import time
 
+import numpy as np
+
 from og_marl.loggers import JsonWriter
+
 
 class BaseMARLSystem:
     def __init__(
@@ -144,7 +146,7 @@ class BaseMARLSystem:
     def train_offline(self, batched_dataset, max_trainer_steps=1e5, evaluate_every=1000, num_eval_episodes=4, json_writer=None):
         """Method to train the system offline.
         
-        WARNING: make sure evaluate_every % log_every == 0 and log_every < evaluate_every, else you wont log evaluation.
+        WARNING: make sure evaluate_every % log_every == 0 and log_every < evaluate_every, else you won't log evaluation.
         """
         trainer_step_ctr = 0
         while trainer_step_ctr < max_trainer_steps:

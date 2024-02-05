@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Wraper for SMACv2."""
+"""Wrapper for SMACv2."""
 import numpy as np
-from gymnasium.spaces import Discrete, Box
-
+from gymnasium.spaces import Box, Discrete
 from smacv2.env.starcraft2.wrapper import StarCraftCapabilityEnvWrapper
+
 from og_marl.environments.base import BaseEnvironment
 
 DISTRIBUTION_CONFIGS = {

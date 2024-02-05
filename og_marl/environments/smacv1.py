@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Wraper for SMAC."""
+"""Wrapper for SMAC."""
 import numpy as np
-from og_marl.environments.base import BaseEnvironment
+from gymnasium.spaces import Box, Discrete
 from smac.env import StarCraft2Env
-from gymnasium.spaces import Discrete, Box
+
+from og_marl.environments.base import BaseEnvironment
+
 
 class SMACv1(BaseEnvironment):
     """Environment wrapper SMACv1."""

@@ -11,13 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from absl import flags, app
+from absl import app, flags
 
 from og_marl.environments.utils import get_environment
-from og_marl.replay_buffers import SequenceCPPRB
-from og_marl.tf2.utils import get_system, set_growing_gpu_memory
 from og_marl.loggers import JsonWriter, WandbLogger
 from og_marl.offline_dataset import OfflineMARLDataset
+from og_marl.replay_buffers import SequenceCPPRB
+from og_marl.tf2.utils import get_system, set_growing_gpu_memory
 
 set_growing_gpu_memory()
 

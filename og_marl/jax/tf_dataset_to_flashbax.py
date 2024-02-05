@@ -12,17 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import jax
 import os
-import jax.numpy as jnp
-import flashbax as fbx
-from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 from pathlib import Path
+
+import flashbax as fbx
+import jax
+import jax.numpy as jnp
+import orbax.checkpoint
 import tensorflow as tf
 import tree
-import orbax.checkpoint
+from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 
 from og_marl.environments.utils import get_environment
+
 
 class FlashbaxBufferStore:
     def __init__(

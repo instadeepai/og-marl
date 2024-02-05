@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import numpy as np
-from multiagent_mujoco.mujoco_multi import MujocoMulti
 from gymnasium.spaces import Box
+from multiagent_mujoco.mujoco_multi import MujocoMulti
 
 from og_marl.environments.base import BaseEnvironment
- 
+
+
 def get_mamujoco_args(scenario):
     env_args = {
         "agent_obsk": 1,

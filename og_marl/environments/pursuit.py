@@ -13,9 +13,10 @@
 # limitations under the License.
 
 import numpy as np
+from gymnasium.spaces import Box, Discrete
 from pettingzoo.sisl import pursuit_v4
-from gymnasium.spaces import Discrete, Box
 from supersuit import black_death_v3
+
 from og_marl.environments.pettingzoo_base import PettingZooBase
 
 

@@ -13,18 +13,15 @@
 # limitations under the License.
 
 """Implementation of QMIX+BCQ"""
-import tensorflow as tf
 import sonnet as snt
+import tensorflow as tf
 
 from og_marl.tf2.systems.idrqn import IDRQNSystem
 from og_marl.tf2.utils import (
-    batched_agents,
-    gather,
-    batch_concat_agent_id_to_obs,
-    switch_two_leading_dims,
-    merge_batch_and_agent_dim_of_time_major_sequence,
-    expand_batch_and_agent_dim_of_time_major_sequence,
-)
+    batch_concat_agent_id_to_obs, batched_agents,
+    expand_batch_and_agent_dim_of_time_major_sequence, gather,
+    merge_batch_and_agent_dim_of_time_major_sequence, switch_two_leading_dims)
+
 
 class IDRQNBCQSystem(IDRQNSystem):
     """IDRQN+BCQ System"""

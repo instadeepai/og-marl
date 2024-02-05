@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from og_marl.offline_dataset import download_and_unzip_dataset
 from og_marl.environments import smacv1
-from og_marl.offline_dataset import OfflineMARLDataset
+from og_marl.offline_dataset import (OfflineMARLDataset,
+                                     download_and_unzip_dataset)
 
 # Comment this out if you already downloaded the dataset
 download_and_unzip_dataset("smac_v1", "3m", dataset_base_dir="datasets")

@@ -13,20 +13,15 @@
 # limitations under the License.
 
 """Implementation of MAICQ"""
-import tensorflow as tf
 import sonnet as snt
+import tensorflow as tf
 import tree
 
 from og_marl.tf2.systems.qmix import QMIXSystem
 from og_marl.tf2.utils import (
-    batched_agents,
-    concat_agent_id_to_obs,
-    gather,
-    batch_concat_agent_id_to_obs,
-    switch_two_leading_dims,
-    merge_batch_and_agent_dim_of_time_major_sequence,
-    expand_batch_and_agent_dim_of_time_major_sequence,
-)
+    batch_concat_agent_id_to_obs, batched_agents, concat_agent_id_to_obs,
+    expand_batch_and_agent_dim_of_time_major_sequence, gather,
+    merge_batch_and_agent_dim_of_time_major_sequence, switch_two_leading_dims)
 
 
 class MAICQSystem(QMIXSystem):

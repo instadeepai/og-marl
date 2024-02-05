@@ -18,11 +18,11 @@ from typing import Dict, List
 import cv2
 import dm_env
 import numpy as np
-from dm_env import specs
-from og_marl.environments.base import OLT
-from pettingzoo.butterfly import pistonball_v6
 import supersuit
+from dm_env import specs
+from pettingzoo.butterfly import pistonball_v6
 
+from og_marl.environments.base import OLT
 from og_marl.environments.pettingzoo_base import PettingZooBase
 
 

@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
-from pathlib import Path
-import tensorflow as tf
-from collections import namedtuple
-import tree
-import zipfile
 import os
+import sys
+import zipfile
+from collections import namedtuple
+from pathlib import Path
+
 import requests
+import tensorflow as tf
+import tree
+
 
 def get_schema_dtypes(environment):
     act_type = list(environment.action_spaces.values())[0].dtype

@@ -14,20 +14,17 @@
 
 """Implementation of TD3"""
 import copy
-import tensorflow as tf
+
 import sonnet as snt
+import tensorflow as tf
 import tree
 
 from og_marl.tf2.systems.base import BaseMARLSystem
 from og_marl.tf2.utils import (
-    batch_concat_agent_id_to_obs,
-    batched_agents,
-    switch_two_leading_dims,
-    merge_batch_and_agent_dim_of_time_major_sequence,
+    batch_concat_agent_id_to_obs, batched_agents, concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
-    set_growing_gpu_memory,
-    concat_agent_id_to_obs
-)
+    merge_batch_and_agent_dim_of_time_major_sequence, set_growing_gpu_memory,
+    switch_two_leading_dims)
 
 set_growing_gpu_memory()
 

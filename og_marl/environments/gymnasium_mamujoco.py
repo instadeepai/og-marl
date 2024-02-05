@@ -15,7 +15,8 @@
 import gymnasium_robotics
 
 from og_marl.environments.base import BaseEnvironment
- 
+
+
 def get_env_config(scenario):
     """Helper method to get env_args."""
     env_args = {

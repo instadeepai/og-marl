@@ -12,25 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Wraper for Flatland."""
-from typing import Tuple, Any
-import numpy as np
-from og_marl.environments.base import BaseEnvironment
-from gymnasium.spaces import Discrete, Box
+"""Wrapper for Flatland."""
+from typing import Any, Tuple
 
+import numpy as np
 from flatland.core.env import Environment
-from flatland.envs.observations import TreeObsForRailEnv, Node
 from flatland.core.env_observation_builder import ObservationBuilder
 from flatland.core.env_prediction_builder import PredictionBuilder
 from flatland.core.grid.grid4_utils import get_new_position
 from flatland.core.grid.grid_utils import coordinate_to_position
 from flatland.envs.agent_utils import EnvAgent
+from flatland.envs.line_generators import sparse_line_generator
+from flatland.envs.observations import Node, TreeObsForRailEnv
+from flatland.envs.predictions import ShortestPathPredictorForRailEnv
 from flatland.envs.rail_env import RailEnv, RailEnvActions
 from flatland.envs.rail_generators import sparse_rail_generator
-from flatland.envs.line_generators import sparse_line_generator
-from flatland.envs.predictions import ShortestPathPredictorForRailEnv
-from flatland.utils.rendertools import AgentRenderVariant, RenderTool
 from flatland.envs.step_utils.states import TrainState
+from flatland.utils.rendertools import AgentRenderVariant, RenderTool
+from gymnasium.spaces import Box, Discrete
+
+from og_marl.environments.base import BaseEnvironment
+
 
 def get_config_key(num_agents):
     return str(num_agents) + "_trains"
@@ -289,7 +291,7 @@ def norm_obs_clip(
     :param obs: Observation that should be normalized
     :param clip_min: min value where observation will be clipped
     :param clip_max: max value where observation will be clipped
-    :return: returnes normalized and clipped observatoin
+    :return: returns normalized and clipped observation
     """
     if fixed_radius > 0:
         max_obs = fixed_radius

@@ -13,19 +13,15 @@
 # limitations under the License.
 
 """Implementation of QMIX"""
-import tensorflow as tf
 import sonnet as snt
+import tensorflow as tf
 
 from og_marl.tf2.systems.idrqn import IDRQNSystem
 from og_marl.tf2.utils import (
-    gather,
-    batch_concat_agent_id_to_obs,
-    switch_two_leading_dims,
-    merge_batch_and_agent_dim_of_time_major_sequence,
-    expand_batch_and_agent_dim_of_time_major_sequence,
-    set_growing_gpu_memory,
-    batched_agents
-)
+    batch_concat_agent_id_to_obs, batched_agents,
+    expand_batch_and_agent_dim_of_time_major_sequence, gather,
+    merge_batch_and_agent_dim_of_time_major_sequence, set_growing_gpu_memory,
+    switch_two_leading_dims)
 
 set_growing_gpu_memory()
 
@@ -202,10 +198,10 @@ class QMixer(snt.Module):
     def __init__(
         self, num_agents, embed_dim = 32, hypernet_embed = 64, preprocess_network = None, non_monotonic=False
     ) -> None:
-        """Inialize QMIX mixing network
+        """Initialise QMIX mixing network
 
         Args:
-            num_agents: Number of agents in the enviroment
+            num_agents: Number of agents in the environment
             state_dim: Dimensions of the global environment state
             embed_dim: The dimension of the output of the first layer
                 of the mixer.

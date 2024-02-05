@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from absl import flags, app
+from absl import app, flags
 
 from og_marl.environments.utils import get_environment
 from og_marl.jax.utils import get_system
