@@ -58,6 +58,8 @@ class MAMuJoCo(BaseEnvironment):
             "legals": {agent: np.zeros(self.action_spaces[agent].shape, "int64") for agent in self.possible_agents}
         }
 
+        self.max_episode_length = 1000
+
     def reset(self):
 
         self._environment.reset()

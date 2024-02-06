@@ -14,9 +14,12 @@
 
 import numpy as np
 import jax
+import jax.numpy as jnp
 import flashbax as fbx
 import cpprb
+import copy
 import tree
+from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 
 class FlashbaxReplayBuffer:
 
@@ -64,19 +67,95 @@ class FlashbaxReplayBuffer:
         return batch.experience
     
     def populate_from_dataset(self, dataset):
-        dataset = dataset.batch(128)
-        for batch in dataset:
-            del batch["infos"]["episode_return"]
-            B,T = list(batch["observations"].values())[0].shape[:2]
-            flattened_batch= tree.map_structure(lambda x: np.reshape(x.numpy(), (-1, *x.shape[2:])), batch)
+        batch_size = 2048
+        batched_dataset = dataset.raw_dataset.batch(batch_size)
+        period = dataset.period
+        max_episode_length = dataset.max_episode_length
+        agents = dataset._agents
 
-            if self._buffer_state is None:
-                single_timestep = tree.map_structure(lambda x: x[0], flattened_batch)
-                self._buffer_state = self._replay_buffer.init(single_timestep)
+        experience = {
+            "observations": {agent: [] for agent in agents},
+            "actions": {agent: [] for agent in agents},
+            "rewards": {agent: [] for agent in agents},
+            "terminals": {agent: [] for agent in agents},
+            "truncations": {agent: [] for agent in agents},
+            "infos": {
+                "legals": {agent: [] for agent in agents},
+                "state": []
+            }
+        }
 
-            flattened_batch = tree.map_structure(lambda x: np.expand_dims(x, axis=0), flattened_batch) # add dummy batch dim
-            self._buffer_state = self._buffer_add_fn(self._buffer_state, flattened_batch)
-        print("Done")
+        episode = {
+            "observations": {agent: [] for agent in agents},
+            "actions": {agent: [] for agent in agents},
+            "rewards": {agent: [] for agent in agents},
+            "terminals": {agent: [] for agent in agents},
+            "truncations": {agent: [] for agent in agents},
+            "infos": {
+                "legals": {agent: [] for agent in agents},
+                "state": []
+            }
+        }
+
+        episode_length = 0
+        for batch in batched_dataset:
+            mask = copy.deepcopy(batch["infos"]["mask"])
+            B = mask.shape[0] # batch_size
+            for idx in range(B):
+                zero_padding_mask = mask[idx,:period]
+                episode_length += np.sum(zero_padding_mask, dtype=int)
+
+                for agent in agents:
+                    episode["observations"][agent].append(batch["observations"][agent][idx, :period])
+                    episode["actions"][agent].append(batch["actions"][agent][idx, :period])
+                    episode["rewards"][agent].append(batch["rewards"][agent][idx, :period])
+                    episode["terminals"][agent].append(batch["terminals"][agent][idx, :period])
+                    episode["truncations"][agent].append(batch["truncations"][agent][idx, :period])
+                    episode["infos"]["legals"][agent].append(batch["infos"]["legals"][agent][idx, :period])
+                episode["infos"]["state"].append(batch["infos"]["state"][idx, :period])
+
+                if (
+                    int(list(episode["terminals"].values())[0][-1][-1]) == 1 # agent 0, last chunck, last timestep in chunk
+                    or episode_length >= max_episode_length
+                ):
+                    for agent in agents:
+                        experience["observations"][agent].append(np.concatenate(episode["observations"][agent], axis=0)[:episode_length])
+                        experience["actions"][agent].append(np.concatenate(episode["actions"][agent], axis=0)[:episode_length])
+                        experience["rewards"][agent].append(np.concatenate(episode["rewards"][agent], axis=0)[:episode_length])
+                        experience["terminals"][agent].append(np.concatenate(episode["terminals"][agent], axis=0)[:episode_length])
+                        experience["truncations"][agent].append(np.concatenate(episode["truncations"][agent], axis=0)[:episode_length])
+                        experience["infos"]["legals"][agent].append(np.concatenate(episode["infos"]["legals"][agent], axis=0)[:episode_length])
+                    experience["infos"]["state"].append(np.concatenate(episode["infos"]["state"], axis=0)[:episode_length])
+
+                    # Clear episode
+                    episode = {
+                        "observations": {agent: [] for agent in agents},
+                        "actions": {agent: [] for agent in agents},
+                        "rewards": {agent: [] for agent in agents},
+                        "terminals": {agent: [] for agent in agents},
+                        "truncations": {agent: [] for agent in agents},
+                        "infos": {
+                            "legals": {agent: [] for agent in agents},
+                            "state": []
+                        }
+                    }
+                    episode_length = 0
+
+        # Concatenate Episodes Together
+        for agent in agents:
+            experience["observations"][agent] = np.concatenate(experience["observations"][agent], axis=0)
+            experience["actions"][agent] = np.concatenate(experience["actions"][agent], axis=0)
+            experience["rewards"][agent] = np.concatenate(experience["rewards"][agent], axis=0)
+            experience["terminals"][agent] = np.concatenate(experience["terminals"][agent], axis=0)
+            experience["truncations"][agent] = np.concatenate(experience["truncations"][agent], axis=0)
+            experience["infos"]["legals"][agent] = np.concatenate(experience["infos"]["legals"][agent], axis=0)
+        experience["infos"]["state"] = np.concatenate(experience["infos"]["state"], axis=0)
+
+        experience = jax.tree_map(lambda x: jnp.expand_dims(x, axis=0), experience)
+
+        buffer_state = TrajectoryBufferState(experience=experience, is_full=jnp.array(False, dtype=bool), current_index=jnp.array(0))
+
+        self._buffer_state = buffer_state
 
 class SequenceCPPRB:
 

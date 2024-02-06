@@ -40,6 +40,8 @@ class SMACv1(BaseEnvironment):
             "legals": {agent: np.zeros((self._num_actions,), "int64") for agent in self.possible_agents}
         }
 
+        self.max_episode_length = self._environment.episode_limit
+
     def reset(self):
         """Resets the env."""
 
