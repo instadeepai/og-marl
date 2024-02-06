@@ -25,7 +25,6 @@ class BaseMARLSystem:
         discount=0.99,
         add_agent_id_to_obs=False,
     ):
-
         self._environment = environment
         self._agents = environment.possible_agents
         self._logger = logger
@@ -52,7 +51,6 @@ class BaseMARLSystem:
             done = False
             episode_return = 0
             while not done:
-
                 if "legals" in infos:
                     legal_actions = infos["legals"]
                 else:
@@ -60,7 +58,9 @@ class BaseMARLSystem:
 
                 actions = self.select_actions(observations, legal_actions, explore=False)
 
-                observations, rewards, terminals, truncations, infos = self._environment.step(actions)
+                observations, rewards, terminals, truncations, infos = self._environment.step(
+                    actions
+                )
                 episode_return += np.mean(list(rewards.values()))
                 done = all(terminals.values()) or all(truncations.values())
             episode_returns.append(episode_return)
@@ -70,8 +70,8 @@ class BaseMARLSystem:
     def train_online(self, replay_buffer, max_env_steps=1e6, train_period=20):
         """Method to train the system online."""
         episodes = 0
-        while True: # breaks out when env_steps > max_env_steps
-            self.reset() # reset the system
+        while True:  # breaks out when env_steps > max_env_steps
+            self.reset()  # reset the system
             observations = self._environment.reset()
 
             if isinstance(observations, tuple):
@@ -89,12 +89,18 @@ class BaseMARLSystem:
                 start_time = time.time()
                 actions = self.select_actions(observations, legal_actions)
                 end_time = time.time()
-                time_for_action_selection = (end_time - start_time)
+                time_for_action_selection = end_time - start_time
 
                 start_time = time.time()
-                next_observations, rewards, terminals, truncations, next_infos = self._environment.step(actions)
+                (
+                    next_observations,
+                    rewards,
+                    terminals,
+                    truncations,
+                    next_infos,
+                ) = self._environment.step(actions)
                 end_time = time.time()
-                time_to_step = (end_time - start_time)
+                time_to_step = end_time - start_time
 
                 # Add step to replay buffer
                 replay_buffer.add(observations, actions, rewards, terminals, truncations, infos)
@@ -105,27 +111,37 @@ class BaseMARLSystem:
 
                 # Bookkeeping
                 episode_return += np.mean(list(rewards.values()))
-                self._env_step_ctr  += 1
+                self._env_step_ctr += 1
 
-                if self._env_step_ctr > 100 and self._env_step_ctr % train_period == 0: # TODO burn in period
+                if (
+                    self._env_step_ctr > 100 and self._env_step_ctr % train_period == 0
+                ):  # TODO burn in period
                     # Sample replay buffer
                     start_time = time.time()
                     batch = next(replay_buffer)
                     end_time = time.time()
-                    time_to_sample = (end_time - start_time)
+                    time_to_sample = end_time - start_time
 
                     # Train step
                     start_time = time.time()
                     train_logs = self.train_step(batch)
                     end_time = time.time()
-                    time_train_step = (end_time - start_time)
+                    time_train_step = end_time - start_time
 
                     train_steps_per_second = 1 / (time_train_step + time_to_sample)
                     env_steps_per_second = 1 / (time_to_step + time_for_action_selection)
 
-                    train_logs = {**train_logs, **self.get_stats(), "Environment Steps": self._env_step_ctr, "Time to Sample": time_to_sample, "Time for Action Selection": time_for_action_selection, "Time to Step Env": time_to_step, "Time for Train Step": time_train_step,
-                                  "Train Steps Per Second": train_steps_per_second,
-                                  "Env Steps Per Second": env_steps_per_second}
+                    train_logs = {
+                        **train_logs,
+                        **self.get_stats(),
+                        "Environment Steps": self._env_step_ctr,
+                        "Time to Sample": time_to_sample,
+                        "Time for Action Selection": time_for_action_selection,
+                        "Time to Step Env": time_to_step,
+                        "Time for Train Step": time_train_step,
+                        "Train Steps Per Second": train_steps_per_second,
+                        "Env Steps Per Second": env_steps_per_second,
+                    }
 
                     self._logger.write(train_logs)
 
@@ -134,21 +150,33 @@ class BaseMARLSystem:
                     break
 
             episodes += 1
-            if episodes % 1 == 0: # TODO: make variable
-                self._logger.write({"Episodes": episodes, "Episode Return": episode_return, "Environment Steps": self._env_step_ctr}, force=True)
+            if episodes % 1 == 0:  # TODO: make variable
+                self._logger.write(
+                    {
+                        "Episodes": episodes,
+                        "Episode Return": episode_return,
+                        "Environment Steps": self._env_step_ctr,
+                    },
+                    force=True,
+                )
 
             if self._env_step_ctr > max_env_steps:
                 break
 
-
-    def train_offline(self, batched_dataset, max_trainer_steps=1e5, evaluate_every=1000, num_eval_episodes=4, json_writer=None):
+    def train_offline(
+        self,
+        batched_dataset,
+        max_trainer_steps=1e5,
+        evaluate_every=1000,
+        num_eval_episodes=4,
+        json_writer=None,
+    ):
         """Method to train the system offline.
 
         WARNING: make sure evaluate_every % log_every == 0 and log_every < evaluate_every, else you won't log evaluation.
         """
         trainer_step_ctr = 0
         while trainer_step_ctr < max_trainer_steps:
-
             if evaluate_every is not None and trainer_step_ctr % evaluate_every == 0:
                 print("EVALUATION")
                 eval_logs = self.evaluate(num_eval_episodes)
@@ -158,22 +186,28 @@ class BaseMARLSystem:
                         trainer_step_ctr,
                         "evaluator/episode_return",
                         eval_logs["evaluator/episode_return"],
-                        trainer_step_ctr // evaluate_every
+                        trainer_step_ctr // evaluate_every,
                     )
 
             start_time = time.time()
             batch = next(batched_dataset)
             end_time = time.time()
-            time_to_sample = (end_time - start_time)
+            time_to_sample = end_time - start_time
 
             start_time = time.time()
             train_logs = self.train_step(batch)
             end_time = time.time()
-            time_train_step = (end_time - start_time)
+            time_train_step = end_time - start_time
 
             train_steps_per_second = 1 / (time_train_step + time_to_sample)
 
-            logs = {**train_logs, "Trainer Steps": trainer_step_ctr, "Time to Sample": time_to_sample, "Time for Train Step": time_train_step, "Train Steps Per Second": train_steps_per_second}
+            logs = {
+                **train_logs,
+                "Trainer Steps": trainer_step_ctr,
+                "Time to Sample": time_to_sample,
+                "Time for Train Step": time_train_step,
+                "Train Steps Per Second": train_steps_per_second,
+            }
 
             self._logger.write(logs)
 
@@ -188,7 +222,7 @@ class BaseMARLSystem:
                 trainer_step_ctr,
                 "absolute/episode_return",
                 eval_logs["absolute/episode_return"],
-                trainer_step_ctr // evaluate_every
+                trainer_step_ctr // evaluate_every,
             )
 
     def reset():

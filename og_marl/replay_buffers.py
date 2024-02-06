@@ -18,7 +18,6 @@ import tree
 
 
 class SequenceCPPRB:
-
     def __init__(self, environment, sequence_length=20, max_size=10_000, batch_size=32):
         self._environment = environment
         self._sequence_length = sequence_length
@@ -38,7 +37,9 @@ class SequenceCPPRB:
             cpprb_env_dict[f"{agent}_terminals"] = {"shape": (sequence_length,)}
             cpprb_env_dict[f"{agent}_truncations"] = {"shape": (sequence_length,)}
 
-            sequence_buffer[f"{agent}_observations"] = np.zeros((sequence_length, *obs_shape), "float32")
+            sequence_buffer[f"{agent}_observations"] = np.zeros(
+                (sequence_length, *obs_shape), "float32"
+            )
             sequence_buffer[f"{agent}_actions"] = np.zeros((sequence_length, *act_shape), "float32")
             sequence_buffer[f"{agent}_rewards"] = np.zeros((sequence_length,), "float32")
             sequence_buffer[f"{agent}_terminals"] = np.zeros((sequence_length,), "float32")
@@ -47,7 +48,9 @@ class SequenceCPPRB:
             if "legals" in self._info_spec:
                 legals_shape = self._info_spec["legals"][agent].shape
                 cpprb_env_dict[f"{agent}_legals"] = {"shape": (sequence_length, *legals_shape)}
-                sequence_buffer[f"{agent}_legals"] = np.zeros((sequence_length, *legals_shape), "float32")
+                sequence_buffer[f"{agent}_legals"] = np.zeros(
+                    (sequence_length, *legals_shape), "float32"
+                )
 
         cpprb_env_dict["mask"] = {"shape": (sequence_length,)}
         sequence_buffer["mask"] = np.zeros((sequence_length,), "float32")
@@ -59,9 +62,7 @@ class SequenceCPPRB:
             sequence_buffer["state"] = np.zeros((sequence_length, *state_shape), "float32")
 
         self._cpprb = cpprb.ReplayBuffer(
-            max_size,
-            env_dict =cpprb_env_dict,
-            default_dtype=np.float32
+            max_size, env_dict=cpprb_env_dict, default_dtype=np.float32
         )
 
         self._sequence_buffer = sequence_buffer
@@ -69,16 +70,23 @@ class SequenceCPPRB:
         self._t = 0
 
     def add(self, observations, actions, rewards, terminals, truncations, infos):
-
         for agent in self._environment.possible_agents:
-            self._sequence_buffer[f"{agent}_observations"][self._t] = np.array(observations[agent], "float32")
+            self._sequence_buffer[f"{agent}_observations"][self._t] = np.array(
+                observations[agent], "float32"
+            )
             self._sequence_buffer[f"{agent}_actions"][self._t] = np.array(actions[agent], "float32")
             self._sequence_buffer[f"{agent}_rewards"][self._t] = np.array(rewards[agent], "float32")
-            self._sequence_buffer[f"{agent}_terminals"][self._t] = np.array(terminals[agent], "float32")
-            self._sequence_buffer[f"{agent}_truncations"][self._t] = np.array(truncations[agent], "float32")
+            self._sequence_buffer[f"{agent}_terminals"][self._t] = np.array(
+                terminals[agent], "float32"
+            )
+            self._sequence_buffer[f"{agent}_truncations"][self._t] = np.array(
+                truncations[agent], "float32"
+            )
 
             if "legals" in infos:
-                self._sequence_buffer[f"{agent}_legals"][self._t] = np.array(infos["legals"][agent], "float32")
+                self._sequence_buffer[f"{agent}_legals"][self._t] = np.array(
+                    infos["legals"][agent], "float32"
+                )
 
         self._sequence_buffer["mask"][self._t] = np.array(1, "float32")
 
@@ -114,7 +122,7 @@ class SequenceCPPRB:
         for key, value in self._sequence_buffer.items():
             trailing_dims = value.shape[1:]
             zero_pad = np.zeros((self._sequence_length - self._t, *trailing_dims), "float32")
-            self._sequence_buffer[key][self._t:] = zero_pad
+            self._sequence_buffer[key][self._t :] = zero_pad
 
     def __iter__(self):
         return self

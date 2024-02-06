@@ -15,15 +15,15 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='OG-MARL',
-    version='0.0.2',
-    author='Claude Formanek',
-    author_email='c.formanek@instadeep.com',
+    name="OG-MARL",
+    version="0.0.2",
+    author="Claude Formanek",
+    author_email="c.formanek@instadeep.com",
     packages=find_packages(),
-    url='https://sites.google.com/view/og-marl',
-    license='',
-    description='Off-the-Grid MARL: Datasets and Baselines for Offline \
-        Multi-Agent Reinforcement Learning',
+    url="https://sites.google.com/view/og-marl",
+    license="",
+    description="Off-the-Grid MARL: Datasets and Baselines for Offline \
+        Multi-Agent Reinforcement Learning",
     long_description="",
     install_requires=[
         "numpy",
@@ -36,10 +36,9 @@ setup(
         "cpprb",
         "absl-py",
         "gymnasium",
-        "requests"
+        "requests",
     ],
     extras_require={
-        'jax': ['flashbax', 'optax', "jax", "flax", "orbax-checkpoint"],
-    }
-
+        "jax": ["flashbax", "optax", "jax", "flax", "orbax-checkpoint"],
+    },
 )

@@ -29,7 +29,6 @@ from og_marl.tf2.utils import (
 
 
 class OMARSystem(IDDPGCQLSystem):
-
     def __init__(
         self,
         environment,
@@ -41,16 +40,16 @@ class OMARSystem(IDDPGCQLSystem):
         critic_learning_rate=3e-4,
         policy_learning_rate=1e-3,
         add_agent_id_to_obs=False,
-        num_ood_actions=4, # CQL
-        cql_weight=10.0, # CQL
-        cql_sigma=0.2, # CQL
-        target_action_gap=10.0, # CQL
-        cql_alpha_learning_rate=3e-4, # CQL
-        omar_iters=3, # OMAR
-        omar_num_samples=5, # OMAR
-        omar_num_elites=5, # OMAR
-        omar_sigma=2.0, # OMAR
-        omar_coe=0.7, # OMAR
+        num_ood_actions=4,  # CQL
+        cql_weight=10.0,  # CQL
+        cql_sigma=0.2,  # CQL
+        target_action_gap=10.0,  # CQL
+        cql_alpha_learning_rate=3e-4,  # CQL
+        omar_iters=3,  # OMAR
+        omar_num_samples=5,  # OMAR
+        omar_num_elites=5,  # OMAR
+        omar_sigma=2.0,  # OMAR
+        omar_coe=0.7,  # OMAR
     ):
         super().__init__(
             environment=environment,
@@ -66,7 +65,7 @@ class OMARSystem(IDDPGCQLSystem):
             cql_weight=cql_weight,
             cql_sigma=cql_sigma,
             target_action_gap=target_action_gap,
-            cql_alpha_learning_rate=cql_alpha_learning_rate
+            cql_alpha_learning_rate=cql_alpha_learning_rate,
         )
 
         self._omar_iters = omar_iters
@@ -76,18 +75,18 @@ class OMARSystem(IDDPGCQLSystem):
 
         self._init_omar_mu, self._init_omar_sigma = 0.0, omar_sigma
 
-    @tf.function(jit_compile=True) # NOTE: comment this out if using debugger
+    @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, batch):
         batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
-        observations = batch["observations"] # (B,T,N,O)
-        actions = batch["actions"] # (B,T,N,A)
-        env_states = batch["state"] # (B,T,S)
-        rewards = batch["rewards"] # (B,T,N)
-        truncations = batch["truncations"] # (B,T,N)
-        terminals = batch["terminals"] # (B,T,N)
-        zero_padding_mask = batch["mask"] # (B,T)
+        observations = batch["observations"]  # (B,T,N,O)
+        actions = batch["actions"]  # (B,T,N,A)
+        env_states = batch["state"]  # (B,T,S)
+        rewards = batch["rewards"]  # (B,T,N)
+        truncations = batch["truncations"]  # (B,T,N)
+        terminals = batch["terminals"]  # (B,T,N)
+        zero_padding_mask = batch["mask"]  # (B,T)
 
         # done = tf.cast(tf.logical_or(tf.cast(truncations, "bool"), tf.cast(terminals, "bool")), "float32")
         done = terminals
@@ -111,26 +110,37 @@ class OMARSystem(IDDPGCQLSystem):
         target_actions, _ = snt.static_unroll(
             self._target_policy_network,
             merge_batch_and_agent_dim_of_time_major_sequence(observations),
-            self._target_policy_network.initial_state(B*N)
+            self._target_policy_network.initial_state(B * N),
         )
         target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
         # Target critics
-        target_qs_1 = self._target_critic_network_1(observations, env_states, target_actions, target_actions)
-        target_qs_2 = self._target_critic_network_2(observations, env_states, target_actions, target_actions)
+        target_qs_1 = self._target_critic_network_1(
+            observations, env_states, target_actions, target_actions
+        )
+        target_qs_2 = self._target_critic_network_2(
+            observations, env_states, target_actions, target_actions
+        )
 
         # Take minimum between two target critics
         target_qs = tf.minimum(target_qs_1, target_qs_2)
 
         # Compute Bellman targets
-        targets = rewards[:-1] + self._discount * (1-done[:-1]) * tf.squeeze(target_qs[1:], axis=-1)
+        targets = rewards[:-1] + self._discount * (1 - done[:-1]) * tf.squeeze(
+            target_qs[1:], axis=-1
+        )
 
         # Do forward passes through the networks and calculate the losses
         with tf.GradientTape(persistent=True) as tape:
-
             # Online critics
-            qs_1 = tf.squeeze(self._critic_network_1(observations, env_states, replay_actions, replay_actions), axis=-1)
-            qs_2 = tf.squeeze(self._critic_network_2(observations, env_states, replay_actions, replay_actions), axis=-1)
+            qs_1 = tf.squeeze(
+                self._critic_network_1(observations, env_states, replay_actions, replay_actions),
+                axis=-1,
+            )
+            qs_2 = tf.squeeze(
+                self._critic_network_2(observations, env_states, replay_actions, replay_actions),
+                axis=-1,
+            )
 
             # Squared TD-error
             critic_loss_1 = 0.5 * (targets - qs_1[:-1]) ** 2
@@ -143,68 +153,134 @@ class OMARSystem(IDDPGCQLSystem):
             online_actions, _ = snt.static_unroll(
                 self._policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
-                self._policy_network.initial_state(B*N)
+                self._policy_network.initial_state(B * N),
             )
             online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
 
             # Repeat all tensors num_ood_actions times andadd  next to batch dim
-            repeat_observations = tf.stack([observations]*self._num_ood_actions, axis=2) # next to batch dim
-            repeat_env_states = tf.stack([env_states]*self._num_ood_actions, axis=2) # next to batch dim
-            repeat_online_actions = tf.stack([online_actions]*self._num_ood_actions, axis=2) # next to batch dim
+            repeat_observations = tf.stack(
+                [observations] * self._num_ood_actions, axis=2
+            )  # next to batch dim
+            repeat_env_states = tf.stack(
+                [env_states] * self._num_ood_actions, axis=2
+            )  # next to batch dim
+            repeat_online_actions = tf.stack(
+                [online_actions] * self._num_ood_actions, axis=2
+            )  # next to batch dim
 
             # Flatten into batch dim
-            repeat_observations = tf.reshape(repeat_observations, (T, -1, *repeat_observations.shape[3:]))
+            repeat_observations = tf.reshape(
+                repeat_observations, (T, -1, *repeat_observations.shape[3:])
+            )
             repeat_env_states = tf.reshape(repeat_env_states, (T, -1, *repeat_env_states.shape[3:]))
-            repeat_online_actions = tf.reshape(repeat_online_actions, (T, -1, *repeat_online_actions.shape[3:]))
+            repeat_online_actions = tf.reshape(
+                repeat_online_actions, (T, -1, *repeat_online_actions.shape[3:])
+            )
 
             # CQL Loss
             random_ood_actions = tf.random.uniform(
-                            shape=repeat_online_actions.shape,
-                            minval=-1.0,
-                            maxval=1.0,
-                            dtype=repeat_online_actions.dtype
+                shape=repeat_online_actions.shape,
+                minval=-1.0,
+                maxval=1.0,
+                dtype=repeat_online_actions.dtype,
             )
             random_ood_action_log_pi = tf.math.log(0.5 ** (random_ood_actions.shape[-1]))
 
-            ood_qs_1 = self._critic_network_1(repeat_observations, repeat_env_states, random_ood_actions, random_ood_actions)[:-1] - random_ood_action_log_pi
-            ood_qs_2 = self._critic_network_2(repeat_observations, repeat_env_states, random_ood_actions, random_ood_actions)[:-1] - random_ood_action_log_pi
+            ood_qs_1 = (
+                self._critic_network_1(
+                    repeat_observations, repeat_env_states, random_ood_actions, random_ood_actions
+                )[:-1]
+                - random_ood_action_log_pi
+            )
+            ood_qs_2 = (
+                self._critic_network_2(
+                    repeat_observations, repeat_env_states, random_ood_actions, random_ood_actions
+                )[:-1]
+                - random_ood_action_log_pi
+            )
 
             # # Actions near true actions
             mu = 0.0
             std = self._cql_sigma
             action_noise = tf.random.normal(
-                                repeat_online_actions.shape,
-                                mean=mu,
-                                stddev=std,
-                                dtype=repeat_online_actions.dtype,
-                            )
+                repeat_online_actions.shape,
+                mean=mu,
+                stddev=std,
+                dtype=repeat_online_actions.dtype,
+            )
             current_ood_actions = tf.clip_by_value(repeat_online_actions + action_noise, -1.0, 1.0)
 
-            ood_actions_prob = (1 / (self._cql_sigma * tf.math.sqrt(2 * np.pi))) * tf.exp( - (action_noise - mu)**2 / (2 * self._cql_sigma**2) )
-            ood_actions_log_prob = tf.math.log(tf.reduce_prod(ood_actions_prob, axis=-1, keepdims=True))
+            ood_actions_prob = (1 / (self._cql_sigma * tf.math.sqrt(2 * np.pi))) * tf.exp(
+                -((action_noise - mu) ** 2) / (2 * self._cql_sigma**2)
+            )
+            ood_actions_log_prob = tf.math.log(
+                tf.reduce_prod(ood_actions_prob, axis=-1, keepdims=True)
+            )
 
-            current_ood_qs_1 = self._critic_network_1(repeat_observations[:-1], repeat_env_states[:-1], current_ood_actions[:-1], current_ood_actions[:-1]) - ood_actions_log_prob[:-1]
-            current_ood_qs_2 = self._critic_network_2(repeat_observations[:-1], repeat_env_states[:-1], current_ood_actions[:-1], current_ood_actions[:-1]) - ood_actions_log_prob[:-1]
+            current_ood_qs_1 = (
+                self._critic_network_1(
+                    repeat_observations[:-1],
+                    repeat_env_states[:-1],
+                    current_ood_actions[:-1],
+                    current_ood_actions[:-1],
+                )
+                - ood_actions_log_prob[:-1]
+            )
+            current_ood_qs_2 = (
+                self._critic_network_2(
+                    repeat_observations[:-1],
+                    repeat_env_states[:-1],
+                    current_ood_actions[:-1],
+                    current_ood_actions[:-1],
+                )
+                - ood_actions_log_prob[:-1]
+            )
 
-            next_current_ood_qs_1 = self._critic_network_1(repeat_observations[:-1], repeat_env_states[:-1], current_ood_actions[1:], current_ood_actions[1:]) - ood_actions_log_prob[1:]
-            next_current_ood_qs_2 = self._critic_network_2(repeat_observations[:-1], repeat_env_states[:-1], current_ood_actions[1:], current_ood_actions[ 1:]) - ood_actions_log_prob[1:]
+            next_current_ood_qs_1 = (
+                self._critic_network_1(
+                    repeat_observations[:-1],
+                    repeat_env_states[:-1],
+                    current_ood_actions[1:],
+                    current_ood_actions[1:],
+                )
+                - ood_actions_log_prob[1:]
+            )
+            next_current_ood_qs_2 = (
+                self._critic_network_2(
+                    repeat_observations[:-1],
+                    repeat_env_states[:-1],
+                    current_ood_actions[1:],
+                    current_ood_actions[1:],
+                )
+                - ood_actions_log_prob[1:]
+            )
 
             # Reshape
-            ood_qs_1 = tf.reshape(ood_qs_1, (T-1, B, self._num_ood_actions, N))
-            ood_qs_2 = tf.reshape(ood_qs_2, (T-1, B, self._num_ood_actions, N))
-            current_ood_qs_1 = tf.reshape(current_ood_qs_1, (T-1, B, self._num_ood_actions, N))
-            current_ood_qs_2 = tf.reshape(current_ood_qs_2, (T-1, B, self._num_ood_actions, N))
-            next_current_ood_qs_1 = tf.reshape(next_current_ood_qs_1, (T-1, B, self._num_ood_actions, N))
-            next_current_ood_qs_2 = tf.reshape(next_current_ood_qs_2, (T-1, B, self._num_ood_actions, N))
+            ood_qs_1 = tf.reshape(ood_qs_1, (T - 1, B, self._num_ood_actions, N))
+            ood_qs_2 = tf.reshape(ood_qs_2, (T - 1, B, self._num_ood_actions, N))
+            current_ood_qs_1 = tf.reshape(current_ood_qs_1, (T - 1, B, self._num_ood_actions, N))
+            current_ood_qs_2 = tf.reshape(current_ood_qs_2, (T - 1, B, self._num_ood_actions, N))
+            next_current_ood_qs_1 = tf.reshape(
+                next_current_ood_qs_1, (T - 1, B, self._num_ood_actions, N)
+            )
+            next_current_ood_qs_2 = tf.reshape(
+                next_current_ood_qs_2, (T - 1, B, self._num_ood_actions, N)
+            )
 
             all_ood_qs_1 = tf.concat((ood_qs_1, current_ood_qs_1, next_current_ood_qs_1), axis=2)
             all_ood_qs_2 = tf.concat((ood_qs_2, current_ood_qs_2, next_current_ood_qs_2), axis=2)
 
             def masked_mean(x):
-                return tf.reduce_sum(x * tf.expand_dims(zero_padding_mask[:-1],axis=-1)) / tf.reduce_sum(zero_padding_mask[:-1])
+                return tf.reduce_sum(
+                    x * tf.expand_dims(zero_padding_mask[:-1], axis=-1)
+                ) / tf.reduce_sum(zero_padding_mask[:-1])
 
-            cql_loss_1 = masked_mean(tf.reduce_logsumexp(all_ood_qs_1, axis=2, keepdims=False)) - masked_mean(qs_1[:-1])
-            cql_loss_2 = masked_mean(tf.reduce_logsumexp(all_ood_qs_2, axis=2, keepdims=False)) - masked_mean(qs_2[:-1])
+            cql_loss_1 = masked_mean(
+                tf.reduce_logsumexp(all_ood_qs_1, axis=2, keepdims=False)
+            ) - masked_mean(qs_1[:-1])
+            cql_loss_2 = masked_mean(
+                tf.reduce_logsumexp(all_ood_qs_2, axis=2, keepdims=False)
+            ) - masked_mean(qs_2[:-1])
 
             # cql_alpha = tf.exp(self._cql_log_alpha)
             # cql_loss_1 = cql_alpha * (cql_loss_1 - self._target_action_gap)
@@ -218,7 +294,7 @@ class OMARSystem(IDDPGCQLSystem):
             ### END CQL ###
 
             # Masked mean
-            critic_mask = tf.squeeze(tf.stack([zero_padding_mask[:-1]]*N, axis=2))
+            critic_mask = tf.squeeze(tf.stack([zero_padding_mask[:-1]] * N, axis=2))
             critic_loss_1 = tf.reduce_sum(critic_loss_1 * critic_mask) / tf.reduce_sum(critic_mask)
             critic_loss_2 = tf.reduce_sum(critic_loss_2 * critic_mask) / tf.reduce_sum(critic_mask)
             critic_loss = (critic_loss_1 + critic_loss_2) / 2
@@ -228,7 +304,7 @@ class OMARSystem(IDDPGCQLSystem):
             onlin_actions, _ = snt.static_unroll(
                 self._policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
-                self._policy_network.initial_state(B*N)
+                self._policy_network.initial_state(B * N),
             )
             curr_pol_out = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
 
@@ -238,8 +314,12 @@ class OMARSystem(IDDPGCQLSystem):
             omar_sigma = tf.zeros_like(curr_pol_out) + self._init_omar_sigma
 
             # Repeat all tensors num_ood_actions times andadd  next to batch dim
-            observations = tf.stack([observations]*self._omar_num_samples, axis=2) # next to batch dim
-            env_states = tf.stack([env_states]*self._omar_num_samples, axis=2) # next to batch dim
+            observations = tf.stack(
+                [observations] * self._omar_num_samples, axis=2
+            )  # next to batch dim
+            env_states = tf.stack(
+                [env_states] * self._omar_num_samples, axis=2
+            )  # next to batch dim
 
             # Flatten into batch dim
             observations = tf.reshape(observations, (T, -1, *observations.shape[3:]))
@@ -252,9 +332,13 @@ class OMARSystem(IDDPGCQLSystem):
                 cem_sampled_acs = tf.transpose(cem_sampled_acs, (1, 2, 0, 3, 4))
                 cem_sampled_acs = tf.clip_by_value(cem_sampled_acs, -1.0, 1.0)
 
-                formatted_cem_sampled_acs = tf.reshape(cem_sampled_acs, (T, -1, *cem_sampled_acs.shape[3:]))
-                all_pred_qvals = self._critic_network_1(observations, env_states, formatted_cem_sampled_acs, actions)
-                all_pred_qvals = tf.reshape(all_pred_qvals, (T,B,self._omar_num_samples,N))
+                formatted_cem_sampled_acs = tf.reshape(
+                    cem_sampled_acs, (T, -1, *cem_sampled_acs.shape[3:])
+                )
+                all_pred_qvals = self._critic_network_1(
+                    observations, env_states, formatted_cem_sampled_acs, actions
+                )
+                all_pred_qvals = tf.reshape(all_pred_qvals, (T, B, self._omar_num_samples, N))
                 all_pred_qvals = tf.transpose(all_pred_qvals, (0, 1, 3, 2))
                 cem_sampled_acs = tf.transpose(cem_sampled_acs, (0, 1, 3, 4, 2))
 
@@ -263,7 +347,7 @@ class OMARSystem(IDDPGCQLSystem):
                     cem_sampled_acs = tf.concat((cem_sampled_acs, last_elite_acs), axis=-1)
 
                 top_k_qvals, top_k_inds = tf.math.top_k(all_pred_qvals, self._omar_num_elites)
-                elite_ac_inds = tf.stack([top_k_inds]*A, axis=-2)
+                elite_ac_inds = tf.stack([top_k_inds] * A, axis=-2)
                 elite_acs = tf.gather(cem_sampled_acs, elite_ac_inds, batch_dims=-1)
 
                 last_top_k_qvals, last_elite_acs = top_k_qvals, elite_acs
@@ -275,7 +359,7 @@ class OMARSystem(IDDPGCQLSystem):
                 omar_sigma = updated_sigma
 
             top_qvals, top_inds = tf.math.top_k(all_pred_qvals, self._omar_num_elites)
-            top_ac_inds = tf.stack([top_k_inds]*A, axis=-2)
+            top_ac_inds = tf.stack([top_k_inds] * A, axis=-2)
             top_acs = tf.gather(cem_sampled_acs, top_ac_inds, batch_dims=-1)
 
             cem_qvals = top_qvals
@@ -287,16 +371,21 @@ class OMARSystem(IDDPGCQLSystem):
             candidate_acs = tf.concat([pol_acs, cem_acs], -1)
 
             max_inds = tf.argmax(candidate_qvals, axis=-1)
-            max_ac_inds = tf.expand_dims(tf.stack([max_inds]*A, axis=-1), axis=-1)
+            max_ac_inds = tf.expand_dims(tf.stack([max_inds] * A, axis=-1), axis=-1)
 
             max_acs = tf.gather(candidate_acs, max_ac_inds, batch_dims=-1)
             max_acs = tf.stop_gradient(tf.reshape(max_acs, max_acs.shape[:-1]))
 
             zero_padding_mask = tf.expand_dims(zero_padding_mask, axis=-1)
+
             def masked_mean(x):
                 return tf.reduce_sum(x * zero_padding_mask) / tf.reduce_sum(zero_padding_mask)
 
-            policy_loss = self._omar_coe * masked_mean(tf.reduce_mean((curr_pol_out - max_acs)**2, axis=-1)) - (1 - self._omar_coe) * masked_mean(tf.squeeze(pred_qvals)) + masked_mean(tf.reduce_mean(curr_pol_out ** 2,axis=-1)) * 1e-3
+            policy_loss = (
+                self._omar_coe * masked_mean(tf.reduce_mean((curr_pol_out - max_acs) ** 2, axis=-1))
+                - (1 - self._omar_coe) * masked_mean(tf.squeeze(pred_qvals))
+                + masked_mean(tf.reduce_mean(curr_pol_out**2, axis=-1)) * 1e-3
+            )
 
         # Train critics
         variables = (
@@ -312,9 +401,7 @@ class OMARSystem(IDDPGCQLSystem):
         # self._cql_alpha_optimizer.apply(gradients, variables)
 
         # Train policy
-        variables = (
-            *self._policy_network.trainable_variables,
-        )
+        variables = (*self._policy_network.trainable_variables,)
         gradients = tape.gradient(policy_loss, variables)
         self._policy_optimizer.apply(gradients, variables)
 
@@ -322,12 +409,12 @@ class OMARSystem(IDDPGCQLSystem):
         online_variables = (
             *self._critic_network_1.variables,
             *self._critic_network_2.variables,
-            *self._policy_network.variables
+            *self._policy_network.variables,
         )
         target_variables = (
             *self._target_critic_network_1.variables,
             *self._target_critic_network_2.variables,
-            *self._target_policy_network.variables
+            *self._target_policy_network.variables,
         )
         self._update_target_network(
             online_variables,
@@ -341,7 +428,7 @@ class OMARSystem(IDDPGCQLSystem):
             "Mean Critic Loss": (critic_loss),
             "Policy Loss": policy_loss,
             # "CQL Alpha Loss": cql_alpha_loss,
-            "CQL Loss": cql_loss_1
+            "CQL Loss": cql_loss_1,
         }
 
         return logs

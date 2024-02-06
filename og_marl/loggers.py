@@ -20,19 +20,16 @@ import wandb
 
 
 class TerminalLogger:
-
     def __init__(
-            self,
-            log_every=2 # seconds
+        self,
+        log_every=2,  # seconds
     ):
         self._log_every = log_every
         self._ctr = 0
         self._last_log = time.time()
 
     def write(self, logs, force=False):
-
         if time.time() - self._last_log > self._log_every or force:
-
             for key, log in logs.items():
                 print(f"{key}: {float(log)} |", end=" ")
             print()
@@ -42,6 +39,7 @@ class TerminalLogger:
 
         self._ctr += 1
 
+
 class WandbLogger:
     def __init__(
         self,
@@ -50,7 +48,7 @@ class WandbLogger:
         notes="",
         tags=["default"],
         entity=None,
-        log_every=2 # seconds
+        log_every=2,  # seconds
     ):
         wandb.init(project=project, notes=notes, tags=tags, entity=entity, config=config)
 
@@ -59,8 +57,6 @@ class WandbLogger:
         self._last_log = time.time()
 
     def write(self, logs, force=False):
-
-
         if time.time() - self._last_log > self._log_every or force:
             wandb.log(logs)
 
@@ -75,6 +71,7 @@ class WandbLogger:
 
     def close(self):
         wandb.finish()
+
 
 class JsonWriter:
     """Writer to create json files for reporting experiment results according to marl-eval
@@ -133,7 +130,7 @@ class JsonWriter:
         timestep: int,
         key: str,
         value: float,
-        evaluation_step = None,
+        evaluation_step=None,
     ) -> None:
         """Writes a step to the json reporting file
 

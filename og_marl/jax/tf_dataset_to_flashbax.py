@@ -49,10 +49,11 @@ class FlashbaxBufferStore:
     def restore_state(self):
         raw_restored = self._manager.restore(self._manager.latest_step())
         return TrajectoryBufferState(
-            experience=jax.tree_util.tree_map(jnp.asarray, raw_restored['experience']),
-            current_index=jnp.asarray(raw_restored['current_index']),
-            is_full=jnp.asarray(raw_restored['is_full']),
+            experience=jax.tree_util.tree_map(jnp.asarray, raw_restored["experience"]),
+            current_index=jnp.asarray(raw_restored["current_index"]),
+            is_full=jnp.asarray(raw_restored["is_full"]),
         )
+
 
 def get_schema_dtypes(environment):
     schema = {}
@@ -80,9 +81,7 @@ def make_decode_fn(schema, agents):
     def _decode_fn(record_bytes):
         example = tf.io.parse_single_example(
             record_bytes,
-            tree.map_structure(
-                lambda x: tf.io.FixedLenFeature([], dtype=tf.string), schema
-            ),
+            tree.map_structure(lambda x: tf.io.FixedLenFeature([], dtype=tf.string), schema),
         )
 
         for key, dtype in schema.items():
@@ -101,9 +100,11 @@ def make_decode_fn(schema, agents):
         sample["episode_return"] = tf.repeat(example["episode_return"], len(sample["state"]))
 
         return sample
+
     return _decode_fn
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     SCENARIO = "8m"
     DATASET = "Poor"
 
@@ -112,17 +113,16 @@ if __name__=="__main__":
     tf.config.experimental.set_visible_devices([], "GPU")
     os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
-
     environment = get_environment("smac_v1", SCENARIO)
 
     # First define hyper-parameters of the buffer.
-    max_length_time_axis = 30000 * 20 # Maximum length of the buffer along the time axis.
-    min_length_time_axis = 16 # Minimum length across the time axis before we can sample.
-    sample_batch_size = 4 # Batch size of trajectories sampled from the buffer.
-    add_batch_size = 1 # Batch size of trajectories added to the buffer.
-    sample_sequence_length = 20 # Sequence length of trajectories sampled from the buffer.
-    add_sequence_length = 20 # Sequence length of trajectories added to the buffer.
-    period = 20 # Period at which we sample trajectories from the buffer.
+    max_length_time_axis = 30000 * 20  # Maximum length of the buffer along the time axis.
+    min_length_time_axis = 16  # Minimum length across the time axis before we can sample.
+    sample_batch_size = 4  # Batch size of trajectories sampled from the buffer.
+    add_batch_size = 1  # Batch size of trajectories added to the buffer.
+    sample_sequence_length = 20  # Sequence length of trajectories sampled from the buffer.
+    add_sequence_length = 20  # Sequence length of trajectories added to the buffer.
+    period = 20  # Period at which we sample trajectories from the buffer.
 
     # Instantiate the trajectory buffer, which is a NamedTuple of pure functions.
     buffer = fbx.make_trajectory_buffer(
@@ -131,7 +131,7 @@ if __name__=="__main__":
         sample_batch_size=sample_batch_size,
         add_batch_size=add_batch_size,
         sample_sequence_length=sample_sequence_length,
-        period=period
+        period=period,
     )
 
     store = FlashbaxBufferStore(f"{DATASET}_{SCENARIO}")
@@ -142,7 +142,9 @@ if __name__=="__main__":
 
     path_to_dataset = f"datasets/smac_v1/{SCENARIO}/{DATASET}"
     contents = os.listdir(path_to_dataset)
-    directories = [content for content in contents if os.path.isdir(os.path.join(path_to_dataset, content))]
+    directories = [
+        content for content in contents if os.path.isdir(os.path.join(path_to_dataset, content))
+    ]
     jitted_add = jax.jit(buffer.add)
     first_sample = True
     for dir in directories:
@@ -168,7 +170,7 @@ if __name__=="__main__":
                 state = jitted_add(state, add_sample)
 
                 if (state.current_index % 1000) == 0:
-                    print(round(state.current_index / max_length_time_axis, 4)*100)
+                    print(round(state.current_index / max_length_time_axis, 4) * 100)
 
                 if (state.current_index % 100_000) == 0:
                     t = state.current_index // 100_000

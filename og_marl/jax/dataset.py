@@ -43,9 +43,9 @@ class FlashbaxBufferStore:
     def restore_state(self):
         raw_restored = self._manager.restore(self._manager.latest_step())
         return TrajectoryBufferState(
-            experience=jax.tree_util.tree_map(jnp.asarray, raw_restored['experience']),
-            current_index=jnp.asarray(raw_restored['current_index']),
-            is_full=jnp.asarray(raw_restored['is_full']),
+            experience=jax.tree_util.tree_map(jnp.asarray, raw_restored["experience"]),
+            current_index=jnp.asarray(raw_restored["current_index"]),
+            is_full=jnp.asarray(raw_restored["is_full"]),
         )
 
     def restore_metadata(self):

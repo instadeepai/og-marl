@@ -48,9 +48,9 @@ FLATLAND_MAP_CONFIGS = {
     },
 }
 
+
 class Flatland(BaseEnvironment):
     def __init__(self, map_name="5_trains"):
-
         map_config = FLATLAND_MAP_CONFIGS[map_name]
 
         self._num_actions = 5
@@ -82,11 +82,15 @@ class Flatland(BaseEnvironment):
         self._obs_dim = 11 * sum(4**i for i in range(self._tree_depth + 1)) + 7
 
         self.action_spaces = {agent: Discrete(self._num_actions) for agent in self.possible_agents}
-        self.observation_spaces = {agent: Box(-np.inf, np.inf, (self._obs_dim,)) for agent in self.possible_agents}
+        self.observation_spaces = {
+            agent: Box(-np.inf, np.inf, (self._obs_dim,)) for agent in self.possible_agents
+        }
 
         self.info_spec = {
-            "state": np.zeros((11*self.num_agents,), "float32"),
-            "legals": {agent: np.zeros((self._num_actions,), "int64") for agent in self.possible_agents}
+            "state": np.zeros((11 * self.num_agents,), "float32"),
+            "legals": {
+                agent: np.zeros((self._num_actions,), "int64") for agent in self.possible_agents
+            },
         }
 
     def reset(self):
@@ -96,28 +100,19 @@ class Flatland(BaseEnvironment):
 
         legal_actions = self._get_legal_actions()
 
-        observations = self._convert_observations(
-            observations, legal_actions, self._done, info
-        )
+        observations = self._convert_observations(observations, legal_actions, self._done, info)
 
         state = self._make_state_representation()
 
-
-        info = {
-            "state": state,
-            "legals": legal_actions
-        }
+        info = {"state": state, "legals": legal_actions}
 
         return observations, info
 
     def step(self, actions):
-
         actions = {int(agent): action.item() for agent, action in actions.items()}
 
         # Step the Flatland environment
-        next_observations, all_rewards, all_dones, info = self._environment.step(
-            actions
-        )
+        next_observations, all_rewards, all_dones, info = self._environment.step(actions)
 
         # Team done flag
         self._done = all(list(all_dones.values()))
@@ -139,10 +134,7 @@ class Flatland(BaseEnvironment):
         # Make extras
         state = self._make_state_representation()
 
-        info = {
-            "state": state,
-            "legals": legal_actions
-        }
+        info = {"state": state, "legals": legal_actions}
 
         terminals = {agent: self._done for agent in self.possible_agents}
         truncations = {agent: False for agent in self.possible_agents}
@@ -155,7 +147,9 @@ class Flatland(BaseEnvironment):
             id = int(agent)
             flatland_agent = self._environment.agents[id]
 
-            if not self._environment.action_required(flatland_agent.state, flatland_agent.speed_counter.is_cell_entry):
+            if not self._environment.action_required(
+                flatland_agent.state, flatland_agent.speed_counter.is_cell_entry
+            ):
                 legals = np.zeros(self._num_actions, "float32")
                 legals[0] = 1  # can only do nothng
             else:
@@ -189,10 +183,8 @@ class Flatland(BaseEnvironment):
         new_observations = {}
         for agent in self.possible_agents:
             id = int(agent)
-            norm_observation = normalize_observation(
-                observations[id], tree_depth=self._tree_depth
-            )
-            state = info["state"][int(agent)] # train state
+            norm_observation = normalize_observation(observations[id], tree_depth=self._tree_depth)
+            state = info["state"][int(agent)]  # train state
             one_hot_state = np.zeros((7,), "float32")
             one_hot_state[state] = 1
             obs = np.concatenate([one_hot_state, norm_observation], axis=-1)

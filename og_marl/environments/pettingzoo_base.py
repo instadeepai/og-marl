@@ -32,7 +32,6 @@ class PettingZooBase(BaseEnvironment):
 
         self.info_spec = {}
 
-
     def reset(self):
         """Resets the env."""
         # Reset the environment
@@ -49,13 +48,10 @@ class PettingZooBase(BaseEnvironment):
 
         return observations, info
 
-
     def step(self, actions):
         """Steps in env."""
         # Step the environment
-        observations, rewards, terminals, truncations, _ = self._environment.step(
-            actions
-        )
+        observations, rewards, terminals, truncations, _ = self._environment.step(actions)
 
         # Global state
         env_state = self._create_state_representation(observations)
@@ -65,17 +61,15 @@ class PettingZooBase(BaseEnvironment):
 
         return observations, rewards, terminals, truncations, info
 
-
     def _add_zero_obs_for_missing_agent(self, observations):
         for agent in self._agents:
             if agent not in observations:
-                observations[agent] = np.zeros(self.observation_spaces[agent].shape, self.observation_spaces[agent].dtype)
+                observations[agent] = np.zeros(
+                    self.observation_spaces[agent].shape, self.observation_spaces[agent].dtype
+                )
         return observations
 
-
-    def _convert_observations(
-        self, observations
-    ):
+    def _convert_observations(self, observations):
         """Convert observations"""
         raise NotImplementedError
 

@@ -14,6 +14,7 @@
 
 """Base class for OG-MARL Environment Wrappers."""
 
+
 class BaseEnvironment:
     """Base environment class for OG-MARL."""
 
@@ -35,7 +36,6 @@ class BaseEnvironment:
         """
         raise NotImplementedError
 
-
     def step(self, actions):
         """Steps in env.
 
@@ -49,7 +49,6 @@ class BaseEnvironment:
 
         """
         raise NotImplementedError
-
 
     def get_stats(self):
         """Return extra stats to be logged.

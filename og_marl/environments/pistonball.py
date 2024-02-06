@@ -49,9 +49,7 @@ class Pistonball(PettingZooBase):
         self._environment = supersuit.color_reduction_v0(self._environment, mode="R")
         self._environment = supersuit.resize_v0(self._environment, x_size=22, y_size=80)
         self._environment = supersuit.dtype_v0(self._environment, dtype="float32")
-        self._environment = supersuit.normalize_obs_v0(
-            self._environment, env_min=0, env_max=1
-        )
+        self._environment = supersuit.normalize_obs_v0(self._environment, env_min=0, env_max=1)
 
         self._agents = self._environment.possible_agents
 
@@ -73,15 +71,11 @@ class Pistonball(PettingZooBase):
 
         # framestacking
         state = np.expand_dims(state, axis=-1)
-        self._state_history = np.concatenate(
-            (state, self._state_history[:, :, :3]), axis=-1
-        )
+        self._state_history = np.concatenate((state, self._state_history[:, :, :3]), axis=-1)
 
         return self._state_history
 
-    def _convert_observations(
-        self, observations: List, done: bool
-    ):
+    def _convert_observations(self, observations: List, done: bool):
         """Convert SMAC observation so it's dm_env compatible.
 
         Args:
@@ -96,11 +90,8 @@ class Pistonball(PettingZooBase):
         """
         olt_observations = {}
         for i, agent in enumerate(self._agents):
-
             agent_obs = np.expand_dims(observations[agent][50:, :], axis=-1)
-            legal_actions = np.ones(
-                self.num_actions, "float32"
-            )  # three actions, all legal
+            legal_actions = np.ones(self.num_actions, "float32")  # three actions, all legal
 
             olt_observations[agent] = OLT(
                 observation=agent_obs,
@@ -123,10 +114,8 @@ class Pistonball(PettingZooBase):
         return state_spec
 
     def action_spec(self) -> Dict[str, specs.BoundedArray]:
-
         action_spec = {}
         for agent in self._agents:
-
             spec = specs.BoundedArray(
                 shape=(1,), dtype="float32", minimum=-1.0, maximum=1.0, name="act"
             )
@@ -145,14 +134,11 @@ class Pistonball(PettingZooBase):
         """
         observation_specs = {}
         for agent in self._agents:
-
             obs = np.zeros((30, 22, 1), "float32")
 
             observation_specs[agent] = OLT(
                 observation=obs,
-                legal_actions=np.ones(
-                    self.num_actions, "float32"
-                ),  # three legal actions
+                legal_actions=np.ones(self.num_actions, "float32"),  # three legal actions
                 terminal=np.asarray(True, "float32"),
             )
 

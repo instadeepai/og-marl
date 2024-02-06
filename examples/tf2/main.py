@@ -24,12 +24,19 @@ set_growing_gpu_memory()
 FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "mamujoco", "Environment name.")
 flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
-flags.DEFINE_string("dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' or '' for combined. ")
+flags.DEFINE_string(
+    "dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' or '' for combined. "
+)
 flags.DEFINE_string("system", "iddpg+cql", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 1e5, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 32, "Number of training steps.")
-flags.DEFINE_integer("num_offline_sequences", 10_000, "Number of sequences to load from the offline dataset into the replay buffer.")
+flags.DEFINE_integer(
+    "num_offline_sequences",
+    10_000,
+    "Number of sequences to load from the offline dataset into the replay buffer.",
+)
+
 
 def main(_):
     config = {
@@ -37,7 +44,7 @@ def main(_):
         "scenario": FLAGS.scenario,
         "dataset": FLAGS.dataset if FLAGS.dataset != "" else "All",
         "system": FLAGS.system,
-        "backend": "tf2"
+        "backend": "tf2",
     }
 
     env = get_environment(FLAGS.env, FLAGS.scenario)
@@ -45,24 +52,28 @@ def main(_):
     dataset = OfflineMARLDataset(env, f"datasets/{FLAGS.env}/{FLAGS.scenario}/{FLAGS.dataset}")
     dataset_sequence_length = dataset.get_sequence_length()
 
-    batched_dataset = SequenceCPPRB(env, max_size=FLAGS.num_offline_sequences, batch_size=FLAGS.batch_size, sequence_length=dataset_sequence_length)
+    batched_dataset = SequenceCPPRB(
+        env,
+        max_size=FLAGS.num_offline_sequences,
+        batch_size=FLAGS.batch_size,
+        sequence_length=dataset_sequence_length,
+    )
 
     batched_dataset.populate_from_dataset(dataset)
 
     logger = WandbLogger(project="tf2-og-marl", config=config)
 
-    json_writer = JsonWriter("logs", f"tf2+{FLAGS.system}", f"{FLAGS.scenario}_{FLAGS.dataset}", FLAGS.env, FLAGS.seed)
+    json_writer = JsonWriter(
+        "logs", f"tf2+{FLAGS.system}", f"{FLAGS.scenario}_{FLAGS.dataset}", FLAGS.env, FLAGS.seed
+    )
 
-    system_kwargs = {
-        "add_agent_id_to_obs": True
-    }
+    system_kwargs = {"add_agent_id_to_obs": True}
     system = get_system(FLAGS.system, env, logger, **system_kwargs)
 
     system.train_offline(
-        batched_dataset,
-        max_trainer_steps=FLAGS.trainer_steps,
-        json_writer=json_writer
+        batched_dataset, max_trainer_steps=FLAGS.trainer_steps, json_writer=json_writer
     )
+
 
 if __name__ == "__main__":
     app.run(main)

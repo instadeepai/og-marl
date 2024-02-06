@@ -17,37 +17,48 @@ import os
 import tensorflow as tf
 
 
-def get_system(system_name, environment, logger, **kwargs) :
+def get_system(system_name, environment, logger, **kwargs):
     if system_name == "idrqn":
         from og_marl.tf2.systems.idrqn import IDRQNSystem
+
         return IDRQNSystem(environment, logger, **kwargs)
     elif system_name == "idrqn+cql":
         from og_marl.tf2.systems.idrqn_cql import IDRQNCQLSystem
+
         return IDRQNCQLSystem(environment, logger, **kwargs)
     elif system_name == "idrqn+bcq":
         from og_marl.tf2.systems.idrqn_bcq import IDRQNBCQSystem
+
         return IDRQNBCQSystem(environment, logger, **kwargs)
     elif system_name == "qmix":
         from og_marl.tf2.systems.qmix import QMIXSystem
+
         return QMIXSystem(environment, logger, **kwargs)
     elif system_name == "qmix+cql":
         from og_marl.tf2.systems.qmix_cql import QMIXCQLSystem
+
         return QMIXCQLSystem(environment, logger, **kwargs)
     elif system_name == "maicq":
         from og_marl.tf2.systems.maicq import MAICQSystem
+
         return MAICQSystem(environment, logger, **kwargs)
     elif system_name == "qmix+bcq":
         from og_marl.tf2.systems.qmix_bcq import QMIXBCQSystem
+
         return QMIXBCQSystem(environment, logger, **kwargs)
     elif system_name == "iddpg":
         from og_marl.tf2.systems.iddpg import IDDPGSystem
+
         return IDDPGSystem(environment, logger, **kwargs)
     elif system_name == "iddpg+cql":
         from og_marl.tf2.systems.iddpg_cql import IDDPGCQLSystem
+
         return IDDPGCQLSystem(environment, logger, **kwargs)
     elif system_name == "omar":
         from og_marl.tf2.systems.omar import OMARSystem
+
         return OMARSystem(environment, logger, **kwargs)
+
 
 def set_growing_gpu_memory() -> None:
     """Solve gpu mem issues."""
@@ -62,9 +73,7 @@ def gather(values, indices, axis=-1, keepdims=False):
     one_hot_indices = tf.one_hot(indices, depth=values.shape[axis])
     if len(values.shape) > 4:  # we have extra dim for distributional q-learning
         one_hot_indices = tf.expand_dims(one_hot_indices, axis=-1)
-    gathered_values = tf.reduce_sum(
-        values * one_hot_indices, axis=axis, keepdims=keepdims
-    )
+    gathered_values = tf.reduce_sum(values * one_hot_indices, axis=axis, keepdims=keepdims)
     return gathered_values
 
 
@@ -150,8 +159,8 @@ def batch_concat_agent_id_to_obs(obs):
 
     return obs
 
-def batched_agents(agents, batch_dict):
 
+def batched_agents(agents, batch_dict):
     batched_agents = {
         "observations": [],
         "actions": [],

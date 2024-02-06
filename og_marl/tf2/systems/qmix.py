@@ -47,7 +47,6 @@ class QMIXSystem(IDRQNSystem):
         eps_decay_timesteps=50_000,
         add_agent_id_to_obs=False,
     ):
-
         super().__init__(
             environment,
             logger,
@@ -60,21 +59,25 @@ class QMIXSystem(IDRQNSystem):
             eps_decay_timesteps=eps_decay_timesteps,
         )
 
-        self._mixer = QMixer(len(self._environment.possible_agents), mixer_embed_dim, mixer_hyper_dim)
-        self._target_mixer = QMixer(len(self._environment.possible_agents), mixer_embed_dim, mixer_hyper_dim)
+        self._mixer = QMixer(
+            len(self._environment.possible_agents), mixer_embed_dim, mixer_hyper_dim
+        )
+        self._target_mixer = QMixer(
+            len(self._environment.possible_agents), mixer_embed_dim, mixer_hyper_dim
+        )
 
-    @tf.function(jit_compile=True) # NOTE: comment this out if using debugger
+    @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, train_step_ctr, batch):
         batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
-        observations = batch["observations"] # (B,T,N,O)
-        actions = batch["actions"] # (B,T,N)
-        env_states = batch["state"] # (B,T,S)
-        rewards = batch["rewards"] # (B,T,N)
-        truncations = batch["truncations"] # (B,T,N)
-        terminals = batch["terminals"] # (B,T,N)
-        zero_padding_mask = batch["mask"] # (B,T)
+        observations = batch["observations"]  # (B,T,N,O)
+        actions = batch["actions"]  # (B,T,N)
+        env_states = batch["state"]  # (B,T,S)
+        rewards = batch["rewards"]  # (B,T,N)
+        truncations = batch["truncations"]  # (B,T,N)
+        terminals = batch["terminals"]  # (B,T,N)
+        zero_padding_mask = batch["mask"]  # (B,T)
         legal_actions = batch["legals"]  # (B,T,N,A)
 
         done = terminals
@@ -94,9 +97,7 @@ class QMIXSystem(IDRQNSystem):
 
         # Unroll target network
         target_qs_out, _ = snt.static_unroll(
-            self._target_q_network,
-            observations,
-            self._target_q_network.initial_state(B*N)
+            self._target_q_network, observations, self._target_q_network.initial_state(B * N)
         )
 
         # Expand batch and agent_dim
@@ -108,9 +109,7 @@ class QMIXSystem(IDRQNSystem):
         with tf.GradientTape() as tape:
             # Unroll online network
             qs_out, _ = snt.static_unroll(
-                self._q_network,
-                observations,
-                self._q_network.initial_state(B*N)
+                self._q_network, observations, self._q_network.initial_state(B * N)
             )
 
             # Expand batch and agent_dim
@@ -130,13 +129,15 @@ class QMIXSystem(IDRQNSystem):
             target_max_qs = gather(target_qs_out, cur_max_actions, axis=-1, keepdims=False)
 
             # Q-MIXING
-            chosen_action_qs, target_max_qs, rewards = self._mixing(chosen_action_qs, target_max_qs, env_states, rewards)
+            chosen_action_qs, target_max_qs, rewards = self._mixing(
+                chosen_action_qs, target_max_qs, env_states, rewards
+            )
 
             # Reduce Agent Dim
-            done = tf.reduce_mean(done, axis=2, keepdims=True) # NOTE Assumes all the same
+            done = tf.reduce_mean(done, axis=2, keepdims=True)  # NOTE Assumes all the same
 
             # Compute targets
-            targets = rewards[:, :-1] + (1-done[:, :-1]) * self._discount * target_max_qs[:, 1:]
+            targets = rewards[:, :-1] + (1 - done[:, :-1]) * self._discount * target_max_qs[:, 1:]
             targets = tf.stop_gradient(targets)
 
             # Chop off last time step
@@ -149,10 +150,7 @@ class QMIXSystem(IDRQNSystem):
             loss = self._apply_mask(loss, zero_padding_mask)
 
         # Get trainable variables
-        variables = (
-            *self._q_network.trainable_variables,
-            *self._mixer.trainable_variables
-        )
+        variables = (*self._q_network.trainable_variables, *self._mixer.trainable_variables)
 
         # Compute gradients.
         gradients = tape.gradient(loss, variables)
@@ -195,11 +193,17 @@ class QMIXSystem(IDRQNSystem):
         rewards = tf.reduce_mean(rewards, axis=2, keepdims=True)
         return chosen_action_qs, target_max_qs, rewards
 
+
 class QMixer(snt.Module):
     """QMIX mixing network."""
 
     def __init__(
-        self, num_agents, embed_dim = 32, hypernet_embed = 64, preprocess_network = None, non_monotonic=False
+        self,
+        num_agents,
+        embed_dim=32,
+        hypernet_embed=64,
+        preprocess_network=None,
+        non_monotonic=False,
     ) -> None:
         """Initialise QMIX mixing network
 
@@ -238,9 +242,8 @@ class QMixer(snt.Module):
 
     def __call__(self, agent_qs: tf.Tensor, states: tf.Tensor) -> tf.Tensor:
         """Forward method."""
-        B = agent_qs.shape[0] # batch size
+        B = agent_qs.shape[0]  # batch size
         state_dim = states.shape[2:]
-
 
         agent_qs = tf.reshape(agent_qs, (-1, 1, self.num_agents))
 
@@ -281,7 +284,7 @@ class QMixer(snt.Module):
         w_final = tf.math.abs(self.hyper_w_final(states))
         w1 = tf.reshape(w1, shape=(-1, self.num_agents, self.embed_dim))
         w_final = tf.reshape(w_final, shape=(-1, self.embed_dim, 1))
-        k = tf.matmul(w1,w_final)
+        k = tf.matmul(w1, w_final)
         k = tf.reshape(k, shape=(B, -1, self.num_agents))
         k = k / (tf.reduce_sum(k, axis=2, keepdims=True) + 1e-10)
         return k

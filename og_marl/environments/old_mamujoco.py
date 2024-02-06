@@ -37,35 +37,42 @@ def get_mamujoco_args(scenario):
         raise ValueError("Not a valid mamujoco scenario")
     return env_args
 
+
 class MAMuJoCo(BaseEnvironment):
     """Environment wrapper Multi-Agent MuJoCo."""
 
     def __init__(self, scenario):
-
         env_args = get_mamujoco_args(scenario)
-        self._environment = MujocoMulti(
-            env_args=env_args
-        )
+        self._environment = MujocoMulti(env_args=env_args)
 
         self.possible_agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
         self._num_actions = self._environment.n_actions
 
-        self.observation_spaces = {agent: Box(float(), 1, (self._environment.obs_size,), "float32") for i, agent in enumerate(self.possible_agents)}
+        self.observation_spaces = {
+            agent: Box(float(), 1, (self._environment.obs_size,), "float32")
+            for i, agent in enumerate(self.possible_agents)
+        }
 
-        self.action_spaces = {agent: self._environment.action_space[i] for i, agent in enumerate(self.possible_agents)}
+        self.action_spaces = {
+            agent: self._environment.action_space[i] for i, agent in enumerate(self.possible_agents)
+        }
 
         self.info_spec = {
             "state": self._environment.get_state(),
-            "legals": {agent: np.zeros(self.action_spaces[agent].shape, "int64") for agent in self.possible_agents}
+            "legals": {
+                agent: np.zeros(self.action_spaces[agent].shape, "int64")
+                for agent in self.possible_agents
+            },
         }
 
     def reset(self):
-
         self._environment.reset()
 
         observations = self._environment.get_obs()
 
-        observations = {agent: observations[i].astype("float32") for i, agent in enumerate(self.possible_agents)}
+        observations = {
+            agent: observations[i].astype("float32") for i, agent in enumerate(self.possible_agents)
+        }
 
         info = {"state": self._environment.get_state()}
 
@@ -85,7 +92,9 @@ class MAMuJoCo(BaseEnvironment):
 
         observations = self._environment.get_obs()
 
-        observations = {agent: observations[i].astype("float32") for i, agent in enumerate(self.possible_agents)}
+        observations = {
+            agent: observations[i].astype("float32") for i, agent in enumerate(self.possible_agents)
+        }
 
         info["state"] = self._environment.get_state()
 

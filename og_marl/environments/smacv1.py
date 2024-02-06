@@ -35,11 +35,15 @@ class SMACv1(BaseEnvironment):
         self._obs_dim = self._environment.get_obs_size()
 
         self.action_spaces = {agent: Discrete(self._num_actions) for agent in self.possible_agents}
-        self.observation_spaces = {agent: Box(-np.inf, np.inf, (self._obs_dim,)) for agent in self.possible_agents}
+        self.observation_spaces = {
+            agent: Box(-np.inf, np.inf, (self._obs_dim,)) for agent in self.possible_agents
+        }
 
         self.info_spec = {
             "state": np.zeros((self._environment.get_state_size(),), "float32"),
-            "legals": {agent: np.zeros((self._num_actions,), "int64") for agent in self.possible_agents}
+            "legals": {
+                agent: np.zeros((self._num_actions,), "int64") for agent in self.possible_agents
+            },
         }
 
     def reset(self):
@@ -57,10 +61,7 @@ class SMACv1(BaseEnvironment):
 
         env_state = self._environment.get_state().astype("float32")
 
-        info = {
-            "legals": legals,
-            "state": env_state
-        }
+        info = {"legals": legals, "state": env_state}
 
         return observations, info
 
@@ -89,10 +90,7 @@ class SMACv1(BaseEnvironment):
         terminals = {agent: np.array(done) for agent in self.possible_agents}
         truncations = {agent: False for agent in self.possible_agents}
 
-        info = {
-            "legals": legals,
-            "state": env_state
-        }
+        info = {"legals": legals, "state": env_state}
 
         return observations, rewards, terminals, truncations, info
 
@@ -108,4 +106,3 @@ class SMACv1(BaseEnvironment):
     def get_stats(self):
         """Return extra stats to be logged."""
         return self._environment.get_stats()
-

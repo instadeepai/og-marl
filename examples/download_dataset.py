@@ -20,12 +20,12 @@ download_and_unzip_dataset("smac_v1", "3m", dataset_base_dir="datasets")
 
 # Compute mean episode return of Good dataset
 
-env = smacv1.SMACv1("3m") # Change SMAC Scenario Here
+env = smacv1.SMACv1("3m")  # Change SMAC Scenario Here
 dataset = OfflineMARLDataset(env, "datasets/smac_v1/3m/Good")
 
-sample_cnt =0
+sample_cnt = 0
 tot_returns = 0
 for sample in dataset._tf_dataset:
-     sample_cnt+=1
-     tot_returns += sample["episode_return"].numpy()
+    sample_cnt += 1
+    tot_returns += sample["episode_return"].numpy()
 print("Mean Episode return:", tot_returns / sample_cnt)

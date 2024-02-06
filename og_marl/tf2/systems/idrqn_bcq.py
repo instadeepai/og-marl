@@ -42,7 +42,6 @@ class IDRQNBCQSystem(IDRQNSystem):
         learning_rate=3e-4,
         add_agent_id_to_obs=False,
     ):
-
         super().__init__(
             environment,
             logger,
@@ -51,7 +50,7 @@ class IDRQNBCQSystem(IDRQNSystem):
             add_agent_id_to_obs=add_agent_id_to_obs,
             discount=discount,
             target_update_period=target_update_period,
-            learning_rate=learning_rate
+            learning_rate=learning_rate,
         )
 
         self._threshold = bc_threshold
@@ -71,13 +70,13 @@ class IDRQNBCQSystem(IDRQNSystem):
         batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
-        observations = batch["observations"] # (B,T,N,O)
-        actions = tf.cast(batch["actions"], "int32") # (B,T,N)
-        env_states = batch["state"] # (B,T,S)
-        rewards = batch["rewards"] # (B,T,N)
-        truncations = batch["truncations"] # (B,T,N)
-        terminals = batch["terminals"] # (B,T,N)
-        zero_padding_mask = batch["mask"] # (B,T)
+        observations = batch["observations"]  # (B,T,N,O)
+        actions = tf.cast(batch["actions"], "int32")  # (B,T,N)
+        env_states = batch["state"]  # (B,T,S)
+        rewards = batch["rewards"]  # (B,T,N)
+        truncations = batch["truncations"]  # (B,T,N)
+        terminals = batch["terminals"]  # (B,T,N)
+        zero_padding_mask = batch["mask"]  # (B,T)
         legal_actions = batch["legals"]  # (B,T,N,A)
 
         done = terminals
@@ -97,9 +96,7 @@ class IDRQNBCQSystem(IDRQNSystem):
 
         # Unroll target network
         target_qs_out, _ = snt.static_unroll(
-            self._target_q_network,
-            observations,
-            self._target_q_network.initial_state(B*N)
+            self._target_q_network, observations, self._target_q_network.initial_state(B * N)
         )
 
         # Expand batch and agent_dim
@@ -111,9 +108,7 @@ class IDRQNBCQSystem(IDRQNSystem):
         with tf.GradientTape() as tape:
             # Unroll online network
             qs_out, _ = snt.static_unroll(
-                self._q_network,
-                observations,
-                self._q_network.initial_state(B*N)
+                self._q_network, observations, self._q_network.initial_state(B * N)
             )
 
             # Expand batch and agent_dim
@@ -133,7 +128,7 @@ class IDRQNBCQSystem(IDRQNSystem):
             probs_out, _ = snt.static_unroll(
                 self._behaviour_cloning_network,
                 observations,
-                self._behaviour_cloning_network.initial_state(B*N)
+                self._behaviour_cloning_network.initial_state(B * N),
             )
 
             # Expand batch and agent_dim
@@ -150,9 +145,7 @@ class IDRQNBCQSystem(IDRQNSystem):
                 probs_out,
                 1 / A * tf.ones(A, "float32"),
             )  # avoid nans, get masked out later
-            bc_loss = tf.keras.metrics.categorical_crossentropy(
-                one_hot_actions, probs_out
-            )
+            bc_loss = tf.keras.metrics.categorical_crossentropy(one_hot_actions, probs_out)
             bc_loss = tf.reduce_sum(bc_loss * bc_mask) / tf.reduce_sum(bc_mask)
 
             # Legal action masking plus bc probs
@@ -165,7 +158,6 @@ class IDRQNBCQSystem(IDRQNSystem):
                 masked_probs_out / tf.reduce_max(masked_probs_out, axis=-1, keepdims=True)
             ) >= self._threshold
 
-
             q_selector = tf.where(bc_action_mask, qs_out, -999999)
             max_actions = tf.argmax(q_selector, axis=-1)
             target_max_qs = gather(target_qs_out, max_actions, axis=-1)
@@ -175,7 +167,7 @@ class IDRQNBCQSystem(IDRQNSystem):
             ###################
 
             # Compute targets
-            targets = rewards[:, :-1] + (1-done[:, :-1]) * self._discount * target_max_qs[:, 1:]
+            targets = rewards[:, :-1] + (1 - done[:, :-1]) * self._discount * target_max_qs[:, 1:]
             targets = tf.stop_gradient(targets)
 
             # Chop off last time step
@@ -190,7 +182,7 @@ class IDRQNBCQSystem(IDRQNSystem):
         # Get trainable variables
         variables = (
             *self._q_network.trainable_variables,
-            *self._behaviour_cloning_network.trainable_variables
+            *self._behaviour_cloning_network.trainable_variables,
         )
 
         # Compute gradients.
@@ -200,14 +192,10 @@ class IDRQNBCQSystem(IDRQNSystem):
         self._optimizer.apply(gradients, variables)
 
         # Online variables
-        online_variables = (
-            *self._q_network.variables,
-        )
+        online_variables = (*self._q_network.variables,)
 
         # Get target variables
-        target_variables = (
-            *self._target_q_network.variables,
-        )
+        target_variables = (*self._target_q_network.variables,)
 
         # Maybe update target network
         self._update_target_network(train_step, online_variables, target_variables)

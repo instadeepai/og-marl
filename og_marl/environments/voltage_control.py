@@ -14,15 +14,23 @@ class VoltageControlEnv(BaseEnvironment):
     def __init__(self):
         """Constructor for VoltageControl."""
         self._environment = VoltageControl()
-        self.possible_agents = [f"agent_{id}" for id in range(self._environment.get_num_of_agents())]
+        self.possible_agents = [
+            f"agent_{id}" for id in range(self._environment.get_num_of_agents())
+        ]
         self.num_agents = len(self.possible_agents)
         self._num_actions = self._environment.get_total_actions()
 
-        self.action_spaces = {agent: Box(-1, 1, (self._num_actions,), "float32") for agent in self.possible_agents}
-        self.observation_spaces = {agent: Box(-np.inf, np.inf, (50,), "float32") for agent in self.possible_agents}
+        self.action_spaces = {
+            agent: Box(-1, 1, (self._num_actions,), "float32") for agent in self.possible_agents
+        }
+        self.observation_spaces = {
+            agent: Box(-np.inf, np.inf, (50,), "float32") for agent in self.possible_agents
+        }
         self.info_spec = {
             "state": np.zeros((144,), "float32"),
-            "legals": {agent: np.zeros((1,), "float32") for agent in self.possible_agents} # placeholder
+            "legals": {
+                agent: np.zeros((1,), "float32") for agent in self.possible_agents
+            },  # placeholder
         }
 
     def reset(self):
@@ -39,7 +47,7 @@ class VoltageControlEnv(BaseEnvironment):
         # Global state
         info = {
             "state": state.astype("float32"),
-            "legals": np.zeros((1,), "float32") # placeholder
+            "legals": np.zeros((1,), "float32"),  # placeholder
         }
 
         self._done = False
@@ -50,18 +58,15 @@ class VoltageControlEnv(BaseEnvironment):
         return observations, info
 
     def step(self, actions: Dict[str, np.ndarray]):
-        """Steps in env.
-        """
+        """Steps in env."""
         actions = self._preprocess_actions(actions)
 
         # Step the environment
-        reward, done, _ = self._environment.step(
-            actions
-        )
+        reward, done, _ = self._environment.step(actions)
 
         rewards = {}
         for agent in self.possible_agents:
-                rewards[agent] = np.array(reward, "float32")
+            rewards[agent] = np.array(reward, "float32")
 
         # Set done flag
         self._done = done
@@ -75,7 +80,7 @@ class VoltageControlEnv(BaseEnvironment):
         # Global state
         info = {
             "state": state,
-            "legals": np.zeros((1,), "float32") # placeholder
+            "legals": np.zeros((1,), "float32"),  # placeholder
         }
 
         terminals = {agent: done for agent in self.possible_agents}
@@ -90,9 +95,7 @@ class VoltageControlEnv(BaseEnvironment):
         concat_action = np.concatenate(concat_action)
         return concat_action
 
-    def _convert_observations(
-        self, observations: List, done: bool
-    ):
+    def _convert_observations(self, observations: List, done: bool):
         """Convert observation so it's dm_env compatible.
 
         Args:
