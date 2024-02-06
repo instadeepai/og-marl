@@ -63,7 +63,7 @@ class StateAndJointActionCritic(snt.Module):
         joint_actions = make_joint_action(agent_actions, other_actions)
 
         # Repeat states for each agent
-        # states = tf.stack([states]*self.N, axis=2) # [T,B,S] -> [T,B,N,S]
+        states = tf.stack([states]*self.N, axis=2) # [T,B,S] -> [T,B,N,S]
 
         # Concat states and joint actions
         critic_input = tf.concat([states, joint_actions], axis=-1)
@@ -91,7 +91,8 @@ def make_joint_action(agent_actions, other_actions):
         joint_action = tf.reshape(joint_action, (T,B,N*A))
         all_joint_actions.append(joint_action)
     all_joint_actions = tf.stack(all_joint_actions, axis=2)
-    return tf.reshape(agent_actions, (T,B,N*A))#all_joint_actions
+    return all_joint_actions
+    # return tf.reshape(agent_actions, (T,B,N*A))#all_joint_actions
 
 class StateAndActionCritic(snt.Module):
 
@@ -137,6 +138,7 @@ class StateAndActionCritic(snt.Module):
         # critic_input = batch_concat_agent_id_to_obs(critic_input)
 
         q_values = self._critic_network(critic_input)
+
         return q_values
 
 class IDDPGSystem(BaseMARLSystem):

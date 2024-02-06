@@ -172,10 +172,10 @@ class IDRQNSystem(BaseMARLSystem):
         resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
         # Unroll target network
-        target_qs_out, _ = snt.static_unroll(
+        target_qs_out = unroll_rnn(
             self._target_q_network, 
             observations,
-            self._target_q_network.initial_state(B*N)
+            resets
         )
 
         # Expand batch and agent_dim

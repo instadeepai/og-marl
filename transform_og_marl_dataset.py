@@ -17,28 +17,18 @@ import jax
 import jax.numpy as jnp
 import flashbax as fbx
 import copy
-from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
+from og_marl.environments.utils import get_environment
+from tqdm import tqdm
+from flashbax.vault import Vault
 
 from og_marl.offline_dataset import OfflineMARLDataset    
 
-def vault_from_dataset(self, dataset):
+def vault_from_dataset(dataset):
     batch_size = 2048
     batched_dataset = dataset.raw_dataset.batch(batch_size)
     period = dataset.period
     max_episode_length = dataset.max_episode_length
     agents = dataset._agents
-
-    experience = {
-        "observations": {agent: [] for agent in agents},
-        "actions": {agent: [] for agent in agents},
-        "rewards": {agent: [] for agent in agents},
-        "terminals": {agent: [] for agent in agents},
-        "truncations": {agent: [] for agent in agents},
-        "infos": {
-            "legals": {agent: [] for agent in agents},
-            "state": []
-        }
-    }
 
     episode = {
         "observations": {agent: [] for agent in agents},
@@ -52,11 +42,23 @@ def vault_from_dataset(self, dataset):
         }
     }
 
+    buffer = fbx.make_flat_buffer(
+        max_length=3_000_000,
+        min_length=1,
+        sample_batch_size=1,
+        add_sequences=True,
+        add_batch_size=None,
+    )
+    buffer_state = ...
+    initialised_buffer_state = False
+    v = ...
+    num_steps_written = 0
+
     episode_length = 0
     for batch in batched_dataset:
         mask = copy.deepcopy(batch["infos"]["mask"])
         B = mask.shape[0] # batch_size
-        for idx in range(B):
+        for idx in tqdm(range(B)):
             zero_padding_mask = mask[idx,:period]
             episode_length += np.sum(zero_padding_mask, dtype=int)
 
@@ -73,14 +75,22 @@ def vault_from_dataset(self, dataset):
                 int(list(episode["terminals"].values())[0][-1][-1]) == 1 # agent 0, last chunck, last timestep in chunk
                 or episode_length >= max_episode_length
             ):
-                for agent in agents:
-                    experience["observations"][agent].append(np.concatenate(episode["observations"][agent], axis=0)[:episode_length])
-                    experience["actions"][agent].append(np.concatenate(episode["actions"][agent], axis=0)[:episode_length])
-                    experience["rewards"][agent].append(np.concatenate(episode["rewards"][agent], axis=0)[:episode_length])
-                    experience["terminals"][agent].append(np.concatenate(episode["terminals"][agent], axis=0)[:episode_length])
-                    experience["truncations"][agent].append(np.concatenate(episode["truncations"][agent], axis=0)[:episode_length])
-                    experience["infos"]["legals"][agent].append(np.concatenate(episode["infos"]["legals"][agent], axis=0)[:episode_length])
-                experience["infos"]["state"].append(np.concatenate(episode["infos"]["state"], axis=0)[:episode_length])
+                episode_to_save = jax.tree_map(
+                    lambda x: np.concatenate(x, axis=0)[:episode_length],
+                    episode,
+                    is_leaf=lambda x: isinstance(x, list)
+                )
+                if not initialised_buffer_state:
+                    buffer_state = buffer.init(
+                        jax.tree_map(lambda x: x[0, ...], episode_to_save)
+                    )
+                    v = Vault(
+                        vault_name="test.vlt",
+                        experience_structure=buffer_state.experience,
+                    )
+                    initialised_buffer_state = True
+
+                buffer_state = jax.jit(buffer.add, donate_argnums=0)(buffer_state, episode_to_save)
 
                 # Clear episode
                 episode = {
@@ -96,28 +106,19 @@ def vault_from_dataset(self, dataset):
                 }
                 episode_length = 0
 
-    # Concatenate Episodes Together
-    for agent in agents:
-        experience["observations"][agent] = np.concatenate(experience["observations"][agent], axis=0)
-        experience["actions"][agent] = np.concatenate(experience["actions"][agent], axis=0)
-        experience["rewards"][agent] = np.concatenate(experience["rewards"][agent], axis=0)
-        experience["terminals"][agent] = np.concatenate(experience["terminals"][agent], axis=0)
-        experience["truncations"][agent] = np.concatenate(experience["truncations"][agent], axis=0)
-        experience["infos"]["legals"][agent] = np.concatenate(experience["infos"]["legals"][agent], axis=0)
-    experience["infos"]["state"] = np.concatenate(experience["infos"]["state"], axis=0)
+        num_steps_written += v.write(buffer_state)
+        print(f"Wrote {num_steps_written} steps")
 
-    experience = jax.tree_map(lambda x: jnp.expand_dims(x, axis=0), experience)
-
-    buffer_state = TrajectoryBufferState(experience=experience, is_full=jnp.array(False, dtype=bool), current_index=jnp.array(0))
-
-    return buffer_state
+    return num_steps_written
 
 
 ##### Main
-env = "smac_v1"
-scenario = "3m"
-dataset = "Good"
+env_name = "mamujoco"
+scenario = "2halfcheetah"
+dataset = "Poor"
 
-dataset = OfflineMARLDataset(env, env_name=env, scenario_name=scenario, dataset_type=dataset)
+env = get_environment(env_name, scenario)
+
+dataset = OfflineMARLDataset(env, env_name=env_name, scenario_name=scenario, dataset_type=dataset)
 
 vault_from_dataset(dataset)

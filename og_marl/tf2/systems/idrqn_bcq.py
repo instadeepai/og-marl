@@ -24,6 +24,7 @@ from og_marl.tf2.utils import (
     switch_two_leading_dims,
     merge_batch_and_agent_dim_of_time_major_sequence,
     expand_batch_and_agent_dim_of_time_major_sequence,
+    unroll_rnn
 )
 
 class IDRQNBCQSystem(IDRQNSystem):
@@ -56,9 +57,9 @@ class IDRQNBCQSystem(IDRQNSystem):
         self._threshold = bc_threshold
         self._behaviour_cloning_network = snt.DeepRNN(
             [
-                snt.Linear(self._linear_layer_dim),
+                snt.Linear(linear_layer_dim),
                 tf.nn.relu,
-                snt.GRU(self._recurrent_layer_dim),
+                snt.GRU(recurrent_layer_dim),
                 tf.nn.relu,
                 snt.Linear(self._environment._num_actions),
                 tf.nn.softmax,
@@ -81,6 +82,9 @@ class IDRQNBCQSystem(IDRQNSystem):
 
         done = terminals
 
+        # When to reset the RNN hidden state
+        resets = tf.maximum(terminals, truncations) # equivalent to logical 'or'
+
         # Get dims
         B, T, N, A = legal_actions.shape
 
@@ -90,15 +94,17 @@ class IDRQNBCQSystem(IDRQNSystem):
 
         # Make time-major
         observations = switch_two_leading_dims(observations)
+        resets = switch_two_leading_dims(resets)
 
         # Merge batch_dim and agent_dim
         observations = merge_batch_and_agent_dim_of_time_major_sequence(observations)
+        resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
         # Unroll target network
-        target_qs_out, _ = snt.static_unroll(
+        target_qs_out = unroll_rnn(
             self._target_q_network, 
             observations,
-            self._target_q_network.initial_state(B*N)
+            resets
         )
 
         # Expand batch and agent_dim
@@ -109,10 +115,10 @@ class IDRQNBCQSystem(IDRQNSystem):
 
         with tf.GradientTape() as tape:
             # Unroll online network
-            qs_out, _ = snt.static_unroll(
+            qs_out = unroll_rnn(
                 self._q_network, 
-                observations, 
-                self._q_network.initial_state(B*N)
+                observations,
+                resets
             )
 
             # Expand batch and agent_dim
@@ -129,10 +135,10 @@ class IDRQNBCQSystem(IDRQNSystem):
             ###################
 
             # Unroll behaviour cloning network
-            probs_out, _ = snt.static_unroll(
+            probs_out = unroll_rnn(
                 self._behaviour_cloning_network, 
                 observations, 
-                self._behaviour_cloning_network.initial_state(B*N)
+                resets
             )
 
             # Expand batch and agent_dim

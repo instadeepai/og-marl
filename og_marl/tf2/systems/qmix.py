@@ -24,7 +24,8 @@ from og_marl.tf2.utils import (
     merge_batch_and_agent_dim_of_time_major_sequence,
     expand_batch_and_agent_dim_of_time_major_sequence,
     set_growing_gpu_memory,
-    batched_agents
+    batched_agents,
+    unroll_rnn
 )
 
 set_growing_gpu_memory()
@@ -79,6 +80,9 @@ class QMIXSystem(IDRQNSystem):
 
         done = terminals
 
+        # When to reset the RNN hidden state
+        resets = tf.maximum(terminals, truncations) # equivalent to logical 'or'
+
         # Get dims
         B, T, N, A = legal_actions.shape
 
@@ -91,12 +95,13 @@ class QMIXSystem(IDRQNSystem):
 
         # Merge batch_dim and agent_dim
         observations = merge_batch_and_agent_dim_of_time_major_sequence(observations)
+        resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
         # Unroll target network
-        target_qs_out, _ = snt.static_unroll(
+        target_qs_out = unroll_rnn(
             self._target_q_network, 
             observations,
-            self._target_q_network.initial_state(B*N)
+            resets
         )
 
         # Expand batch and agent_dim
@@ -107,10 +112,10 @@ class QMIXSystem(IDRQNSystem):
 
         with tf.GradientTape() as tape:
             # Unroll online network
-            qs_out, _ = snt.static_unroll(
+            qs_out = unroll_rnn(
                 self._q_network, 
                 observations, 
-                self._q_network.initial_state(B*N)
+                resets
             )
 
             # Expand batch and agent_dim

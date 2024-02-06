@@ -24,7 +24,8 @@ from og_marl.tf2.utils import (
     merge_batch_and_agent_dim_of_time_major_sequence,
     expand_batch_and_agent_dim_of_time_major_sequence,
     set_growing_gpu_memory,
-    batched_agents
+    batched_agents,
+    unroll_rnn
 )
 
 set_growing_gpu_memory()
@@ -37,8 +38,8 @@ class QMIXCQLSystem(QMIXSystem):
         self,
         environment,
         logger,
-        num_ood_actions=5,
-        cql_weight=1.0,
+        num_ood_actions=10,
+        cql_weight=5.0,
         linear_layer_dim=64,
         recurrent_layer_dim=64,
         mixer_embed_dim=32,
@@ -66,7 +67,7 @@ class QMIXCQLSystem(QMIXSystem):
         self._num_ood_actions = num_ood_actions
         self._cql_weight = cql_weight
 
-    # @tf.function(jit_compile=True)
+    @tf.function(jit_compile=True)
     def _tf_train_step(self, train_step, batch):
         batch = batched_agents(self._environment.possible_agents, batch)
 
@@ -80,6 +81,9 @@ class QMIXCQLSystem(QMIXSystem):
         zero_padding_mask = batch["mask"] # (B,T)
         legal_actions = batch["legals"]  # (B,T,N,A)
 
+        # When to reset the RNN hidden state
+        resets = tf.maximum(terminals, truncations) # equivalent to logical 'or'
+
         done = terminals
 
         # Get dims
@@ -91,15 +95,17 @@ class QMIXCQLSystem(QMIXSystem):
 
         # Make time-major
         observations = switch_two_leading_dims(observations)
+        resets = switch_two_leading_dims(resets)
 
         # Merge batch_dim and agent_dim
         observations = merge_batch_and_agent_dim_of_time_major_sequence(observations)
+        resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
         # Unroll target network
-        target_qs_out, _ = snt.static_unroll(
+        target_qs_out = unroll_rnn(
             self._target_q_network, 
             observations,
-            self._target_q_network.initial_state(B*N)
+            resets
         )
 
         # Expand batch and agent_dim
@@ -110,10 +116,10 @@ class QMIXCQLSystem(QMIXSystem):
 
         with tf.GradientTape() as tape:
             # Unroll online network
-            qs_out, _ = snt.static_unroll(
+            qs_out = unroll_rnn(
                 self._q_network, 
                 observations, 
-                self._q_network.initial_state(B*N)
+                resets
             )
 
             # Expand batch and agent_dim
