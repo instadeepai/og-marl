@@ -16,8 +16,6 @@ import time
 
 import numpy as np
 
-from og_marl.loggers import JsonWriter
-
 
 class BaseMARLSystem:
     def __init__(
@@ -54,21 +52,21 @@ class BaseMARLSystem:
             done = False
             episode_return = 0
             while not done:
-                
+
                 if "legals" in infos:
                     legal_actions = infos["legals"]
                 else:
                     legal_actions = None
 
                 actions = self.select_actions(observations, legal_actions, explore=False)
-                
+
                 observations, rewards, terminals, truncations, infos = self._environment.step(actions)
                 episode_return += np.mean(list(rewards.values()))
                 done = all(terminals.values()) or all(truncations.values())
             episode_returns.append(episode_return)
         logs = {"evaluator/episode_return": np.mean(episode_returns)}
         return logs
-    
+
     def train_online(self, replay_buffer, max_env_steps=1e6, train_period=20):
         """Method to train the system online."""
         episodes = 0
@@ -80,7 +78,7 @@ class BaseMARLSystem:
                 observations, infos = observations
             else:
                 infos = {}
-            
+
             episode_return = 0
             while True:
                 if "legals" in infos:
@@ -97,7 +95,7 @@ class BaseMARLSystem:
                 next_observations, rewards, terminals, truncations, next_infos = self._environment.step(actions)
                 end_time = time.time()
                 time_to_step = (end_time - start_time)
-                
+
                 # Add step to replay buffer
                 replay_buffer.add(observations, actions, rewards, terminals, truncations, infos)
 
@@ -125,7 +123,7 @@ class BaseMARLSystem:
                     train_steps_per_second = 1 / (time_train_step + time_to_sample)
                     env_steps_per_second = 1 / (time_to_step + time_for_action_selection)
 
-                    train_logs = {**train_logs, **self.get_stats(), "Environment Steps": self._env_step_ctr, "Time to Sample": time_to_sample, "Time for Action Selection": time_for_action_selection, "Time to Step Env": time_to_step, "Time for Train Step": time_train_step, 
+                    train_logs = {**train_logs, **self.get_stats(), "Environment Steps": self._env_step_ctr, "Time to Sample": time_to_sample, "Time for Action Selection": time_for_action_selection, "Time to Step Env": time_to_step, "Time for Train Step": time_train_step,
                                   "Train Steps Per Second": train_steps_per_second,
                                   "Env Steps Per Second": env_steps_per_second}
 
@@ -145,7 +143,7 @@ class BaseMARLSystem:
 
     def train_offline(self, batched_dataset, max_trainer_steps=1e5, evaluate_every=1000, num_eval_episodes=4, json_writer=None):
         """Method to train the system offline.
-        
+
         WARNING: make sure evaluate_every % log_every == 0 and log_every < evaluate_every, else you won't log evaluation.
         """
         trainer_step_ctr = 0
@@ -172,11 +170,11 @@ class BaseMARLSystem:
             train_logs = self.train_step(batch)
             end_time = time.time()
             time_train_step = (end_time - start_time)
-            
+
             train_steps_per_second = 1 / (time_train_step + time_to_sample)
 
             logs = {**train_logs, "Trainer Steps": trainer_step_ctr, "Time to Sample": time_to_sample, "Time for Train Step": time_train_step, "Train Steps Per Second": train_steps_per_second}
-            
+
             self._logger.write(logs)
 
             trainer_step_ctr += 1
@@ -199,6 +197,6 @@ class BaseMARLSystem:
 
     def select_actions(self, observations):
         raise NotImplementedError
-    
+
     def train_step(self, batch):
         raise NotImplementedError

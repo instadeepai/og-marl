@@ -15,7 +15,6 @@
 import os
 import sys
 import zipfile
-from collections import namedtuple
 from pathlib import Path
 
 import requests
@@ -96,7 +95,7 @@ class OfflineMARLDataset:
             sample[f"{agent}_terminals"] = 1 - example[f"{agent}_discounts"]
             sample[f"{agent}_truncations"] = tf.zeros_like(example[f"{agent}_discounts"])
             sample[f"{agent}_legals"] = example[f"{agent}_legal_actions"]
-            
+
         sample["mask"] = example["zero_padding_mask"]
         sample["state"] = example["env_state"]
         sample["episode_return"] = example["episode_return"]
@@ -107,16 +106,19 @@ class OfflineMARLDataset:
         """Expose any other attributes of the underlying environment.
 
         Args:
+        ----
             name (str): attribute.
 
         Returns:
+        -------
             Any: return attribute from env or underlying env.
+
         """
         if hasattr(self.__class__, name):
             return self.__getattribute__(name)
         else:
             return getattr(self._tf_dataset, name)
-        
+
 
 DATASET_URLS = {
     "smac_v1": {
@@ -181,7 +183,7 @@ def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./data
                 dl += len(data)
                 file.write(data)
                 done = int(50 * dl / total_length)
-                sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)) )    
+                sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)) )
                 sys.stdout.flush()
 
     # Step 2: Unzip the file
@@ -207,7 +209,7 @@ def download_flashbax_dataset(env_name, scenario_name, base_dir="./datasets/flas
     extraction_path = f'{base_dir}/{env_name}/{scenario_name}'
 
     print("Downloading dataset. This could take a few minutes.")
-    
+
     response = requests.get(dataset_download_url, stream=True)
     total_length = response.headers.get('content-length')
 
@@ -221,7 +223,7 @@ def download_flashbax_dataset(env_name, scenario_name, base_dir="./datasets/flas
                 dl += len(data)
                 file.write(data)
                 done = int(50 * dl / total_length)
-                sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)) )    
+                sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)) )
                 sys.stdout.flush()
 
 

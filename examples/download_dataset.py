@@ -13,8 +13,7 @@
 # limitations under the License.
 
 from og_marl.environments import smacv1
-from og_marl.offline_dataset import (OfflineMARLDataset,
-                                     download_and_unzip_dataset)
+from og_marl.offline_dataset import OfflineMARLDataset, download_and_unzip_dataset
 
 # Comment this out if you already downloaded the dataset
 download_and_unzip_dataset("smac_v1", "3m", dataset_base_dir="datasets")
@@ -22,7 +21,7 @@ download_and_unzip_dataset("smac_v1", "3m", dataset_base_dir="datasets")
 # Compute mean episode return of Good dataset
 
 env = smacv1.SMACv1("3m") # Change SMAC Scenario Here
-dataset = OfflineMARLDataset(env, f"datasets/smac_v1/3m/Good")
+dataset = OfflineMARLDataset(env, "datasets/smac_v1/3m/Good")
 
 sample_cnt =0
 tot_returns = 0

@@ -25,7 +25,7 @@ class FlashbaxBufferStore:
         self,
         dataset_path: str,
     ) -> None:
-        orbax_checkpointer = orbax.checkpoint.PyTreeCheckpointer() 
+        orbax_checkpointer = orbax.checkpoint.PyTreeCheckpointer()
         options = orbax.checkpoint.CheckpointManagerOptions(
             max_to_keep=1,
             create=True,
@@ -47,7 +47,7 @@ class FlashbaxBufferStore:
             current_index=jnp.asarray(raw_restored['current_index']),
             is_full=jnp.asarray(raw_restored['is_full']),
         )
-    
+
     def restore_metadata(self):
         metadata = self._manager.metadata()
         return metadata

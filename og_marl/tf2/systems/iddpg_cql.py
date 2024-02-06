@@ -19,15 +19,18 @@ import tensorflow as tf
 
 from og_marl.tf2.systems.iddpg import IDDPGSystem
 from og_marl.tf2.utils import (
-    batch_concat_agent_id_to_obs, batched_agents,
+    batch_concat_agent_id_to_obs,
+    batched_agents,
     expand_batch_and_agent_dim_of_time_major_sequence,
-    merge_batch_and_agent_dim_of_time_major_sequence, switch_two_leading_dims)
+    merge_batch_and_agent_dim_of_time_major_sequence,
+    switch_two_leading_dims,
+)
 
 
 class IDDPGCQLSystem(IDDPGSystem):
 
     def __init__(
-        self, 
+        self,
         environment,
         logger,
         linear_layer_dim=64,
@@ -39,7 +42,7 @@ class IDDPGCQLSystem(IDDPGSystem):
         add_agent_id_to_obs=False,
         random_exploration_timesteps=0,
         num_ood_actions=10, # CQL
-        cql_weight=5.0, # CQL  
+        cql_weight=5.0, # CQL
         cql_sigma=0.2, # CQL
         target_action_gap=10.0, # CQL
         cql_alpha_learning_rate=3e-4 # CQL
@@ -54,7 +57,7 @@ class IDDPGCQLSystem(IDDPGSystem):
             critic_learning_rate=critic_learning_rate,
             policy_learning_rate=policy_learning_rate,
             add_agent_id_to_obs=add_agent_id_to_obs,
-            random_exploration_timesteps=random_exploration_timesteps  
+            random_exploration_timesteps=random_exploration_timesteps
         )
 
         self._num_ood_actions = num_ood_actions
@@ -86,7 +89,7 @@ class IDDPGCQLSystem(IDDPGSystem):
         # Maybe add agent ids to observation
         if self._add_agent_id_to_obs:
             observations = batch_concat_agent_id_to_obs(observations)
-        
+
         # Make time-major
         observations = switch_two_leading_dims(observations)
         replay_actions = switch_two_leading_dims(actions)
@@ -223,7 +226,7 @@ class IDDPGCQLSystem(IDDPGSystem):
             qs_1 = self._critic_network_1(observations, env_states, online_actions, replay_actions)
             qs_2 = self._critic_network_2(observations, env_states, online_actions,replay_actions)
             qs = tf.minimum(qs_1, qs_2)
-            
+
             policy_loss = - tf.squeeze(qs, axis=-1) + 1e-3 * tf.reduce_mean(tf.square(online_actions))
 
             # Masked mean
@@ -260,7 +263,7 @@ class IDDPGCQLSystem(IDDPGSystem):
             *self._target_critic_network_1.variables,
             *self._target_critic_network_2.variables,
             *self._target_policy_network.variables
-        )   
+        )
         self._update_target_network(
             online_variables,
             target_variables,

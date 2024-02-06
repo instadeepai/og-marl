@@ -35,7 +35,6 @@ class PettingZooBase(BaseEnvironment):
 
     def reset(self):
         """Resets the env."""
-
         # Reset the environment
         observations = self._environment.reset()
 
@@ -53,7 +52,6 @@ class PettingZooBase(BaseEnvironment):
 
     def step(self, actions):
         """Steps in env."""
-
         # Step the environment
         observations, rewards, terminals, truncations, _ = self._environment.step(
             actions
@@ -61,7 +59,7 @@ class PettingZooBase(BaseEnvironment):
 
         # Global state
         env_state = self._create_state_representation(observations)
-        
+
         # Extra infos
         info = {"state": env_state}
 

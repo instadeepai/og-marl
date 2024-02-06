@@ -19,9 +19,14 @@ import tree
 
 from og_marl.tf2.systems.qmix import QMIXSystem
 from og_marl.tf2.utils import (
-    batch_concat_agent_id_to_obs, batched_agents, concat_agent_id_to_obs,
-    expand_batch_and_agent_dim_of_time_major_sequence, gather,
-    merge_batch_and_agent_dim_of_time_major_sequence, switch_two_leading_dims)
+    batch_concat_agent_id_to_obs,
+    batched_agents,
+    concat_agent_id_to_obs,
+    expand_batch_and_agent_dim_of_time_major_sequence,
+    gather,
+    merge_batch_and_agent_dim_of_time_major_sequence,
+    switch_two_leading_dims,
+)
 
 
 class MAICQSystem(QMIXSystem):
@@ -71,10 +76,9 @@ class MAICQSystem(QMIXSystem):
                 tf.nn.softmax,
             ]
         )
-    
+
     def reset(self):
         """Called at the start of a new episode."""
-
         # Reset the recurrent neural network
         self._rnn_states = {agent: self._policy_network.initial_state(1) for agent in self._environment.possible_agents}
 
@@ -139,7 +143,7 @@ class MAICQSystem(QMIXSystem):
 
         # Unroll target network
         target_qs_out, _ = snt.static_unroll(
-            self._target_q_network, 
+            self._target_q_network,
             observations,
             self._target_q_network.initial_state(B*N)
         )
@@ -153,8 +157,8 @@ class MAICQSystem(QMIXSystem):
         with tf.GradientTape(persistent=True) as tape:
             # Unroll online network
             qs_out, _ = snt.static_unroll(
-                self._q_network, 
-                observations, 
+                self._q_network,
+                observations,
                 self._q_network.initial_state(B*N)
             )
 

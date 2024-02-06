@@ -166,7 +166,7 @@ def batched_agents(agents, batch_dict):
     for agent in agents:
         for key in batched_agents:
             batched_agents[key].append(batch_dict[agent + "_" + key])
-    
+
     for key, value in batched_agents.items():
         batched_agents[key] = tf.stack(value, axis=2)
 

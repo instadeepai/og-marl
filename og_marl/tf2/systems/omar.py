@@ -20,15 +20,18 @@ import tensorflow_probability as tfp
 
 from og_marl.tf2.systems.iddpg_cql import IDDPGCQLSystem
 from og_marl.tf2.utils import (
-    batch_concat_agent_id_to_obs, batched_agents,
+    batch_concat_agent_id_to_obs,
+    batched_agents,
     expand_batch_and_agent_dim_of_time_major_sequence,
-    merge_batch_and_agent_dim_of_time_major_sequence, switch_two_leading_dims)
+    merge_batch_and_agent_dim_of_time_major_sequence,
+    switch_two_leading_dims,
+)
 
 
 class OMARSystem(IDDPGCQLSystem):
 
     def __init__(
-        self, 
+        self,
         environment,
         logger,
         linear_layer_dim=64,
@@ -39,7 +42,7 @@ class OMARSystem(IDDPGCQLSystem):
         policy_learning_rate=1e-3,
         add_agent_id_to_obs=False,
         num_ood_actions=4, # CQL
-        cql_weight=10.0, # CQL  
+        cql_weight=10.0, # CQL
         cql_sigma=0.2, # CQL
         target_action_gap=10.0, # CQL
         cql_alpha_learning_rate=3e-4, # CQL
@@ -95,7 +98,7 @@ class OMARSystem(IDDPGCQLSystem):
         # Maybe add agent ids to observation
         if self._add_agent_id_to_obs:
             observations = batch_concat_agent_id_to_obs(observations)
-        
+
         # Make time-major
         observations = switch_two_leading_dims(observations)
         replay_actions = switch_two_leading_dims(actions)
@@ -325,7 +328,7 @@ class OMARSystem(IDDPGCQLSystem):
             *self._target_critic_network_1.variables,
             *self._target_critic_network_2.variables,
             *self._target_policy_network.variables
-        )   
+        )
         self._update_target_network(
             online_variables,
             target_variables,

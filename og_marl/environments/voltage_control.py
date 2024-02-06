@@ -28,8 +28,10 @@ class VoltageControlEnv(BaseEnvironment):
     def reset(self):
         """Resets the env.
 
-        Returns:
+        Returns
+        -------
             dm_env.TimeStep: dm timestep.
+
         """
         # Reset the environment
         observations, state = self._environment.reset()
@@ -94,11 +96,14 @@ class VoltageControlEnv(BaseEnvironment):
         """Convert observation so it's dm_env compatible.
 
         Args:
+        ----
             observes (Dict[str, np.ndarray]): observations per agent.
             dones (Dict[str, bool]): dones per agent.
 
         Returns:
+        -------
             types.Observation: dm compatible observations.
+
         """
         dict_observations = {}
         for i, agent in enumerate(self.possible_agents):

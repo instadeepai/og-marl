@@ -18,10 +18,14 @@ import tensorflow as tf
 
 from og_marl.tf2.systems.idrqn import IDRQNSystem
 from og_marl.tf2.utils import (
-    batch_concat_agent_id_to_obs, batched_agents,
-    expand_batch_and_agent_dim_of_time_major_sequence, gather,
-    merge_batch_and_agent_dim_of_time_major_sequence, set_growing_gpu_memory,
-    switch_two_leading_dims)
+    batch_concat_agent_id_to_obs,
+    batched_agents,
+    expand_batch_and_agent_dim_of_time_major_sequence,
+    gather,
+    merge_batch_and_agent_dim_of_time_major_sequence,
+    set_growing_gpu_memory,
+    switch_two_leading_dims,
+)
 
 set_growing_gpu_memory()
 
@@ -90,7 +94,7 @@ class QMIXSystem(IDRQNSystem):
 
         # Unroll target network
         target_qs_out, _ = snt.static_unroll(
-            self._target_q_network, 
+            self._target_q_network,
             observations,
             self._target_q_network.initial_state(B*N)
         )
@@ -104,8 +108,8 @@ class QMIXSystem(IDRQNSystem):
         with tf.GradientTape() as tape:
             # Unroll online network
             qs_out, _ = snt.static_unroll(
-                self._q_network, 
-                observations, 
+                self._q_network,
+                observations,
                 self._q_network.initial_state(B*N)
             )
 
@@ -181,17 +185,16 @@ class QMIXSystem(IDRQNSystem):
 
     def _mixing(self, chosen_action_qs, target_max_qs, states, rewards):
         """QMIX"""
-
-        # VDN 
+        # VDN
         # chosen_action_qs = tf.reduce_sum(chosen_action_qs, axis=2, keepdims=True)
         # target_max_qs = tf.reduce_sum(target_max_qs, axis=2, keepdims=True)
         # VDN
-        
+
         chosen_action_qs = self._mixer(chosen_action_qs, states)
         target_max_qs = self._target_mixer(target_max_qs, states)
         rewards = tf.reduce_mean(rewards, axis=2, keepdims=True)
         return chosen_action_qs, target_max_qs, rewards
-    
+
 class QMixer(snt.Module):
     """QMIX mixing network."""
 
@@ -201,13 +204,14 @@ class QMixer(snt.Module):
         """Initialise QMIX mixing network
 
         Args:
+        ----
             num_agents: Number of agents in the environment
             state_dim: Dimensions of the global environment state
             embed_dim: The dimension of the output of the first layer
                 of the mixer.
             hypernet_embed: Number of units in the hyper network
-        """
 
+        """
         super().__init__()
         self.num_agents = num_agents
         self.embed_dim = embed_dim
@@ -234,7 +238,6 @@ class QMixer(snt.Module):
 
     def __call__(self, agent_qs: tf.Tensor, states: tf.Tensor) -> tf.Tensor:
         """Forward method."""
-        
         B = agent_qs.shape[0] # batch size
         state_dim = states.shape[2:]
 
@@ -269,10 +272,9 @@ class QMixer(snt.Module):
         q_tot = tf.reshape(y, (B, -1, 1))
 
         return q_tot
-    
+
     def k(self, states):
         """Method used by MAICQ."""
-
         B, T = states.shape[:2]
 
         w1 = tf.math.abs(self.hyper_w_1(states))

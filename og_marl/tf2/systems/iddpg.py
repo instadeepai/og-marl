@@ -21,10 +21,14 @@ import tree
 
 from og_marl.tf2.systems.base import BaseMARLSystem
 from og_marl.tf2.utils import (
-    batch_concat_agent_id_to_obs, batched_agents, concat_agent_id_to_obs,
+    batch_concat_agent_id_to_obs,
+    batched_agents,
+    concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
-    merge_batch_and_agent_dim_of_time_major_sequence, set_growing_gpu_memory,
-    switch_two_leading_dims)
+    merge_batch_and_agent_dim_of_time_major_sequence,
+    set_growing_gpu_memory,
+    switch_two_leading_dims,
+)
 
 set_growing_gpu_memory()
 
@@ -75,7 +79,7 @@ class StateAndJointActionCritic(snt.Module):
 
 def make_joint_action(agent_actions, other_actions):
     """Method to construct the joint action.
-    
+
     agent_actions [T,B,N,A]: tensor of actions the agent took. Usually
         the actions from the learnt policy network.
     other_actions [[T,B,N,A]]: tensor of actions the agent took. Usually
@@ -165,14 +169,14 @@ class StateAndActionCritic(snt.Module):
 
     def __call__(self, observations, states, agent_actions, other_actions, stop_other_actions_gradient=True):
         """Forward pass of critic network.
-        
+
         observations [T,B,N,O]
         states [T,B,S]
         agent_actions [T,B,N,A]: the actions the agent took.
         other_actions [T,B,N,A]: the actions the other agents took.
         """
         if self._preprocess_network is not None:
-            embeds = [] 
+            embeds = []
             for t in range(states.shape[0]):
                 embeds.append(self._preprocess_network(states[t]))
             states =  tf.stack(embeds, axis=0) # stack along time
@@ -203,7 +207,7 @@ class IDDPGSystem(BaseMARLSystem):
         critic_learning_rate=3e-4,
         policy_learning_rate=1e-3,
         add_agent_id_to_obs=True,
-        random_exploration_timesteps=50_000 
+        random_exploration_timesteps=50_000
     ):
 
         super().__init__(
@@ -252,7 +256,6 @@ class IDDPGSystem(BaseMARLSystem):
 
     def reset(self):
         """Called at the start of a new episode."""
-
         # Reset the recurrent neural network
         self._rnn_states = {agent: self._policy_network.initial_state(1) for agent in self._environment.possible_agents}
 
@@ -279,7 +282,7 @@ class IDDPGSystem(BaseMARLSystem):
                 if self._random_exploration_timesteps > 0:
                     action = tf.random.uniform(action.shape, -1, 1, dtype=action.dtype)
                     self._random_exploration_timesteps.assign_sub(1)
-                else:            
+                else:
                     noise = tf.random.normal(action.shape, 0.0, 0.2) # TODO: make variable
                     action = tf.clip_by_value(action + noise, -1, 1)
 
@@ -287,7 +290,7 @@ class IDDPGSystem(BaseMARLSystem):
             actions[agent] = action
 
         return actions, next_rnn_states
-    
+
     def train_step(self, batch):
         logs = self._tf_train_step(batch)
         return logs
@@ -314,7 +317,7 @@ class IDDPGSystem(BaseMARLSystem):
         # Maybe add agent ids to observation
         if self._add_agent_id_to_obs:
             observations = batch_concat_agent_id_to_obs(observations)
-        
+
         # Make time-major
         observations = switch_two_leading_dims(observations)
         replay_actions = switch_two_leading_dims(actions)
@@ -370,7 +373,7 @@ class IDDPGSystem(BaseMARLSystem):
             qs_1 = self._critic_network_1(observations, env_states, online_actions, replay_actions)
             qs_2 = self._critic_network_2(observations, env_states, online_actions,replay_actions)
             qs = tf.minimum(qs_1, qs_2)
-            
+
             policy_loss = - tf.squeeze(qs, axis=-1) + 1e-3 * tf.reduce_mean(online_actions**2)
 
             # Masked mean
@@ -402,7 +405,7 @@ class IDDPGSystem(BaseMARLSystem):
             *self._target_critic_network_1.variables,
             *self._target_critic_network_2.variables,
             *self._target_policy_network.variables
-        )   
+        )
         self._update_target_network(
             online_variables,
             target_variables,

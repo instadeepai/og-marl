@@ -7,6 +7,7 @@
 #     http://www.apache.org/licenses/LICENSE-2.0
 
 import time
+
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,11 +20,10 @@ import jax
 import jax.numpy as jnp
 import optax
 import tree
-import wandb
 from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 from flax import linen as nn
 
-from og_marl.environments.utils import get_environment
+import wandb
 from og_marl.jax.tf_dataset_to_flashbax import FlashbaxBufferStore
 
 
@@ -57,7 +57,7 @@ def train_bc_system(
     NUM_EPOCHS = num_epochs
 
     NUM_ACTS = environment._num_actions
-    NUM_AGENTS = len(environment.possible_agents)    
+    NUM_AGENTS = len(environment.possible_agents)
 
     ##################
     ### End Config ###
@@ -90,7 +90,7 @@ def train_bc_system(
 
             # Final dense layer for output
             output = nn.Dense(self.output_size)(x)
-            
+
             return carry, output
 
         @staticmethod
@@ -122,16 +122,19 @@ def train_bc_system(
         return jnp.sum(loss * mask) / jnp.sum(mask) # masked mean
 
     def batched_multi_agent_behaviour_cloninig_loss(params, obs_seq, act_seq, mask):
-        """
-        Args:
+        """Args:
+        ----
             params: a container of params for the behaviour cloning network which is shared between 
                 all agents in the system.
             obs_seq: an array of a sequence of observations for all agents. Shape (B,N,T,O) where
                 B is the batch dim, N is the number of agents, T is the time dimension and O is
                 the observation dim.
             act_seq: is an array of a sequence of actions for all agents. Shape (B,N,T).
-        Returns: 
+
+        Returns
+        -------
             A scalar behaviour cloning loss.
+
         """
         multi_agent_behaviour_cloning_loss = jax.vmap(behaviour_cloning_loss, (None,1,1,None)) # vmap over agent dim which is after time dim
         batched_multi_agent_behaviour_cloninig_loss = jax.vmap(multi_agent_behaviour_cloning_loss, (None, 0,0,0))

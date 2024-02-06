@@ -48,7 +48,7 @@ class SequenceCPPRB:
                 legals_shape = self._info_spec["legals"][agent].shape
                 cpprb_env_dict[f"{agent}_legals"] = {"shape": (sequence_length, *legals_shape)}
                 sequence_buffer[f"{agent}_legals"] = np.zeros((sequence_length, *legals_shape), "float32")
-        
+
         cpprb_env_dict["mask"] = {"shape": (sequence_length,)}
         sequence_buffer["mask"] = np.zeros((sequence_length,), "float32")
 
@@ -118,7 +118,7 @@ class SequenceCPPRB:
 
     def __iter__(self):
         return self
-    
+
     def __next__(self):
         cpprb_sample = self._cpprb.sample(self._batch_size)
 

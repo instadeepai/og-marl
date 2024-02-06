@@ -21,10 +21,15 @@ import tree
 
 from og_marl.tf2.systems.base import BaseMARLSystem
 from og_marl.tf2.utils import (
-    batch_concat_agent_id_to_obs, batched_agents, concat_agent_id_to_obs,
-    expand_batch_and_agent_dim_of_time_major_sequence, gather,
-    merge_batch_and_agent_dim_of_time_major_sequence, set_growing_gpu_memory,
-    switch_two_leading_dims)
+    batch_concat_agent_id_to_obs,
+    batched_agents,
+    concat_agent_id_to_obs,
+    expand_batch_and_agent_dim_of_time_major_sequence,
+    gather,
+    merge_batch_and_agent_dim_of_time_major_sequence,
+    set_growing_gpu_memory,
+    switch_two_leading_dims,
+)
 
 set_growing_gpu_memory()
 
@@ -84,7 +89,6 @@ class IDRQNSystem(BaseMARLSystem):
 
     def reset(self):
         """Called at the start of a new episode."""
-
         # Reset the recurrent neural network
         self._rnn_states = {agent: self._q_network.initial_state(1) for agent in self._environment.possible_agents}
 
@@ -133,7 +137,7 @@ class IDRQNSystem(BaseMARLSystem):
             actions[agent] = action
 
         return actions, next_rnn_states
-    
+
     def train_step(self, batch):
         self._train_step_ctr += 1
         logs = self._tf_train_step(tf.convert_to_tensor(self._train_step_ctr), batch)
@@ -171,7 +175,7 @@ class IDRQNSystem(BaseMARLSystem):
 
         # Unroll target network
         target_qs_out, _ = snt.static_unroll(
-            self._target_q_network, 
+            self._target_q_network,
             observations,
             self._target_q_network.initial_state(B*N)
         )
@@ -185,8 +189,8 @@ class IDRQNSystem(BaseMARLSystem):
         with tf.GradientTape() as tape:
             # Unroll online network
             qs_out, _ = snt.static_unroll(
-                self._q_network, 
-                observations, 
+                self._q_network,
+                observations,
                 self._q_network.initial_state(B*N)
             )
 
@@ -248,7 +252,7 @@ class IDRQNSystem(BaseMARLSystem):
             "Mean Q-values": tf.reduce_mean(qs_out),
             "Mean Chosen Q-values": tf.reduce_mean(chosen_action_qs),
         }
-    
+
     def get_stats(self):
         return {"Epsilon": max(1.0 - self._env_step_ctr * self._eps_dec, self._eps_min)}
 
@@ -260,7 +264,6 @@ class IDRQNSystem(BaseMARLSystem):
 
     def _update_target_network(self, train_step, online_variables, target_variables):
         """Update the target networks."""
-
         if train_step % self._target_update_period == 0:
             for src, dest in zip(online_variables, target_variables):
                 dest.assign(src)

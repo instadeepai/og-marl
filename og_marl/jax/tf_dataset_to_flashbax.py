@@ -31,7 +31,7 @@ class FlashbaxBufferStore:
         self,
         dataset_path: str,
     ) -> None:
-        orbax_checkpointer = orbax.checkpoint.PyTreeCheckpointer() 
+        orbax_checkpointer = orbax.checkpoint.PyTreeCheckpointer()
         options = orbax.checkpoint.CheckpointManagerOptions(
             max_to_keep=1,
             create=True,
@@ -95,7 +95,7 @@ def make_decode_fn(schema, agents):
             sample[f"{agent}_rewards"] = example[f"{agent}_rewards"]
             sample[f"{agent}_done"] = 1 - example[f"{agent}_discounts"]
             sample[f"{agent}_legals"] = example[f"{agent}_legal_actions"]
-            
+
         sample["mask"] = example["zero_padding_mask"]
         sample["state"] = example["env_state"]
         sample["episode_return"] = tf.repeat(example["episode_return"], len(sample["state"]))
@@ -116,7 +116,7 @@ if __name__=="__main__":
     environment = get_environment("smac_v1", SCENARIO)
 
     # First define hyper-parameters of the buffer.
-    max_length_time_axis = 30000 * 20 # Maximum length of the buffer along the time axis. 
+    max_length_time_axis = 30000 * 20 # Maximum length of the buffer along the time axis.
     min_length_time_axis = 16 # Minimum length across the time axis before we can sample.
     sample_batch_size = 4 # Batch size of trajectories sampled from the buffer.
     add_batch_size = 1 # Batch size of trajectories added to the buffer.
@@ -149,7 +149,7 @@ if __name__=="__main__":
         filenames = Path(os.path.join(path_to_dataset, dir)).glob("**/*.tfrecord")
         filenames = list(filenames)
         filenames.sort(key=lambda x: int(str(x).split("executor_sequence_log_")[-1][:-9]))
-    
+
         for filename in filenames:
             print(filename)
             tf_record_dataset = tf.data.TFRecordDataset(filename, compression_type="GZIP").map(
@@ -163,7 +163,7 @@ if __name__=="__main__":
 
                     init_sample = tree.map_structure(lambda x: jnp.array(x[0]), sample)
                     state = buffer.init(init_sample)
-                
+
                 add_sample = tree.map_structure(lambda x: jnp.expand_dims(x, axis=0), sample)
                 state = jitted_add(state, add_sample)
 
@@ -180,7 +180,7 @@ if __name__=="__main__":
                 break
         if state.is_full:
             break
-    
+
         store.save(t, state)
 
     rng_key = jax.random.PRNGKey(0)

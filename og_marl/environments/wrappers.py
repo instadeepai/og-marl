@@ -69,7 +69,7 @@ class ExperienceRecorder:
         self._infos = infos
 
         return observations, infos
-    
+
     def step(self, actions):
         observations, rewards, terminals, truncations, infos = self._environment.step(actions)
 
@@ -81,7 +81,7 @@ class ExperienceRecorder:
             truncations=truncations,
             infos=self._infos,
         )
-        
+
         # Log stuff to vault/flashbax
         if not self._has_initialised:
             self._buffer_state = self._buffer.init(packed_timestep)
@@ -94,7 +94,7 @@ class ExperienceRecorder:
         self._buffer_state = self._add_to_buffer(
             self._buffer_state,
             packed_timestep,
-            # jax.tree_map(lambda x: np.expand_dims(np.expand_dims(np.array(x), axis=0), axis=0), packed_timestep), # NOTE add time dimension and batch dimension. should we use flat buffer? 
+            # jax.tree_map(lambda x: np.expand_dims(np.expand_dims(np.array(x), axis=0), axis=0), packed_timestep), # NOTE add time dimension and batch dimension. should we use flat buffer?
         )
 
         # Store new observations and infos
@@ -106,7 +106,7 @@ class ExperienceRecorder:
             self._vault.write(self._buffer_state)
 
         return observations, rewards, terminals, truncations, infos
-    
+
     def __getattr__(self, name: str):
         """Expose any other attributes of the underlying environment."""
         if hasattr(self.__class__, name):
@@ -135,7 +135,7 @@ class Dtype:
             observations[agent] = observation.astype(self._dtype)
 
         return observations, infos
-    
+
     def step(self, actions):
         next_observations, rewards, terminals, truncations, infos = self._environment.step(actions)
 
@@ -143,7 +143,7 @@ class Dtype:
             next_observations[agent] = observation.astype(self._dtype)
 
         return next_observations, rewards, terminals, truncations, infos
-    
+
     def __getattr__(self, name: str):
         """Expose any other attributes of the underlying environment."""
         if hasattr(self.__class__, name):
@@ -184,7 +184,7 @@ class PadObsandActs:
                 observations[agent] = np.concatenate((observation, np.zeros((missing_dim,), observation.dtype)))
 
         return observations, infos
-    
+
     def step(self, actions):
         actions = {agent: action[:self._environment.action_spaces[agent].shape[0]] for agent, action in actions.items()}
         next_observations, rewards, terminals, truncations, infos = self._environment.step(actions)
@@ -195,7 +195,7 @@ class PadObsandActs:
                 next_observations[agent] = np.concatenate((observation, np.zeros((missing_dim,), observation.dtype)))
 
         return next_observations, rewards, terminals, truncations, infos
-    
+
     def __getattr__(self, name: str):
         """Expose any other attributes of the underlying environment."""
         if hasattr(self.__class__, name):

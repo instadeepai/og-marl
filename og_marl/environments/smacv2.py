@@ -115,7 +115,6 @@ class SMACv2(BaseEnvironment):
 
     def reset(self):
         """Resets the env."""
-
         # Reset the environment
         self._environment.reset()
         self._done = False
@@ -126,7 +125,7 @@ class SMACv2(BaseEnvironment):
 
         legal_actions = self._get_legal_actions()
         legals = {agent: legal_actions[i] for i, agent in enumerate(self.possible_agents)}
-        
+
         env_state = self._environment.get_state().astype("float32")
 
         info = {
@@ -138,7 +137,6 @@ class SMACv2(BaseEnvironment):
 
     def step(self, actions):
         """Step in env."""
-
         # Convert dict of actions to list for SMAC
         smac_actions = []
         for agent in self.possible_agents:

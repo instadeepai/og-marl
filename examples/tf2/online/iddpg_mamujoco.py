@@ -13,8 +13,7 @@
 # limitations under the License.
 
 from og_marl.environments.gymnasium_mamujoco import MAMuJoCo
-from og_marl.environments.wrappers import (Dtype, ExperienceRecorder,
-                                           PadObsandActs)
+from og_marl.environments.wrappers import Dtype, ExperienceRecorder, PadObsandActs
 from og_marl.loggers import WandbLogger
 from og_marl.replay_buffers import SequenceCPPRB
 from og_marl.tf2.systems.iddpg import IDDPGSystem

@@ -16,19 +16,12 @@
 from typing import Any, Tuple
 
 import numpy as np
-from flatland.core.env import Environment
-from flatland.core.env_observation_builder import ObservationBuilder
-from flatland.core.env_prediction_builder import PredictionBuilder
 from flatland.core.grid.grid4_utils import get_new_position
-from flatland.core.grid.grid_utils import coordinate_to_position
-from flatland.envs.agent_utils import EnvAgent
 from flatland.envs.line_generators import sparse_line_generator
 from flatland.envs.observations import Node, TreeObsForRailEnv
 from flatland.envs.predictions import ShortestPathPredictorForRailEnv
-from flatland.envs.rail_env import RailEnv, RailEnvActions
+from flatland.envs.rail_env import RailEnv
 from flatland.envs.rail_generators import sparse_rail_generator
-from flatland.envs.step_utils.states import TrainState
-from flatland.utils.rendertools import AgentRenderVariant, RenderTool
 from gymnasium.spaces import Box, Discrete
 
 from og_marl.environments.base import BaseEnvironment
@@ -98,7 +91,7 @@ class Flatland(BaseEnvironment):
 
     def reset(self):
         self._done = False
-        
+
         observations, info = self._environment.reset()
 
         legal_actions = self._get_legal_actions()
@@ -116,7 +109,7 @@ class Flatland(BaseEnvironment):
         }
 
         return observations, info
-    
+
     def step(self, actions):
 
         actions = {int(agent): action.item() for agent, action in actions.items()}
@@ -145,7 +138,7 @@ class Flatland(BaseEnvironment):
 
         # Make extras
         state = self._make_state_representation()
-        
+
         info = {
             "state": state,
             "legals": legal_actions
@@ -155,7 +148,7 @@ class Flatland(BaseEnvironment):
         truncations = {agent: False for agent in self.possible_agents}
 
         return next_observations, rewards, terminals, truncations, info
-    
+
     def _get_legal_actions(self):
         legal_actions = {}
         for agent in self.possible_agents:
@@ -205,14 +198,13 @@ class Flatland(BaseEnvironment):
             obs = np.concatenate([one_hot_state, norm_observation], axis=-1)
             new_observations[agent] = obs
         return new_observations
-    
+
 
 ### RailEnv Wrappers from: https://gitlab.aicrowd.com/flatland/flatland/-/blob/master/flatland/contrib/wrappers/flatland_wrappers.py
 
 
 def find_all_cells_where_agent_can_choose(env: RailEnv):
-    """
-    input: a RailEnv (or something which behaves similarly, e.g. a wrapped RailEnv),
+    """input: a RailEnv (or something which behaves similarly, e.g. a wrapped RailEnv),
     WHICH HAS BEEN RESET ALREADY!
     (o.w., we call env.rail, which is None before reset(), and crash.)
     """

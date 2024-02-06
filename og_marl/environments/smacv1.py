@@ -25,7 +25,7 @@ class SMACv1(BaseEnvironment):
 
     def __init__(
         self,
-        map_name: str, 
+        map_name: str,
     ):
         self._environment = StarCraft2Env(map_name=map_name)
         self.possible_agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
@@ -44,7 +44,6 @@ class SMACv1(BaseEnvironment):
 
     def reset(self):
         """Resets the env."""
-
         # Reset the environment
         self._environment.reset()
         self._done = False
@@ -55,7 +54,7 @@ class SMACv1(BaseEnvironment):
 
         legal_actions = self._get_legal_actions()
         legals = {agent: legal_actions[i] for i, agent in enumerate(self.possible_agents)}
-        
+
         env_state = self._environment.get_state().astype("float32")
 
         info = {
@@ -67,7 +66,6 @@ class SMACv1(BaseEnvironment):
 
     def step(self, actions):
         """Step in env."""
-
         # Convert dict of actions to list for SMAC
         smac_actions = []
         for agent in self.possible_agents:
@@ -110,4 +108,4 @@ class SMACv1(BaseEnvironment):
     def get_stats(self):
         """Return extra stats to be logged."""
         return self._environment.get_stats()
-    
+

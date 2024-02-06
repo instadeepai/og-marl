@@ -30,7 +30,7 @@ class TerminalLogger:
         self._last_log = time.time()
 
     def write(self, logs, force=False):
-        
+
         if time.time() - self._last_log > self._log_every or force:
 
             for key, log in logs.items():
@@ -59,8 +59,8 @@ class WandbLogger:
         self._last_log = time.time()
 
     def write(self, logs, force=False):
-        
-        
+
+
         if time.time() - self._last_log > self._log_every or force:
             wandb.log(logs)
 
@@ -77,19 +77,20 @@ class WandbLogger:
         wandb.finish()
 
 class JsonWriter:
-    """
-    Writer to create json files for reporting experiment results according to marl-eval
+    """Writer to create json files for reporting experiment results according to marl-eval
 
     Follows conventions from https://github.com/instadeepai/marl-eval/tree/main#usage-
     This writer was adapted from the implementation found in BenchMARL. For the original
     implementation please see https://tinyurl.com/2t6fy548
 
     Args:
+    ----
         path (str): where to write the file
         algorithm_name (str): algorithm name
         task_name (str): task name
         environment_name (str): environment name
         seed (int): random seed of the experiment
+
     """
 
     def __init__(
@@ -134,16 +135,16 @@ class JsonWriter:
         value: float,
         evaluation_step = None,
     ) -> None:
-        """
-        Writes a step to the json reporting file
+        """Writes a step to the json reporting file
 
         Args:
+        ----
             timestep (int): the current environment timestep
             key (str): the metric that should be logged
             value (str): the value of the metric that should be logged
             evaluation_step (int): the evaluation step
-        """
 
+        """
         logging_prefix, *metric_key = key.split("/")
         metric_key = "/".join(metric_key)
 

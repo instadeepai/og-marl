@@ -22,10 +22,10 @@ import jax
 import jax.numpy as jnp
 import optax
 import tree
-import wandb
 from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 from flax import linen as nn
 
+import wandb
 from og_marl.jax.dataset import FlashbaxBufferStore
 
 
@@ -112,7 +112,7 @@ def train_maicq_system(
 
             # Final dense layer for output
             output = nn.Dense(self.output_size)(x)
-            
+
             return carry, output
 
         @staticmethod
@@ -150,7 +150,7 @@ def train_maicq_system(
             B, T, N = action_values.shape[:3]
 
             action_values = jnp.reshape(action_values, (-1, 1, self.num_agents))
-            env_state = jnp.reshape(env_state, (-1, env_state.shape[-1])) 
+            env_state = jnp.reshape(env_state, (-1, env_state.shape[-1]))
 
             w1 = jnp.abs(self.hyper_w_1(env_state))
             b1 = self.hyper_b_1(env_state)
@@ -182,7 +182,7 @@ def train_maicq_system(
             k = jnp.matmul(w1,w_final)
             k = jnp.reshape(k, (B, -1, self.num_agents))
             k = k / (jnp.sum(k, axis=1, keepdims=True) + 1e-9) # avoid div by zero
-            
+
             return k
 
     def unroll_policy(params, obs_seq):
@@ -198,12 +198,13 @@ def train_maicq_system(
         return q_values
 
     def maicq_loss(params, target_params, obs, act, rew, done, legals, env_state, mask):
-        """
-        Args:
+        """Args:
+        ----
             obs: (B,T,N,O)
             act: (B,T,N)
             rew: (B,T,N)
             done: (B,T,N)
+
         """
         B,T,N = obs.shape[:3]
 
@@ -280,7 +281,7 @@ def train_maicq_system(
             params, opt_state, buffer_state = carry
             batch = buffer.sample(buffer_state, rng_key)
             (loss, logs), grads = jax.value_and_grad(maicq_loss, has_aux=True)(
-                params["online"], params["target"], batch.experience["obs"], 
+                params["online"], params["target"], batch.experience["obs"],
                 batch.experience["act"], batch.experience["rew"], batch.experience["done"],
                 batch.experience["legals"], batch.experience["env_state"], batch.experience["mask"])
             updates, opt_state = optim.update(

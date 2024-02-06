@@ -33,11 +33,13 @@ class Pistonball(PettingZooBase):
         """Constructor for parallel PZ wrapper.
 
         Args:
+        ----
             environment (ParallelEnv): parallel PZ env.
             env_preprocess_wrappers (Optional[List], optional): Wrappers
                 that preprocess envs.
                 Format (env_preprocessor, dict_with_preprocessor_params).
             return_state_info: return extra state info
+
         """
         self._environment = pistonball_v6.parallel_env(
             n_pistons=n_pistons, continuous=True, render_mode="rgb_array"
@@ -83,11 +85,14 @@ class Pistonball(PettingZooBase):
         """Convert SMAC observation so it's dm_env compatible.
 
         Args:
+        ----
             observes (Dict[str, np.ndarray]): observations per agent.
             dones (Dict[str, bool]): dones per agent.
 
         Returns:
+        -------
             types.Observation: dm compatible observations.
+
         """
         olt_observations = {}
         for i, agent in enumerate(self._agents):
@@ -108,8 +113,10 @@ class Pistonball(PettingZooBase):
     def extra_spec(self) -> Dict[str, specs.BoundedArray]:
         """Function returns extra spec (format) of the env.
 
-        Returns:
+        Returns
+        -------
             Dict[str, specs.BoundedArray]: extra spec.
+
         """
         state_spec = {"s_t": np.zeros((56, 88, 4), "float32")}  # four stacked frames
 
@@ -131,8 +138,10 @@ class Pistonball(PettingZooBase):
     def observation_spec(self):
         """Observation spec.
 
-        Returns:
+        Returns
+        -------
             types.Observation: spec for environment.
+
         """
         observation_specs = {}
         for agent in self._agents:

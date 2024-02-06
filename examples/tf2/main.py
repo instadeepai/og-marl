@@ -44,7 +44,7 @@ def main(_):
 
     dataset = OfflineMARLDataset(env, f"datasets/{FLAGS.env}/{FLAGS.scenario}/{FLAGS.dataset}")
     dataset_sequence_length = dataset.get_sequence_length()
-    
+
     batched_dataset = SequenceCPPRB(env, max_size=FLAGS.num_offline_sequences, batch_size=FLAGS.batch_size, sequence_length=dataset_sequence_length)
 
     batched_dataset.populate_from_dataset(dataset)
@@ -59,7 +59,7 @@ def main(_):
     system = get_system(FLAGS.system, env, logger, **system_kwargs)
 
     system.train_offline(
-        batched_dataset, 
+        batched_dataset,
         max_trainer_steps=FLAGS.trainer_steps,
         json_writer=json_writer
     )
