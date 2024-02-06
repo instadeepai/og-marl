@@ -1,0 +1,24 @@
+[tool.ruff]
+line-length = 100
+select = ["A","B","C","D","E","F","G","I","N","T","W"]  # Specify list of error codes to report.
+exclude = [
+    ".tox",
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    "proto/*",
+    "*.pyc",
+    "*.egg-info",
+    ".cache",
+    ".eggs",
+]
+ignore = [
+    "A002",  # Argument shadowing a Python builtin.
+    "A003",  # Class attribute shadowing a Python builtin.
+    "D107",  # Do not require docstrings for __init__.
+    "E266",  # Do not require block comments to only have a single leading #.
+    "E731",  # Do not assign a lambda expression, use a def.
+    "B017",  # assertRaises(Exception): or pytest.raises(Exception) should be considered evil.
+    "E203",  # black and flake8 disagree on whitespace before ':'.
+]
