@@ -1,6 +1,6 @@
 
 default_language_version:
-  python: python3.8
+  python: python3
 default_stages: [commit]
 repos:
   - repo: https://github.com/codespell-project/codespell
@@ -9,8 +9,8 @@ repos:
       - id: codespell
         name: codespell
         description: Checks for common misspellings in text files.
-        entry: codespell  --ignore-words=.codespell-ignore.txt
+        entry: codespell
         language: python
         types: [text]
         args:
-          - "-L childs"
+          - "-L childs,olt"
