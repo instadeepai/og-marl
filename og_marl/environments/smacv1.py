@@ -21,6 +21,7 @@ from og_marl.environments.base import BaseEnvironment
 
 
 class SMACv1(BaseEnvironment):
+
     """Environment wrapper SMACv1."""
 
     def __init__(

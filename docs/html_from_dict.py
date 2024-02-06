@@ -58,8 +58,8 @@ lines = [
 ]
 for i, env in enumerate(list(DATASET_URLS.keys())):
     lines.extend(["<h2>" + env_names[i] + "</h2>\n", "<ul>\n"])
-    for map in DATASET_URLS[env].keys():
-        lines.append("  <li><a href=" + DATASET_URLS[env][map] + ">" + map + "</a></li>\n")
+    for mapping in DATASET_URLS[env].keys():
+        lines.append("  <li><a href=" + DATASET_URLS[env][mapping] + ">" + mapping + "</a></li>\n")
     lines.extend(["</ul>\n", "\n"])
 
 lines.extend(["</body>\n", "</html>\n"])

@@ -18,6 +18,7 @@ from og_marl.environments.base import BaseEnvironment
 
 
 class PettingZooBase(BaseEnvironment):
+
     """Environment wrapper for PettingZoo environments."""
 
     def __init__(self):

@@ -30,6 +30,7 @@ from og_marl.tf2.utils import (
 
 
 class MAICQSystem(QMIXSystem):
+
     """MAICQ System"""
 
     def __init__(
@@ -131,7 +132,7 @@ class MAICQSystem(QMIXSystem):
         actions = tf.cast(batch["actions"], "int32")  # (B,T,N)
         env_states = batch["state"]  # (B,T,S)
         rewards = batch["rewards"]  # (B,T,N)
-        truncations = batch["truncations"]  # (B,T,N)
+        # truncations = batch["truncations"]  # (B,T,N)
         terminals = batch["terminals"]  # (B,T,N)
         zero_padding_mask = batch["mask"]  # (B,T)
         legal_actions = batch["legals"]  # (B,T,N,A)

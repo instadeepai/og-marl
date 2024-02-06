@@ -39,7 +39,7 @@ class BaseMARLSystem:
     def evaluate(self, num_eval_episodes=4):
         """Method to evaluate the system online (i.e. in the environment)."""
         episode_returns = []
-        for episode in range(num_eval_episodes):
+        for _ in range(num_eval_episodes):
             self.reset()
             observations = self._environment.reset()
 
@@ -173,7 +173,8 @@ class BaseMARLSystem:
     ):
         """Method to train the system offline.
 
-        WARNING: make sure evaluate_every % log_every == 0 and log_every < evaluate_every, else you won't log evaluation.
+        WARNING: make sure evaluate_every % log_every == 0 and log_every < evaluate_every,
+        else you won't log evaluation.
         """
         trainer_step_ctr = 0
         while trainer_step_ctr < max_trainer_steps:

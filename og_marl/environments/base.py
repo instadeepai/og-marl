@@ -16,6 +16,7 @@
 
 
 class BaseEnvironment:
+
     """Base environment class for OG-MARL."""
 
     def __init__(self):

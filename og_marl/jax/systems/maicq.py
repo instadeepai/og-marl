@@ -29,7 +29,7 @@ import wandb
 from og_marl.jax.dataset import FlashbaxBufferStore
 
 
-def train_maicq_system(
+def train_maicq_system(  # noqa: C901
     environment,
     logger,
     dataset_path,
@@ -207,6 +207,7 @@ def train_maicq_system(
 
     def maicq_loss(params, target_params, obs, act, rew, done, legals, env_state, mask):
         """Args:
+
         ----
             obs: (B,T,N,O)
             act: (B,T,N)
@@ -292,7 +293,8 @@ def train_maicq_system(
     @chex.assert_max_traces(n=1)
     def train_epoch(rng_key, params, opt_state, buffer_state):
         buffer = fbx.make_trajectory_buffer(
-            max_length_time_axis=10_000_000,  # NOTE: we set this to an arbitrary large number > buffer_state.current_index.
+            # NOTE: we set this to an arbitrary large number > buffer_state.current_index.
+            max_length_time_axis=10_000_000,
             min_length_time_axis=BATCH_SIZE,
             sample_batch_size=BATCH_SIZE,
             add_batch_size=1,
@@ -355,7 +357,7 @@ def train_maicq_system(
 
     def evaluation(init_carry, params, environment):
         episode_returns = []
-        for e in range(NUM_EVALS):
+        for _ in range(NUM_EVALS):
             episode_return = 0
             done = False
             obs, info = environment.reset()

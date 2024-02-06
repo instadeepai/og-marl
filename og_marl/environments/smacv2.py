@@ -84,6 +84,7 @@ MAP_NAMES = {
 
 
 class SMACv2(BaseEnvironment):
+
     """Environment wrapper SMAC."""
 
     def __init__(self, scenario):

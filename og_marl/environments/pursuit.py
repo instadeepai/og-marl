@@ -21,6 +21,7 @@ from og_marl.environments.pettingzoo_base import PettingZooBase
 
 
 class Pursuit(PettingZooBase):
+
     """Environment wrapper for Pursuit."""
 
     def __init__(self):

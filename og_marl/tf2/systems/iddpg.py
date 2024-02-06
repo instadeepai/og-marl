@@ -199,6 +199,7 @@ class StateAndActionCritic(snt.Module):
 
 
 class IDDPGSystem(BaseMARLSystem):
+
     """Independent Deep Recurrent Q-Networs System"""
 
     def __init__(
@@ -319,11 +320,14 @@ class IDDPGSystem(BaseMARLSystem):
         actions = batch["actions"]  # (B,T,N,A)
         env_states = batch["state"]  # (B,T,S)
         rewards = batch["rewards"]  # (B,T,N)
-        truncations = batch["truncations"]  # (B,T,N)
+        # truncations = batch["truncations"]  # (B,T,N)
         terminals = batch["terminals"]  # (B,T,N)
         zero_padding_mask = batch["mask"]  # (B,T)
 
-        # done = tf.cast(tf.logical_or(tf.cast(truncations, "bool"), tf.cast(terminals, "bool")), "float32")
+        # done = tf.cast(
+        #     tf.logical_or(tf.cast(truncations, "bool"), tf.cast(terminals, "bool")),
+        #     "float32",
+        # )
         done = terminals
 
         # Get dims

@@ -27,6 +27,7 @@ from og_marl.environments.pettingzoo_base import PettingZooBase
 
 
 class Pistonball(PettingZooBase):
+
     """Environment wrapper for PettingZoo MARL environments."""
 
     def __init__(self, n_pistons=15):
@@ -89,7 +90,7 @@ class Pistonball(PettingZooBase):
 
         """
         olt_observations = {}
-        for i, agent in enumerate(self._agents):
+        for _, agent in enumerate(self._agents):
             agent_obs = np.expand_dims(observations[agent][50:, :], axis=-1)
             legal_actions = np.ones(self.num_actions, "float32")  # three actions, all legal
 

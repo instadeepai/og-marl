@@ -92,7 +92,10 @@ class ExperienceRecorder:
         self._buffer_state = self._add_to_buffer(
             self._buffer_state,
             packed_timestep,
-            # jax.tree_map(lambda x: np.expand_dims(np.expand_dims(np.array(x), axis=0), axis=0), packed_timestep), # NOTE add time dimension and batch dimension. should we use flat buffer?
+            # jax.tree_map(
+            #     lambda x: np.expand_dims(np.expand_dims(np.array(x), axis=0), axis=0),
+            #     packed_timestep,
+            # ), # NOTE add time dimension and batch dimension. should we use flat buffer?
         )
 
         # Store new observations and infos

@@ -45,6 +45,7 @@ def get_env_config(scenario):
 
 
 class MAMuJoCo:
+
     """Environment wrapper Multi-Agent MuJoCo."""
 
     def __init__(self, scenario):

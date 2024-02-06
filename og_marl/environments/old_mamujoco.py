@@ -39,6 +39,7 @@ def get_mamujoco_args(scenario):
 
 
 class MAMuJoCo(BaseEnvironment):
+
     """Environment wrapper Multi-Agent MuJoCo."""
 
     def __init__(self, scenario):

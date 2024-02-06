@@ -43,10 +43,10 @@ class TerminalLogger:
 class WandbLogger:
     def __init__(
         self,
-        config={},
+        config={},  # noqa: B006
         project="default_project",
         notes="",
-        tags=["default"],
+        tags=["default"],  # noqa: B006
         entity=None,
         log_every=2,  # seconds
     ):
@@ -74,6 +74,7 @@ class WandbLogger:
 
 
 class JsonWriter:
+
     """Writer to create json files for reporting experiment results according to marl-eval
 
     Follows conventions from https://github.com/instadeepai/marl-eval/tree/main#usage-

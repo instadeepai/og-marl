@@ -27,7 +27,7 @@ import wandb
 from og_marl.jax.tf_dataset_to_flashbax import FlashbaxBufferStore
 
 
-def train_bc_system(
+def train_bc_system(  # noqa: C901
     environment,
     logger,
     dataset_path,
@@ -56,7 +56,7 @@ def train_bc_system(
     NUM_EPOCHS = num_epochs
 
     NUM_ACTS = environment._num_actions
-    NUM_AGENTS = len(environment.possible_agents)
+    # NUM_AGENTS = len(environment.possible_agents)
 
     ##################
     ### End Config ###
@@ -130,6 +130,7 @@ def train_bc_system(
 
     def batched_multi_agent_behaviour_cloninig_loss(params, obs_seq, act_seq, mask):
         """Args:
+
         ----
             params: a container of params for the behaviour cloning network which is shared between
                 all agents in the system.
@@ -154,7 +155,8 @@ def train_bc_system(
 
     def train_epoch(rng_key, params, opt_state, buffer_state):
         buffer = fbx.make_trajectory_buffer(
-            max_length_time_axis=10_000_000,  # NOTE: we set this to an arbitrary large number > buffer_state.current_index.
+            # NOTE: we set this to an arbitrary large number > buffer_state.current_index.
+            max_length_time_axis=10_000_000,
             min_length_time_axis=BATCH_SIZE,
             sample_batch_size=BATCH_SIZE,
             add_batch_size=1,
@@ -202,7 +204,7 @@ def train_bc_system(
 
     def evaluation(init_carry, params, environment):
         episode_returns = []
-        for e in range(NUM_EVALS):
+        for _ in range(NUM_EVALS):
             episode_return = 0
             done = False
             obs, info = environment.reset()

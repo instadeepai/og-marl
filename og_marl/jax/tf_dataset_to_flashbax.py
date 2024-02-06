@@ -147,8 +147,8 @@ if __name__ == "__main__":
     ]
     jitted_add = jax.jit(buffer.add)
     first_sample = True
-    for dir in directories:
-        filenames = Path(os.path.join(path_to_dataset, dir)).glob("**/*.tfrecord")
+    for directory in directories:
+        filenames = Path(os.path.join(path_to_dataset, directory)).glob("**/*.tfrecord")
         filenames = list(filenames)
         filenames.sort(key=lambda x: int(str(x).split("executor_sequence_log_")[-1][:-9]))
 

@@ -9,13 +9,14 @@ from og_marl.environments.base import BaseEnvironment
 
 
 class VoltageControlEnv(BaseEnvironment):
+
     """Environment wrapper for MAPDN environment."""
 
     def __init__(self):
         """Constructor for VoltageControl."""
         self._environment = VoltageControl()
         self.possible_agents = [
-            f"agent_{id}" for id in range(self._environment.get_num_of_agents())
+            f"agent_{agent_id}" for agent_id in range(self._environment.get_num_of_agents())
         ]
         self.num_agents = len(self.possible_agents)
         self._num_actions = self._environment.get_total_actions()
