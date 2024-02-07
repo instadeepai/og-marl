@@ -7,6 +7,7 @@ json_logs
 vaults
 logs
 __MACOSX
+3.9
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
