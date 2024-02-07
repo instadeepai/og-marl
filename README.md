@@ -196,7 +196,7 @@ from og_marl.loggers import TerminalLogger
 
 # Download the dataset
 download_flashbax_dataset(
-    env_name="smac_v1", 
+    env_name="smac_v1",
     scenario_name="8m",
     base_dir="datasets/flashbax"
 )

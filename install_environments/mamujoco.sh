@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Make sure you have these packages installed 
+# Make sure you have these packages installed
 sudo apt install libosmesa6-dev libgl1-mesa-glx libglfw3 patchelf
 
 export MUJOCOPATH=~/.mujoco

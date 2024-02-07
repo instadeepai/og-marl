@@ -3,7 +3,7 @@ site_author: InstaDeep Research
 site_url: https://instadeepai.github.io/og-marl/
 site_dir: public
 
-theme: 
+theme:
   name: material
   logo: assets/instadeep_logo.png
   favicon: assets/instadeep_logo.png
