@@ -105,7 +105,7 @@ class Pistonball(PettingZooBase):
     def extra_spec(self) -> Dict[str, specs.BoundedArray]:
         """Function returns extra spec (format) of the env.
 
-        Returns
+        Returns:
         -------
             Dict[str, specs.BoundedArray]: extra spec.
 
@@ -128,7 +128,7 @@ class Pistonball(PettingZooBase):
     def observation_spec(self):
         """Observation spec.
 
-        Returns
+        Returns:
         -------
             types.Observation: spec for environment.
 

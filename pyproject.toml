@@ -45,6 +45,7 @@ ignore = [
 
 ]
 mccabe.max-complexity = 11
+pydocstyle.convention = "google"
 
 [tool.ruff.format]
 quote-style = "double"

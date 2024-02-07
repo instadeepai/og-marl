@@ -30,7 +30,7 @@ class BaseEnvironment:
     def reset(self):
         """Resets the env.
 
-        Returns
+        Returns:
         -------
             Dict: observations
 
@@ -54,7 +54,7 @@ class BaseEnvironment:
     def get_stats(self):
         """Return extra stats to be logged.
 
-        Returns
+        Returns:
         -------
             extra stats to be logged.
 

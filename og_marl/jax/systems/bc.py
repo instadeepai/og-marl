@@ -139,7 +139,7 @@ def train_bc_system(  # noqa: C901
                 the observation dim.
             act_seq: is an array of a sequence of actions for all agents. Shape (B,N,T).
 
-        Returns
+        Returns:
         -------
             A scalar behaviour cloning loss.
 

@@ -37,7 +37,7 @@ class VoltageControlEnv(BaseEnvironment):
     def reset(self):
         """Resets the env.
 
-        Returns
+        Returns:
         -------
             dm_env.TimeStep: dm timestep.
 
