@@ -14,23 +14,22 @@
 
 import json
 import os
-import wandb
 import time
 
-class TerminalLogger:
+import wandb
 
+
+class TerminalLogger:
     def __init__(
-            self,
-            log_every=2 # seconds
+        self,
+        log_every=2,  # seconds
     ):
         self._log_every = log_every
         self._ctr = 0
         self._last_log = time.time()
 
     def write(self, logs, force=False):
-        
         if time.time() - self._last_log > self._log_every or force:
-
             for key, log in logs.items():
                 print(f"{key}: {float(log)} |", end=" ")
             print()
@@ -40,15 +39,16 @@ class TerminalLogger:
 
         self._ctr += 1
 
+
 class WandbLogger:
     def __init__(
         self,
-        config={},
+        config={},  # noqa: B006
         project="default_project",
         notes="",
-        tags=["default"],
+        tags=["default"],  # noqa: B006
         entity=None,
-        log_every=2 # seconds
+        log_every=2,  # seconds
     ):
         wandb.init(project=project, notes=notes, tags=tags, entity=entity, config=config)
 
@@ -57,8 +57,6 @@ class WandbLogger:
         self._last_log = time.time()
 
     def write(self, logs, force=False):
-        
-        
         if time.time() - self._last_log > self._log_every or force:
             wandb.log(logs)
 
@@ -74,20 +72,23 @@ class WandbLogger:
     def close(self):
         wandb.finish()
 
+
 class JsonWriter:
-    """
-    Writer to create json files for reporting experiment results according to marl-eval
+
+    """Writer to create json files for reporting experiment results according to marl-eval
 
     Follows conventions from https://github.com/instadeepai/marl-eval/tree/main#usage-
     This writer was adapted from the implementation found in BenchMARL. For the original
     implementation please see https://tinyurl.com/2t6fy548
 
     Args:
+    ----
         path (str): where to write the file
         algorithm_name (str): algorithm name
         task_name (str): task name
         environment_name (str): environment name
         seed (int): random seed of the experiment
+
     """
 
     def __init__(
@@ -130,18 +131,18 @@ class JsonWriter:
         timestep: int,
         key: str,
         value: float,
-        evaluation_step = None,
+        evaluation_step=None,
     ) -> None:
-        """
-        Writes a step to the json reporting file
+        """Writes a step to the json reporting file
 
         Args:
+        ----
             timestep (int): the current environment timestep
             key (str): the metric that should be logged
             value (str): the value of the metric that should be logged
             evaluation_step (int): the evaluation step
-        """
 
+        """
         logging_prefix, *metric_key = key.split("/")
         metric_key = "/".join(metric_key)
 

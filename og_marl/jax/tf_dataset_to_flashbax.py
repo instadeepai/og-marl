@@ -12,24 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import jax
 import os
-import jax.numpy as jnp
-import flashbax as fbx
-from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 from pathlib import Path
+
+import flashbax as fbx
+import jax
+import jax.numpy as jnp
+import orbax.checkpoint
 import tensorflow as tf
 import tree
-import orbax.checkpoint
+from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 
 from og_marl.environments.utils import get_environment
+
 
 class FlashbaxBufferStore:
     def __init__(
         self,
         dataset_path: str,
     ) -> None:
-        orbax_checkpointer = orbax.checkpoint.PyTreeCheckpointer() 
+        orbax_checkpointer = orbax.checkpoint.PyTreeCheckpointer()
         options = orbax.checkpoint.CheckpointManagerOptions(
             max_to_keep=1,
             create=True,
@@ -47,10 +49,11 @@ class FlashbaxBufferStore:
     def restore_state(self):
         raw_restored = self._manager.restore(self._manager.latest_step())
         return TrajectoryBufferState(
-            experience=jax.tree_util.tree_map(jnp.asarray, raw_restored['experience']),
-            current_index=jnp.asarray(raw_restored['current_index']),
-            is_full=jnp.asarray(raw_restored['is_full']),
+            experience=jax.tree_util.tree_map(jnp.asarray, raw_restored["experience"]),
+            current_index=jnp.asarray(raw_restored["current_index"]),
+            is_full=jnp.asarray(raw_restored["is_full"]),
         )
+
 
 def get_schema_dtypes(environment):
     schema = {}
@@ -78,9 +81,7 @@ def make_decode_fn(schema, agents):
     def _decode_fn(record_bytes):
         example = tf.io.parse_single_example(
             record_bytes,
-            tree.map_structure(
-                lambda x: tf.io.FixedLenFeature([], dtype=tf.string), schema
-            ),
+            tree.map_structure(lambda x: tf.io.FixedLenFeature([], dtype=tf.string), schema),
         )
 
         for key, dtype in schema.items():
@@ -93,15 +94,17 @@ def make_decode_fn(schema, agents):
             sample[f"{agent}_rewards"] = example[f"{agent}_rewards"]
             sample[f"{agent}_done"] = 1 - example[f"{agent}_discounts"]
             sample[f"{agent}_legals"] = example[f"{agent}_legal_actions"]
-            
+
         sample["mask"] = example["zero_padding_mask"]
         sample["state"] = example["env_state"]
         sample["episode_return"] = tf.repeat(example["episode_return"], len(sample["state"]))
 
         return sample
+
     return _decode_fn
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     SCENARIO = "8m"
     DATASET = "Poor"
 
@@ -110,17 +113,16 @@ if __name__=="__main__":
     tf.config.experimental.set_visible_devices([], "GPU")
     os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
-
     environment = get_environment("smac_v1", SCENARIO)
 
     # First define hyper-parameters of the buffer.
-    max_length_time_axis = 30000 * 20 # Maximum length of the buffer along the time axis. 
-    min_length_time_axis = 16 # Minimum length across the time axis before we can sample.
-    sample_batch_size = 4 # Batch size of trajectories sampled from the buffer.
-    add_batch_size = 1 # Batch size of trajectories added to the buffer.
-    sample_sequence_length = 20 # Sequence length of trajectories sampled from the buffer.
-    add_sequence_length = 20 # Sequence length of trajectories added to the buffer.
-    period = 20 # Period at which we sample trajectories from the buffer.
+    max_length_time_axis = 30000 * 20  # Maximum length of the buffer along the time axis.
+    min_length_time_axis = 16  # Minimum length across the time axis before we can sample.
+    sample_batch_size = 4  # Batch size of trajectories sampled from the buffer.
+    add_batch_size = 1  # Batch size of trajectories added to the buffer.
+    sample_sequence_length = 20  # Sequence length of trajectories sampled from the buffer.
+    add_sequence_length = 20  # Sequence length of trajectories added to the buffer.
+    period = 20  # Period at which we sample trajectories from the buffer.
 
     # Instantiate the trajectory buffer, which is a NamedTuple of pure functions.
     buffer = fbx.make_trajectory_buffer(
@@ -129,7 +131,7 @@ if __name__=="__main__":
         sample_batch_size=sample_batch_size,
         add_batch_size=add_batch_size,
         sample_sequence_length=sample_sequence_length,
-        period=period
+        period=period,
     )
 
     store = FlashbaxBufferStore(f"{DATASET}_{SCENARIO}")
@@ -140,14 +142,16 @@ if __name__=="__main__":
 
     path_to_dataset = f"datasets/smac_v1/{SCENARIO}/{DATASET}"
     contents = os.listdir(path_to_dataset)
-    directories = [content for content in contents if os.path.isdir(os.path.join(path_to_dataset, content))]
+    directories = [
+        content for content in contents if os.path.isdir(os.path.join(path_to_dataset, content))
+    ]
     jitted_add = jax.jit(buffer.add)
     first_sample = True
-    for dir in directories:
-        filenames = Path(os.path.join(path_to_dataset, dir)).glob("**/*.tfrecord")
+    for directory in directories:
+        filenames = Path(os.path.join(path_to_dataset, directory)).glob("**/*.tfrecord")
         filenames = list(filenames)
         filenames.sort(key=lambda x: int(str(x).split("executor_sequence_log_")[-1][:-9]))
-    
+
         for filename in filenames:
             print(filename)
             tf_record_dataset = tf.data.TFRecordDataset(filename, compression_type="GZIP").map(
@@ -161,12 +165,12 @@ if __name__=="__main__":
 
                     init_sample = tree.map_structure(lambda x: jnp.array(x[0]), sample)
                     state = buffer.init(init_sample)
-                
+
                 add_sample = tree.map_structure(lambda x: jnp.expand_dims(x, axis=0), sample)
                 state = jitted_add(state, add_sample)
 
                 if (state.current_index % 1000) == 0:
-                    print(round(state.current_index / max_length_time_axis, 4)*100)
+                    print(round(state.current_index / max_length_time_axis, 4) * 100)
 
                 if (state.current_index % 100_000) == 0:
                     t = state.current_index // 100_000
@@ -178,7 +182,7 @@ if __name__=="__main__":
                 break
         if state.is_full:
             break
-    
+
         store.save(t, state)
 
     rng_key = jax.random.PRNGKey(0)

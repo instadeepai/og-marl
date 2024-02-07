@@ -14,8 +14,7 @@
 
 import gymnasium_robotics
 
-from og_marl.environments.base import BaseEnvironment
- 
+
 def get_env_config(scenario):
     """Helper method to get env_args."""
     env_args = {
@@ -29,37 +28,33 @@ def get_env_config(scenario):
         env_args["agent_conf"] = "2x3"
     elif scenario.lower() == "6halfcheetah":
         env_args["scenario"] = "HalfCheetah"
-        env_args["agent_conf"]="6x1"
+        env_args["agent_conf"] = "6x1"
     elif scenario.lower() == "2ant":
         env_args["scenario"] = "Ant"
-        env_args["agent_conf"]="2x4"
+        env_args["agent_conf"] = "2x4"
     elif scenario.lower() == "4ant":
         env_args["scenario"] = "Ant"
-        env_args["agent_conf"]="4x2"
+        env_args["agent_conf"] = "4x2"
     elif scenario.lower() == "3hopper":
         env_args["scenario"] = "Hopper"
-        env_args["agent_conf"]="3x1"
+        env_args["agent_conf"] = "3x1"
     elif scenario.lower() == "2walker":
         env_args["scenario"] = "Walker2d"
-        env_args["agent_conf"]="2x3"
+        env_args["agent_conf"] = "2x3"
     return env_args
 
+
 class MAMuJoCo:
+
     """Environment wrapper Multi-Agent MuJoCo."""
 
     def __init__(self, scenario):
-
         env_config = get_env_config(scenario)
-        self._environment = gymnasium_robotics.mamujoco_v0.parallel_env(
-            **env_config
-        )
+        self._environment = gymnasium_robotics.mamujoco_v0.parallel_env(**env_config)
 
-        self.info_spec = {
-            "state": self._environment.state()
-        }
+        self.info_spec = {"state": self._environment.state()}
 
     def reset(self):
-
         observations, _ = self._environment.reset()
 
         info = {"state": self._environment.state().astype("float32")}

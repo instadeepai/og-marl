@@ -13,27 +13,29 @@
 # limitations under the License.
 
 """Implementation of QMIX+BCQ"""
-import tensorflow as tf
 import sonnet as snt
+import tensorflow as tf
 
 from og_marl.tf2.systems.qmix import QMIXSystem
 from og_marl.tf2.utils import (
-    gather,
     batch_concat_agent_id_to_obs,
-    switch_two_leading_dims,
-    merge_batch_and_agent_dim_of_time_major_sequence,
+    batched_agents,
     expand_batch_and_agent_dim_of_time_major_sequence,
-    batched_agents
+    gather,
+    merge_batch_and_agent_dim_of_time_major_sequence,
+    switch_two_leading_dims,
 )
 
+
 class QMIXBCQSystem(QMIXSystem):
+
     """QMIX+BCQ System"""
 
     def __init__(
         self,
         environment,
         logger,
-        bc_threshold=0.4, # BCQ parameter
+        bc_threshold=0.4,  # BCQ parameter
         linear_layer_dim=64,
         recurrent_layer_dim=64,
         mixer_embed_dim=32,
@@ -43,7 +45,6 @@ class QMIXBCQSystem(QMIXSystem):
         learning_rate=3e-4,
         add_agent_id_to_obs=False,
     ):
-
         super().__init__(
             environment,
             logger,
@@ -54,7 +55,7 @@ class QMIXBCQSystem(QMIXSystem):
             add_agent_id_to_obs=add_agent_id_to_obs,
             discount=discount,
             target_update_period=target_update_period,
-            learning_rate=learning_rate
+            learning_rate=learning_rate,
         )
 
         self._threshold = bc_threshold
@@ -71,17 +72,16 @@ class QMIXBCQSystem(QMIXSystem):
 
     @tf.function(jit_compile=True)
     def _tf_train_step(self, train_step, batch):
-
         batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
-        observations = batch["observations"] # (B,T,N,O)
-        actions = tf.cast(batch["actions"], "int32") # (B,T,N)
-        env_states = batch["state"] # (B,T,S)
-        rewards = batch["rewards"] # (B,T,N)
-        truncations = batch["truncations"] # (B,T,N)
-        terminals = batch["terminals"] # (B,T,N)
-        zero_padding_mask = batch["mask"] # (B,T)
+        observations = batch["observations"]  # (B,T,N,O)
+        actions = tf.cast(batch["actions"], "int32")  # (B,T,N)
+        env_states = batch["state"]  # (B,T,S)
+        rewards = batch["rewards"]  # (B,T,N)
+        # truncations = batch["truncations"]  # (B,T,N)
+        terminals = batch["terminals"]  # (B,T,N)
+        zero_padding_mask = batch["mask"]  # (B,T)
         legal_actions = batch["legals"]  # (B,T,N,A)
 
         done = terminals
@@ -101,9 +101,7 @@ class QMIXBCQSystem(QMIXSystem):
 
         # Unroll target network
         target_qs_out, _ = snt.static_unroll(
-            self._target_q_network, 
-            observations,
-            self._target_q_network.initial_state(B*N)
+            self._target_q_network, observations, self._target_q_network.initial_state(B * N)
         )
 
         # Expand batch and agent_dim
@@ -115,9 +113,7 @@ class QMIXBCQSystem(QMIXSystem):
         with tf.GradientTape() as tape:
             # Unroll online network
             qs_out, _ = snt.static_unroll(
-                self._q_network, 
-                observations, 
-                self._q_network.initial_state(B*N)
+                self._q_network, observations, self._q_network.initial_state(B * N)
             )
 
             # Expand batch and agent_dim
@@ -135,9 +131,9 @@ class QMIXBCQSystem(QMIXSystem):
 
             # Unroll behaviour cloning network
             probs_out, _ = snt.static_unroll(
-                self._behaviour_cloning_network, 
-                observations, 
-                self._behaviour_cloning_network.initial_state(B*N)
+                self._behaviour_cloning_network,
+                observations,
+                self._behaviour_cloning_network.initial_state(B * N),
             )
 
             # Expand batch and agent_dim
@@ -154,9 +150,7 @@ class QMIXBCQSystem(QMIXSystem):
                 probs_out,
                 1 / A * tf.ones(A, "float32"),
             )  # avoid nans, get masked out later
-            bc_loss = tf.keras.metrics.categorical_crossentropy(
-                one_hot_actions, probs_out
-            )
+            bc_loss = tf.keras.metrics.categorical_crossentropy(one_hot_actions, probs_out)
             bc_loss = tf.reduce_sum(bc_loss * bc_mask) / tf.reduce_sum(bc_mask)
 
             # Legal action masking plus bc probs
@@ -168,7 +162,6 @@ class QMIXBCQSystem(QMIXSystem):
             bc_action_mask = (
                 masked_probs_out / tf.reduce_max(masked_probs_out, axis=-1, keepdims=True)
             ) >= self._threshold
-
 
             q_selector = tf.where(bc_action_mask, qs_out, -999999)
             max_actions = tf.argmax(q_selector, axis=-1)
@@ -184,7 +177,7 @@ class QMIXBCQSystem(QMIXSystem):
             )
 
             # Compute targets
-            targets = rewards[:, :-1] + (1-done[:, :-1]) * self._discount * target_max_qs[:, 1:]
+            targets = rewards[:, :-1] + (1 - done[:, :-1]) * self._discount * target_max_qs[:, 1:]
             targets = tf.stop_gradient(targets)
 
             # Chop off last time step
@@ -200,7 +193,7 @@ class QMIXBCQSystem(QMIXSystem):
         variables = (
             *self._q_network.trainable_variables,
             *self._mixer.trainable_variables,
-            *self._behaviour_cloning_network.trainable_variables
+            *self._behaviour_cloning_network.trainable_variables,
         )
 
         # Compute gradients.

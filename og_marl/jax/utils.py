@@ -12,12 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-def get_system(system_name, environment, logger, **kwargs) :
+
+
+def get_system(system_name, environment, logger, **kwargs):
     if system_name == "bc":
         from og_marl.jax.systems.bc import train_bc_system
+
         return partial(train_bc_system, environment, logger)
     elif system_name == "maicq":
         from og_marl.jax.systems.maicq import train_maicq_system
+
         return partial(train_maicq_system, environment, logger)
     else:
         raise ValueError("System name not recognised.")
