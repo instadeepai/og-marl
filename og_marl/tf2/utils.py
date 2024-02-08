@@ -17,7 +17,9 @@ import os
 import tensorflow as tf
 
 
-def get_system(system_name, environment, logger, **kwargs):
+def get_system(system_name, environment, logger, **kwargs):  # noqa: C901
+    # TODO: Fix the cognitive complexity here
+
     if system_name == "idrqn":
         from og_marl.tf2.systems.idrqn import IDRQNSystem
 
@@ -56,6 +58,7 @@ def get_system(system_name, environment, logger, **kwargs):
         return IDDPGCQLSystem(environment, logger, **kwargs)
     elif system_name == "facmac+cql":
         from og_marl.tf2.systems.facmac_cql import FACMACCQLSystem
+
         return FACMACCQLSystem(environment, logger, **kwargs)
     elif system_name == "omar":
         from og_marl.tf2.systems.omar import OMARSystem
@@ -134,8 +137,9 @@ def concat_agent_id_to_obs(obs, agent_id, N):
 
     return obs
 
+
 def unroll_rnn(rnn_network, inputs, resets):
-    T,B = inputs.shape[:2]
+    T, B = inputs.shape[:2]
 
     outputs = []
     hidden_state = rnn_network.initial_state(B)
@@ -143,13 +147,16 @@ def unroll_rnn(rnn_network, inputs, resets):
         output, hidden_state = rnn_network(inputs[i], hidden_state)
         outputs.append(output)
 
-        hidden_state = (tf.where(
-            tf.cast(tf.expand_dims(resets[i], axis=-1), "bool"),
-            rnn_network.initial_state(B)[0],
-            hidden_state[0]
-        ),) # hidden state wrapped im tuple
+        hidden_state = (
+            tf.where(
+                tf.cast(tf.expand_dims(resets[i], axis=-1), "bool"),
+                rnn_network.initial_state(B)[0],
+                hidden_state[0],
+            ),
+        )  # hidden state wrapped im tuple
 
     return tf.stack(outputs, axis=0)
+
 
 def batch_concat_agent_id_to_obs(obs):
     B, T, N = obs.shape[:3]  # batch size, timedim, num_agents
@@ -206,6 +213,6 @@ def batched_agents(agents, batch_dict):
     if "mask" in batch_dict["infos"]:
         batched_agents["mask"] = tf.convert_to_tensor(batch_dict["infos"]["mask"], "float32")
     else:
-        batched_agents["mask"] = tf.ones_like(batched_agents["terminals"][:,:,0], "float32")
+        batched_agents["mask"] = tf.ones_like(batched_agents["terminals"][:, :, 0], "float32")
 
     return batched_agents

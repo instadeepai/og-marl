@@ -36,7 +36,7 @@ setup(
         "absl-py",
         "gymnasium",
         "requests",
-        "jax[cpu]"
+        "jax[cpu]",
     ],
     extras_require={
         "jax": ["flashbax", "optax", "jax", "flax", "orbax-checkpoint"],

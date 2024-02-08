@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
-import jax
-import jax.numpy as jnp
-import flashbax as fbx
 import copy
-from og_marl.environments.utils import get_environment
-from tqdm import tqdm
-from flashbax.vault import Vault
 
-from og_marl.offline_dataset import OfflineMARLDataset    
+import flashbax as fbx
+import jax
+import numpy as np
+from flashbax.vault import Vault
+from tqdm import tqdm
+
+from og_marl.environments.utils import get_environment
+from og_marl.offline_dataset import OfflineMARLDataset
+
 
 def vault_from_dataset(dataset):
     batch_size = 2048
@@ -36,10 +37,7 @@ def vault_from_dataset(dataset):
         "rewards": {agent: [] for agent in agents},
         "terminals": {agent: [] for agent in agents},
         "truncations": {agent: [] for agent in agents},
-        "infos": {
-            "legals": {agent: [] for agent in agents},
-            "state": []
-        }
+        "infos": {"legals": {agent: [] for agent in agents}, "state": []},
     }
 
     buffer = fbx.make_flat_buffer(
@@ -57,9 +55,9 @@ def vault_from_dataset(dataset):
     episode_length = 0
     for batch in batched_dataset:
         mask = copy.deepcopy(batch["infos"]["mask"])
-        B = mask.shape[0] # batch_size
+        B = mask.shape[0]  # batch_size
         for idx in tqdm(range(B)):
-            zero_padding_mask = mask[idx,:period]
+            zero_padding_mask = mask[idx, :period]
             episode_length += np.sum(zero_padding_mask, dtype=int)
 
             for agent in agents:
@@ -68,22 +66,23 @@ def vault_from_dataset(dataset):
                 episode["rewards"][agent].append(batch["rewards"][agent][idx, :period])
                 episode["terminals"][agent].append(batch["terminals"][agent][idx, :period])
                 episode["truncations"][agent].append(batch["truncations"][agent][idx, :period])
-                episode["infos"]["legals"][agent].append(batch["infos"]["legals"][agent][idx, :period])
+                episode["infos"]["legals"][agent].append(
+                    batch["infos"]["legals"][agent][idx, :period]
+                )
             episode["infos"]["state"].append(batch["infos"]["state"][idx, :period])
 
             if (
-                int(list(episode["terminals"].values())[0][-1][-1]) == 1 # agent 0, last chunck, last timestep in chunk
+                int(list(episode["terminals"].values())[0][-1][-1])
+                == 1  # agent 0, last chunk, last timestep in chunk
                 or episode_length >= max_episode_length
             ):
                 episode_to_save = jax.tree_map(
-                    lambda x: np.concatenate(x, axis=0)[:episode_length],
+                    lambda x, ep_len=episode_length: np.concatenate(x, axis=0)[:ep_len],
                     episode,
-                    is_leaf=lambda x: isinstance(x, list)
+                    is_leaf=lambda x: isinstance(x, list),
                 )
                 if not initialised_buffer_state:
-                    buffer_state = buffer.init(
-                        jax.tree_map(lambda x: x[0, ...], episode_to_save)
-                    )
+                    buffer_state = buffer.init(jax.tree_map(lambda x: x[0, ...], episode_to_save))
                     v = Vault(
                         vault_name="test.vlt",
                         experience_structure=buffer_state.experience,
@@ -99,10 +98,7 @@ def vault_from_dataset(dataset):
                     "rewards": {agent: [] for agent in agents},
                     "terminals": {agent: [] for agent in agents},
                     "truncations": {agent: [] for agent in agents},
-                    "infos": {
-                        "legals": {agent: [] for agent in agents},
-                        "state": []
-                    }
+                    "infos": {"legals": {agent: [] for agent in agents}, "state": []},
                 }
                 episode_length = 0
 
