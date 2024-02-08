@@ -12,18 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import jax
 import os
+
+import jax
 import jax.numpy as jnp
-from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 import orbax.checkpoint
+from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
+
 
 class FlashbaxBufferStore:
     def __init__(
         self,
         dataset_path: str,
     ) -> None:
-        orbax_checkpointer = orbax.checkpoint.PyTreeCheckpointer() 
+        orbax_checkpointer = orbax.checkpoint.PyTreeCheckpointer()
         options = orbax.checkpoint.CheckpointManagerOptions(
             max_to_keep=1,
             create=True,
@@ -41,11 +43,11 @@ class FlashbaxBufferStore:
     def restore_state(self):
         raw_restored = self._manager.restore(self._manager.latest_step())
         return TrajectoryBufferState(
-            experience=jax.tree_util.tree_map(jnp.asarray, raw_restored['experience']),
-            current_index=jnp.asarray(raw_restored['current_index']),
-            is_full=jnp.asarray(raw_restored['is_full']),
+            experience=jax.tree_util.tree_map(jnp.asarray, raw_restored["experience"]),
+            current_index=jnp.asarray(raw_restored["current_index"]),
+            is_full=jnp.asarray(raw_restored["is_full"]),
         )
-    
+
     def restore_metadata(self):
         metadata = self._manager.metadata()
         return metadata

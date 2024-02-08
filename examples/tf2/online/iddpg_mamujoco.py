@@ -12,19 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from og_marl.environments.wrappers import PadObsandActs, Dtype, ExperienceRecorder
-from og_marl.loggers import WandbLogger
-from og_marl.tf2.systems.iddpg import IDDPGSystem
 from og_marl.environments.gymnasium_mamujoco import MAMuJoCo
 from og_marl.replay_buffers import FlashbaxReplayBuffer
+from og_marl.environments.wrappers import Dtype, PadObsandActs
+from og_marl.loggers import WandbLogger
+from og_marl.tf2.systems.iddpg import IDDPGSystem
 
 env = MAMuJoCo("4ant")
 
 env = PadObsandActs(env)
 
 env = Dtype(env, "float32")
-
-# env = ExperienceRecorder(env, "mamujoco")
 
 logger = WandbLogger()
 

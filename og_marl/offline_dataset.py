@@ -18,7 +18,14 @@ import tensorflow as tf
 import tree
 import zipfile
 import os
+import sys
+import zipfile
+from pathlib import Path
+
 import requests
+import tensorflow as tf
+import tree
+
 
 DATASET_INFO = {
     "smac_v1": {
@@ -135,6 +142,7 @@ def get_schema_dtypes(environment):
 
     return schema
 
+
 class OfflineMARLDataset:
     def __init__(
         self,
@@ -179,9 +187,7 @@ class OfflineMARLDataset:
     def _decode_fn(self, record_bytes):
         example = tf.io.parse_single_example(
             record_bytes,
-            tree.map_structure(
-                lambda x: tf.io.FixedLenFeature([], dtype=tf.string), self._schema
-            ),
+            tree.map_structure(lambda x: tf.io.FixedLenFeature([], dtype=tf.string), self._schema),
         )
 
         for key, dtype in self._schema.items():
@@ -206,16 +212,19 @@ class OfflineMARLDataset:
         """Expose any other attributes of the underlying environment.
 
         Args:
+        ----
             name (str): attribute.
 
         Returns:
+        -------
             Any: return attribute from env or underlying env.
+
         """
         if hasattr(self.__class__, name):
             return self.__getattribute__(name)
         else:
             return getattr(self._tf_dataset, name)
-        
+
 
 def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./datasets"):
     dataset_download_url = DATASET_INFO[env_name][scenario_name]["url"]
@@ -225,15 +234,15 @@ def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./data
     os.makedirs(f'{dataset_base_dir}/tmp/', exist_ok=True)
     os.makedirs(f'{dataset_base_dir}/{env_name}/', exist_ok=True)
 
-    zip_file_path = f'{dataset_base_dir}/tmp/tmp_dataset.zip'
+    zip_file_path = f"{dataset_base_dir}/tmp/tmp_dataset.zip"
 
     extraction_path = f'{dataset_base_dir}/{env_name}'
 
     response = requests.get(dataset_download_url, stream=True)
-    total_length = response.headers.get('content-length')
+    total_length = response.headers.get("content-length")
 
-    with open(zip_file_path, 'wb') as file:
-        if total_length is None: # no content length header
+    with open(zip_file_path, "wb") as file:
+        if total_length is None:  # no content length header
             file.write(response.content)
         else:
             dl = 0
@@ -242,11 +251,11 @@ def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./data
                 dl += len(data)
                 file.write(data)
                 done = int(50 * dl / total_length)
-                sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)) )    
+                sys.stdout.write("\r[%s%s]" % ("=" * done, " " * (50 - done)))
                 sys.stdout.flush()
 
     # Step 2: Unzip the file
-    with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+    with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
         zip_ref.extractall(extraction_path)
 
     # Optionally, delete the zip file after extraction

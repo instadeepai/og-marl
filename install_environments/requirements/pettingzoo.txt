@@ -1,9 +1,9 @@
+autorom
+gym
+numpy
+opencv-python
 pettingzoo==1.22.0
 pygame
-supersuit==3.3.4
-autorom
-numpy
-gym
 pymunk
 scipy
-opencv-python
+supersuit==3.3.4

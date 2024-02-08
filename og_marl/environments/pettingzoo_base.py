@@ -11,11 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Base wraper for Cooperative Pettingzoo environments."""
+"""Base wrapper for Cooperative Pettingzoo environments."""
 import numpy as np
+
 from og_marl.environments.base import BaseEnvironment
 
+
 class PettingZooBase(BaseEnvironment):
+
     """Environment wrapper for PettingZoo environments."""
 
     def __init__(self):
@@ -30,10 +33,8 @@ class PettingZooBase(BaseEnvironment):
 
         self.info_spec = {}
 
-
     def reset(self):
         """Resets the env."""
-
         # Reset the environment
         observations = self._environment.reset()
 
@@ -48,34 +49,28 @@ class PettingZooBase(BaseEnvironment):
 
         return observations, info
 
-
     def step(self, actions):
         """Steps in env."""
-
         # Step the environment
-        observations, rewards, terminals, truncations, _ = self._environment.step(
-            actions
-        )
+        observations, rewards, terminals, truncations, _ = self._environment.step(actions)
 
         # Global state
         env_state = self._create_state_representation(observations)
-        
+
         # Extra infos
         info = {"state": env_state}
 
         return observations, rewards, terminals, truncations, info
 
-
     def _add_zero_obs_for_missing_agent(self, observations):
         for agent in self._agents:
             if agent not in observations:
-                observations[agent] = np.zeros(self.observation_spaces[agent].shape, self.observation_spaces[agent].dtype)
+                observations[agent] = np.zeros(
+                    self.observation_spaces[agent].shape, self.observation_spaces[agent].dtype
+                )
         return observations
 
-
-    def _convert_observations(
-        self, observations
-    ):
+    def _convert_observations(self, observations):
         """Convert observations"""
         raise NotImplementedError
 

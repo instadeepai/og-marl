@@ -12,21 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from og_marl.offline_dataset import download_and_unzip_dataset
 from og_marl.environments import smacv1
-from og_marl.offline_dataset import OfflineMARLDataset
+from og_marl.offline_dataset import OfflineMARLDataset, download_and_unzip_dataset
 
 # Comment this out if you already downloaded the dataset
-download_and_unzip_dataset("mamujoco", "2_halfcheetah", dataset_base_dir="datasets")
+download_and_unzip_dataset("smac_v1", "3m", dataset_base_dir="datasets")
 
 # Compute mean episode return of Good dataset
 
-# env = smacv1.SMACv1("3m") # Change SMAC Scenario Here
-# dataset = OfflineMARLDataset(env, env_name="smac_v1", scenario_name="3m", dataset_type="Good")
+env = smacv1.SMACv1("3m")  # Change SMAC Scenario Here
+dataset = OfflineMARLDataset(env, "datasets/smac_v1/3m/Good")
 
-# sample_cnt =0
-# tot_returns = 0
-# for sample in dataset.raw_dataset:
-#      sample_cnt += 1
-#      tot_returns += sample["infos"]["episode_return"].numpy()
-# print("Mean Episode return:", tot_returns / sample_cnt)
+sample_cnt = 0
+tot_returns = 0
+for sample in dataset._tf_dataset:
+    sample_cnt += 1
+    tot_returns += sample["episode_return"].numpy()
+print("Mean Episode return:", tot_returns / sample_cnt)

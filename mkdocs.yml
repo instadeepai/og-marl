@@ -3,7 +3,7 @@ site_author: InstaDeep Research
 site_url: https://instadeepai.github.io/og-marl/
 site_dir: public
 
-theme: 
+theme:
   name: material
   logo: assets/instadeep_logo.png
   favicon: assets/instadeep_logo.png
@@ -35,6 +35,10 @@ theme:
       toggle:
         icon: material/weather-night
         name: Switch to light mode
+
+nav:
+  - Home: 'index.md'
+  - Datasets: 'datasets.md'
 
 markdown_extensions:
   - attr_list

@@ -1,7 +1,7 @@
-from og_marl.loggers import WandbLogger
-from og_marl.tf2.systems.qmix import QMIXSystem
 from og_marl.environments.smacv1 import SMACv1
+from og_marl.loggers import WandbLogger
 from og_marl.replay_buffers import SequenceCPPRB
+from og_marl.tf2.systems.qmix import QMIXSystem
 
 env = SMACv1("3m")
 

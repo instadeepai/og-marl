@@ -12,18 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Wraper for SMAC."""
+"""Wrapper for SMAC."""
 import numpy as np
-from og_marl.environments.base import BaseEnvironment
+from gymnasium.spaces import Box, Discrete
 from smac.env import StarCraft2Env
-from gymnasium.spaces import Discrete, Box
+
+from og_marl.environments.base import BaseEnvironment
+
 
 class SMACv1(BaseEnvironment):
+
     """Environment wrapper SMACv1."""
 
     def __init__(
         self,
-        map_name: str, 
+        map_name: str,
     ):
         self._environment = StarCraft2Env(map_name=map_name)
         self.possible_agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
@@ -33,18 +36,21 @@ class SMACv1(BaseEnvironment):
         self._obs_dim = self._environment.get_obs_size()
 
         self.action_spaces = {agent: Discrete(self._num_actions) for agent in self.possible_agents}
-        self.observation_spaces = {agent: Box(-np.inf, np.inf, (self._obs_dim,)) for agent in self.possible_agents}
+        self.observation_spaces = {
+            agent: Box(-np.inf, np.inf, (self._obs_dim,)) for agent in self.possible_agents
+        }
 
         self.info_spec = {
             "state": np.zeros((self._environment.get_state_size(),), "float32"),
-            "legals": {agent: np.zeros((self._num_actions,), "int64") for agent in self.possible_agents}
+            "legals": {
+                agent: np.zeros((self._num_actions,), "int64") for agent in self.possible_agents
+            },
         }
 
         self.max_episode_length = self._environment.episode_limit
 
     def reset(self):
         """Resets the env."""
-
         # Reset the environment
         self._environment.reset()
         self._done = False
@@ -55,19 +61,15 @@ class SMACv1(BaseEnvironment):
 
         legal_actions = self._get_legal_actions()
         legals = {agent: legal_actions[i] for i, agent in enumerate(self.possible_agents)}
-        
+
         env_state = self._environment.get_state().astype("float32")
 
-        info = {
-            "legals": legals,
-            "state": env_state
-        }
+        info = {"legals": legals, "state": env_state}
 
         return observations, info
 
     def step(self, actions):
         """Step in env."""
-
         # Convert dict of actions to list for SMAC
         smac_actions = []
         for agent in self.possible_agents:
@@ -91,10 +93,7 @@ class SMACv1(BaseEnvironment):
         terminals = {agent: np.array(done) for agent in self.possible_agents}
         truncations = {agent: False for agent in self.possible_agents}
 
-        info = {
-            "legals": legals,
-            "state": env_state
-        }
+        info = {"legals": legals, "state": env_state}
 
         return observations, rewards, terminals, truncations, info
 
@@ -110,4 +109,3 @@ class SMACv1(BaseEnvironment):
     def get_stats(self):
         """Return extra stats to be logged."""
         return self._environment.get_stats()
-    

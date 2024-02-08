@@ -18,7 +18,7 @@ mkdir -p $MAP_DIR
 wget https://github.com/oxwhirl/smac/releases/download/v0.1-beta1/SMAC_Maps.zip
 unzip SMAC_Maps.zip
 mv SMAC_Maps $MAP_DIR
-rm -rf SMAC_Maps.zip 
+rm -rf SMAC_Maps.zip
 
 echo 'StarCraft II is installed.'
 
