@@ -26,6 +26,7 @@ from og_marl.tf2.utils import (
     gather,
     merge_batch_and_agent_dim_of_time_major_sequence,
     switch_two_leading_dims,
+    unroll_rnn,
 )
 
 
@@ -68,9 +69,9 @@ class MAICQSystem(QMIXSystem):
         # Policy Network
         self._policy_network = snt.DeepRNN(
             [
-                snt.Linear(self._linear_layer_dim),
+                snt.Linear(linear_layer_dim),
                 tf.nn.relu,
-                snt.GRU(self._recurrent_layer_dim),
+                snt.GRU(recurrent_layer_dim),
                 tf.nn.relu,
                 snt.Linear(self._environment._num_actions),
                 tf.nn.softmax,
@@ -132,12 +133,13 @@ class MAICQSystem(QMIXSystem):
         actions = tf.cast(batch["actions"], "int32")  # (B,T,N)
         env_states = batch["state"]  # (B,T,S)
         rewards = batch["rewards"]  # (B,T,N)
-        # truncations = batch["truncations"]  # (B,T,N)
+        truncations = batch["truncations"]  # (B,T,N)
         terminals = batch["terminals"]  # (B,T,N)
         zero_padding_mask = batch["mask"]  # (B,T)
         legal_actions = batch["legals"]  # (B,T,N,A)
 
-        done = terminals
+        # When to reset the RNN hidden state
+        resets = tf.maximum(terminals, truncations) # equivalent to logical 'or'
 
         # Get dims
         B, T, N, A = legal_actions.shape
@@ -148,13 +150,17 @@ class MAICQSystem(QMIXSystem):
 
         # Make time-major
         observations = switch_two_leading_dims(observations)
+        resets = switch_two_leading_dims(resets)
 
         # Merge batch_dim and agent_dim
         observations = merge_batch_and_agent_dim_of_time_major_sequence(observations)
+        resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
         # Unroll target network
-        target_qs_out, _ = snt.static_unroll(
-            self._target_q_network, observations, self._target_q_network.initial_state(B * N)
+        target_qs_out = unroll_rnn(
+            self._target_q_network, 
+            observations,
+            resets
         )
 
         # Expand batch and agent_dim
@@ -165,8 +171,10 @@ class MAICQSystem(QMIXSystem):
 
         with tf.GradientTape(persistent=True) as tape:
             # Unroll online network
-            qs_out, _ = snt.static_unroll(
-                self._q_network, observations, self._q_network.initial_state(B * N)
+            qs_out = unroll_rnn(
+                self._q_network, 
+                observations, 
+                resets
             )
 
             # Expand batch and agent_dim
@@ -176,8 +184,8 @@ class MAICQSystem(QMIXSystem):
             q_vals = switch_two_leading_dims(qs_out)
 
             # Unroll the policy
-            probs_out, _ = snt.static_unroll(
-                self._policy_network, observations, self._policy_network.initial_state(B * N)
+            probs_out = unroll_rnn(
+                self._policy_network, observations, resets
             )
 
             # Expand batch and agent_dim
@@ -224,7 +232,7 @@ class MAICQSystem(QMIXSystem):
             target_q_taken = len(advantage_Q) * advantage_Q * target_q_taken
 
             # Compute targets
-            targets = rewards[:, :-1] + (1 - done[:, :-1]) * self._discount * target_q_taken[:, 1:]
+            targets = rewards[:, :-1] + (1 - terminals[:, :-1]) * self._discount * target_q_taken[:, 1:]
             targets = tf.stop_gradient(targets)
 
             # TD error

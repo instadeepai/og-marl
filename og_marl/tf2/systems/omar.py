@@ -25,6 +25,7 @@ from og_marl.tf2.utils import (
     expand_batch_and_agent_dim_of_time_major_sequence,
     merge_batch_and_agent_dim_of_time_major_sequence,
     switch_two_leading_dims,
+    unroll_rnn,
 )
 
 
@@ -40,14 +41,12 @@ class OMARSystem(IDDPGCQLSystem):
         critic_learning_rate=3e-4,
         policy_learning_rate=1e-3,
         add_agent_id_to_obs=False,
-        num_ood_actions=4,  # CQL
-        cql_weight=10.0,  # CQL
+        num_ood_actions=10,  # CQL
+        cql_weight=5.0,  # CQL
         cql_sigma=0.2,  # CQL
-        target_action_gap=10.0,  # CQL
-        cql_alpha_learning_rate=3e-4,  # CQL
         omar_iters=3,  # OMAR
-        omar_num_samples=5,  # OMAR
-        omar_num_elites=5,  # OMAR
+        omar_num_samples=10,  # OMAR
+        omar_num_elites=10,  # OMAR
         omar_sigma=2.0,  # OMAR
         omar_coe=0.7,  # OMAR
     ):
@@ -64,8 +63,6 @@ class OMARSystem(IDDPGCQLSystem):
             num_ood_actions=num_ood_actions,
             cql_weight=cql_weight,
             cql_sigma=cql_sigma,
-            target_action_gap=target_action_gap,
-            cql_alpha_learning_rate=cql_alpha_learning_rate,
         )
 
         self._omar_iters = omar_iters
@@ -84,15 +81,12 @@ class OMARSystem(IDDPGCQLSystem):
         actions = batch["actions"]  # (B,T,N,A)
         env_states = batch["state"]  # (B,T,S)
         rewards = batch["rewards"]  # (B,T,N)
-        # truncations = batch["truncations"]  # (B,T,N)
+        truncations = batch["truncations"]  # (B,T,N)
         terminals = batch["terminals"]  # (B,T,N)
         zero_padding_mask = batch["mask"]  # (B,T)
 
-        # done = tf.cast(
-        #     tf.logical_or(tf.cast(truncations, "bool"), tf.cast(terminals, "bool")),
-        #     "float32",
-        # )
-        done = terminals
+        # When to reset the RNN hidden state
+        resets = tf.maximum(terminals, truncations) # equivalent to logical 'or'
 
         # Get dims
         B, T, N, A = actions.shape[:4]
@@ -103,17 +97,18 @@ class OMARSystem(IDDPGCQLSystem):
 
         # Make time-major
         observations = switch_two_leading_dims(observations)
+        resets = switch_two_leading_dims(resets)
         replay_actions = switch_two_leading_dims(actions)
         rewards = switch_two_leading_dims(rewards)
-        done = switch_two_leading_dims(done)
+        terminals = switch_two_leading_dims(terminals)
         zero_padding_mask = switch_two_leading_dims(zero_padding_mask)
         env_states = switch_two_leading_dims(env_states)
 
         # Unroll target policy
-        target_actions, _ = snt.static_unroll(
+        target_actions = unroll_rnn(
             self._target_policy_network,
             merge_batch_and_agent_dim_of_time_major_sequence(observations),
-            self._target_policy_network.initial_state(B * N),
+            merge_batch_and_agent_dim_of_time_major_sequence(resets),
         )
         target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
@@ -129,7 +124,7 @@ class OMARSystem(IDDPGCQLSystem):
         target_qs = tf.minimum(target_qs_1, target_qs_2)
 
         # Compute Bellman targets
-        targets = rewards[:-1] + self._discount * (1 - done[:-1]) * tf.squeeze(
+        targets = rewards[:-1] + self._discount * (1 - terminals[:-1]) * tf.squeeze(
             target_qs[1:], axis=-1
         )
 
@@ -153,10 +148,10 @@ class OMARSystem(IDDPGCQLSystem):
             ### CQL ###
             ###########
 
-            online_actions, _ = snt.static_unroll(
+            online_actions = unroll_rnn(
                 self._policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
-                self._policy_network.initial_state(B * N),
+                merge_batch_and_agent_dim_of_time_major_sequence(resets),
             )
             online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
 
@@ -285,14 +280,8 @@ class OMARSystem(IDDPGCQLSystem):
                 tf.reduce_logsumexp(all_ood_qs_2, axis=2, keepdims=False)
             ) - masked_mean(qs_2[:-1])
 
-            # cql_alpha = tf.exp(self._cql_log_alpha)
-            # cql_loss_1 = cql_alpha * (cql_loss_1 - self._target_action_gap)
-            # cql_loss_2 = cql_alpha * (cql_loss_2 - self._target_action_gap)
-
             critic_loss_1 += self._cql_weight * cql_loss_1
             critic_loss_2 += self._cql_weight * cql_loss_2
-
-            # cql_alpha_loss = (- cql_loss_1 - cql_loss_2) * 0.5
 
             ### END CQL ###
 
@@ -304,10 +293,10 @@ class OMARSystem(IDDPGCQLSystem):
 
             # Policy Loss
             # Unroll online policy
-            onlin_actions, _ = snt.static_unroll(
+            onlin_actions = unroll_rnn(
                 self._policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
-                self._policy_network.initial_state(B * N),
+                merge_batch_and_agent_dim_of_time_major_sequence(resets),
             )
             curr_pol_out = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
 
@@ -397,11 +386,6 @@ class OMARSystem(IDDPGCQLSystem):
         )
         gradients = tape.gradient(critic_loss, variables)
         self._critic_optimizer.apply(gradients, variables)
-
-        # # Optimise CQL alpha
-        # variables = [self._cql_log_alpha]
-        # gradients = tape.gradient(cql_alpha_loss, variables)
-        # self._cql_alpha_optimizer.apply(gradients, variables)
 
         # Train policy
         variables = (*self._policy_network.trainable_variables,)
