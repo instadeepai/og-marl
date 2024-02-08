@@ -56,7 +56,7 @@ class FlashbaxReplayBuffer:
         if self._buffer_state is None:
             self._buffer_state = self._replay_buffer.init(timestep)
         
-        timestep = tree.map_structure(lambda x: np.expand_dims(np.expand_dims(x, axis=0), axis=0), timestep) # add batch dim
+        timestep = tree.map_structure(lambda x: x[jnp.newaxis, jnp.newaxis, ...], timestep) # add batch & time dims
         self._buffer_state = self._buffer_add_fn(self._buffer_state, timestep)
 
     def sample(self):
@@ -64,5 +64,28 @@ class FlashbaxReplayBuffer:
         batch = self._buffer_sample_fn(self._buffer_state, sample_key)
         return batch.experience
     
-    def populate_from_vault(self, vault_name, vault_uid, vault_rel_dir="vaults"):
-        self._buffer_state = Vault(vault_name, vault_uid=vault_uid, rel_dir=vault_rel_dir).read()
+    def populate_from_vault(self, env_name, scenario_name, dataset_name, rel_dir="datasets") -> bool:
+        try:
+            self._buffer_state = Vault(
+                vault_name=f"{env_name}/{scenario_name}.vlt",
+                vault_uid=dataset_name,
+                rel_dir=rel_dir,
+            ).read()
+
+            # Recreate the buffer and associated pure functions
+            self._max_size = self._buffer_state.current_index
+            self._replay_buffer = fbx.make_trajectory_buffer(
+                add_batch_size=1,
+                sample_batch_size=self._batch_size,
+                sample_sequence_length=self._sequence_length,
+                period=1,
+                min_length_time_axis=1,
+                max_size=self._max_size,
+            )
+            self._buffer_sample_fn = jax.jit(self._replay_buffer.sample)
+            self._buffer_add_fn = jax.jit(self._replay_buffer.add)
+
+            return True
+
+        except ValueError:
+            return False
