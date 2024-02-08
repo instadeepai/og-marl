@@ -50,13 +50,13 @@ repos:
         stages: [ commit-msg ]
         additional_dependencies: [ '@commitlint/config-conventional' ]
 
-  - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.3.0
-    hooks:
-      - id: insert-license
-        name: "License inserter"
-        files: .*py$
-        args:
-          - --license-filepath=docs/license_header.txt
-          - --comment-style=#
-        exclude: .npy$  # Do not add license to .npy files (the standard binary file format in NumPy)
+  # - repo: https://github.com/Lucas-C/pre-commit-hooks
+  #   rev: v1.3.0
+  #   hooks:
+  #     - id: insert-license
+  #       name: "License inserter"
+  #       files: .*py$
+  #       args:
+  #         - --license-filepath=docs/license_header.txt
+  #         - --comment-style=#
+  #       exclude: .npy$  # Do not add license to .npy files (the standard binary file format in NumPy)

@@ -26,11 +26,10 @@ from og_marl.tf2.utils import (
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
     merge_batch_and_agent_dim_of_time_major_sequence,
-    set_growing_gpu_memory,
-    concat_agent_id_to_obs,
     switch_two_leading_dims,
-    unroll_rnn
+    unroll_rnn,
 )
+
 
 class StateAndJointActionCritic(snt.Module):
     def __init__(self, num_agents, num_actions):
@@ -40,7 +39,7 @@ class StateAndJointActionCritic(snt.Module):
         self._critic_network = snt.Sequential(
             [
                 snt.Linear(256),
-                tf.keras.layers.ReLU(),         
+                tf.keras.layers.ReLU(),
                 snt.Linear(256),
                 tf.keras.layers.ReLU(),
                 snt.Linear(1),
@@ -86,12 +85,15 @@ def make_joint_action(agent_actions, other_actions):
     other_actions [[T,B,N,A]]: tensor of actions the agent took. Usually
         the actions from the replay buffer.
     """
-    T,B,N,A = agent_actions.shape[:4] # (B,N,A)
+    T, B, N, A = agent_actions.shape[:4]  # (B,N,A)
     all_joint_actions = []
     for i in range(N):
-        one_hot = tf.expand_dims(tf.cast(tf.stack([tf.stack([tf.one_hot(i, N)]*B,axis=0)]*T,axis=0), "bool"), axis=-1)
+        one_hot = tf.expand_dims(
+            tf.cast(tf.stack([tf.stack([tf.one_hot(i, N)] * B, axis=0)] * T, axis=0), "bool"),
+            axis=-1,
+        )
         joint_action = tf.where(one_hot, agent_actions, agent_actions)
-        joint_action = tf.reshape(joint_action, (T,B,N*A))
+        joint_action = tf.reshape(joint_action, (T, B, N * A))
         all_joint_actions.append(joint_action)
     all_joint_actions = tf.stack(all_joint_actions, axis=2)
     return all_joint_actions
@@ -254,26 +256,26 @@ class IDDPGSystem(BaseMARLSystem):
             actions[agent] = action
 
         return actions, next_rnn_states
-    
+
     def train_step(self, experience):
         logs = self._tf_train_step(experience)
         return logs
 
-    @tf.function(jit_compile=True) # NOTE: comment this out if using debugger
+    @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, experience):
         batch = batched_agents(self._environment.possible_agents, experience)
 
         # Unpack the batch
-        observations = batch["observations"] # (B,T,N,O)
-        actions = batch["actions"] # (B,T,N,A)
-        env_states = batch["state"] # (B,T,S)
-        rewards = batch["rewards"] # (B,T,N)
-        truncations = tf.cast(batch["truncations"], "float32") # (B,T,N)
-        terminals = tf.cast(batch["terminals"], "float32") # (B,T,N)
-        zero_padding_mask = batch["mask"] # (B,T)
+        observations = batch["observations"]  # (B,T,N,O)
+        actions = batch["actions"]  # (B,T,N,A)
+        env_states = batch["state"]  # (B,T,S)
+        rewards = batch["rewards"]  # (B,T,N)
+        truncations = tf.cast(batch["truncations"], "float32")  # (B,T,N)
+        terminals = tf.cast(batch["terminals"], "float32")  # (B,T,N)
+        zero_padding_mask = batch["mask"]  # (B,T)
 
         # When to reset the RNN hidden state
-        resets = tf.maximum(terminals, truncations) # equivalent to logical 'or'
+        resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
 
         # Get dims
         B, T, N = actions.shape[:3]
@@ -295,7 +297,7 @@ class IDDPGSystem(BaseMARLSystem):
         target_actions = unroll_rnn(
             self._target_policy_network,
             merge_batch_and_agent_dim_of_time_major_sequence(observations),
-            merge_batch_and_agent_dim_of_time_major_sequence(resets)
+            merge_batch_and_agent_dim_of_time_major_sequence(resets),
         )
         target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
@@ -342,7 +344,7 @@ class IDDPGSystem(BaseMARLSystem):
             onlin_actions = unroll_rnn(
                 self._policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
-                merge_batch_and_agent_dim_of_time_major_sequence(resets)
+                merge_batch_and_agent_dim_of_time_major_sequence(resets),
             )
             online_actions = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
 

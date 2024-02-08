@@ -21,10 +21,10 @@ from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
     batched_agents,
     expand_batch_and_agent_dim_of_time_major_sequence,
-    unroll_rnn,
     gather,
     merge_batch_and_agent_dim_of_time_major_sequence,
     switch_two_leading_dims,
+    unroll_rnn,
 )
 
 
@@ -82,7 +82,7 @@ class IDRQNBCQSystem(IDRQNSystem):
         legal_actions = batch["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state
-        resets = tf.maximum(terminals, truncations) # equivalent to logical 'or'
+        resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
 
         # Get dims
         B, T, N, A = legal_actions.shape
@@ -100,11 +100,7 @@ class IDRQNBCQSystem(IDRQNSystem):
         resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
         # Unroll target network
-        target_qs_out = unroll_rnn(
-            self._target_q_network, 
-            observations,
-            resets
-        )
+        target_qs_out = unroll_rnn(self._target_q_network, observations, resets)
 
         # Expand batch and agent_dim
         target_qs_out = expand_batch_and_agent_dim_of_time_major_sequence(target_qs_out, B, N)
@@ -114,11 +110,7 @@ class IDRQNBCQSystem(IDRQNSystem):
 
         with tf.GradientTape() as tape:
             # Unroll online network
-            qs_out = unroll_rnn(
-                self._q_network, 
-                observations,
-                resets
-            )
+            qs_out = unroll_rnn(self._q_network, observations, resets)
 
             # Expand batch and agent_dim
             qs_out = expand_batch_and_agent_dim_of_time_major_sequence(qs_out, B, N)
@@ -134,11 +126,7 @@ class IDRQNBCQSystem(IDRQNSystem):
             ###################
 
             # Unroll behaviour cloning network
-            probs_out = unroll_rnn(
-                self._behaviour_cloning_network, 
-                observations, 
-                resets
-            )
+            probs_out = unroll_rnn(self._behaviour_cloning_network, observations, resets)
 
             # Expand batch and agent_dim
             probs_out = expand_batch_and_agent_dim_of_time_major_sequence(probs_out, B, N)
@@ -176,7 +164,9 @@ class IDRQNBCQSystem(IDRQNSystem):
             ###################
 
             # Compute targets
-            targets = rewards[:, :-1] + (1 - terminals[:, :-1]) * self._discount * target_max_qs[:, 1:]
+            targets = (
+                rewards[:, :-1] + (1 - terminals[:, :-1]) * self._discount * target_max_qs[:, 1:]
+            )
             targets = tf.stop_gradient(targets)
 
             # Chop off last time step

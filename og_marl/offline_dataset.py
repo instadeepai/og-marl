@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
-from pathlib import Path
-import tensorflow as tf
-import tree
-import zipfile
 import os
 import sys
 import zipfile
@@ -26,99 +21,79 @@ import requests
 import tensorflow as tf
 import tree
 
-
 DATASET_INFO = {
     "smac_v1": {
-        "3m": {
-            "url": "https://tinyurl.com/3m-dataset",
-            "sequence_length": 20,
-            "period": 10
-        },
-        "8m": {
-            "url": "https://tinyurl.com/8m-dataset",
-            "sequence_length": 20,
-            "period": 10
-        },
+        "3m": {"url": "https://tinyurl.com/3m-dataset", "sequence_length": 20, "period": 10},
+        "8m": {"url": "https://tinyurl.com/8m-dataset", "sequence_length": 20, "period": 10},
         "5m_vs_6m": {
             "url": "https://tinyurl.com/5m-vs-6m-dataset",
             "sequence_length": 20,
-            "period": 10
+            "period": 10,
         },
-        "2s3z": {
-            "url": "https://tinyurl.com/2s3z-dataset",
-            "sequence_length": 20,
-            "period": 10
-        },
+        "2s3z": {"url": "https://tinyurl.com/2s3z-dataset", "sequence_length": 20, "period": 10},
         "3s5z_vs_3s6z": {
             "url": "https://tinyurl.com/3s5z-vs-3s6z-dataset3",
             "sequence_length": 20,
-            "period": 10
+            "period": 10,
         },
         "2c_vs_64zg": {
             "url": "https://tinyurl.com/2c-vs-64zg-dataset",
             "sequence_length": 20,
-            "period": 10
+            "period": 10,
         },
         "27m_vs_30m": {
             "url": "https://tinyurl.com/27m-vs-30m-dataset",
             "sequence_length": 20,
-            "period": 10
+            "period": 10,
         },
     },
     "smac_v2": {
         "terran_5_vs_5": {
             "url": "https://tinyurl.com/terran-5-vs-5-dataset",
             "sequence_length": 20,
-            "period": 10
+            "period": 10,
         },
         "zerg_5_vs_5": {
             "url": "https://tinyurl.com/zerg-5-vs-5-dataset",
             "sequence_length": 20,
-            "period": 10
+            "period": 10,
         },
         "terran_10_vs_10": {
             "url": "https://tinyurl.com/terran-10-vs-10-dataset",
             "sequence_length": 20,
-            "period": 10
+            "period": 10,
         },
     },
     "flatland": {
         "3_trains": {
             "url": "https://tinyurl.com/3trains-dataset",
-            "sequence_length": 20, #TODO
-            "period": 10
+            "sequence_length": 20,  # TODO
+            "period": 10,
         },
         "5_trains": {
             "url": "https://tinyurl.com/5trains-dataset",
-            "sequence_length": 20, #TODO
-            "period": 10
+            "sequence_length": 20,  # TODO
+            "period": 10,
         },
     },
     "mamujoco": {
         "2halfcheetah": {
             "url": "https://tinyurl.com/2halfcheetah-dataset",
             "sequence_length": 20,
-            "period": 10
+            "period": 10,
         },
-        "2ant": {
-            "url": "https://tinyurl.com/2ant-dataset",
-            "sequence_length": 20,
-            "period": 10
-        },
-        "4ant": {
-            "url": "https://tinyurl.com/4ant-dataset",
-            "sequence_length": 20,
-            "period": 10
-        },
+        "2ant": {"url": "https://tinyurl.com/2ant-dataset", "sequence_length": 20, "period": 10},
+        "4ant": {"url": "https://tinyurl.com/4ant-dataset", "sequence_length": 20, "period": 10},
     },
     "voltage_control": {
         "case33_3min_final": {
             "url": "https://tinyurl.com/case33-3min-final-dataset",
             "sequence_length": 20,
-            "period": 10
+            "period": 10,
         },
-    }
+    },
 }
+
 
 def get_schema_dtypes(environment):
     act_type = list(environment.action_spaces.values())[0].dtype
@@ -175,9 +150,7 @@ class OfflineMARLDataset:
 
         filename_dataset = tf.data.Dataset.from_tensor_slices(filenames)
         self.raw_dataset = filename_dataset.flat_map(
-            lambda x: tf.data.TFRecordDataset(x, compression_type="GZIP").map(
-                self._decode_fn
-            )
+            lambda x: tf.data.TFRecordDataset(x, compression_type="GZIP").map(self._decode_fn)
         )
 
         self.period = DATASET_INFO[env_name][scenario_name]["period"]
@@ -193,7 +166,14 @@ class OfflineMARLDataset:
         for key, dtype in self._schema.items():
             example[key] = tf.io.parse_tensor(example[key], dtype)
 
-        sample = {"observations": {}, "actions": {}, "rewards": {}, "terminals": {}, "truncations": {}, "infos": {"legals":{}}}
+        sample = {
+            "observations": {},
+            "actions": {},
+            "rewards": {},
+            "terminals": {},
+            "truncations": {},
+            "infos": {"legals": {}},
+        }
         for agent in self._agents:
             sample["observations"][agent] = example[f"{agent}_observations"]
             sample["actions"][agent] = example[f"{agent}_actions"]
@@ -201,7 +181,7 @@ class OfflineMARLDataset:
             sample["terminals"][agent] = 1 - example[f"{agent}_discounts"]
             sample["truncations"][agent] = tf.zeros_like(example[f"{agent}_discounts"])
             sample["infos"]["legals"][agent] = example[f"{agent}_legal_actions"]
-            
+
         sample["infos"]["mask"] = example["zero_padding_mask"]
         sample["infos"]["state"] = example["env_state"]
         sample["infos"]["episode_return"] = example["episode_return"]
@@ -231,12 +211,12 @@ def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./data
 
     # TODO add check to see if dataset exists already.
 
-    os.makedirs(f'{dataset_base_dir}/tmp/', exist_ok=True)
-    os.makedirs(f'{dataset_base_dir}/{env_name}/', exist_ok=True)
+    os.makedirs(f"{dataset_base_dir}/tmp/", exist_ok=True)
+    os.makedirs(f"{dataset_base_dir}/{env_name}/", exist_ok=True)
 
     zip_file_path = f"{dataset_base_dir}/tmp/tmp_dataset.zip"
 
-    extraction_path = f'{dataset_base_dir}/{env_name}'
+    extraction_path = f"{dataset_base_dir}/{env_name}"
 
     response = requests.get(dataset_download_url, stream=True)
     total_length = response.headers.get("content-length")

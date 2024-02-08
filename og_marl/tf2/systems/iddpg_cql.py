@@ -14,7 +14,6 @@
 
 """Implementation of TD3"""
 import numpy as np
-import sonnet as snt
 import tensorflow as tf
 
 from og_marl.tf2.systems.iddpg import IDDPGSystem
@@ -22,9 +21,9 @@ from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
     batched_agents,
     expand_batch_and_agent_dim_of_time_major_sequence,
-    unroll_rnn,
     merge_batch_and_agent_dim_of_time_major_sequence,
     switch_two_leading_dims,
+    unroll_rnn,
 )
 
 
@@ -67,16 +66,16 @@ class IDDPGCQLSystem(IDDPGSystem):
         batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
-        observations = batch["observations"] # (B,T,N,O)
-        actions = batch["actions"] # (B,T,N,A)
-        env_states = batch["state"] # (B,T,S)
-        rewards = batch["rewards"] # (B,T,N)
-        truncations = tf.cast(batch["truncations"], "float32") # (B,T,N)
-        terminals = tf.cast(batch["terminals"], "float32") # (B,T,N)
-        zero_padding_mask = batch["mask"] # (B,T)
+        observations = batch["observations"]  # (B,T,N,O)
+        actions = batch["actions"]  # (B,T,N,A)
+        env_states = batch["state"]  # (B,T,S)
+        rewards = batch["rewards"]  # (B,T,N)
+        truncations = tf.cast(batch["truncations"], "float32")  # (B,T,N)
+        terminals = tf.cast(batch["terminals"], "float32")  # (B,T,N)
+        zero_padding_mask = batch["mask"]  # (B,T)
 
         # When to reset the RNN hidden state
-        resets = tf.maximum(terminals, truncations) # equivalent to logical 'or'
+        resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
 
         # Get dims
         B, T, N = actions.shape[:3]
@@ -94,12 +93,11 @@ class IDDPGCQLSystem(IDDPGSystem):
         env_states = switch_two_leading_dims(env_states)
         resets = switch_two_leading_dims(resets)
 
-
         # Unroll target policy
         target_actions = unroll_rnn(
             self._target_policy_network,
             merge_batch_and_agent_dim_of_time_major_sequence(observations),
-            merge_batch_and_agent_dim_of_time_major_sequence(resets)
+            merge_batch_and_agent_dim_of_time_major_sequence(resets),
         )
         target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
@@ -142,7 +140,7 @@ class IDDPGCQLSystem(IDDPGSystem):
             online_actions = unroll_rnn(
                 self._policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
-                merge_batch_and_agent_dim_of_time_major_sequence(resets)
+                merge_batch_and_agent_dim_of_time_major_sequence(resets),
             )
             online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
 
@@ -287,12 +285,18 @@ class IDDPGCQLSystem(IDDPGSystem):
             target_online_actions = unroll_rnn(
                 self._target_policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
-                merge_batch_and_agent_dim_of_time_major_sequence(resets)
+                merge_batch_and_agent_dim_of_time_major_sequence(resets),
             )
-            target_online_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_online_actions, B, N)
+            target_online_actions = expand_batch_and_agent_dim_of_time_major_sequence(
+                target_online_actions, B, N
+            )
 
-            qs_1 = self._critic_network_1(observations, env_states, online_actions, target_online_actions)
-            qs_2 = self._critic_network_2(observations, env_states, online_actions, target_online_actions)
+            qs_1 = self._critic_network_1(
+                observations, env_states, online_actions, target_online_actions
+            )
+            qs_2 = self._critic_network_2(
+                observations, env_states, online_actions, target_online_actions
+            )
             qs = tf.minimum(qs_1, qs_2)
 
             policy_loss = -tf.squeeze(qs, axis=-1) + 1e-3 * tf.reduce_mean(

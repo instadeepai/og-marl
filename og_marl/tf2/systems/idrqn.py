@@ -18,8 +18,6 @@ import copy
 import sonnet as snt
 import tensorflow as tf
 import tree
-import flashbax as fbx
-import jax
 
 from og_marl.tf2.systems.base import BaseMARLSystem
 from og_marl.tf2.utils import (
@@ -27,13 +25,12 @@ from og_marl.tf2.utils import (
     batched_agents,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
-    concat_agent_id_to_obs,
-    unroll_rnn,
     gather,
     merge_batch_and_agent_dim_of_time_major_sequence,
-    set_growing_gpu_memory,
     switch_two_leading_dims,
+    unroll_rnn,
 )
+
 
 class IDRQNSystem(BaseMARLSystem):
 
@@ -151,22 +148,21 @@ class IDRQNSystem(BaseMARLSystem):
         logs = self._tf_train_step(tf.convert_to_tensor(self._train_step_ctr), experience)
         return logs
 
-    @tf.function(jit_compile=True) # NOTE: comment this out if using debugger
+    @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, train_step_ctr, experience):
         experience = batched_agents(self._environment.possible_agents, experience)
 
         # Unpack the batch
-        observations = experience["observations"] # (B,T,N,O)
-        actions = experience["actions"] # (B,T,N)
-        env_states = experience["state"] # (B,T,S)
-        rewards = experience["rewards"] # (B,T,N)
-        truncations = tf.cast(experience["truncations"], "float32") # (B,T,N)
-        terminals = tf.cast(experience["terminals"], "float32") # (B,T,N)
-        zero_padding_mask = experience["mask"] # (B,T)
+        observations = experience["observations"]  # (B,T,N,O)
+        actions = experience["actions"]  # (B,T,N)
+        rewards = experience["rewards"]  # (B,T,N)
+        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
+        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
+        zero_padding_mask = experience["mask"]  # (B,T)
         legal_actions = experience["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state
-        resets = tf.maximum(terminals, truncations) # equivalent to logical 'or'
+        resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
 
         # Get dims
         B, T, N, A = legal_actions.shape
@@ -184,11 +180,7 @@ class IDRQNSystem(BaseMARLSystem):
         resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
         # Unroll target network
-        target_qs_out = unroll_rnn(
-            self._target_q_network, 
-            observations,
-            resets
-        )
+        target_qs_out = unroll_rnn(self._target_q_network, observations, resets)
 
         # Expand batch and agent_dim
         target_qs_out = expand_batch_and_agent_dim_of_time_major_sequence(target_qs_out, B, N)
@@ -198,11 +190,7 @@ class IDRQNSystem(BaseMARLSystem):
 
         with tf.GradientTape() as tape:
             # Unroll online network
-            qs_out = unroll_rnn(
-                self._q_network, 
-                observations, 
-                resets
-            )
+            qs_out = unroll_rnn(self._q_network, observations, resets)
 
             # Expand batch and agent_dim
             qs_out = expand_batch_and_agent_dim_of_time_major_sequence(qs_out, B, N)
@@ -221,7 +209,9 @@ class IDRQNSystem(BaseMARLSystem):
             target_max_qs = gather(target_qs_out, cur_max_actions, axis=-1, keepdims=False)
 
             # Compute targets
-            targets = rewards[:, :-1] + (1 - terminals[:, :-1]) * self._discount * target_max_qs[:, 1:]
+            targets = (
+                rewards[:, :-1] + (1 - terminals[:, :-1]) * self._discount * target_max_qs[:, 1:]
+            )
             targets = tf.stop_gradient(targets)
 
             # Chop off last time step

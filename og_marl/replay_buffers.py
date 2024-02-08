@@ -12,17 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
+import flashbax as fbx
 import jax
 import jax.numpy as jnp
-import flashbax as fbx
-from flashbax.vault import Vault
 import tree
+from flashbax.vault import Vault
+
 
 class FlashbaxReplayBuffer:
-
     def __init__(self, sequence_length, max_size=50_000, batch_size=32, sample_period=1, seed=42):
-
         self._sequence_length = sequence_length
         self._max_size = max_size
         self._batch_size = batch_size
@@ -50,21 +48,25 @@ class FlashbaxReplayBuffer:
             "rewards": rewards,
             "terminals": terminals,
             "truncations": truncations,
-            "infos": infos
+            "infos": infos,
         }
 
         if self._buffer_state is None:
             self._buffer_state = self._replay_buffer.init(timestep)
-        
-        timestep = tree.map_structure(lambda x: x[jnp.newaxis, jnp.newaxis, ...], timestep) # add batch & time dims
+
+        timestep = tree.map_structure(
+            lambda x: x[jnp.newaxis, jnp.newaxis, ...], timestep
+        )  # add batch & time dims
         self._buffer_state = self._buffer_add_fn(self._buffer_state, timestep)
 
     def sample(self):
-        self._rng_key, sample_key = jax.random.split(self._rng_key,2)
+        self._rng_key, sample_key = jax.random.split(self._rng_key, 2)
         batch = self._buffer_sample_fn(self._buffer_state, sample_key)
         return batch.experience
-    
-    def populate_from_vault(self, env_name, scenario_name, dataset_name, rel_dir="datasets") -> bool:
+
+    def populate_from_vault(
+        self, env_name, scenario_name, dataset_name, rel_dir="datasets"
+    ) -> bool:
         try:
             self._buffer_state = Vault(
                 vault_name=f"{env_name}/{scenario_name}.vlt",
