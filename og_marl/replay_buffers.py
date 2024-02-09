@@ -55,7 +55,7 @@ class FlashbaxReplayBuffer:
             self._buffer_state = self._replay_buffer.init(timestep)
 
         timestep = tree.map_structure(
-            lambda x: x[jnp.newaxis, jnp.newaxis, ...], timestep
+            lambda x: jnp.array(x)[jnp.newaxis, jnp.newaxis, ...], timestep
         )  # add batch & time dims
         self._buffer_state = self._buffer_add_fn(self._buffer_state, timestep)
 

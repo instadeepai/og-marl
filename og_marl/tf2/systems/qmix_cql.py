@@ -77,7 +77,6 @@ class QMIXCQLSystem(QMIXSystem):
         rewards = batch["rewards"]  # (B,T,N)
         truncations = batch["truncations"]  # (B,T,N)
         terminals = batch["terminals"]  # (B,T,N)
-        zero_padding_mask = batch["mask"]  # (B,T)
         legal_actions = batch["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state
@@ -139,7 +138,7 @@ class QMIXCQLSystem(QMIXSystem):
             targets = tf.stop_gradient(targets)
 
             # TD-Error Loss
-            loss = 0.5 * tf.square(targets - chosen_action_qs[:, :-1])
+            td_loss = tf.reduce_mean(0.5 * tf.square(targets - chosen_action_qs[:, :-1]))
 
             #############
             #### CQL ####
@@ -164,17 +163,16 @@ class QMIXCQLSystem(QMIXSystem):
             all_mixed_ood_qs.append(chosen_action_qs)  # [B, T, Ra + 1]
             all_mixed_ood_qs = tf.concat(all_mixed_ood_qs, axis=-1)
 
-            cql_loss = self._apply_mask(
-                tf.reduce_logsumexp(all_mixed_ood_qs, axis=-1, keepdims=True)[:, :-1],
-                zero_padding_mask,
-            ) - self._apply_mask(chosen_action_qs[:, :-1], zero_padding_mask)
+            cql_loss = tf.reduce_mean(
+                tf.reduce_logsumexp(all_mixed_ood_qs, axis=-1, keepdims=True)[:, :-1]
+            ) - tf.reduce_mean(chosen_action_qs[:, :-1])
 
             #############
             #### end ####
             #############
 
             # Mask out zero-padded timesteps
-            loss = self._apply_mask(loss, zero_padding_mask) + cql_loss
+            loss = loss + cql_loss
 
         # Get trainable variables
         variables = (*self._q_network.trainable_variables, *self._mixer.trainable_variables)

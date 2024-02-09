@@ -83,7 +83,6 @@ class OMARSystem(IDDPGCQLSystem):
         rewards = batch["rewards"]  # (B,T,N)
         truncations = batch["truncations"]  # (B,T,N)
         terminals = batch["terminals"]  # (B,T,N)
-        zero_padding_mask = batch["mask"]  # (B,T)
 
         # When to reset the RNN hidden state
         resets = tf.maximum(terminals, truncations) # equivalent to logical 'or'
@@ -101,7 +100,6 @@ class OMARSystem(IDDPGCQLSystem):
         replay_actions = switch_two_leading_dims(actions)
         rewards = switch_two_leading_dims(rewards)
         terminals = switch_two_leading_dims(terminals)
-        zero_padding_mask = switch_two_leading_dims(zero_padding_mask)
         env_states = switch_two_leading_dims(env_states)
 
         # Unroll target policy
@@ -141,8 +139,8 @@ class OMARSystem(IDDPGCQLSystem):
             )
 
             # Squared TD-error
-            critic_loss_1 = 0.5 * (targets - qs_1[:-1]) ** 2
-            critic_loss_2 = 0.5 * (targets - qs_2[:-1]) ** 2
+            critic_loss_1 = tf.reduce_mean(0.5 * (targets - qs_1[:-1]) ** 2)
+            critic_loss_2 = tf.reduce_mean(0.5 * (targets - qs_2[:-1]) ** 2)
 
             ###########
             ### CQL ###
@@ -268,27 +266,17 @@ class OMARSystem(IDDPGCQLSystem):
             all_ood_qs_1 = tf.concat((ood_qs_1, current_ood_qs_1, next_current_ood_qs_1), axis=2)
             all_ood_qs_2 = tf.concat((ood_qs_2, current_ood_qs_2, next_current_ood_qs_2), axis=2)
 
-            def masked_mean(x):
-                return tf.reduce_sum(
-                    x * tf.expand_dims(zero_padding_mask[:-1], axis=-1)
-                ) / tf.reduce_sum(zero_padding_mask[:-1])
-
-            cql_loss_1 = masked_mean(
+            cql_loss_1 = tf.reduce_mean(
                 tf.reduce_logsumexp(all_ood_qs_1, axis=2, keepdims=False)
-            ) - masked_mean(qs_1[:-1])
-            cql_loss_2 = masked_mean(
+            ) - tf.reduce_mean(qs_1[:-1])
+            cql_loss_2 = tf.reduce_mean(
                 tf.reduce_logsumexp(all_ood_qs_2, axis=2, keepdims=False)
-            ) - masked_mean(qs_2[:-1])
+            ) - tf.reduce_mean(qs_2[:-1])
 
             critic_loss_1 += self._cql_weight * cql_loss_1
             critic_loss_2 += self._cql_weight * cql_loss_2
 
             ### END CQL ###
-
-            # Masked mean
-            critic_mask = tf.squeeze(tf.stack([zero_padding_mask[:-1]] * N, axis=2))
-            critic_loss_1 = tf.reduce_sum(critic_loss_1 * critic_mask) / tf.reduce_sum(critic_mask)
-            critic_loss_2 = tf.reduce_sum(critic_loss_2 * critic_mask) / tf.reduce_sum(critic_mask)
             critic_loss = (critic_loss_1 + critic_loss_2) / 2
 
             # Policy Loss
@@ -368,15 +356,10 @@ class OMARSystem(IDDPGCQLSystem):
             max_acs = tf.gather(candidate_acs, max_ac_inds, batch_dims=-1)
             max_acs = tf.stop_gradient(tf.reshape(max_acs, max_acs.shape[:-1]))
 
-            zero_padding_mask = tf.expand_dims(zero_padding_mask, axis=-1)
-
-            def masked_mean(x):
-                return tf.reduce_sum(x * zero_padding_mask) / tf.reduce_sum(zero_padding_mask)
-
             policy_loss = (
-                self._omar_coe * masked_mean(tf.reduce_mean((curr_pol_out - max_acs) ** 2, axis=-1))
-                - (1 - self._omar_coe) * masked_mean(tf.squeeze(pred_qvals))
-                + masked_mean(tf.reduce_mean(curr_pol_out**2, axis=-1)) * 1e-3
+                self._omar_coe * tf.reduce_mean(tf.reduce_mean((curr_pol_out - max_acs) ** 2, axis=-1))
+                - (1 - self._omar_coe) * tf.reduce_mean(tf.squeeze(pred_qvals))
+                + tf.reduce_mean(tf.reduce_mean(curr_pol_out**2, axis=-1)) * 1e-3
             )
 
         # Train critics
@@ -414,7 +397,6 @@ class OMARSystem(IDDPGCQLSystem):
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),
             "Mean Critic Loss": (critic_loss),
             "Policy Loss": policy_loss,
-            # "CQL Alpha Loss": cql_alpha_loss,
             "CQL Loss": cql_loss_1,
         }
 

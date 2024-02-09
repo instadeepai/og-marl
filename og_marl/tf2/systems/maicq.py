@@ -135,7 +135,6 @@ class MAICQSystem(QMIXSystem):
         rewards = batch["rewards"]  # (B,T,N)
         truncations = batch["truncations"]  # (B,T,N)
         terminals = batch["terminals"]  # (B,T,N)
-        zero_padding_mask = batch["mask"]  # (B,T)
         legal_actions = batch["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state
@@ -208,17 +207,13 @@ class MAICQSystem(QMIXSystem):
             advantages = tf.stop_gradient(advantages)
 
             pi_taken = gather(probs_out, actions, keepdims=False)
-            pi_taken = tf.where(
-                tf.cast(tf.expand_dims(zero_padding_mask, axis=-1), "bool"), pi_taken, 1.0
-            )
             log_pi_taken = tf.math.log(pi_taken)
 
             coe = self._mixer.k(env_states)
 
-            coma_mask = tf.concat([tf.expand_dims(zero_padding_mask, axis=-1)] * N, axis=2)
-            coma_loss = -tf.reduce_sum(
-                coe * (len(advantages) * advantages * log_pi_taken) * coma_mask
-            ) / tf.reduce_sum(coma_mask)
+            coma_loss = -tf.reduce_mean(
+                coe * (len(advantages) * advantages * log_pi_taken)
+            )
 
             # Critic learning
             q_taken = gather(q_vals, actions, axis=-1)
@@ -240,9 +235,7 @@ class MAICQSystem(QMIXSystem):
             q_loss = 0.5 * tf.square(td_error)
 
             # Masking
-            q_loss = tf.reduce_sum(
-                q_loss * tf.expand_dims(zero_padding_mask[:, :-1], axis=-1)
-            ) / tf.reduce_sum(zero_padding_mask[:, :-1])
+            q_loss = tf.reduce_mean(q_loss)
 
             # Add losses together
             loss = q_loss + coma_loss

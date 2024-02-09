@@ -16,8 +16,7 @@ from og_marl.environments.gymnasium_mamujoco import MAMuJoCo
 from og_marl.environments.wrappers import Dtype, PadObsandActs
 from og_marl.loggers import WandbLogger
 from og_marl.replay_buffers import FlashbaxReplayBuffer
-from og_marl.tf2.systems.iddpg import IDDPGSystem
-from og_marl.tf2.systems.maddpg import MADDPGSystem
+from og_marl.tf2.systems.facmac import FACMACSystem
 
 env = MAMuJoCo("4ant")
 
@@ -27,8 +26,7 @@ env = Dtype(env, "float32")
 
 logger = WandbLogger()
 
-# system = IDDPGSystem(env, logger)
-system = MADDPGSystem(env, logger)
+system = FACMACSystem(env, logger)
 
 rb = FlashbaxReplayBuffer(sequence_length=20, max_size=50_000)
 

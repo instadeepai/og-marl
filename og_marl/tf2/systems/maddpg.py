@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implementation of TD3"""
+"""Implementation of MADDPG+CQL"""
 import copy
 
 import sonnet as snt
@@ -49,7 +49,7 @@ class StateAndJointActionCritic(snt.Module):
         super().__init__()
 
     def __call__(
-        self, observations, states, agent_actions, other_actions, stop_other_actions_gradient=True
+        self, states, agent_actions, other_actions, stop_other_actions_gradient=True
     ):
         """Forward pass of critic network.
 
@@ -92,58 +92,14 @@ def make_joint_action(agent_actions, other_actions):
             tf.cast(tf.stack([tf.stack([tf.one_hot(i, N)] * B, axis=0)] * T, axis=0), "bool"),
             axis=-1,
         )
-        joint_action = tf.where(one_hot, agent_actions, agent_actions)
+        joint_action = tf.where(one_hot, agent_actions, other_actions)
         joint_action = tf.reshape(joint_action, (T, B, N * A))
         all_joint_actions.append(joint_action)
     all_joint_actions = tf.stack(all_joint_actions, axis=2)
     return all_joint_actions
 
 
-class StateAndActionCritic(snt.Module):
-    def __init__(self, num_agents, num_actions, preprocess_network=None):
-        self.N = num_agents
-        self.A = num_actions
-
-        self._preprocess_network = preprocess_network
-
-        self._critic_network = snt.Sequential(
-            [
-                snt.Linear(128),
-                tf.keras.layers.ReLU(),
-                snt.Linear(128),
-                tf.keras.layers.ReLU(),
-                snt.Linear(1),
-            ]
-        )
-
-        super().__init__()
-
-    def __call__(
-        self, states, agent_actions
-    ):
-        """Forward pass of critic network.
-
-        states [T,B,S]
-        agent_actions [T,B,N,A]: the actions the agent took.
-        """
-        if self._preprocess_network is not None:
-            embeds = []
-            for t in range(states.shape[0]):
-                embeds.append(self._preprocess_network(states[t]))
-            states = tf.stack(embeds, axis=0)  # stack along time
-
-        # Repeat states for each agent
-        states = tf.stack([states] * self.N, axis=2)
-
-        # Concat states and joint actions
-        critic_input = tf.concat([states, agent_actions], axis=-1)
-
-        q_values = self._critic_network(critic_input)
-
-        return q_values
-
-
-class IDDPGSystem(BaseMARLSystem):
+class MADDPGSystem(BaseMARLSystem):
 
     """Independent Deep Recurrent Q-Networs System"""
 
@@ -183,7 +139,7 @@ class IDDPGSystem(BaseMARLSystem):
         self._target_policy_network = copy.deepcopy(self._policy_network)
 
         # Critic network
-        self._critic_network_1 = StateAndActionCritic(
+        self._critic_network_1 = StateAndJointActionCritic(
             len(self._environment.possible_agents), self._environment._num_actions
         )  # shared network for all agents
         self._critic_network_2 = copy.deepcopy(self._critic_network_1)
@@ -296,10 +252,10 @@ class IDDPGSystem(BaseMARLSystem):
 
         # Target critics
         target_qs_1 = self._target_critic_network_1(
-            observations, env_states, target_actions, target_actions
+            env_states, target_actions, target_actions
         )
         target_qs_2 = self._target_critic_network_2(
-            observations, env_states, target_actions, target_actions
+            env_states, target_actions, target_actions
         )
 
         # Take minimum between two target critics
@@ -314,19 +270,17 @@ class IDDPGSystem(BaseMARLSystem):
         with tf.GradientTape(persistent=True) as tape:
             # Online critics
             qs_1 = tf.squeeze(
-                self._critic_network_1(observations, env_states, replay_actions, replay_actions),
+                self._critic_network_1(env_states, replay_actions, replay_actions),
                 axis=-1,
             )
             qs_2 = tf.squeeze(
-                self._critic_network_2(observations, env_states, replay_actions, replay_actions),
+                self._critic_network_2(env_states, replay_actions, replay_actions),
                 axis=-1,
             )
 
             # Squared TD-error
             critic_loss_1 = tf.reduce_mean(0.5 * (targets - qs_1[:-1]) ** 2)
             critic_loss_2 = tf.reduce_mean(0.5 * (targets - qs_2[:-1]) ** 2)
-
-            # Masked mean
             critic_loss = (critic_loss_1 + critic_loss_2) / 2
 
             # Policy Loss
@@ -338,8 +292,8 @@ class IDDPGSystem(BaseMARLSystem):
             )
             online_actions = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
 
-            qs_1 = self._critic_network_1(observations, env_states, online_actions, replay_actions)
-            qs_2 = self._critic_network_2(observations, env_states, online_actions, replay_actions)
+            qs_1 = self._critic_network_1(env_states, online_actions, replay_actions)
+            qs_2 = self._critic_network_2(env_states, online_actions, replay_actions)
             qs = tf.minimum(qs_1, qs_2)
 
             policy_loss = -tf.squeeze(qs, axis=-1) + 1e-3 * tf.reduce_mean(online_actions**2)

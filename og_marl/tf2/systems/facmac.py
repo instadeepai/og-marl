@@ -165,7 +165,7 @@ class ObservationsAndActionCritic(snt.Module):
         return q_values
 
 
-class FACMACCQLSystem(IDDPGSystem):
+class FACMACSystem(IDDPGSystem):
     def __init__(
         self,
         environment,
@@ -272,111 +272,12 @@ class FACMACCQLSystem(IDDPGSystem):
             # Squared TD-error
             critic_loss = tf.reduce_mean(0.5 * (targets - qs[:-1]) ** 2)
 
-            ###########
-            ### CQL ###
-            ###########
-
             online_actions = unroll_rnn(
                 self._policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
                 merge_batch_and_agent_dim_of_time_major_sequence(resets),
             )
             online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
-
-            # Repeat all tensors num_ood_actions times andadd  next to batch dim
-            repeat_observations = tf.stack(
-                [observations] * self._num_ood_actions, axis=2
-            )  # next to batch dim
-            repeat_env_states = tf.stack(
-                [env_states] * self._num_ood_actions, axis=2
-            )  # next to batch dim
-            repeat_online_actions = tf.stack(
-                [online_actions] * self._num_ood_actions, axis=2
-            )  # next to batch dim
-            repeat_resets = tf.stack([resets] * self._num_ood_actions, axis=2)  # next to batch dim
-
-            # Flatten into batch dim
-            repeat_observations = tf.reshape(
-                repeat_observations, (T, -1, *repeat_observations.shape[3:])
-            )
-            repeat_env_states = tf.reshape(repeat_env_states, (T, -1, *repeat_env_states.shape[3:]))
-            repeat_online_actions = tf.reshape(
-                repeat_online_actions, (T, -1, *repeat_online_actions.shape[3:])
-            )
-            repeat_resets = tf.reshape(repeat_resets, (T, -1, *repeat_resets.shape[3:]))
-
-            # CQL Loss
-            all_ood_qs = []
-            random_ood_actions = tf.random.uniform(
-                shape=repeat_online_actions.shape,
-                minval=-1.0,
-                maxval=1.0,
-                dtype=repeat_online_actions.dtype,
-            )
-            random_ood_action_log_pi = tf.math.log(0.5 ** (random_ood_actions.shape[-1]))
-
-            ood_qs = (
-                self._critic_network(
-                    repeat_observations,
-                    random_ood_actions,
-                    repeat_resets,
-                )[:-1]
-                - random_ood_action_log_pi
-            )
-            ood_qs = self._mixer(ood_qs, repeat_env_states[:-1])
-            all_ood_qs.append(ood_qs)
-
-            # # Actions near true actions
-            mu = 0.0
-            std = self._cql_sigma
-            action_noise = tf.random.normal(
-                repeat_online_actions.shape,
-                mean=mu,
-                stddev=std,
-                dtype=repeat_online_actions.dtype,
-            )
-            current_ood_actions = tf.clip_by_value(repeat_online_actions + action_noise, -1.0, 1.0)
-
-            ood_actions_prob = (1 / (self._cql_sigma * tf.math.sqrt(2 * np.pi))) * tf.exp(
-                -((action_noise - mu) ** 2) / (2 * self._cql_sigma**2)
-            )
-            ood_actions_log_prob = tf.math.log(
-                tf.reduce_prod(ood_actions_prob, axis=-1, keepdims=True)
-            )
-
-            ood_qs = (
-                self._critic_network(
-                    repeat_observations[:-1],
-                    current_ood_actions[:-1],
-                    repeat_resets[:-1],
-                )
-                - ood_actions_log_prob[:-1]
-            )
-            ood_qs = self._mixer(ood_qs, repeat_env_states[:-1])
-            all_ood_qs.append(ood_qs)
-
-            next_ood_qs = (
-                self._critic_network(
-                    repeat_observations[:-1],
-                    current_ood_actions[1:], # next action
-                    repeat_resets[:-1],
-                )
-                - ood_actions_log_prob[1:]
-            )
-            next_ood_qs = self._mixer(next_ood_qs, repeat_env_states[:-1])
-            all_ood_qs.append(next_ood_qs)
-
-            # Reshape
-            all_ood_qs = [tf.reshape(x, (T - 1, B, self._num_ood_actions)) for x in all_ood_qs]
-            all_ood_qs = tf.concat(all_ood_qs, axis=2)
-
-            cql_loss = tf.reduce_mean(
-                tf.reduce_logsumexp(all_ood_qs, axis=2, keepdims=True)
-            ) - tf.reduce_mean(qs[:-1])
-
-            critic_loss += self._cql_weight * cql_loss
-
-            ### END CQL ###
 
             # Policy Loss
             qs = self._critic_network(
@@ -418,8 +319,6 @@ class FACMACCQLSystem(IDDPGSystem):
             "Mean Q-values": tf.reduce_mean(qs),
             "Mean Critic Loss": critic_loss,
             "Policy Loss": policy_loss,
-            # "CQL Alpha Loss": cql_alpha_loss,
-            "CQL Loss": cql_loss,
         }
 
         return logs

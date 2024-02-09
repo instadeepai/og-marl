@@ -158,7 +158,6 @@ class IDRQNSystem(BaseMARLSystem):
         rewards = experience["rewards"]  # (B,T,N)
         truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
         terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
-        zero_padding_mask = experience["mask"]  # (B,T)
         legal_actions = experience["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state
@@ -221,7 +220,7 @@ class IDRQNSystem(BaseMARLSystem):
             loss = 0.5 * tf.square(targets - chosen_action_qs)
 
             # Mask out zero-padded timesteps
-            loss = self._apply_mask(loss, zero_padding_mask)
+            loss = tf.reduce_mean(loss)
 
         # Get trainable variables
         variables = (*self._q_network.trainable_variables,)

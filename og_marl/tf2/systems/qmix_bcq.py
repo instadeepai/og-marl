@@ -82,7 +82,6 @@ class QMIXBCQSystem(QMIXSystem):
         rewards = batch["rewards"]  # (B,T,N)
         truncations = batch["truncations"]  # (B,T,N)
         terminals = batch["terminals"]  # (B,T,N)
-        zero_padding_mask = batch["mask"]  # (B,T)
         legal_actions = batch["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state
@@ -140,14 +139,8 @@ class QMIXBCQSystem(QMIXSystem):
 
             # Behaviour Cloning Loss
             one_hot_actions = tf.one_hot(actions, depth=probs_out.shape[-1], axis=-1)
-            bc_mask = tf.stack([zero_padding_mask] * N, axis=-1)
-            probs_out = tf.where(
-                tf.cast(tf.expand_dims(bc_mask, axis=-1), "bool"),
-                probs_out,
-                1 / A * tf.ones(A, "float32"),
-            )  # avoid nans, get masked out later
             bc_loss = tf.keras.metrics.categorical_crossentropy(one_hot_actions, probs_out)
-            bc_loss = tf.reduce_sum(bc_loss * bc_mask) / tf.reduce_sum(bc_mask)
+            bc_loss = tf.reduce_mean(bc_loss)
 
             # Legal action masking plus bc probs
             masked_probs_out = probs_out * tf.cast(legal_actions, "float32")
@@ -185,7 +178,7 @@ class QMIXBCQSystem(QMIXSystem):
             loss = 0.5 * tf.square(targets - chosen_action_qs)
 
             # Mask out zero-padded timesteps
-            loss = self._apply_mask(loss, zero_padding_mask) + bc_loss
+            loss = tf.reduce_mean(loss) + bc_loss
 
         # Get trainable variables
         variables = (

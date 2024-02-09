@@ -76,7 +76,6 @@ class QMIXSystem(IDRQNSystem):
         rewards = batch["rewards"]  # (B,T,N)
         truncations = batch["truncations"]  # (B,T,N)
         terminals = batch["terminals"]  # (B,T,N)
-        zero_padding_mask = batch["mask"]  # (B,T)
         legal_actions = batch["legals"]  # (B,T,N,A)
 
         done = terminals
@@ -145,9 +144,7 @@ class QMIXSystem(IDRQNSystem):
 
             # TD-Error Loss
             loss = 0.5 * tf.square(targets - chosen_action_qs)
-
-            # Mask out zero-padded timesteps
-            loss = self._apply_mask(loss, zero_padding_mask)
+            loss = tf.reduce_mean(loss)
 
         # Get trainable variables
         variables = (*self._q_network.trainable_variables, *self._mixer.trainable_variables)
