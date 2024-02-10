@@ -285,12 +285,12 @@ class MADDPGSystem(BaseMARLSystem):
 
             # Policy Loss
             # Unroll online policy
-            onlin_actions = unroll_rnn(
+            online_actions = unroll_rnn(
                 self._policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
                 merge_batch_and_agent_dim_of_time_major_sequence(resets),
             )
-            online_actions = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
+            online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
 
             qs_1 = self._critic_network_1(env_states, online_actions, replay_actions)
             qs_2 = self._critic_network_2(env_states, online_actions, replay_actions)

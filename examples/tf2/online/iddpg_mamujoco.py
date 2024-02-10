@@ -18,6 +18,7 @@ from og_marl.loggers import WandbLogger
 from og_marl.replay_buffers import FlashbaxReplayBuffer
 from og_marl.tf2.systems.iddpg import IDDPGSystem
 from og_marl.tf2.systems.maddpg import MADDPGSystem
+from og_marl.tf2.systems.seq_maddpg import SEQMADDPGSystem
 
 env = MAMuJoCo("4ant")
 
@@ -29,6 +30,7 @@ logger = WandbLogger()
 
 # system = IDDPGSystem(env, logger)
 system = MADDPGSystem(env, logger)
+# system = SEQMADDPGSystem(env,logger)
 
 rb = FlashbaxReplayBuffer(sequence_length=20, max_size=50_000)
 

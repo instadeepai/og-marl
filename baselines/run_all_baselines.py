@@ -1,3 +1,5 @@
+import os
+
 from og_marl.environments.utils import get_environment
 from og_marl.loggers import JsonWriter, WandbLogger
 from og_marl.replay_buffers import FlashbaxReplayBuffer
@@ -5,6 +7,8 @@ from og_marl.tf2.systems import get_system
 from og_marl.tf2.utils import set_growing_gpu_memory
 
 set_growing_gpu_memory()
+
+os.environ["SUPPRESS_GR_PROMPT"] = 1
 
 scenario_system_configs = {
     "smac_v1": {
@@ -60,4 +64,7 @@ for seed in seeds:
                         system.train_offline(buffer, max_trainer_steps=trainer_steps, evaluate_every=evaluate_every, json_writer=json_writer)
                     except:
                         logger.close()
+                        print()
+                        print("BROKEN")
+                        print()
                         continue

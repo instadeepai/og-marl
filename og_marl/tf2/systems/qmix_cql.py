@@ -172,7 +172,7 @@ class QMIXCQLSystem(QMIXSystem):
             #############
 
             # Mask out zero-padded timesteps
-            loss = loss + cql_loss
+            loss = td_loss + cql_loss
 
         # Get trainable variables
         variables = (*self._q_network.trainable_variables, *self._mixer.trainable_variables)

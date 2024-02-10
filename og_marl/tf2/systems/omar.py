@@ -112,10 +112,10 @@ class OMARSystem(IDDPGCQLSystem):
 
         # Target critics
         target_qs_1 = self._target_critic_network_1(
-            observations, env_states, target_actions, target_actions
+            env_states, target_actions
         )
         target_qs_2 = self._target_critic_network_2(
-            observations, env_states, target_actions, target_actions
+            env_states, target_actions
         )
 
         # Take minimum between two target critics
@@ -130,11 +130,11 @@ class OMARSystem(IDDPGCQLSystem):
         with tf.GradientTape(persistent=True) as tape:
             # Online critics
             qs_1 = tf.squeeze(
-                self._critic_network_1(observations, env_states, replay_actions, replay_actions),
+                self._critic_network_1(env_states, replay_actions),
                 axis=-1,
             )
             qs_2 = tf.squeeze(
-                self._critic_network_2(observations, env_states, replay_actions, replay_actions),
+                self._critic_network_2(env_states, replay_actions),
                 axis=-1,
             )
 
@@ -184,13 +184,13 @@ class OMARSystem(IDDPGCQLSystem):
 
             ood_qs_1 = (
                 self._critic_network_1(
-                    repeat_observations, repeat_env_states, random_ood_actions, random_ood_actions
+                    repeat_env_states, random_ood_actions
                 )[:-1]
                 - random_ood_action_log_pi
             )
             ood_qs_2 = (
                 self._critic_network_2(
-                    repeat_observations, repeat_env_states, random_ood_actions, random_ood_actions
+                    repeat_env_states, random_ood_actions
                 )[:-1]
                 - random_ood_action_log_pi
             )
@@ -215,18 +215,14 @@ class OMARSystem(IDDPGCQLSystem):
 
             current_ood_qs_1 = (
                 self._critic_network_1(
-                    repeat_observations[:-1],
                     repeat_env_states[:-1],
-                    current_ood_actions[:-1],
                     current_ood_actions[:-1],
                 )
                 - ood_actions_log_prob[:-1]
             )
             current_ood_qs_2 = (
                 self._critic_network_2(
-                    repeat_observations[:-1],
                     repeat_env_states[:-1],
-                    current_ood_actions[:-1],
                     current_ood_actions[:-1],
                 )
                 - ood_actions_log_prob[:-1]
@@ -234,18 +230,14 @@ class OMARSystem(IDDPGCQLSystem):
 
             next_current_ood_qs_1 = (
                 self._critic_network_1(
-                    repeat_observations[:-1],
                     repeat_env_states[:-1],
-                    current_ood_actions[1:],
                     current_ood_actions[1:],
                 )
                 - ood_actions_log_prob[1:]
             )
             next_current_ood_qs_2 = (
                 self._critic_network_2(
-                    repeat_observations[:-1],
                     repeat_env_states[:-1],
-                    current_ood_actions[1:],
                     current_ood_actions[1:],
                 )
                 - ood_actions_log_prob[1:]
@@ -288,7 +280,7 @@ class OMARSystem(IDDPGCQLSystem):
             )
             curr_pol_out = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
 
-            pred_qvals = self._critic_network_1(observations, env_states, curr_pol_out, actions)
+            pred_qvals = self._critic_network_1(env_states, curr_pol_out)
 
             omar_mu = tf.zeros_like(curr_pol_out) + self._init_omar_mu
             omar_sigma = tf.zeros_like(curr_pol_out) + self._init_omar_sigma
@@ -316,7 +308,7 @@ class OMARSystem(IDDPGCQLSystem):
                     cem_sampled_acs, (T, -1, *cem_sampled_acs.shape[3:])
                 )
                 all_pred_qvals = self._critic_network_1(
-                    observations, env_states, formatted_cem_sampled_acs, actions
+                    env_states, formatted_cem_sampled_acs
                 )
                 all_pred_qvals = tf.reshape(all_pred_qvals, (T, B, self._omar_num_samples, N))
                 all_pred_qvals = tf.transpose(all_pred_qvals, (0, 1, 3, 2))
