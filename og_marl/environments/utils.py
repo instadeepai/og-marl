@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-def get_environment(env_name, scenario):
+def get_environment(env_name: str, scenario: str):  # -> wrapped env type
     if env_name == "smac_v1":
         from og_marl.environments.smacv1 import SMACv1
 

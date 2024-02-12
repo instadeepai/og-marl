@@ -12,12 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Dict
+
 import flashbax as fbx
 import jax
 import jax.numpy as jnp
 import tree
 from flashbax.vault import Vault
+from tensorflow import Tensor
 
+Experience_tf = Dict[str, Tensor]
 
 class FlashbaxReplayBuffer:
     def __init__(self, sequence_length, max_size=50_000, batch_size=32, sample_period=1, seed=42):

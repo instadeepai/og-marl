@@ -13,17 +13,24 @@
 # limitations under the License.
 
 import time
+from typing import Dict, Optional
 
 import numpy as np
+from chex import Numeric
+from tensorflow import Tensor
+
+from og_marl.environments.base import BaseEnvironment
+from og_marl.loggers import BaseLogger, JsonWriter
+from og_marl.replay_buffers import Experience_tf, FlashbaxReplayBuffer
 
 
 class BaseMARLSystem:
     def __init__(
         self,
-        environment,
-        logger,
-        discount=0.99,
-        add_agent_id_to_obs=False,
+        environment: BaseEnvironment,
+        logger: BaseLogger,
+        discount: float = 0.99,
+        add_agent_id_to_obs: bool = False,
     ):
         self._environment = environment
         self._agents = environment.possible_agents
@@ -33,10 +40,10 @@ class BaseMARLSystem:
 
         self._env_step_ctr = 0.0
 
-    def get_stats(self):
+    def get_stats(self) -> Dict[str, Numeric]:
         return {}
 
-    def evaluate(self, num_eval_episodes=4):
+    def evaluate(self, num_eval_episodes: int = 4) -> Dict[str, Numeric]:
         """Method to evaluate the system online (i.e. in the environment)."""
         episode_returns = []
         for _ in range(num_eval_episodes):
@@ -49,7 +56,7 @@ class BaseMARLSystem:
                 infos = {}
 
             done = False
-            episode_return = 0
+            episode_return = 0.0
             while not done:
                 if "legals" in infos:
                     legal_actions = infos["legals"]
@@ -61,13 +68,18 @@ class BaseMARLSystem:
                 observations, rewards, terminals, truncations, infos = self._environment.step(
                     actions
                 )
-                episode_return += np.mean(list(rewards.values()))
+                episode_return += np.mean(list(rewards.values()), dtype="float")
                 done = all(terminals.values()) or all(truncations.values())
             episode_returns.append(episode_return)
         logs = {"evaluator/episode_return": np.mean(episode_returns)}
         return logs
 
-    def train_online(self, replay_buffer, max_env_steps=1e6, train_period=20):
+    def train_online(
+        self,
+        replay_buffer: FlashbaxReplayBuffer,
+        max_env_steps: int = int(1e6),
+        train_period: int = 20,
+    ) -> None:
         """Method to train the system online."""
         episodes = 0
         while True:  # breaks out when env_steps > max_env_steps
@@ -79,7 +91,7 @@ class BaseMARLSystem:
             else:
                 infos = {}
 
-            episode_return = 0
+            episode_return = 0.0
             while True:
                 if "legals" in infos:
                     legal_actions = infos["legals"]
@@ -110,7 +122,7 @@ class BaseMARLSystem:
                 infos = next_infos
 
                 # Bookkeeping
-                episode_return += np.mean(list(rewards.values()))
+                episode_return += np.mean(list(rewards.values()), dtype="float")
                 self._env_step_ctr += 1
 
                 if (
@@ -164,12 +176,12 @@ class BaseMARLSystem:
 
     def train_offline(
         self,
-        replay_buffer,
-        max_trainer_steps=1e5,
-        evaluate_every=1000,
-        num_eval_episodes=4,
-        json_writer=None,
-    ):
+        replay_buffer: FlashbaxReplayBuffer,
+        max_trainer_steps: int = int(1e5),
+        evaluate_every: int = 1000,
+        num_eval_episodes: int = 4,
+        json_writer: Optional[JsonWriter] = None,
+    ) -> None:
         """Method to train the system offline.
 
         WARNING: make sure evaluate_every % log_every == 0 and log_every < evaluate_every,
@@ -225,12 +237,17 @@ class BaseMARLSystem:
                 trainer_step_ctr // evaluate_every,
             )
 
-    def reset():
+    def reset(self) -> None:
         """Called at the start of each new episode."""
         return
 
-    def select_actions(self, observations):
+    def select_actions(
+        self,
+        observations: Dict[str, Tensor],
+        legal_actions: Dict[str, Tensor],
+        explore: bool = True,
+    ) -> np.ndarray:
         raise NotImplementedError
 
-    def train_step(self, batch):
+    def train_step(self, batch: Experience_tf) -> Dict[str, Numeric]:
         raise NotImplementedError

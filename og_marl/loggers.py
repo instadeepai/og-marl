@@ -15,20 +15,28 @@
 import json
 import os
 import time
+from typing import Dict, List, Optional
+
+from chex import Numeric
 
 import wandb
 
 
-class TerminalLogger:
+class BaseLogger:
+    def write(self, logs: Dict[str, Numeric], force: bool = False):
+        raise NotImplementedError
+
+
+class TerminalLogger(BaseLogger):
     def __init__(
         self,
-        log_every=2,  # seconds
+        log_every: int = 2,  # seconds
     ):
         self._log_every = log_every
         self._ctr = 0
         self._last_log = time.time()
 
-    def write(self, logs, force=False):
+    def write(self, logs: Dict[str, Numeric], force: bool = False):
         if time.time() - self._last_log > self._log_every or force:
             for key, log in logs.items():
                 print(f"{key}: {float(log)} |", end=" ")
@@ -40,15 +48,15 @@ class TerminalLogger:
         self._ctr += 1
 
 
-class WandbLogger:
+class WandbLogger(BaseLogger):
     def __init__(
         self,
-        config={},  # noqa: B006
-        project="default_project",
-        notes="",
-        tags=["default"],  # noqa: B006
-        entity=None,
-        log_every=2,  # seconds
+        config: Dict = {},  # noqa: B006
+        project: str = "default_project",
+        notes: str = "",
+        tags: List = ["default"],  # noqa: B006
+        entity: Optional[str] = None,
+        log_every: int = 2,  # seconds
     ):
         wandb.init(project=project, notes=notes, tags=tags, entity=entity, config=config)
 
@@ -56,7 +64,7 @@ class WandbLogger:
         self._ctr = 0
         self._last_log = time.time()
 
-    def write(self, logs, force=False):
+    def write(self, logs: Dict[str, Numeric], force: bool = False):
         if time.time() - self._last_log > self._log_every or force:
             wandb.log(logs)
 
@@ -131,7 +139,7 @@ class JsonWriter:
         timestep: int,
         key: str,
         value: float,
-        evaluation_step=None,
+        evaluation_step: Optional[int] = None,
     ) -> None:
         """Writes a step to the json reporting file
 
