@@ -17,14 +17,24 @@ from typing import Dict
 import flashbax as fbx
 import jax
 import jax.numpy as jnp
+import numpy as np
 import tree
+from chex import Array
+from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 from flashbax.vault import Vault
 from tensorflow import Tensor
 
-Experience_tf = Dict[str, Tensor]
+Experience = Dict[str, Array]
 
 class FlashbaxReplayBuffer:
-    def __init__(self, sequence_length, max_size=50_000, batch_size=32, sample_period=1, seed=42):
+    def __init__(
+        self,
+        sequence_length: int,
+        max_size: int = 50_000,
+        batch_size: int = 32,
+        sample_period: int = 1,
+        seed: int = 42
+    ):
         self._sequence_length = sequence_length
         self._max_size = max_size
         self._batch_size = batch_size
@@ -42,10 +52,18 @@ class FlashbaxReplayBuffer:
         self._buffer_sample_fn = jax.jit(self._replay_buffer.sample)
         self._buffer_add_fn = jax.jit(self._replay_buffer.add)
 
-        self._buffer_state = None
+        self._buffer_state: TrajectoryBufferState = None
         self._rng_key = jax.random.PRNGKey(seed)
 
-    def add(self, observations, actions, rewards, terminals, truncations, infos):
+    def add(
+        self,
+        observations: np.ndarray,
+        actions: np.ndarray,
+        rewards: np.ndarray,
+        terminals: np.ndarray,
+        truncations: np.ndarray,
+        infos: np.ndarray,
+    ) -> None:
         timestep = {
             "observations": observations,
             "actions": actions,
@@ -63,13 +81,17 @@ class FlashbaxReplayBuffer:
         )  # add batch & time dims
         self._buffer_state = self._buffer_add_fn(self._buffer_state, timestep)
 
-    def sample(self):
+    def sample(self) -> Experience:
         self._rng_key, sample_key = jax.random.split(self._rng_key, 2)
         batch = self._buffer_sample_fn(self._buffer_state, sample_key)
-        return batch.experience
+        return batch.experience  # type: ignore
 
     def populate_from_vault(
-        self, env_name, scenario_name, dataset_name, rel_dir="datasets"
+        self,
+        env_name: str,
+        scenario_name: str,
+        dataset_name: str,
+        rel_dir: str= "datasets"
     ) -> bool:
         try:
             self._buffer_state = Vault(

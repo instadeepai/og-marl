@@ -21,7 +21,7 @@ from tensorflow import Tensor
 
 from og_marl.environments.base import BaseEnvironment
 from og_marl.loggers import BaseLogger, JsonWriter
-from og_marl.replay_buffers import Experience_tf, FlashbaxReplayBuffer
+from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
 
 
 class BaseMARLSystem:
@@ -243,11 +243,11 @@ class BaseMARLSystem:
 
     def select_actions(
         self,
-        observations: Dict[str, Tensor],
-        legal_actions: Dict[str, Tensor],
+        observations: Dict[str, np.ndarray],
+        legal_actions: Dict[str, np.ndarray],
         explore: bool = True,
     ) -> np.ndarray:
         raise NotImplementedError
 
-    def train_step(self, batch: Experience_tf) -> Dict[str, Numeric]:
+    def train_step(self, batch: Experience) -> Dict[str, Numeric]:
         raise NotImplementedError
