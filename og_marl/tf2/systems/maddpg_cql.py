@@ -13,10 +13,16 @@
 # limitations under the License.
 
 """Implementation of MADDPG+CQL"""
+from typing import Dict
+
+import numpy as np
 import sonnet as snt
 import tensorflow as tf
-import numpy as np
+from chex import Numeric
+from tensorflow import Tensor
 
+from og_marl.environments.base import BaseEnvironment
+from og_marl.loggers import BaseLogger
 from og_marl.tf2.systems.maddpg import MADDPGSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
@@ -27,25 +33,26 @@ from og_marl.tf2.utils import (
     unroll_rnn,
 )
 
+
 class MADDPGCQLSystem(MADDPGSystem):
 
     """MA Deep Recurrent Q-Networs with CQL System"""
 
     def __init__(
         self,
-        environment,
-        logger,
-        linear_layer_dim=64,
-        recurrent_layer_dim=64,
-        discount=0.99,
-        target_update_rate=0.005,
-        critic_learning_rate=1e-3,
-        policy_learning_rate=1e-3,
-        add_agent_id_to_obs=False,
-        random_exploration_timesteps=0,
-        num_ood_actions=10,  # CQL
-        cql_weight=5.0,  # CQL
-        cql_sigma=0.2,  # CQL
+        environment: BaseEnvironment,
+        logger: BaseLogger,
+        linear_layer_dim: int = 64,
+        recurrent_layer_dim: int = 64,
+        discount: float = 0.99,
+        target_update_rate: float = 0.005,
+        critic_learning_rate: float = 1e-3,
+        policy_learning_rate: float = 1e-3,
+        add_agent_id_to_obs: bool = False,
+        random_exploration_timesteps: int = 0,
+        num_ood_actions: int = 10,  # CQL
+        cql_weight: float = 5.0,  # CQL
+        cql_sigma: float = 0.2,  # CQL
     ):
         super().__init__(
             environment=environment,
@@ -65,7 +72,7 @@ class MADDPGCQLSystem(MADDPGSystem):
         self._cql_sigma = cql_sigma
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
-    def _tf_train_step(self, experience):
+    def _tf_train_step(self, experience: Dict[str, Tensor]) -> Dict[str, Numeric]:
         batch = batched_agents(self._environment.possible_agents, experience)
 
         # Unpack the batch
@@ -321,9 +328,3 @@ class MADDPGCQLSystem(MADDPGSystem):
         }
 
         return logs
-
-    def _update_target_network(self, online_variables, target_variables):
-        """Update the target networks."""
-        tau = self._target_update_rate
-        for src, dest in zip(online_variables, target_variables):
-            dest.assign(dest * (1.0 - tau) + src * tau)
