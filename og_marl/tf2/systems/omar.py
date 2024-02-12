@@ -13,11 +13,16 @@
 # limitations under the License.
 
 """Implementation of OMAR"""
+from typing import Dict
+
 import numpy as np
-import sonnet as snt
 import tensorflow as tf
 import tensorflow_probability as tfp
+from chex import Numeric
+from tensorflow import Tensor
 
+from og_marl.environments.base import BaseEnvironment
+from og_marl.loggers import BaseLogger
 from og_marl.tf2.systems.iddpg_cql import IDDPGCQLSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
@@ -32,23 +37,23 @@ from og_marl.tf2.utils import (
 class OMARSystem(IDDPGCQLSystem):
     def __init__(
         self,
-        environment,
-        logger,
-        linear_layer_dim=64,
-        recurrent_layer_dim=64,
-        discount=0.99,
-        target_update_rate=0.005,
-        critic_learning_rate=3e-4,
-        policy_learning_rate=1e-3,
-        add_agent_id_to_obs=False,
-        num_ood_actions=10,  # CQL
-        cql_weight=5.0,  # CQL
-        cql_sigma=0.2,  # CQL
-        omar_iters=3,  # OMAR
-        omar_num_samples=10,  # OMAR
-        omar_num_elites=10,  # OMAR
-        omar_sigma=2.0,  # OMAR
-        omar_coe=0.7,  # OMAR
+        environment: BaseEnvironment,
+        logger: BaseLogger,
+        linear_layer_dim: int = 64,
+        recurrent_layer_dim: int = 64,
+        discount: float = 0.99,
+        target_update_rate: float = 0.005,
+        critic_learning_rate: float = 3e-4,
+        policy_learning_rate: float = 1e-3,
+        add_agent_id_to_obs: bool = False,
+        num_ood_actions: int = 10,  # CQL
+        cql_weight: float = 5.0,  # CQL
+        cql_sigma: float = 0.2,  # CQL
+        omar_iters: int = 3,  # OMAR
+        omar_num_samples: int = 10,  # OMAR
+        omar_num_elites: int = 10,  # OMAR
+        omar_sigma: float = 2.0,  # OMAR
+        omar_coe: float = 0.7,  # OMAR
     ):
         super().__init__(
             environment=environment,
@@ -73,7 +78,7 @@ class OMARSystem(IDDPGCQLSystem):
         self._init_omar_mu, self._init_omar_sigma = 0.0, omar_sigma
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
-    def _tf_train_step(self, batch):
+    def _tf_train_step(self, batch: Dict[str, Tensor]) -> Dict[str, Numeric]:
         batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
@@ -315,8 +320,8 @@ class OMARSystem(IDDPGCQLSystem):
                 cem_sampled_acs = tf.transpose(cem_sampled_acs, (0, 1, 3, 4, 2))
 
                 if iter_idx > 0:
-                    all_pred_qvals = tf.concat((all_pred_qvals, last_top_k_qvals), axis=-1)
-                    cem_sampled_acs = tf.concat((cem_sampled_acs, last_elite_acs), axis=-1)
+                    all_pred_qvals = tf.concat((all_pred_qvals, last_top_k_qvals), axis=-1)  # type: ignore
+                    cem_sampled_acs = tf.concat((cem_sampled_acs, last_elite_acs), axis=-1)  # type: ignore
 
                 top_k_qvals, top_k_inds = tf.math.top_k(all_pred_qvals, self._omar_num_elites)
                 elite_ac_inds = tf.stack([top_k_inds] * A, axis=-2)
