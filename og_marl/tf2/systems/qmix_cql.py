@@ -13,8 +13,14 @@
 # limitations under the License.
 
 """Implementation of QMIX+CQL"""
-import tensorflow as tf
+from typing import Dict
 
+import tensorflow as tf
+from chex import Numeric
+from tensorflow import Tensor
+
+from og_marl.environments.base import BaseEnvironment
+from og_marl.loggers import BaseLogger
 from og_marl.tf2.systems.qmix import QMIXSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
@@ -36,18 +42,18 @@ class QMIXCQLSystem(QMIXSystem):
 
     def __init__(
         self,
-        environment,
-        logger,
-        num_ood_actions=10,
-        cql_weight=5.0,
-        linear_layer_dim=64,
-        recurrent_layer_dim=64,
-        mixer_embed_dim=32,
-        mixer_hyper_dim=64,
-        discount=0.99,
-        target_update_period=200,
-        learning_rate=3e-4,
-        add_agent_id_to_obs=False,
+        environment: BaseEnvironment,
+        logger: BaseLogger,
+        num_ood_actions: int = 10,
+        cql_weight: float = 5.0,
+        linear_layer_dim: int = 64,
+        recurrent_layer_dim: int = 64,
+        mixer_embed_dim: int = 32,
+        mixer_hyper_dim: int = 64,
+        discount: float = 0.99,
+        target_update_period: int = 200,
+        learning_rate: float = 3e-4,
+        add_agent_id_to_obs: bool = False,
     ):
         super().__init__(
             environment,
@@ -67,7 +73,7 @@ class QMIXCQLSystem(QMIXSystem):
         self._cql_weight = cql_weight
 
     @tf.function(jit_compile=True)
-    def _tf_train_step(self, train_step, batch):
+    def _tf_train_step(self, train_step: int, batch: Dict[str, Tensor]) -> Dict[str, Numeric]:
         batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch

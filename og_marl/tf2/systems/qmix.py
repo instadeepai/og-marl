@@ -13,9 +13,15 @@
 # limitations under the License.
 
 """Implementation of QMIX"""
+from typing import Dict, Tuple
+
 import sonnet as snt
 import tensorflow as tf
+from chex import Numeric
+from tensorflow import Tensor
 
+from og_marl.environments.base import BaseEnvironment
+from og_marl.loggers import BaseLogger
 from og_marl.tf2.systems.idrqn import IDRQNSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
@@ -34,17 +40,17 @@ class QMIXSystem(IDRQNSystem):
 
     def __init__(
         self,
-        environment,
-        logger,
-        linear_layer_dim=64,
-        recurrent_layer_dim=64,
-        mixer_embed_dim=32,
-        mixer_hyper_dim=64,
-        discount=0.99,
-        target_update_period=200,
-        learning_rate=3e-4,
-        eps_decay_timesteps=50_000,
-        add_agent_id_to_obs=False,
+        environment: BaseEnvironment,
+        logger: BaseLogger,
+        linear_layer_dim: int = 64,
+        recurrent_layer_dim: int = 64,
+        mixer_embed_dim: int = 32,
+        mixer_hyper_dim: int = 64,
+        discount: float = 0.99,
+        target_update_period: int = 200,
+        learning_rate: float = 3e-4,
+        eps_decay_timesteps: int = 50_000,
+        add_agent_id_to_obs: bool = False,
     ):
         super().__init__(
             environment,
@@ -66,7 +72,7 @@ class QMIXSystem(IDRQNSystem):
         )
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
-    def _tf_train_step(self, train_step_ctr, batch):
+    def _tf_train_step(self, train_step_ctr: int, batch: Dict[str, Tensor]) -> Dict[str, Numeric]:
         batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
@@ -178,7 +184,13 @@ class QMIXSystem(IDRQNSystem):
             "Mean Chosen Q-values": tf.reduce_mean(chosen_action_qs),
         }
 
-    def _mixing(self, chosen_action_qs, target_max_qs, states, rewards):
+    def _mixing(
+        self,
+        chosen_action_qs: Tensor,
+        target_max_qs: Tensor,
+        states: Tensor,
+        rewards: Tensor,
+    ) -> Tuple[Tensor, Tensor, Tensor]:
         """QMIX"""
         # VDN
         # chosen_action_qs = tf.reduce_sum(chosen_action_qs, axis=2, keepdims=True)
@@ -197,12 +209,12 @@ class QMixer(snt.Module):
 
     def __init__(
         self,
-        num_agents,
-        embed_dim=32,
-        hypernet_embed=64,
-        preprocess_network=None,
-        non_monotonic=False,
-    ) -> None:
+        num_agents: int,
+        embed_dim: int = 32,
+        hypernet_embed: int = 64,
+        preprocess_network: snt.Module = None,
+        non_monotonic: bool = False,
+    ):
         """Initialise QMIX mixing network
 
         Args:
@@ -238,7 +250,7 @@ class QMixer(snt.Module):
         # V(s) instead of a bias for the last layers
         self.V = snt.Sequential([snt.Linear(self.embed_dim), tf.nn.relu, snt.Linear(1)])
 
-    def __call__(self, agent_qs: tf.Tensor, states: tf.Tensor) -> tf.Tensor:
+    def __call__(self, agent_qs: Tensor, states: Tensor) -> Tensor:
         """Forward method."""
         B = agent_qs.shape[0]  # batch size
         state_dim = states.shape[2:]
@@ -274,7 +286,7 @@ class QMixer(snt.Module):
 
         return q_tot
 
-    def k(self, states):
+    def k(self, states: Tensor) -> Tensor:
         """Method used by MAICQ."""
         B, T = states.shape[:2]
 
