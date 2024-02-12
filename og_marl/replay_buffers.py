@@ -22,7 +22,6 @@ import tree
 from chex import Array
 from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 from flashbax.vault import Vault
-from tensorflow import Tensor
 
 Experience = Dict[str, Array]
 
