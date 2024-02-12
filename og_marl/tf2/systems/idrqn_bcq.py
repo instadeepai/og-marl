@@ -13,9 +13,15 @@
 # limitations under the License.
 
 """Implementation of QMIX+BCQ"""
+from typing import Dict
+
 import sonnet as snt
 import tensorflow as tf
+from chex import Numeric
+from tensorflow import Tensor
 
+from og_marl.environments.base import BaseEnvironment
+from og_marl.loggers import BaseLogger
 from og_marl.tf2.systems.idrqn import IDRQNSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
@@ -34,15 +40,15 @@ class IDRQNBCQSystem(IDRQNSystem):
 
     def __init__(
         self,
-        environment,
-        logger,
-        bc_threshold=0.4,
-        linear_layer_dim=64,
-        recurrent_layer_dim=64,
-        discount=0.99,
-        target_update_period=200,
-        learning_rate=3e-4,
-        add_agent_id_to_obs=False,
+        environment: BaseEnvironment,
+        logger: BaseLogger,
+        bc_threshold: float = 0.4,
+        linear_layer_dim: int = 64,
+        recurrent_layer_dim: int = 64,
+        discount: float = 0.99,
+        target_update_period: int = 200,
+        learning_rate: float = 3e-4,
+        add_agent_id_to_obs: bool = False,
     ):
         super().__init__(
             environment,
@@ -68,7 +74,7 @@ class IDRQNBCQSystem(IDRQNSystem):
         )
 
     @tf.function(jit_compile=True)
-    def _tf_train_step(self, train_step, batch):
+    def _tf_train_step(self, train_step: int, batch: Dict[str, Tensor]) -> Dict[str, Numeric]:
         batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
