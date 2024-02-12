@@ -115,7 +115,7 @@ class QMixer(snt.Module):
         # Reshape and return
         q_tot = tf.reshape(y, (B, -1, 1))
 
-        q_tot = switch_two_leading_dims(q_tot)
+        q_tot: Tensor = switch_two_leading_dims(q_tot)
 
         return q_tot
 
@@ -182,9 +182,6 @@ class FACMACSystem(IDDPGSystem):
         policy_learning_rate: float = 1e-4,
         add_agent_id_to_obs: bool = False,
         random_exploration_timesteps: int = 0,
-        num_ood_actions: int = 10,  # CQL
-        cql_weight: float = 5.0,  # CQL
-        cql_sigma: float = 0.2,  # CQL
     ):
         super().__init__(
             environment=environment,
@@ -208,10 +205,6 @@ class FACMACSystem(IDDPGSystem):
 
         self._mixer = QMixer(len(self._environment.possible_agents))
         self._target_mixer = copy.deepcopy(self._mixer)
-
-        self._num_ood_actions = num_ood_actions
-        self._cql_weight = cql_weight
-        self._cql_sigma = cql_sigma
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, batch: Dict[str, Tensor]) -> Dict[str, Numeric]:
