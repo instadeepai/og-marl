@@ -14,11 +14,16 @@
 
 """Implementation of TD3"""
 import copy
+from typing import Dict, Optional
 
 import numpy as np
 import sonnet as snt
 import tensorflow as tf
+from chex import Numeric
+from tensorflow import Tensor
 
+from og_marl.environments.base import BaseEnvironment
+from og_marl.loggers import BaseLogger
 from og_marl.tf2.systems.iddpg import IDDPGSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
@@ -35,11 +40,11 @@ class QMixer(snt.Module):
 
     def __init__(
         self,
-        num_agents,
-        embed_dim=32,
-        hypernet_embed=64,
-        preprocess_network=None,
-        non_monotonic=False,
+        num_agents: int,
+        embed_dim: int = 32,
+        hypernet_embed: int = 64,
+        preprocess_network: Optional[snt.Module] = None,
+        non_monotonic: bool = False,
     ) -> None:
         """Initialise QMIX mixing network
 
@@ -74,7 +79,7 @@ class QMixer(snt.Module):
         # V(s) instead of a bias for the last layers
         self.V = snt.Sequential([snt.Linear(self.embed_dim), tf.nn.relu, snt.Linear(1)])
 
-    def __call__(self, agent_qs: tf.Tensor, states: tf.Tensor) -> tf.Tensor:
+    def __call__(self, agent_qs: Tensor, states: Tensor) -> Tensor:
         """Forward method."""
         agent_qs = switch_two_leading_dims(agent_qs)
         states = switch_two_leading_dims(states)
@@ -117,7 +122,7 @@ class QMixer(snt.Module):
 
 
 class ObservationsAndActionCritic(snt.Module):
-    def __init__(self, num_agents, num_actions):
+    def __init__(self, num_agents: int, num_actions: int):
         self.N = num_agents
         self.A = num_actions
 
@@ -135,11 +140,11 @@ class ObservationsAndActionCritic(snt.Module):
 
     def __call__(
         self,
-        observations,
-        agent_actions,
-        resets,
-        stop_other_actions_gradient=True,
-    ):
+        observations: Tensor,
+        agent_actions: Tensor,
+        resets: Tensor,
+        stop_other_actions_gradient: bool = True,
+    ) -> Tensor:
         """Forward pass of critic network.
 
         observations [T,B,N,O]
@@ -160,7 +165,7 @@ class ObservationsAndActionCritic(snt.Module):
 
         q_values = unroll_rnn(self._critic_network, critic_input, resets)
 
-        q_values = expand_batch_and_agent_dim_of_time_major_sequence(q_values, B, N)
+        q_values: Tensor = expand_batch_and_agent_dim_of_time_major_sequence(q_values, B, N)
 
         return q_values
 
@@ -168,19 +173,19 @@ class ObservationsAndActionCritic(snt.Module):
 class FACMACSystem(IDDPGSystem):
     def __init__(
         self,
-        environment,
-        logger,
-        linear_layer_dim=64,
-        recurrent_layer_dim=64,
-        discount=0.99,
-        target_update_rate=0.005,
-        critic_learning_rate=1e-4,
-        policy_learning_rate=1e-4,
-        add_agent_id_to_obs=False,
-        random_exploration_timesteps=0,
-        num_ood_actions=10,  # CQL
-        cql_weight=5.0,  # CQL
-        cql_sigma=0.2,  # CQL
+        environment: BaseEnvironment,
+        logger: BaseLogger,
+        linear_layer_dim: int = 64,
+        recurrent_layer_dim: int = 64,
+        discount: float = 0.99,
+        target_update_rate: float = 0.005,
+        critic_learning_rate: float = 1e-4,
+        policy_learning_rate: float = 1e-4,
+        add_agent_id_to_obs: bool = False,
+        random_exploration_timesteps: int = 0,
+        num_ood_actions: int = 10,  # CQL
+        cql_weight: float = 5.0,  # CQL
+        cql_sigma: float = 0.2,  # CQL
     ):
         super().__init__(
             environment=environment,
@@ -210,7 +215,7 @@ class FACMACSystem(IDDPGSystem):
         self._cql_sigma = cql_sigma
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
-    def _tf_train_step(self, batch):
+    def _tf_train_step(self, batch: Dict[str, Tensor]) -> Dict[str, Numeric]:
         batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
