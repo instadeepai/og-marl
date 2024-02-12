@@ -168,7 +168,9 @@ class IDRQNSystem(BaseMARLSystem):
         return logs  # type: ignore
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
-    def _tf_train_step(self, train_step_ctr: int, experience: Dict[str, Tensor]) -> Dict[str, Numeric]:
+    def _tf_train_step(
+        self, train_step_ctr: int, experience: Dict[str, Tensor]
+    ) -> Dict[str, Numeric]:
         experience = batched_agents(self._environment.possible_agents, experience)
 
         # Unpack the batch

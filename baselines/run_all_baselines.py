@@ -16,7 +16,7 @@ scenario_system_configs = {
             "systems": ["idrqn", "idrqn+cql", "idrqn+bcq", "qmix+cql", "qmix+bcq", "maicq"],
             "datasets": ["Good"],
             "trainer_steps": 3000,
-            "evaluate_every": 1000
+            "evaluate_every": 1000,
         },
     },
     "mamujoco": {
@@ -24,7 +24,7 @@ scenario_system_configs = {
             "systems": ["iddpg", "iddpg+cql", "maddpg+cql", "maddpg", "omar"],
             "datasets": ["Good"],
             "trainer_steps": 3000,
-            "evaluate_every": 1000
+            "evaluate_every": 1000,
         },
     },
 }
@@ -48,10 +48,12 @@ for seed in seeds:
                         env = get_environment(env_name, scenario_name)
 
                         buffer = FlashbaxReplayBuffer(sequence_length=20, sample_period=1)
-                        is_vault_loaded = buffer.populate_from_vault(env_name, scenario_name, dataset_name)
+                        is_vault_loaded = buffer.populate_from_vault(
+                            env_name, scenario_name, dataset_name
+                        )
                         if not is_vault_loaded:
                             raise ValueError("Vault not found. Exiting.")
-                        
+
                         json_writer = JsonWriter(
                             "logs", system_name, f"{scenario_name}_{dataset_name}", env_name, seed
                         )
@@ -59,9 +61,18 @@ for seed in seeds:
                         system_kwargs = {"add_agent_id_to_obs": True}
                         system = get_system(system_name, env, logger, **system_kwargs)
 
-                        trainer_steps = scenario_system_configs[env_name][scenario_name]["trainer_steps"]
-                        evaluate_every = scenario_system_configs[env_name][scenario_name]["evaluate_every"]
-                        system.train_offline(buffer, max_trainer_steps=trainer_steps, evaluate_every=evaluate_every, json_writer=json_writer)
+                        trainer_steps = scenario_system_configs[env_name][scenario_name][
+                            "trainer_steps"
+                        ]
+                        evaluate_every = scenario_system_configs[env_name][scenario_name][
+                            "evaluate_every"
+                        ]
+                        system.train_offline(
+                            buffer,
+                            max_trainer_steps=trainer_steps,
+                            evaluate_every=evaluate_every,
+                            json_writer=json_writer,
+                        )
                     except:
                         logger.close()
                         print()

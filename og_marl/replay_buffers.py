@@ -25,6 +25,7 @@ from flashbax.vault import Vault
 
 Experience = Dict[str, Array]
 
+
 class FlashbaxReplayBuffer:
     def __init__(
         self,
@@ -32,7 +33,7 @@ class FlashbaxReplayBuffer:
         max_size: int = 50_000,
         batch_size: int = 32,
         sample_period: int = 1,
-        seed: int = 42
+        seed: int = 42,
     ):
         self._sequence_length = sequence_length
         self._max_size = max_size
@@ -86,11 +87,7 @@ class FlashbaxReplayBuffer:
         return batch.experience  # type: ignore
 
     def populate_from_vault(
-        self,
-        env_name: str,
-        scenario_name: str,
-        dataset_name: str,
-        rel_dir: str= "datasets"
+        self, env_name: str, scenario_name: str, dataset_name: str, rel_dir: str = "datasets"
     ) -> bool:
         try:
             self._buffer_state = Vault(

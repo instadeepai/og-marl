@@ -16,7 +16,6 @@
 from typing import Dict
 
 import numpy as np
-import sonnet as snt
 import tensorflow as tf
 from chex import Numeric
 from tensorflow import Tensor
@@ -110,12 +109,8 @@ class MADDPGCQLSystem(MADDPGSystem):
         target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
         # Target critics
-        target_qs_1 = self._target_critic_network_1(
-            env_states, target_actions, target_actions
-        )
-        target_qs_2 = self._target_critic_network_2(
-            env_states, target_actions, target_actions
-        )
+        target_qs_1 = self._target_critic_network_1(env_states, target_actions, target_actions)
+        target_qs_2 = self._target_critic_network_2(env_states, target_actions, target_actions)
 
         # Take minimum between two target critics
         target_qs = tf.minimum(target_qs_1, target_qs_2)
@@ -182,15 +177,15 @@ class MADDPGCQLSystem(MADDPGSystem):
             random_ood_action_log_pi = tf.math.log(0.5 ** (random_ood_actions.shape[-1]))
 
             ood_qs_1 = (
-                self._critic_network_1(
-                    repeat_env_states, random_ood_actions, random_ood_actions
-                )[:-1]
+                self._critic_network_1(repeat_env_states, random_ood_actions, random_ood_actions)[
+                    :-1
+                ]
                 - random_ood_action_log_pi
             )
             ood_qs_2 = (
-                self._critic_network_2(
-                    repeat_env_states, random_ood_actions, random_ood_actions
-                )[:-1]
+                self._critic_network_2(repeat_env_states, random_ood_actions, random_ood_actions)[
+                    :-1
+                ]
                 - random_ood_action_log_pi
             )
 

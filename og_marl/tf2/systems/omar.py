@@ -90,7 +90,7 @@ class OMARSystem(IDDPGCQLSystem):
         terminals = batch["terminals"]  # (B,T,N)
 
         # When to reset the RNN hidden state
-        resets = tf.maximum(terminals, truncations) # equivalent to logical 'or'
+        resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
 
         # Get dims
         B, T, N, A = actions.shape[:4]
@@ -116,12 +116,8 @@ class OMARSystem(IDDPGCQLSystem):
         target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
         # Target critics
-        target_qs_1 = self._target_critic_network_1(
-            env_states, target_actions
-        )
-        target_qs_2 = self._target_critic_network_2(
-            env_states, target_actions
-        )
+        target_qs_1 = self._target_critic_network_1(env_states, target_actions)
+        target_qs_2 = self._target_critic_network_2(env_states, target_actions)
 
         # Take minimum between two target critics
         target_qs = tf.minimum(target_qs_1, target_qs_2)
@@ -188,15 +184,11 @@ class OMARSystem(IDDPGCQLSystem):
             random_ood_action_log_pi = tf.math.log(0.5 ** (random_ood_actions.shape[-1]))
 
             ood_qs_1 = (
-                self._critic_network_1(
-                    repeat_env_states, random_ood_actions
-                )[:-1]
+                self._critic_network_1(repeat_env_states, random_ood_actions)[:-1]
                 - random_ood_action_log_pi
             )
             ood_qs_2 = (
-                self._critic_network_2(
-                    repeat_env_states, random_ood_actions
-                )[:-1]
+                self._critic_network_2(repeat_env_states, random_ood_actions)[:-1]
                 - random_ood_action_log_pi
             )
 
@@ -312,9 +304,7 @@ class OMARSystem(IDDPGCQLSystem):
                 formatted_cem_sampled_acs = tf.reshape(
                     cem_sampled_acs, (T, -1, *cem_sampled_acs.shape[3:])
                 )
-                all_pred_qvals = self._critic_network_1(
-                    env_states, formatted_cem_sampled_acs
-                )
+                all_pred_qvals = self._critic_network_1(env_states, formatted_cem_sampled_acs)
                 all_pred_qvals = tf.reshape(all_pred_qvals, (T, B, self._omar_num_samples, N))
                 all_pred_qvals = tf.transpose(all_pred_qvals, (0, 1, 3, 2))
                 cem_sampled_acs = tf.transpose(cem_sampled_acs, (0, 1, 3, 4, 2))
@@ -354,7 +344,8 @@ class OMARSystem(IDDPGCQLSystem):
             max_acs = tf.stop_gradient(tf.reshape(max_acs, max_acs.shape[:-1]))
 
             policy_loss = (
-                self._omar_coe * tf.reduce_mean(tf.reduce_mean((curr_pol_out - max_acs) ** 2, axis=-1))
+                self._omar_coe
+                * tf.reduce_mean(tf.reduce_mean((curr_pol_out - max_acs) ** 2, axis=-1))
                 - (1 - self._omar_coe) * tf.reduce_mean(tf.squeeze(pred_qvals))
                 + tf.reduce_mean(tf.reduce_mean(curr_pol_out**2, axis=-1)) * 1e-3
             )

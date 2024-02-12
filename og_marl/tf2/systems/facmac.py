@@ -16,7 +16,6 @@
 import copy
 from typing import Dict, Optional
 
-import numpy as np
 import sonnet as snt
 import tensorflow as tf
 from chex import Numeric
@@ -253,9 +252,7 @@ class FACMACSystem(IDDPGSystem):
         target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
         # Target critics
-        target_qs = self._target_critic_network(
-            observations, target_actions, resets
-        )
+        target_qs = self._target_critic_network(observations, target_actions, resets)
         target_qs = self._target_mixer(target_qs, env_states)
 
         # Compute Bellman targets
@@ -269,9 +266,7 @@ class FACMACSystem(IDDPGSystem):
         # Do forward passes through the networks and calculate the losses
         with tf.GradientTape(persistent=True) as tape:
             # Online critics
-            qs = self._critic_network(
-                observations, replay_actions, resets
-            )
+            qs = self._critic_network(observations, replay_actions, resets)
             qs = self._mixer(qs, env_states)
 
             # Squared TD-error
@@ -285,9 +280,7 @@ class FACMACSystem(IDDPGSystem):
             online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
 
             # Policy Loss
-            qs = self._critic_network(
-                observations, online_actions, resets
-            )
+            qs = self._critic_network(observations, online_actions, resets)
             qs = self._mixer(qs, env_states)
 
             policy_loss = -tf.reduce_mean(qs) + 1e-3 * tf.reduce_mean(tf.square(online_actions))

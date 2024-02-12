@@ -253,12 +253,8 @@ class IDDPGSystem(BaseMARLSystem):
         target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
         # Target critics
-        target_qs_1 = self._target_critic_network_1(
-            env_states, target_actions
-        )
-        target_qs_2 = self._target_critic_network_2(
-            env_states, target_actions
-        )
+        target_qs_1 = self._target_critic_network_1(env_states, target_actions)
+        target_qs_2 = self._target_critic_network_2(env_states, target_actions)
 
         # Take minimum between two target critics
         target_qs = tf.minimum(target_qs_1, target_qs_2)

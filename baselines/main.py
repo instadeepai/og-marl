@@ -47,7 +47,7 @@ def main(_):
     is_vault_loaded = buffer.populate_from_vault(FLAGS.env, FLAGS.scenario, FLAGS.dataset)
     if not is_vault_loaded:
         print("Vault not found. Exiting.")
-        return 
+        return
 
     logger = WandbLogger(project="tf2-og-marl", config=config)
 

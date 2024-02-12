@@ -17,7 +17,6 @@ from typing import Dict, Optional
 
 import numpy as np
 from chex import Numeric
-from tensorflow import Tensor
 
 from og_marl.environments.base import BaseEnvironment
 from og_marl.loggers import BaseLogger, JsonWriter

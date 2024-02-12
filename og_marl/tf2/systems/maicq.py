@@ -154,7 +154,7 @@ class MAICQSystem(QMIXSystem):
         legal_actions = batch["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state
-        resets = tf.maximum(terminals, truncations) # equivalent to logical 'or'
+        resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
 
         # Get dims
         B, T, N, A = legal_actions.shape
@@ -172,11 +172,7 @@ class MAICQSystem(QMIXSystem):
         resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
         # Unroll target network
-        target_qs_out = unroll_rnn(
-            self._target_q_network, 
-            observations,
-            resets
-        )
+        target_qs_out = unroll_rnn(self._target_q_network, observations, resets)
 
         # Expand batch and agent_dim
         target_qs_out = expand_batch_and_agent_dim_of_time_major_sequence(target_qs_out, B, N)
@@ -186,11 +182,7 @@ class MAICQSystem(QMIXSystem):
 
         with tf.GradientTape(persistent=True) as tape:
             # Unroll online network
-            qs_out = unroll_rnn(
-                self._q_network, 
-                observations, 
-                resets
-            )
+            qs_out = unroll_rnn(self._q_network, observations, resets)
 
             # Expand batch and agent_dim
             qs_out = expand_batch_and_agent_dim_of_time_major_sequence(qs_out, B, N)
@@ -199,9 +191,7 @@ class MAICQSystem(QMIXSystem):
             q_vals = switch_two_leading_dims(qs_out)
 
             # Unroll the policy
-            probs_out = unroll_rnn(
-                self._policy_network, observations, resets
-            )
+            probs_out = unroll_rnn(self._policy_network, observations, resets)
 
             # Expand batch and agent_dim
             probs_out = expand_batch_and_agent_dim_of_time_major_sequence(probs_out, B, N)
@@ -227,9 +217,7 @@ class MAICQSystem(QMIXSystem):
 
             coe = self._mixer.k(env_states)
 
-            coma_loss = -tf.reduce_mean(
-                coe * (len(advantages) * advantages * log_pi_taken)
-            )
+            coma_loss = -tf.reduce_mean(coe * (len(advantages) * advantages * log_pi_taken))
 
             # Critic learning
             q_taken = gather(q_vals, actions, axis=-1)
@@ -243,7 +231,9 @@ class MAICQSystem(QMIXSystem):
             target_q_taken = len(advantage_Q) * advantage_Q * target_q_taken
 
             # Compute targets
-            targets = rewards[:, :-1] + (1 - terminals[:, :-1]) * self._discount * target_q_taken[:, 1:]
+            targets = (
+                rewards[:, :-1] + (1 - terminals[:, :-1]) * self._discount * target_q_taken[:, 1:]
+            )
             targets = tf.stop_gradient(targets)
 
             # TD error

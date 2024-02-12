@@ -16,9 +16,7 @@ from og_marl.environments.gymnasium_mamujoco import MAMuJoCo
 from og_marl.environments.wrappers import Dtype, PadObsandActs
 from og_marl.loggers import WandbLogger
 from og_marl.replay_buffers import FlashbaxReplayBuffer
-from og_marl.tf2.systems.iddpg import IDDPGSystem
 from og_marl.tf2.systems.maddpg import MADDPGSystem
-from og_marl.tf2.systems.seq_maddpg import SEQMADDPGSystem
 
 env = MAMuJoCo("4ant")
 
