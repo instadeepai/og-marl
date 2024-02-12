@@ -26,6 +26,9 @@ class BaseLogger:
     def write(self, logs: Dict[str, Numeric], force: bool = False):
         raise NotImplementedError
 
+    def close(self) -> None:
+        return
+
 
 class TerminalLogger(BaseLogger):
     def __init__(
