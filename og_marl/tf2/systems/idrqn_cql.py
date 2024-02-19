@@ -64,15 +64,16 @@ class IDRQNCQLSystem(QMIXSystem):
 
     @tf.function(jit_compile=True)
     def _tf_train_step(self, train_step, batch):
-        batch = batched_agents(self._environment.possible_agents, batch)
+        # batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
         observations = batch["observations"]  # (B,T,N,O)
-        actions = tf.cast(batch["actions"], "int32")  # (B,T,N)
+        actions = batch["actions"]  # (B,T,N)
+        env_states = batch["infos"]["state"]  # (B,T,S)
         rewards = batch["rewards"]  # (B,T,N)
         truncations = batch["truncations"]  # (B,T,N)
         terminals = batch["terminals"]  # (B,T,N)
-        legal_actions = batch["legals"]  # (B,T,N,A)
+        legal_actions = batch["infos"]["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'

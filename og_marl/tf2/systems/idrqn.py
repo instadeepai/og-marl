@@ -107,7 +107,7 @@ class IDRQNSystem(BaseMARLSystem):
             lambda x: x.numpy(), actions
         )  # convert to numpy and squeeze batch dim
 
-    # @tf.function(jit_compile=True)
+    @tf.function(jit_compile=True)
     def _tf_select_actions(self, env_step_ctr, observations, legal_actions, rnn_states, explore):
         actions = {}
         next_rnn_states = {}
@@ -152,15 +152,16 @@ class IDRQNSystem(BaseMARLSystem):
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, train_step_ctr, experience):
-        experience = batched_agents(self._environment.possible_agents, experience)
+        # experience = batched_agents(self._environment.possible_agents, experience)
 
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N)
+        env_states = experience["infos"]["state"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
-        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
-        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
-        legal_actions = experience["legals"]  # (B,T,N,A)
+        truncations = experience["truncations"]  # (B,T,N)
+        terminals = experience["terminals"]  # (B,T,N)
+        legal_actions = experience["infos"]["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
