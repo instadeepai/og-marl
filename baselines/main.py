@@ -22,10 +22,10 @@ from og_marl.tf2.utils import set_growing_gpu_memory
 set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("env", "mamujoco", "Environment name.")
-flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
-flags.DEFINE_string("dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
-flags.DEFINE_string("system", "omar", "System name.")
+flags.DEFINE_string("env", "smac_v1", "Environment name.")
+flags.DEFINE_string("scenario", "3m", "Environment scenario name.")
+flags.DEFINE_string("dataset", "Medium", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
+flags.DEFINE_string("system", "qmix", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 1e5, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")

@@ -55,7 +55,7 @@ class FlashbaxReplayBuffer:
             self._buffer_state = self._replay_buffer.init(timestep)
 
         timestep = tree.map_structure(
-            lambda x: jnp.array(x)[jnp.newaxis, jnp.newaxis, ...], timestep
+            lambda x: jnp.expand_dims(jnp.expand_dims(jnp.array(x),0),0), timestep
         )  # add batch & time dims
         self._buffer_state = self._buffer_add_fn(self._buffer_state, timestep)
 
@@ -69,9 +69,9 @@ class FlashbaxReplayBuffer:
     ) -> bool:
         try:
             self._buffer_state = Vault(
-                vault_name=f"{env_name}/{scenario_name}.vlt",
-                vault_uid=dataset_name,
-                rel_dir=rel_dir,
+                vault_name="smac_v1_3m_Medium.vlt",#f"{env_name}/{scenario_name}.vlt",
+                vault_uid="20240213081604",#dataset_name,
+                rel_dir="vaults",
             ).read()
 
             # Recreate the buffer and associated pure functions

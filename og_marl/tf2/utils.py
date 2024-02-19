@@ -152,6 +152,9 @@ def batched_agents(agents, batch_dict):
     for key, value in batched_agents.items():
         batched_agents[key] = tf.stack(value, axis=2)
 
+    batched_agents["terminals"] = tf.cast(batched_agents["terminals"], "float32")
+    batched_agents["truncations"] = tf.cast(batched_agents["truncations"], "float32")
+
     if "legals" in batch_dict["infos"]:
         batched_agents["legals"] = []
         for agent in agents:

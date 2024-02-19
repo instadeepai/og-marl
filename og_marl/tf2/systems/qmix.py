@@ -65,7 +65,7 @@ class QMIXSystem(IDRQNSystem):
             len(self._environment.possible_agents), mixer_embed_dim, mixer_hyper_dim
         )
 
-    @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
+    # @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, train_step_ctr, batch):
         batch = batched_agents(self._environment.possible_agents, batch)
 

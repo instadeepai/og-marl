@@ -18,30 +18,33 @@ import flashbax as fbx
 import jax
 import numpy as np
 from flashbax.vault import Vault
+import tensorflow as tf
 from tqdm import tqdm
+import h5py
+import tree
 
 from og_marl.environments.utils import get_environment
 from og_marl.offline_dataset import OfflineMARLDataset
 
 
-def vault_from_dataset(dataset):
-    batch_size = 2048
+def vault_from_dataset(dataset, vault_name):
+    batch_size = 200
     batched_dataset = dataset.raw_dataset.batch(batch_size)
     period = dataset.period
     max_episode_length = dataset.max_episode_length
     agents = dataset._agents
 
     episode = {
-        "observations": {agent: [] for agent in agents},
-        "actions": {agent: [] for agent in agents},
-        "rewards": {agent: [] for agent in agents},
-        "terminals": {agent: [] for agent in agents},
-        "truncations": {agent: [] for agent in agents},
-        "infos": {"legals": {agent: [] for agent in agents}, "state": []},
+        "observations": [],
+        "actions": [],
+        "rewards": [],
+        "terminals": [],
+        "truncations": [],
+        "infos": {"legals": [], "state": []},
     }
 
     buffer = fbx.make_flat_buffer(
-        max_length=3_000_000,
+        max_length=200_000,
         min_length=1,
         sample_batch_size=1,
         add_sequences=True,
@@ -60,20 +63,29 @@ def vault_from_dataset(dataset):
             zero_padding_mask = mask[idx, :period]
             episode_length += np.sum(zero_padding_mask, dtype=int)
 
-            for agent in agents:
-                episode["observations"][agent].append(batch["observations"][agent][idx, :period])
-                episode["actions"][agent].append(batch["actions"][agent][idx, :period])
-                episode["rewards"][agent].append(batch["rewards"][agent][idx, :period])
-                episode["terminals"][agent].append(batch["terminals"][agent][idx, :period])
-                episode["truncations"][agent].append(batch["truncations"][agent][idx, :period])
-                episode["infos"]["legals"][agent].append(
-                    batch["infos"]["legals"][agent][idx, :period]
-                )
+            # for agent in agents:
+            episode["observations"].append(tf.stack(
+                list(jax.tree_map(lambda x: x[idx, :period], batch["observations"]).values()), axis=1
+            ))
+            episode["actions"].append(tf.stack(
+                list(jax.tree_map(lambda x: x[idx, :period], batch["actions"]).values()), axis=1
+            ))
+            episode["rewards"].append(tf.stack(
+                list(jax.tree_map(lambda x: x[idx, :period], batch["rewards"]).values()), axis=1
+            ))
+            episode["terminals"].append(tf.stack(
+                list(jax.tree_map(lambda x: x[idx, :period], batch["terminals"]).values()), axis=1
+            ))
+            episode["truncations"].append(tf.stack(
+                list(jax.tree_map(lambda x: x[idx, :period], batch["truncations"]).values()), axis=1
+            ))
+            episode["infos"]["legals"].append(tf.stack(
+                list(jax.tree_map(lambda x: x[idx, :period], batch["infos"]["legals"]).values()), axis=1
+            ))
             episode["infos"]["state"].append(batch["infos"]["state"][idx, :period])
 
             if (
-                int(list(episode["terminals"].values())[0][-1][-1])
-                == 1  # agent 0, last chunk, last timestep in chunk
+                episode["terminals"][-1][-1, 0] == 1  # last chunk, last timestep in chunk, agent 0
                 or episode_length >= max_episode_length
             ):
                 episode_to_save = jax.tree_map(
@@ -84,7 +96,7 @@ def vault_from_dataset(dataset):
                 if not initialised_buffer_state:
                     buffer_state = buffer.init(jax.tree_map(lambda x: x[0, ...], episode_to_save))
                     v = Vault(
-                        vault_name="test.vlt",
+                        vault_name=vault_name,
                         experience_structure=buffer_state.experience,
                     )
                     initialised_buffer_state = True
@@ -93,28 +105,35 @@ def vault_from_dataset(dataset):
 
                 # Clear episode
                 episode = {
-                    "observations": {agent: [] for agent in agents},
-                    "actions": {agent: [] for agent in agents},
-                    "rewards": {agent: [] for agent in agents},
-                    "terminals": {agent: [] for agent in agents},
-                    "truncations": {agent: [] for agent in agents},
-                    "infos": {"legals": {agent: [] for agent in agents}, "state": []},
+                    "observations": [],
+                    "actions": [],
+                    "rewards": [],
+                    "terminals": [],
+                    "truncations": [],
+                    "infos": {"legals": [], "state": []},
                 }
                 episode_length = 0
-
         num_steps_written += v.write(buffer_state)
         print(f"Wrote {num_steps_written} steps")
-
     return num_steps_written
 
 
 ##### Main
-env_name = "mamujoco"
-scenario = "2halfcheetah"
-dataset = "Poor"
 
-env = get_environment(env_name, scenario)
+from og_marl.offline_dataset import DATASET_INFO, download_and_unzip_dataset
+from og_marl.environments.utils import get_environment
 
-dataset = OfflineMARLDataset(env, env_name=env_name, scenario_name=scenario, dataset_type=dataset)
+for env_name in DATASET_INFO.keys():
+    if env_name not in ["mamujoco"]:
+        continue
+    for scenario_name in DATASET_INFO[env_name].keys():
+        if scenario_name in []:
+            continue
+        if scenario_name in ["8m"]:
+            download_and_unzip_dataset(env_name, scenario_name)
 
-vault_from_dataset(dataset)
+        env = get_environment(env_name, scenario_name)
+
+        for dataset_name in ["Good", "Medium", "Poor"]:
+            dataset = OfflineMARLDataset(env, env_name, scenario_name, dataset_name)
+            vault_from_dataset(dataset, f"{env_name}_{scenario_name}_{dataset_name}.vlt")

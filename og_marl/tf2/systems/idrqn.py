@@ -17,6 +17,7 @@ import copy
 
 import sonnet as snt
 import tensorflow as tf
+import tensorflow_probability as tfp
 import tree
 
 from og_marl.tf2.systems.base import BaseMARLSystem
@@ -106,7 +107,7 @@ class IDRQNSystem(BaseMARLSystem):
             lambda x: x.numpy(), actions
         )  # convert to numpy and squeeze batch dim
 
-    @tf.function(jit_compile=True)
+    # @tf.function(jit_compile=True)
     def _tf_select_actions(self, env_step_ctr, observations, legal_actions, rnn_states, explore):
         actions = {}
         next_rnn_states = {}
@@ -129,12 +130,13 @@ class IDRQNSystem(BaseMARLSystem):
 
             epsilon = tf.maximum(1.0 - self._eps_dec * env_step_ctr, self._eps_min)
 
-            greedy_logits = tf.math.log(tf.one_hot(greedy_action, masked_q_values.shape[-1]))
-            logits = (1.0 - epsilon) * greedy_logits + epsilon * tf.math.log(agent_legal_actions)
-            logits = tf.expand_dims(logits, axis=0)
+            greedy_probs = tf.one_hot(greedy_action, masked_q_values.shape[-1])
+            explore_probs = (agent_legal_actions / tf.reduce_sum(agent_legal_actions))
+            probs = (1.0 - epsilon) * greedy_probs + epsilon * explore_probs
+            probs = tf.expand_dims(probs, axis=0)
 
             if explore:
-                action = tf.random.categorical(logits, num_samples=1)
+                action = tfp.distributions.Categorical(probs=probs).sample()[0]
             else:
                 action = greedy_action
 
