@@ -98,16 +98,18 @@ class JsonWriter:
         task_name: str,
         environment_name: str,
         seed: int,
+        file_name: str = "metrics.json",
+        save_to_wandb: bool = False
     ):
         self.path = path
-        self.file_name = "metrics.json"
+        self.file_name = file_name
         self.run_data = {"absolute_metrics": {}}
+        self._save_to_wandb = save_to_wandb
 
         # If the file already exists, load it
         if os.path.isfile(f"{self.path}/{self.file_name}"):
             with open(f"{self.path}/{self.file_name}", "r") as f:
                 data = json.load(f)
-
         else:
             # Create the logging directory if it doesn't exist
             os.makedirs(self.path, exist_ok=True)
@@ -163,3 +165,7 @@ class JsonWriter:
 
         with open(f"{self.path}/{self.file_name}", "w") as f:
             json.dump(self.data, f, indent=4)
+
+    def close(self):
+        if self._save_to_wandb:
+            wandb.save(f"{self.path}/{self.file_name}")

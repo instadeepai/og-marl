@@ -65,13 +65,13 @@ class FlashbaxReplayBuffer:
         return batch.experience
 
     def populate_from_vault(
-        self, env_name, scenario_name, dataset_name, rel_dir="datasets"
+        self, env_name, scenario_name, dataset_name, rel_dir="vaults"
     ) -> bool:
         try:
             self._buffer_state = Vault(
-                vault_name="smac_v1_3m_Medium.vlt",#f"{env_name}/{scenario_name}.vlt",
-                vault_uid="20240213081604",#dataset_name,
-                rel_dir="vaults",
+                vault_name=f"{env_name}/{scenario_name}.vlt",
+                vault_uid=dataset_name,
+                rel_dir=rel_dir,
             ).read()
 
             # Recreate the buffer and associated pure functions

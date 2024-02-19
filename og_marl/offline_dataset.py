@@ -21,6 +21,14 @@ import requests
 import tensorflow as tf
 import tree
 
+VAULT_INFO = {
+    "smac_v1": {
+        "3m": {
+            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3m.zip"
+        }
+    }
+}
+
 DATASET_INFO = {
     "smac_v1": {
         "3m": {"url": "https://tinyurl.com/3m-dataset", "sequence_length": 20, "period": 10},
@@ -240,3 +248,53 @@ def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./data
 
     # Optionally, delete the zip file after extraction
     os.remove(zip_file_path)
+
+def download_and_unzip_vault(env_name, scenario_name, dataset_base_dir="./vaults"):
+    dataset_download_url = VAULT_INFO[env_name][scenario_name]["url"]
+
+    if check_directory_exists_and_not_empty(f"{dataset_base_dir}/{env_name}/{scenario_name}.vlt"):
+        print(f"Vault '{dataset_base_dir}/{env_name}/{scenario_name}' already exists.")
+        return
+
+    os.makedirs(f"{dataset_base_dir}/tmp/", exist_ok=True)
+    os.makedirs(f"{dataset_base_dir}/{env_name}/", exist_ok=True)
+
+    zip_file_path = f"{dataset_base_dir}/tmp/tmp_dataset.zip"
+
+    extraction_path = f"{dataset_base_dir}/{env_name}"
+
+    response = requests.get(dataset_download_url, stream=True)
+    total_length = response.headers.get("content-length")
+
+    with open(zip_file_path, "wb") as file:
+        if total_length is None:  # no content length header
+            file.write(response.content)
+        else:
+            dl = 0
+            total_length = int(total_length)
+            for data in response.iter_content(chunk_size=4096):
+                dl += len(data)
+                file.write(data)
+                done = int(50 * dl / total_length)
+                sys.stdout.write("\r[%s%s]" % ("=" * done, " " * (50 - done)))
+                sys.stdout.flush()
+
+    # Step 2: Unzip the file
+    with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
+        zip_ref.extractall(extraction_path)
+
+    # Optionally, delete the zip file after extraction
+    os.remove(zip_file_path)
+
+def check_directory_exists_and_not_empty(path):
+    # Check if the directory exists
+    if os.path.exists(path) and os.path.isdir(path):
+        # Check if the directory is not empty
+        if not os.listdir(path):  # This will return an empty list if the directory is empty
+            return False  # Directory exists but is empty
+        else:
+            return True  # Directory exists and is not empty
+    else:
+        return False  # Directory does not exist
+
+download_and_unzip_vault("smac_v1", "3m")

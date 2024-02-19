@@ -65,18 +65,18 @@ class QMIXSystem(IDRQNSystem):
             len(self._environment.possible_agents), mixer_embed_dim, mixer_hyper_dim
         )
 
-    # @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
+    @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, train_step_ctr, batch):
-        batch = batched_agents(self._environment.possible_agents, batch)
+        # batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
         observations = batch["observations"]  # (B,T,N,O)
         actions = batch["actions"]  # (B,T,N)
-        env_states = batch["state"]  # (B,T,S)
+        env_states = batch["infos"]["state"]  # (B,T,S)
         rewards = batch["rewards"]  # (B,T,N)
         truncations = batch["truncations"]  # (B,T,N)
         terminals = batch["terminals"]  # (B,T,N)
-        legal_actions = batch["legals"]  # (B,T,N,A)
+        legal_actions = batch["infos"]["legals"]  # (B,T,N,A)
 
         done = terminals
 

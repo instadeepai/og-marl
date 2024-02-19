@@ -5,6 +5,7 @@ launch.json
 .vscode
 json_logs
 vaults
+vaults_unprocessed
 logs
 __MACOSX
 3.9

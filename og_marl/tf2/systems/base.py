@@ -224,6 +224,7 @@ class BaseMARLSystem:
                 eval_logs["absolute/episode_return"],
                 trainer_step_ctr // evaluate_every,
             )
+            json_writer.close()
 
     def reset():
         """Called at the start of each new episode."""

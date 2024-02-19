@@ -16,6 +16,7 @@ from absl import app, flags
 from og_marl.environments.utils import get_environment
 from og_marl.loggers import JsonWriter, WandbLogger
 from og_marl.replay_buffers import FlashbaxReplayBuffer
+from og_marl.offline_dataset import download_and_unzip_vault
 from og_marl.tf2.systems import get_system
 from og_marl.tf2.utils import set_growing_gpu_memory
 
@@ -27,7 +28,7 @@ flags.DEFINE_string("scenario", "3m", "Environment scenario name.")
 flags.DEFINE_string("dataset", "Medium", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
 flags.DEFINE_string("system", "qmix", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
-flags.DEFINE_float("trainer_steps", 1e5, "Number of training steps.")
+flags.DEFINE_float("trainer_steps", 2e3, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
 
 
@@ -44,15 +45,17 @@ def main(_):
 
     buffer = FlashbaxReplayBuffer(sequence_length=20, sample_period=2)
 
+    download_and_unzip_vault(FLAGS.env, FLAGS.scenario)
+
     is_vault_loaded = buffer.populate_from_vault(FLAGS.env, FLAGS.scenario, FLAGS.dataset)
     if not is_vault_loaded:
         print("Vault not found. Exiting.")
         return 
 
-    logger = WandbLogger(project="tf2-og-marl", config=config)
+    logger = WandbLogger(project="og-marl-baselines", config=config)
 
     json_writer = JsonWriter(
-        "logs", f"tf2+{FLAGS.system}", f"{FLAGS.scenario}_{FLAGS.dataset}", FLAGS.env, FLAGS.seed
+        "logs", f"{FLAGS.system}", f"{FLAGS.scenario}_{FLAGS.dataset}", FLAGS.env, FLAGS.seed, file_name=f"{FLAGS.scenario}_{FLAGS.dataset}_{FLAGS.seed}.json", save_to_wandb=True
     )
 
     system_kwargs = {"add_agent_id_to_obs": True}
