@@ -17,7 +17,7 @@ spec:
 
   types:
     Worker:
-      count: 20
+      count: 50
 
       resources:
         # 10-15 cpus for single process
