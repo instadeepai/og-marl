@@ -28,7 +28,7 @@ flags.DEFINE_string("scenario", "3m", "Environment scenario name.")
 flags.DEFINE_string("dataset", "Medium", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
 flags.DEFINE_string("system", "qmix", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
-flags.DEFINE_float("trainer_steps", 2e3, "Number of training steps.")
+flags.DEFINE_float("trainer_steps", 5e4, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
 
 
