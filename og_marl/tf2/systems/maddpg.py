@@ -214,7 +214,8 @@ class MADDPGSystem(BaseMARLSystem):
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, experience):
-        batch = batched_agents(self._environment.possible_agents, experience)
+        # batch = batched_agents(self._environment.possible_agents, experience)
+        batch = experience
 
         # Unpack the batch
         observations = batch["observations"]  # (B,T,N,O)

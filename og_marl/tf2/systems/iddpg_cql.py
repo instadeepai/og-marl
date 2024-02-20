@@ -62,8 +62,9 @@ class IDDPGCQLSystem(IDDPGSystem):
         self._cql_sigma = cql_sigma
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
-    def _tf_train_step(self, batch):
-        batch = batched_agents(self._environment.possible_agents, batch)
+    def _tf_train_step(self, experience):
+        # batch = batched_agents(self._environment.possible_agents, batch)
+        batch = experience
 
         # Unpack the batch
         observations = batch["observations"]  # (B,T,N,O)

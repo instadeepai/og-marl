@@ -74,7 +74,7 @@ class OMARSystem(IDDPGCQLSystem):
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, batch):
-        batch = batched_agents(self._environment.possible_agents, batch)
+        # batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
         observations = batch["observations"]  # (B,T,N,O)
