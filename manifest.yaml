@@ -13,18 +13,18 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: wandb agent off-the-grid-marl-team/og-marl-baselines/kkaoytnl
+  command: wandb agent off-the-grid-marl-team/og-marl-baselines/7tvdf3sw
 
   types:
     Worker:
-      count: 50  
+      count: 1
 
       resources:
         # 10-15 cpus for single process
         cpus: 4
         # mandatory (must be >= 2): RAM ratio wanted (in GB)
         # memory = cpus * ramRatio
-        ramRatio: 2
+        ramRatio: 3
         accelerators:
           gpu:
             count: 0

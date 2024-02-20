@@ -41,6 +41,17 @@ VAULT_INFO = {
         "2c_vs_64zg": {
             "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2c_vs_64zg.zip"
         },
+    },
+    "mamujoco": {
+        "2ant": {
+            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2ant.zip"
+        },
+        "2halfcheetah": {
+            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2halfcheetah.zip"
+        },
+        "4ant": {
+            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/4ant.zip"
+        },
     }
 }
 
@@ -311,5 +322,3 @@ def check_directory_exists_and_not_empty(path):
             return True  # Directory exists and is not empty
     else:
         return False  # Directory does not exist
-
-download_and_unzip_vault("smac_v1", "3m")

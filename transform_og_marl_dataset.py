@@ -124,16 +124,16 @@ from og_marl.offline_dataset import DATASET_INFO, download_and_unzip_dataset
 from og_marl.environments.utils import get_environment
 
 for env_name in DATASET_INFO.keys():
-    if env_name not in ["mamujoco"]:
+    if env_name not in ["smac_v2"]:
         continue
     for scenario_name in DATASET_INFO[env_name].keys():
         if scenario_name in []:
             continue
-        if scenario_name in ["8m"]:
-            download_and_unzip_dataset(env_name, scenario_name)
+        # if scenario_name not in []:
+        #     download_and_unzip_dataset(env_name, scenario_name)
 
         env = get_environment(env_name, scenario_name)
 
-        for dataset_name in ["Good", "Medium", "Poor"]:
+        for dataset_name in ["Replay"]:
             dataset = OfflineMARLDataset(env, env_name, scenario_name, dataset_name)
             vault_from_dataset(dataset, f"{env_name}_{scenario_name}_{dataset_name}.vlt")
