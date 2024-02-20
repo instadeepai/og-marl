@@ -36,6 +36,7 @@ RUN pip install --quiet --upgrade pip setuptools wheel &&  \
 ENV SC2PATH /home/app/StarCraftII
 RUN ./install_environments/smacv1.sh
 
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
 RUN ./install_environments/mamujoco.sh
 
 # Copy all code
