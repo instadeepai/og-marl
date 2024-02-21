@@ -99,12 +99,12 @@ DATASET_INFO = {
         },
     },
     "flatland": {
-        "3_trains": {
+        "3trains": {
             "url": "https://tinyurl.com/3trains-dataset",
             "sequence_length": 20,  # TODO
             "period": 10,
         },
-        "5_trains": {
+        "5trains": {
             "url": "https://tinyurl.com/5trains-dataset",
             "sequence_length": 20,  # TODO
             "period": 10,
