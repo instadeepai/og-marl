@@ -158,7 +158,7 @@ class IDDPGSystem(BaseMARLSystem):
         critic_learning_rate=3e-4,
         policy_learning_rate=1e-3,
         add_agent_id_to_obs=True,
-        random_exploration_timesteps=50_000,
+        random_exploration_timesteps=50_000, # for online training
     ):
         super().__init__(
             environment, logger, add_agent_id_to_obs=add_agent_id_to_obs, discount=discount
@@ -297,10 +297,10 @@ class IDDPGSystem(BaseMARLSystem):
 
         # Target critics
         target_qs_1 = self._target_critic_network_1(
-            observations, env_states, target_actions, target_actions
+            env_states, target_actions
         )
         target_qs_2 = self._target_critic_network_2(
-            observations, env_states, target_actions, target_actions
+            env_states, target_actions
         )
 
         # Take minimum between two target critics
@@ -315,11 +315,11 @@ class IDDPGSystem(BaseMARLSystem):
         with tf.GradientTape(persistent=True) as tape:
             # Online critics
             qs_1 = tf.squeeze(
-                self._critic_network_1(observations, env_states, replay_actions, replay_actions),
+                self._critic_network_1(env_states, replay_actions),
                 axis=-1,
             )
             qs_2 = tf.squeeze(
-                self._critic_network_2(observations, env_states, replay_actions, replay_actions),
+                self._critic_network_2(env_states, replay_actions),
                 axis=-1,
             )
 
@@ -339,8 +339,8 @@ class IDDPGSystem(BaseMARLSystem):
             )
             online_actions = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
 
-            qs_1 = self._critic_network_1(observations, env_states, online_actions, replay_actions)
-            qs_2 = self._critic_network_2(observations, env_states, online_actions, replay_actions)
+            qs_1 = self._critic_network_1(env_states, online_actions)
+            qs_2 = self._critic_network_2(env_states, online_actions)
             qs = tf.minimum(qs_1, qs_2)
 
             policy_loss = -tf.squeeze(qs, axis=-1) + 1e-3 * tf.reduce_mean(online_actions**2)

@@ -57,3 +57,7 @@ def get_system(system_name, environment, logger, **kwargs):  # noqa: C901
         from og_marl.tf2.systems.facmac_cql import FACMACCQLSystem
 
         return FACMACCQLSystem(environment, logger, **kwargs)
+    elif system_name == "dbc":
+        from og_marl.tf2.systems.bc import DicreteActionBehaviourCloning
+
+        return DicreteActionBehaviourCloning(environment, logger, **kwargs)
