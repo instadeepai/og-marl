@@ -220,7 +220,7 @@ class MADDPGSystem(BaseMARLSystem):
         # Unpack the batch
         observations = batch["observations"]  # (B,T,N,O)
         actions = batch["actions"]  # (B,T,N,A)
-        env_states = batch["state"]  # (B,T,S)
+        env_states = batch["infos"]["state"]   # (B,T,S)
         rewards = batch["rewards"]  # (B,T,N)
         truncations = tf.cast(batch["truncations"], "float32")  # (B,T,N)
         terminals = tf.cast(batch["terminals"], "float32")  # (B,T,N)

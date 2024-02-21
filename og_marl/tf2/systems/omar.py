@@ -79,7 +79,7 @@ class OMARSystem(IDDPGCQLSystem):
         # Unpack the batch
         observations = batch["observations"]  # (B,T,N,O)
         actions = batch["actions"]  # (B,T,N,A)
-        env_states = batch["state"]  # (B,T,S)
+        env_states = batch["infos"]["state"]   # (B,T,S)
         rewards = batch["rewards"]  # (B,T,N)
         truncations = batch["truncations"]  # (B,T,N)
         terminals = batch["terminals"]  # (B,T,N)
