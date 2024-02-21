@@ -5,9 +5,9 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 # Update packages and install python3.9 and other dependencies
 RUN apt-get update -y && \
-    apt-get install -y software-properties-common git wget unzip && \
+    apt-get install -y software-properties-common && \
     add-apt-repository -y ppa:deadsnakes/ppa && \
-    apt-get install -y python3.9 python3.9-dev python3-pip python3.9-venv && \
+    apt-get install -y python3.9 python3.9-dev python3-pip python3.9-venv python3-dev python3-opencv swig ffmpeg git unzip wget libosmesa6-dev libgl1-mesa-glx libglfw3 patchelf && \
     update-alternatives --install /usr/bin/python python /usr/bin/python3.9 10 && \
     python -m venv og-marl && \
     apt-get clean && \
@@ -33,8 +33,8 @@ RUN pip install --quiet --upgrade pip setuptools wheel &&  \
     pip install -e . && \
     pip install flashbax==0.1.0
 
-ENV SC2PATH /home/app/StarCraftII
-RUN ./install_environments/smacv1.sh
+# ENV SC2PATH /home/app/StarCraftII
+# RUN ./install_environments/smacv1.sh
 
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
 RUN ./install_environments/mamujoco.sh
