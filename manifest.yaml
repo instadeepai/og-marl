@@ -17,14 +17,14 @@ spec:
 
   types:
     Worker:
-      count: 50
+      count: 25
 
       resources:
         # 10-15 cpus for single process
-        cpus: 4
+        cpus: 8
         # mandatory (must be >= 2): RAM ratio wanted (in GB)
         # memory = cpus * ramRatio
-        ramRatio: 3
+        ramRatio: 2
         accelerators:
           gpu:
             count: 0
