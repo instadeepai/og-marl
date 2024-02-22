@@ -42,6 +42,11 @@ VAULT_INFO = {
             "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2c_vs_64zg.zip"
         },
     },
+    "smac_v2": {
+        "terran_5_vs_5": {
+            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/terran_5_vs_5.zip"
+        },
+    },
     "mamujoco": {
         "2ant": {
             "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2ant.zip"
