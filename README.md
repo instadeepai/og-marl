@@ -5,7 +5,7 @@
 </p>
 
 <h2 align="center">
-    <p>Off-the-Grid MARL: Offline Multi-Agent Reinforcement Learning Datasets and Baselines</p>
+    <p>Offline Multi-Agent Reinforcement Learning Datasets and Baselines</p>
 </h2>
 <p align="center">
     <a href="https://www.python.org/doc/versions/">
@@ -16,9 +16,6 @@
     </a>
     <a href="https://arxiv.org/abs/2302.00521">
         <img src="https://img.shields.io/badge/PrePrint-ArXiv-red" alt="ArXiv">
-    </a>
-    <a href="https://sites.google.com/view/og-marl">
-        <img src="https://img.shields.io/badge/Datasets-Download-green" alt="Website">
     </a>
 </p>
 
