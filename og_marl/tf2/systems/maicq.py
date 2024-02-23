@@ -27,7 +27,6 @@ from og_marl.loggers import BaseLogger
 from og_marl.tf2.systems.qmix import QMIXSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
-    batched_agents,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
     gather,

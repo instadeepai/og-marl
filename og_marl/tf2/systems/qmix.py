@@ -25,7 +25,6 @@ from og_marl.loggers import BaseLogger
 from og_marl.tf2.systems.idrqn import IDRQNSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
-    batched_agents,
     expand_batch_and_agent_dim_of_time_major_sequence,
     gather,
     merge_batch_and_agent_dim_of_time_major_sequence,
@@ -72,7 +71,9 @@ class QMIXSystem(IDRQNSystem):
         )
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
-    def _tf_train_step(self, train_step_ctr: int, experience: Dict[str, Tensor]) -> Dict[str, Numeric]:
+    def _tf_train_step(
+        self, train_step_ctr: int, experience: Dict[str, Tensor]
+    ) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N)

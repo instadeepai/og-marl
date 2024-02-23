@@ -73,7 +73,7 @@ for seed in seeds:
                             evaluate_every=evaluate_every,
                             json_writer=json_writer,
                         )
-                    except:
+                    except:  # noqa: E722
                         logger.close()
                         print()
                         print("BROKEN")

@@ -29,7 +29,6 @@ from og_marl.replay_buffers import Experience
 from og_marl.tf2.systems.base import BaseMARLSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
-    batched_agents,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
     merge_batch_and_agent_dim_of_time_major_sequence,
@@ -104,7 +103,7 @@ class IDDPGSystem(BaseMARLSystem):
         critic_learning_rate: float = 3e-4,
         policy_learning_rate: float = 1e-3,
         add_agent_id_to_obs: bool = True,
-        random_exploration_timesteps: int = 50_000, # for online training
+        random_exploration_timesteps: int = 50_000,  # for online training
     ):
         super().__init__(
             environment, logger, add_agent_id_to_obs=add_agent_id_to_obs, discount=discount

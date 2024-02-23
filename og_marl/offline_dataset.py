@@ -23,18 +23,10 @@ import tree
 
 VAULT_INFO = {
     "smac_v1": {
-        "3m": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3m.zip"
-        },
-        "8m": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/8m.zip"
-        },
-        "5m_vs_6m": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/5m_vs_6m.zip"
-        },
-        "2s3z": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2s3z.zip"
-        },
+        "3m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3m.zip"},
+        "8m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/8m.zip"},
+        "5m_vs_6m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/5m_vs_6m.zip"},
+        "2s3z": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2s3z.zip"},
         "3s5z_vs_3s6z": {
             "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3s5z_vs_3s6z.zip"
         },
@@ -48,16 +40,12 @@ VAULT_INFO = {
         },
     },
     "mamujoco": {
-        "2ant": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2ant.zip"
-        },
+        "2ant": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2ant.zip"},
         "2halfcheetah": {
             "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2halfcheetah.zip"
         },
-        "4ant": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/4ant.zip"
-        },
-    }
+        "4ant": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/4ant.zip"},
+    },
 }
 
 DATASET_INFO = {
@@ -280,6 +268,7 @@ def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./data
     # Optionally, delete the zip file after extraction
     os.remove(zip_file_path)
 
+
 def download_and_unzip_vault(env_name, scenario_name, dataset_base_dir="./vaults"):
     dataset_download_url = VAULT_INFO[env_name][scenario_name]["url"]
 
@@ -316,6 +305,7 @@ def download_and_unzip_vault(env_name, scenario_name, dataset_base_dir="./vaults
 
     # Optionally, delete the zip file after extraction
     os.remove(zip_file_path)
+
 
 def check_directory_exists_and_not_empty(path):
     # Check if the directory exists

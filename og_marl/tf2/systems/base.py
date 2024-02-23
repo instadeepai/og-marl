@@ -191,7 +191,9 @@ class BaseMARLSystem:
             if evaluate_every is not None and trainer_step_ctr % evaluate_every == 0:
                 print("EVALUATION")
                 eval_logs = self.evaluate(num_eval_episodes)
-                self._logger.write(eval_logs | {"Trainer Steps (eval)": trainer_step_ctr}, force=True)
+                self._logger.write(
+                    eval_logs | {"Trainer Steps (eval)": trainer_step_ctr}, force=True
+                )
                 if json_writer is not None:
                     json_writer.write(
                         trainer_step_ctr,

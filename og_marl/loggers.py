@@ -110,7 +110,7 @@ class JsonWriter:
         environment_name: str,
         seed: int,
         file_name: str = "metrics.json",
-        save_to_wandb: bool = False
+        save_to_wandb: bool = False,
     ):
         self.path = path
         self.file_name = file_name

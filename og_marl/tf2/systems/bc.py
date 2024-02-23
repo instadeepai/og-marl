@@ -1,19 +1,16 @@
-from typing import Dict
-
-import tensorflow as tf
 import sonnet as snt
-import tree
+import tensorflow as tf
 import tensorflow_probability as tfp
+import tree
 
 from og_marl.tf2.systems.base import BaseMARLSystem
 from og_marl.tf2.utils import (
+    batch_concat_agent_id_to_obs,
     concat_agent_id_to_obs,
-    gather,
-    batch_concat_agent_id_to_obs, 
-    expand_batch_and_agent_dim_of_time_major_sequence, 
-    merge_batch_and_agent_dim_of_time_major_sequence, 
+    expand_batch_and_agent_dim_of_time_major_sequence,
+    merge_batch_and_agent_dim_of_time_major_sequence,
     switch_two_leading_dims,
-    unroll_rnn
+    unroll_rnn,
 )
 
 
@@ -30,12 +27,8 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
         learning_rate=1e-3,
         add_agent_id_to_obs=True,
     ):
-
         super().__init__(
-            environment,
-            logger,
-            discount=discount,
-            add_agent_id_to_obs=add_agent_id_to_obs
+            environment, logger, discount=discount, add_agent_id_to_obs=add_agent_id_to_obs
         )
 
         # Policy network
@@ -68,7 +61,9 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
         return
 
     def select_actions(self, observations, legal_actions=None, explore=True):
-        actions, next_rnn_states = self._tf_select_actions(observations, self._rnn_states, legal_actions)
+        actions, next_rnn_states = self._tf_select_actions(
+            observations, self._rnn_states, legal_actions
+        )
         self._rnn_states = next_rnn_states
         return tree.map_structure(
             lambda x: x[0].numpy(), actions
@@ -93,7 +88,9 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
 
             if legal_actions is not None:
                 agent_legals = tf.expand_dims(legal_actions[agent], axis=0)
-                probs = (probs * agent_legals) / tf.reduce_sum(probs * agent_legals) # mask and renorm
+                probs = (probs * agent_legals) / tf.reduce_sum(
+                    probs * agent_legals
+                )  # mask and renorm
 
             action = tfp.distributions.Categorical(probs=probs).sample(1)
 
@@ -130,7 +127,6 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
         actions = switch_two_leading_dims(actions)
 
         with tf.GradientTape() as tape:
-
             probs_out = unroll_rnn(
                 self._policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
@@ -146,9 +142,7 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
             bc_loss = tf.reduce_mean(bc_loss)
 
         # Apply gradients to policy
-        variables = (
-            *self._policy_network.trainable_variables,
-        )  # Get trainable variables
+        variables = (*self._policy_network.trainable_variables,)  # Get trainable variables
 
         gradients = tape.gradient(bc_loss, variables)  # Compute gradients.
         self._optimizer.apply(gradients, variables)
@@ -156,6 +150,7 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
         logs = {"Policy Loss": bc_loss}
 
         return logs
+
 
 # class ContinuousMaBcTrainer(DiscreteMaBcTrainer):
 #     def __init__(

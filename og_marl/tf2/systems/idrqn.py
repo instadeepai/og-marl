@@ -30,7 +30,6 @@ from og_marl.replay_buffers import Experience
 from og_marl.tf2.systems.base import BaseMARLSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
-    batched_agents,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
     gather,
@@ -150,7 +149,7 @@ class IDRQNSystem(BaseMARLSystem):
             epsilon = tf.maximum(1.0 - self._eps_dec * env_step_ctr, self._eps_min)
 
             greedy_probs = tf.one_hot(greedy_action, masked_q_values.shape[-1])
-            explore_probs = (agent_legal_actions / tf.reduce_sum(agent_legal_actions))
+            explore_probs = agent_legal_actions / tf.reduce_sum(agent_legal_actions)
             probs = (1.0 - epsilon) * greedy_probs + epsilon * explore_probs
             probs = tf.expand_dims(probs, axis=0)
 
@@ -176,7 +175,6 @@ class IDRQNSystem(BaseMARLSystem):
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N)
-        env_states = experience["infos"]["state"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
         truncations = experience["truncations"]  # (B,T,N)
         terminals = experience["terminals"]  # (B,T,N)
