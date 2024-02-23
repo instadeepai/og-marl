@@ -45,6 +45,8 @@ Install `og-marl` and its dependencies. We tested `og-marl` with Python 3.9. Con
 
 `pip install -e .`
 
+`pip install flashbax==0.1.0`
+
 Download environment dependencies. We will use SMACv1 in this example.
 
 `bash install_environments/smacv1.sh`
