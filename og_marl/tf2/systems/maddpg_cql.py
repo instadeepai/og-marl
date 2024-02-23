@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implementation of TD3"""
-import numpy as np
+"""Implementation of MADDPG+CQL"""
+import sonnet as snt
 import tensorflow as tf
+import numpy as np
 
-from og_marl.tf2.systems.iddpg import IDDPGSystem
+from og_marl.tf2.systems.maddpg import MADDPGSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
     batched_agents,
@@ -26,8 +27,10 @@ from og_marl.tf2.utils import (
     unroll_rnn,
 )
 
+class MADDPGCQLSystem(MADDPGSystem):
 
-class IDDPGCQLSystem(IDDPGSystem):
+    """MA Deep Recurrent Q-Networs with CQL System"""
+
     def __init__(
         self,
         environment,
@@ -63,7 +66,7 @@ class IDDPGCQLSystem(IDDPGSystem):
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, experience):
-        # batch = batched_agents(self._environment.possible_agents, batch)
+        # batch = batched_agents(self._environment.possible_agents, experience)
         batch = experience
 
         # Unpack the batch
@@ -102,10 +105,10 @@ class IDDPGCQLSystem(IDDPGSystem):
 
         # Target critics
         target_qs_1 = self._target_critic_network_1(
-            env_states, target_actions
+            env_states, target_actions, target_actions
         )
         target_qs_2 = self._target_critic_network_2(
-            env_states, target_actions
+            env_states, target_actions, target_actions
         )
 
         # Take minimum between two target critics
@@ -120,11 +123,11 @@ class IDDPGCQLSystem(IDDPGSystem):
         with tf.GradientTape(persistent=True) as tape:
             # Online critics
             qs_1 = tf.squeeze(
-                self._critic_network_1(env_states, replay_actions),
+                self._critic_network_1(env_states, replay_actions, replay_actions),
                 axis=-1,
             )
             qs_2 = tf.squeeze(
-                self._critic_network_2(env_states, replay_actions),
+                self._critic_network_2(env_states, replay_actions, replay_actions),
                 axis=-1,
             )
 
@@ -174,13 +177,13 @@ class IDDPGCQLSystem(IDDPGSystem):
 
             ood_qs_1 = (
                 self._critic_network_1(
-                    repeat_env_states, random_ood_actions
+                    repeat_env_states, random_ood_actions, random_ood_actions
                 )[:-1]
                 - random_ood_action_log_pi
             )
             ood_qs_2 = (
                 self._critic_network_2(
-                    repeat_env_states, random_ood_actions
+                    repeat_env_states, random_ood_actions, random_ood_actions
                 )[:-1]
                 - random_ood_action_log_pi
             )
@@ -207,12 +210,14 @@ class IDDPGCQLSystem(IDDPGSystem):
                 self._critic_network_1(
                     repeat_env_states[:-1],
                     current_ood_actions[:-1],
+                    current_ood_actions[:-1],
                 )
                 - ood_actions_log_prob[:-1]
             )
             current_ood_qs_2 = (
                 self._critic_network_2(
                     repeat_env_states[:-1],
+                    current_ood_actions[:-1],
                     current_ood_actions[:-1],
                 )
                 - ood_actions_log_prob[:-1]
@@ -222,12 +227,14 @@ class IDDPGCQLSystem(IDDPGSystem):
                 self._critic_network_1(
                     repeat_env_states[:-1],
                     current_ood_actions[1:],
+                    current_ood_actions[1:],
                 )
                 - ood_actions_log_prob[1:]
             )
             next_current_ood_qs_2 = (
                 self._critic_network_2(
                     repeat_env_states[:-1],
+                    current_ood_actions[1:],
                     current_ood_actions[1:],
                 )
                 - ood_actions_log_prob[1:]
@@ -260,34 +267,22 @@ class IDDPGCQLSystem(IDDPGSystem):
 
             ### END CQL ###
 
-            # Masked mean
             critic_loss = (critic_loss_1 + critic_loss_2) / 2
 
             # Policy Loss
             # Unroll online policy
-            target_online_actions = unroll_rnn(
-                self._target_policy_network,
+            onlin_actions = unroll_rnn(
+                self._policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
                 merge_batch_and_agent_dim_of_time_major_sequence(resets),
             )
-            target_online_actions = expand_batch_and_agent_dim_of_time_major_sequence(
-                target_online_actions, B, N
-            )
+            online_actions = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
 
-            qs_1 = self._critic_network_1(
-                env_states, online_actions
-            )
-            qs_2 = self._critic_network_2(
-                env_states, online_actions
-            )
+            qs_1 = self._critic_network_1(env_states, online_actions, replay_actions)
+            qs_2 = self._critic_network_2(env_states, online_actions, replay_actions)
             qs = tf.minimum(qs_1, qs_2)
 
-            policy_loss = -tf.squeeze(qs, axis=-1) + 1e-3 * tf.reduce_mean(
-                tf.square(online_actions)
-            )
-
-            # Masked mean
-            policy_loss = tf.reduce_mean(policy_loss)
+            policy_loss = -tf.reduce_mean(qs) + 1e-3 * tf.reduce_mean(online_actions**2)
 
         # Train critics
         variables = (
@@ -324,7 +319,12 @@ class IDDPGCQLSystem(IDDPGSystem):
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),
             "Mean Critic Loss": (critic_loss),
             "Policy Loss": policy_loss,
-            "CQL Loss": cql_loss_1,
         }
 
         return logs
+
+    def _update_target_network(self, online_variables, target_variables):
+        """Update the target networks."""
+        tau = self._target_update_rate
+        for src, dest in zip(online_variables, target_variables):
+            dest.assign(dest * (1.0 - tau) + src * tau)

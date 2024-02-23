@@ -23,11 +23,9 @@ from og_marl.tf2.utils import (
     expand_batch_and_agent_dim_of_time_major_sequence,
     gather,
     merge_batch_and_agent_dim_of_time_major_sequence,
-    set_growing_gpu_memory,
     switch_two_leading_dims,
+    unroll_rnn,
 )
-
-set_growing_gpu_memory()
 
 
 class QMIXSystem(IDRQNSystem):
@@ -69,19 +67,21 @@ class QMIXSystem(IDRQNSystem):
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, train_step_ctr, batch):
-        batch = batched_agents(self._environment.possible_agents, batch)
+        # batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
         observations = batch["observations"]  # (B,T,N,O)
         actions = batch["actions"]  # (B,T,N)
-        env_states = batch["state"]  # (B,T,S)
+        env_states = batch["infos"]["state"]  # (B,T,S)
         rewards = batch["rewards"]  # (B,T,N)
-        # truncations = batch["truncations"]  # (B,T,N)
+        truncations = batch["truncations"]  # (B,T,N)
         terminals = batch["terminals"]  # (B,T,N)
-        zero_padding_mask = batch["mask"]  # (B,T)
-        legal_actions = batch["legals"]  # (B,T,N,A)
+        legal_actions = batch["infos"]["legals"]  # (B,T,N,A)
 
         done = terminals
+
+        # When to reset the RNN hidden state
+        resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
 
         # Get dims
         B, T, N, A = legal_actions.shape
@@ -92,14 +92,14 @@ class QMIXSystem(IDRQNSystem):
 
         # Make time-major
         observations = switch_two_leading_dims(observations)
+        resets = switch_two_leading_dims(resets)
 
         # Merge batch_dim and agent_dim
         observations = merge_batch_and_agent_dim_of_time_major_sequence(observations)
+        resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
         # Unroll target network
-        target_qs_out, _ = snt.static_unroll(
-            self._target_q_network, observations, self._target_q_network.initial_state(B * N)
-        )
+        target_qs_out = unroll_rnn(self._target_q_network, observations, resets)
 
         # Expand batch and agent_dim
         target_qs_out = expand_batch_and_agent_dim_of_time_major_sequence(target_qs_out, B, N)
@@ -109,9 +109,7 @@ class QMIXSystem(IDRQNSystem):
 
         with tf.GradientTape() as tape:
             # Unroll online network
-            qs_out, _ = snt.static_unroll(
-                self._q_network, observations, self._q_network.initial_state(B * N)
-            )
+            qs_out = unroll_rnn(self._q_network, observations, resets)
 
             # Expand batch and agent_dim
             qs_out = expand_batch_and_agent_dim_of_time_major_sequence(qs_out, B, N)
@@ -146,9 +144,7 @@ class QMIXSystem(IDRQNSystem):
 
             # TD-Error Loss
             loss = 0.5 * tf.square(targets - chosen_action_qs)
-
-            # Mask out zero-padded timesteps
-            loss = self._apply_mask(loss, zero_padding_mask)
+            loss = tf.reduce_mean(loss)
 
         # Get trainable variables
         variables = (*self._q_network.trainable_variables, *self._mixer.trainable_variables)

@@ -66,6 +66,8 @@ class MAMuJoCo(BaseEnvironment):
             },
         }
 
+        self.max_episode_length = 1000
+
     def reset(self):
         self._environment.reset()
 

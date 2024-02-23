@@ -13,7 +13,6 @@
 # limitations under the License.
 
 """Implementation of QMIX+CQL"""
-import sonnet as snt
 import tensorflow as tf
 
 from og_marl.tf2.systems.qmix import QMIXSystem
@@ -25,6 +24,7 @@ from og_marl.tf2.utils import (
     merge_batch_and_agent_dim_of_time_major_sequence,
     set_growing_gpu_memory,
     switch_two_leading_dims,
+    unroll_rnn,
 )
 
 set_growing_gpu_memory()
@@ -38,8 +38,8 @@ class QMIXCQLSystem(QMIXSystem):
         self,
         environment,
         logger,
-        num_ood_actions=5,
-        cql_weight=1.0,
+        num_ood_actions=10,
+        cql_weight=5.0,
         linear_layer_dim=64,
         recurrent_layer_dim=64,
         mixer_embed_dim=32,
@@ -66,21 +66,21 @@ class QMIXCQLSystem(QMIXSystem):
         self._num_ood_actions = num_ood_actions
         self._cql_weight = cql_weight
 
-    # @tf.function(jit_compile=True)
+    @tf.function(jit_compile=True)
     def _tf_train_step(self, train_step, batch):
-        batch = batched_agents(self._environment.possible_agents, batch)
+        # batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
         observations = batch["observations"]  # (B,T,N,O)
-        actions = tf.cast(batch["actions"], "int32")  # (B,T,N)
-        env_states = batch["state"]  # (B,T,S)
+        actions = batch["actions"]  # (B,T,N)
+        env_states = batch["infos"]["state"]  # (B,T,S)
         rewards = batch["rewards"]  # (B,T,N)
-        # truncations = batch["truncations"]  # (B,T,N)
+        truncations = batch["truncations"]  # (B,T,N)
         terminals = batch["terminals"]  # (B,T,N)
-        zero_padding_mask = batch["mask"]  # (B,T)
-        legal_actions = batch["legals"]  # (B,T,N,A)
+        legal_actions = batch["infos"]["legals"]  # (B,T,N,A)
 
-        done = terminals
+        # When to reset the RNN hidden state
+        resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
 
         # Get dims
         B, T, N, A = legal_actions.shape
@@ -91,14 +91,14 @@ class QMIXCQLSystem(QMIXSystem):
 
         # Make time-major
         observations = switch_two_leading_dims(observations)
+        resets = switch_two_leading_dims(resets)
 
         # Merge batch_dim and agent_dim
         observations = merge_batch_and_agent_dim_of_time_major_sequence(observations)
+        resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
         # Unroll target network
-        target_qs_out, _ = snt.static_unroll(
-            self._target_q_network, observations, self._target_q_network.initial_state(B * N)
-        )
+        target_qs_out = unroll_rnn(self._target_q_network, observations, resets)
 
         # Expand batch and agent_dim
         target_qs_out = expand_batch_and_agent_dim_of_time_major_sequence(target_qs_out, B, N)
@@ -108,9 +108,7 @@ class QMIXCQLSystem(QMIXSystem):
 
         with tf.GradientTape() as tape:
             # Unroll online network
-            qs_out, _ = snt.static_unroll(
-                self._q_network, observations, self._q_network.initial_state(B * N)
-            )
+            qs_out = unroll_rnn(self._q_network, observations, resets)
 
             # Expand batch and agent_dim
             qs_out = expand_batch_and_agent_dim_of_time_major_sequence(qs_out, B, N)
@@ -134,11 +132,13 @@ class QMIXCQLSystem(QMIXSystem):
             )
 
             # Compute targets
-            targets = rewards[:, :-1] + (1 - done[:, :-1]) * self._discount * target_max_qs[:, 1:]
+            targets = (
+                rewards[:, :-1] + (1 - terminals[:, :-1]) * self._discount * target_max_qs[:, 1:]
+            )
             targets = tf.stop_gradient(targets)
 
             # TD-Error Loss
-            loss = 0.5 * tf.square(targets - chosen_action_qs[:, :-1])
+            td_loss = tf.reduce_mean(0.5 * tf.square(targets - chosen_action_qs[:, :-1]))
 
             #############
             #### CQL ####
@@ -163,17 +163,16 @@ class QMIXCQLSystem(QMIXSystem):
             all_mixed_ood_qs.append(chosen_action_qs)  # [B, T, Ra + 1]
             all_mixed_ood_qs = tf.concat(all_mixed_ood_qs, axis=-1)
 
-            cql_loss = self._apply_mask(
-                tf.reduce_logsumexp(all_mixed_ood_qs, axis=-1, keepdims=True)[:, :-1],
-                zero_padding_mask,
-            ) - self._apply_mask(chosen_action_qs[:, :-1], zero_padding_mask)
+            cql_loss = tf.reduce_mean(
+                tf.reduce_logsumexp(all_mixed_ood_qs, axis=-1, keepdims=True)[:, :-1]
+            ) - tf.reduce_mean(chosen_action_qs[:, :-1])
 
             #############
             #### end ####
             #############
 
             # Mask out zero-padded timesteps
-            loss = self._apply_mask(loss, zero_padding_mask) + cql_loss
+            loss = td_loss + cql_loss
 
         # Get trainable variables
         variables = (*self._q_network.trainable_variables, *self._mixer.trainable_variables)

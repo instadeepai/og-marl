@@ -116,6 +116,8 @@ class SMACv2(BaseEnvironment):
             },
         }
 
+        self.max_episode_length = self._environment.episode_limit
+
     def reset(self):
         """Resets the env."""
         # Reset the environment

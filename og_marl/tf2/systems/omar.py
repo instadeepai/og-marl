@@ -25,6 +25,7 @@ from og_marl.tf2.utils import (
     expand_batch_and_agent_dim_of_time_major_sequence,
     merge_batch_and_agent_dim_of_time_major_sequence,
     switch_two_leading_dims,
+    unroll_rnn,
 )
 
 
@@ -40,14 +41,12 @@ class OMARSystem(IDDPGCQLSystem):
         critic_learning_rate=3e-4,
         policy_learning_rate=1e-3,
         add_agent_id_to_obs=False,
-        num_ood_actions=4,  # CQL
-        cql_weight=10.0,  # CQL
+        num_ood_actions=10,  # CQL
+        cql_weight=5.0,  # CQL
         cql_sigma=0.2,  # CQL
-        target_action_gap=10.0,  # CQL
-        cql_alpha_learning_rate=3e-4,  # CQL
         omar_iters=3,  # OMAR
-        omar_num_samples=5,  # OMAR
-        omar_num_elites=5,  # OMAR
+        omar_num_samples=10,  # OMAR
+        omar_num_elites=10,  # OMAR
         omar_sigma=2.0,  # OMAR
         omar_coe=0.7,  # OMAR
     ):
@@ -64,8 +63,6 @@ class OMARSystem(IDDPGCQLSystem):
             num_ood_actions=num_ood_actions,
             cql_weight=cql_weight,
             cql_sigma=cql_sigma,
-            target_action_gap=target_action_gap,
-            cql_alpha_learning_rate=cql_alpha_learning_rate,
         )
 
         self._omar_iters = omar_iters
@@ -77,22 +74,18 @@ class OMARSystem(IDDPGCQLSystem):
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, batch):
-        batch = batched_agents(self._environment.possible_agents, batch)
+        # batch = batched_agents(self._environment.possible_agents, batch)
 
         # Unpack the batch
         observations = batch["observations"]  # (B,T,N,O)
         actions = batch["actions"]  # (B,T,N,A)
-        env_states = batch["state"]  # (B,T,S)
+        env_states = batch["infos"]["state"]   # (B,T,S)
         rewards = batch["rewards"]  # (B,T,N)
-        # truncations = batch["truncations"]  # (B,T,N)
+        truncations = batch["truncations"]  # (B,T,N)
         terminals = batch["terminals"]  # (B,T,N)
-        zero_padding_mask = batch["mask"]  # (B,T)
 
-        # done = tf.cast(
-        #     tf.logical_or(tf.cast(truncations, "bool"), tf.cast(terminals, "bool")),
-        #     "float32",
-        # )
-        done = terminals
+        # When to reset the RNN hidden state
+        resets = tf.maximum(terminals, truncations) # equivalent to logical 'or'
 
         # Get dims
         B, T, N, A = actions.shape[:4]
@@ -103,33 +96,33 @@ class OMARSystem(IDDPGCQLSystem):
 
         # Make time-major
         observations = switch_two_leading_dims(observations)
+        resets = switch_two_leading_dims(resets)
         replay_actions = switch_two_leading_dims(actions)
         rewards = switch_two_leading_dims(rewards)
-        done = switch_two_leading_dims(done)
-        zero_padding_mask = switch_two_leading_dims(zero_padding_mask)
+        terminals = switch_two_leading_dims(terminals)
         env_states = switch_two_leading_dims(env_states)
 
         # Unroll target policy
-        target_actions, _ = snt.static_unroll(
+        target_actions = unroll_rnn(
             self._target_policy_network,
             merge_batch_and_agent_dim_of_time_major_sequence(observations),
-            self._target_policy_network.initial_state(B * N),
+            merge_batch_and_agent_dim_of_time_major_sequence(resets),
         )
         target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
         # Target critics
         target_qs_1 = self._target_critic_network_1(
-            observations, env_states, target_actions, target_actions
+            env_states, target_actions
         )
         target_qs_2 = self._target_critic_network_2(
-            observations, env_states, target_actions, target_actions
+            env_states, target_actions
         )
 
         # Take minimum between two target critics
         target_qs = tf.minimum(target_qs_1, target_qs_2)
 
         # Compute Bellman targets
-        targets = rewards[:-1] + self._discount * (1 - done[:-1]) * tf.squeeze(
+        targets = rewards[:-1] + self._discount * (1 - terminals[:-1]) * tf.squeeze(
             target_qs[1:], axis=-1
         )
 
@@ -137,26 +130,26 @@ class OMARSystem(IDDPGCQLSystem):
         with tf.GradientTape(persistent=True) as tape:
             # Online critics
             qs_1 = tf.squeeze(
-                self._critic_network_1(observations, env_states, replay_actions, replay_actions),
+                self._critic_network_1(env_states, replay_actions),
                 axis=-1,
             )
             qs_2 = tf.squeeze(
-                self._critic_network_2(observations, env_states, replay_actions, replay_actions),
+                self._critic_network_2(env_states, replay_actions),
                 axis=-1,
             )
 
             # Squared TD-error
-            critic_loss_1 = 0.5 * (targets - qs_1[:-1]) ** 2
-            critic_loss_2 = 0.5 * (targets - qs_2[:-1]) ** 2
+            critic_loss_1 = tf.reduce_mean(0.5 * (targets - qs_1[:-1]) ** 2)
+            critic_loss_2 = tf.reduce_mean(0.5 * (targets - qs_2[:-1]) ** 2)
 
             ###########
             ### CQL ###
             ###########
 
-            online_actions, _ = snt.static_unroll(
+            online_actions = unroll_rnn(
                 self._policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
-                self._policy_network.initial_state(B * N),
+                merge_batch_and_agent_dim_of_time_major_sequence(resets),
             )
             online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
 
@@ -191,13 +184,13 @@ class OMARSystem(IDDPGCQLSystem):
 
             ood_qs_1 = (
                 self._critic_network_1(
-                    repeat_observations, repeat_env_states, random_ood_actions, random_ood_actions
+                    repeat_env_states, random_ood_actions
                 )[:-1]
                 - random_ood_action_log_pi
             )
             ood_qs_2 = (
                 self._critic_network_2(
-                    repeat_observations, repeat_env_states, random_ood_actions, random_ood_actions
+                    repeat_env_states, random_ood_actions
                 )[:-1]
                 - random_ood_action_log_pi
             )
@@ -222,18 +215,14 @@ class OMARSystem(IDDPGCQLSystem):
 
             current_ood_qs_1 = (
                 self._critic_network_1(
-                    repeat_observations[:-1],
                     repeat_env_states[:-1],
-                    current_ood_actions[:-1],
                     current_ood_actions[:-1],
                 )
                 - ood_actions_log_prob[:-1]
             )
             current_ood_qs_2 = (
                 self._critic_network_2(
-                    repeat_observations[:-1],
                     repeat_env_states[:-1],
-                    current_ood_actions[:-1],
                     current_ood_actions[:-1],
                 )
                 - ood_actions_log_prob[:-1]
@@ -241,18 +230,14 @@ class OMARSystem(IDDPGCQLSystem):
 
             next_current_ood_qs_1 = (
                 self._critic_network_1(
-                    repeat_observations[:-1],
                     repeat_env_states[:-1],
-                    current_ood_actions[1:],
                     current_ood_actions[1:],
                 )
                 - ood_actions_log_prob[1:]
             )
             next_current_ood_qs_2 = (
                 self._critic_network_2(
-                    repeat_observations[:-1],
                     repeat_env_states[:-1],
-                    current_ood_actions[1:],
                     current_ood_actions[1:],
                 )
                 - ood_actions_log_prob[1:]
@@ -273,45 +258,29 @@ class OMARSystem(IDDPGCQLSystem):
             all_ood_qs_1 = tf.concat((ood_qs_1, current_ood_qs_1, next_current_ood_qs_1), axis=2)
             all_ood_qs_2 = tf.concat((ood_qs_2, current_ood_qs_2, next_current_ood_qs_2), axis=2)
 
-            def masked_mean(x):
-                return tf.reduce_sum(
-                    x * tf.expand_dims(zero_padding_mask[:-1], axis=-1)
-                ) / tf.reduce_sum(zero_padding_mask[:-1])
-
-            cql_loss_1 = masked_mean(
+            cql_loss_1 = tf.reduce_mean(
                 tf.reduce_logsumexp(all_ood_qs_1, axis=2, keepdims=False)
-            ) - masked_mean(qs_1[:-1])
-            cql_loss_2 = masked_mean(
+            ) - tf.reduce_mean(qs_1[:-1])
+            cql_loss_2 = tf.reduce_mean(
                 tf.reduce_logsumexp(all_ood_qs_2, axis=2, keepdims=False)
-            ) - masked_mean(qs_2[:-1])
-
-            # cql_alpha = tf.exp(self._cql_log_alpha)
-            # cql_loss_1 = cql_alpha * (cql_loss_1 - self._target_action_gap)
-            # cql_loss_2 = cql_alpha * (cql_loss_2 - self._target_action_gap)
+            ) - tf.reduce_mean(qs_2[:-1])
 
             critic_loss_1 += self._cql_weight * cql_loss_1
             critic_loss_2 += self._cql_weight * cql_loss_2
 
-            # cql_alpha_loss = (- cql_loss_1 - cql_loss_2) * 0.5
-
             ### END CQL ###
-
-            # Masked mean
-            critic_mask = tf.squeeze(tf.stack([zero_padding_mask[:-1]] * N, axis=2))
-            critic_loss_1 = tf.reduce_sum(critic_loss_1 * critic_mask) / tf.reduce_sum(critic_mask)
-            critic_loss_2 = tf.reduce_sum(critic_loss_2 * critic_mask) / tf.reduce_sum(critic_mask)
             critic_loss = (critic_loss_1 + critic_loss_2) / 2
 
             # Policy Loss
             # Unroll online policy
-            onlin_actions, _ = snt.static_unroll(
+            onlin_actions = unroll_rnn(
                 self._policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
-                self._policy_network.initial_state(B * N),
+                merge_batch_and_agent_dim_of_time_major_sequence(resets),
             )
             curr_pol_out = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
 
-            pred_qvals = self._critic_network_1(observations, env_states, curr_pol_out, actions)
+            pred_qvals = self._critic_network_1(env_states, curr_pol_out)
 
             omar_mu = tf.zeros_like(curr_pol_out) + self._init_omar_mu
             omar_sigma = tf.zeros_like(curr_pol_out) + self._init_omar_sigma
@@ -339,7 +308,7 @@ class OMARSystem(IDDPGCQLSystem):
                     cem_sampled_acs, (T, -1, *cem_sampled_acs.shape[3:])
                 )
                 all_pred_qvals = self._critic_network_1(
-                    observations, env_states, formatted_cem_sampled_acs, actions
+                    env_states, formatted_cem_sampled_acs
                 )
                 all_pred_qvals = tf.reshape(all_pred_qvals, (T, B, self._omar_num_samples, N))
                 all_pred_qvals = tf.transpose(all_pred_qvals, (0, 1, 3, 2))
@@ -379,15 +348,10 @@ class OMARSystem(IDDPGCQLSystem):
             max_acs = tf.gather(candidate_acs, max_ac_inds, batch_dims=-1)
             max_acs = tf.stop_gradient(tf.reshape(max_acs, max_acs.shape[:-1]))
 
-            zero_padding_mask = tf.expand_dims(zero_padding_mask, axis=-1)
-
-            def masked_mean(x):
-                return tf.reduce_sum(x * zero_padding_mask) / tf.reduce_sum(zero_padding_mask)
-
             policy_loss = (
-                self._omar_coe * masked_mean(tf.reduce_mean((curr_pol_out - max_acs) ** 2, axis=-1))
-                - (1 - self._omar_coe) * masked_mean(tf.squeeze(pred_qvals))
-                + masked_mean(tf.reduce_mean(curr_pol_out**2, axis=-1)) * 1e-3
+                self._omar_coe * tf.reduce_mean(tf.reduce_mean((curr_pol_out - max_acs) ** 2, axis=-1))
+                - (1 - self._omar_coe) * tf.reduce_mean(tf.squeeze(pred_qvals))
+                + tf.reduce_mean(tf.reduce_mean(curr_pol_out**2, axis=-1)) * 1e-3
             )
 
         # Train critics
@@ -397,11 +361,6 @@ class OMARSystem(IDDPGCQLSystem):
         )
         gradients = tape.gradient(critic_loss, variables)
         self._critic_optimizer.apply(gradients, variables)
-
-        # # Optimise CQL alpha
-        # variables = [self._cql_log_alpha]
-        # gradients = tape.gradient(cql_alpha_loss, variables)
-        # self._cql_alpha_optimizer.apply(gradients, variables)
 
         # Train policy
         variables = (*self._policy_network.trainable_variables,)
@@ -430,7 +389,6 @@ class OMARSystem(IDDPGCQLSystem):
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),
             "Mean Critic Loss": (critic_loss),
             "Policy Loss": policy_loss,
-            # "CQL Alpha Loss": cql_alpha_loss,
             "CQL Loss": cql_loss_1,
         }
 

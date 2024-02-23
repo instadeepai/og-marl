@@ -21,6 +21,118 @@ import requests
 import tensorflow as tf
 import tree
 
+VAULT_INFO = {
+    "smac_v1": {
+        "3m": {
+            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3m.zip"
+        },
+        "8m": {
+            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/8m.zip"
+        },
+        "5m_vs_6m": {
+            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/5m_vs_6m.zip"
+        },
+        "2s3z": {
+            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2s3z.zip"
+        },
+        "3s5z_vs_3s6z": {
+            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3s5z_vs_3s6z.zip"
+        },
+        "2c_vs_64zg": {
+            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2c_vs_64zg.zip"
+        },
+    },
+    "smac_v2": {
+        "terran_5_vs_5": {
+            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/terran_5_vs_5.zip"
+        },
+    },
+    "mamujoco": {
+        "2ant": {
+            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2ant.zip"
+        },
+        "2halfcheetah": {
+            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2halfcheetah.zip"
+        },
+        "4ant": {
+            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/4ant.zip"
+        },
+    }
+}
+
+DATASET_INFO = {
+    "smac_v1": {
+        "3m": {"url": "https://tinyurl.com/3m-dataset", "sequence_length": 20, "period": 10},
+        "8m": {"url": "https://tinyurl.com/8m-dataset", "sequence_length": 20, "period": 10},
+        "5m_vs_6m": {
+            "url": "https://tinyurl.com/5m-vs-6m-dataset",
+            "sequence_length": 20,
+            "period": 10,
+        },
+        "2s3z": {"url": "https://tinyurl.com/2s3z-dataset", "sequence_length": 20, "period": 10},
+        "3s5z_vs_3s6z": {
+            "url": "https://tinyurl.com/3s5z-vs-3s6z-dataset3",
+            "sequence_length": 20,
+            "period": 10,
+        },
+        "2c_vs_64zg": {
+            "url": "https://tinyurl.com/2c-vs-64zg-dataset",
+            "sequence_length": 20,
+            "period": 10,
+        },
+        "27m_vs_30m": {
+            "url": "https://tinyurl.com/27m-vs-30m-dataset",
+            "sequence_length": 20,
+            "period": 10,
+        },
+    },
+    "smac_v2": {
+        "terran_5_vs_5": {
+            "url": "https://tinyurl.com/terran-5-vs-5-dataset",
+            "sequence_length": 20,
+            "period": 10,
+        },
+        "zerg_5_vs_5": {
+            "url": "https://tinyurl.com/zerg-5-vs-5-dataset",
+            "sequence_length": 20,
+            "period": 10,
+        },
+        "terran_10_vs_10": {
+            "url": "https://tinyurl.com/terran-10-vs-10-dataset",
+            "sequence_length": 20,
+            "period": 10,
+        },
+    },
+    "flatland": {
+        "3trains": {
+            "url": "https://tinyurl.com/3trains-dataset",
+            "sequence_length": 20,  # TODO
+            "period": 10,
+        },
+        "5trains": {
+            "url": "https://tinyurl.com/5trains-dataset",
+            "sequence_length": 20,  # TODO
+            "period": 10,
+        },
+    },
+    "mamujoco": {
+        "2halfcheetah": {
+            "url": "https://tinyurl.com/2halfcheetah-dataset",
+            "sequence_length": 20,
+            "period": 10,
+        },
+        "2ant": {"url": "https://tinyurl.com/2ant-dataset", "sequence_length": 20, "period": 10},
+        "4ant": {"url": "https://tinyurl.com/4ant-dataset", "sequence_length": 20, "period": 10},
+    },
+    "voltage_control": {
+        "case33_3min_final": {
+            "url": "https://tinyurl.com/case33-3min-final-dataset",
+            "sequence_length": 20,
+            "period": 10,
+        },
+    },
+}
+
 
 def get_schema_dtypes(environment):
     act_type = list(environment.action_spaces.values())[0].dtype
@@ -46,27 +158,43 @@ def get_schema_dtypes(environment):
 
 
 class OfflineMARLDataset:
-    def __init__(self, environment, path_to_dataset, num_parallel_calls=None):
+    def __init__(
+        self,
+        environment,
+        env_name,
+        scenario_name,
+        dataset_type,
+        base_dataset_dir="./datasets",
+    ):
         self._environment = environment
         self._schema = get_schema_dtypes(environment)
         self._agents = environment.possible_agents
 
+        path_to_dataset = f"{base_dataset_dir}/{env_name}/{scenario_name}/{dataset_type}"
+
         file_path = Path(path_to_dataset)
+        sub_dir_to_idx = {}
+        idx = 0
+        for subdir in os.listdir(file_path):
+            if file_path.joinpath(subdir).is_dir():
+                sub_dir_to_idx[subdir] = idx
+                idx += 1
+
+        def get_fname_idx(file_name):
+            dir_idx = sub_dir_to_idx[file_name.split("/")[-2]] * 1000
+            return dir_idx + int(file_name.split("log_")[-1].split(".")[0])
+
         filenames = [str(file_name) for file_name in file_path.glob("**/*.tfrecord")]
+        filenames = sorted(filenames, key=get_fname_idx)
+
         filename_dataset = tf.data.Dataset.from_tensor_slices(filenames)
-        self._tf_dataset = filename_dataset.interleave(
-            lambda x: tf.data.TFRecordDataset(x, compression_type="GZIP").map(self._decode_fn),
-            cycle_length=None,
-            num_parallel_calls=num_parallel_calls,
-            deterministic=False,
-            block_length=None,
+        self.raw_dataset = filename_dataset.flat_map(
+            lambda x: tf.data.TFRecordDataset(x, compression_type="GZIP").map(self._decode_fn)
         )
 
-    def get_sequence_length(self):
-        for sample in self._tf_dataset:
-            T = sample["mask"].shape[0]
-            break
-        return T
+        self.period = DATASET_INFO[env_name][scenario_name]["period"]
+        self.sequence_length = DATASET_INFO[env_name][scenario_name]["sequence_length"]
+        self.max_episode_length = environment.max_episode_length
 
     def _decode_fn(self, record_bytes):
         example = tf.io.parse_single_example(
@@ -77,18 +205,25 @@ class OfflineMARLDataset:
         for key, dtype in self._schema.items():
             example[key] = tf.io.parse_tensor(example[key], dtype)
 
-        sample = {}
+        sample = {
+            "observations": {},
+            "actions": {},
+            "rewards": {},
+            "terminals": {},
+            "truncations": {},
+            "infos": {"legals": {}},
+        }
         for agent in self._agents:
-            sample[f"{agent}_observations"] = example[f"{agent}_observations"]
-            sample[f"{agent}_actions"] = example[f"{agent}_actions"]
-            sample[f"{agent}_rewards"] = example[f"{agent}_rewards"]
-            sample[f"{agent}_terminals"] = 1 - example[f"{agent}_discounts"]
-            sample[f"{agent}_truncations"] = tf.zeros_like(example[f"{agent}_discounts"])
-            sample[f"{agent}_legals"] = example[f"{agent}_legal_actions"]
+            sample["observations"][agent] = example[f"{agent}_observations"]
+            sample["actions"][agent] = example[f"{agent}_actions"]
+            sample["rewards"][agent] = example[f"{agent}_rewards"]
+            sample["terminals"][agent] = 1 - example[f"{agent}_discounts"]
+            sample["truncations"][agent] = tf.zeros_like(example[f"{agent}_discounts"])
+            sample["infos"]["legals"][agent] = example[f"{agent}_legal_actions"]
 
-        sample["mask"] = example["zero_padding_mask"]
-        sample["state"] = example["env_state"]
-        sample["episode_return"] = example["episode_return"]
+        sample["infos"]["mask"] = example["zero_padding_mask"]
+        sample["infos"]["state"] = example["env_state"]
+        sample["infos"]["episode_return"] = example["episode_return"]
 
         return sample
 
@@ -110,53 +245,17 @@ class OfflineMARLDataset:
             return getattr(self._tf_dataset, name)
 
 
-DATASET_URLS = {
-    "smac_v1": {
-        "3m": "https://tinyurl.com/3m-dataset",
-        "8m": "https://tinyurl.com/8m-dataset",
-        "5m_vs_6m": "https://tinyurl.com/5m-vs-6m-dataset",
-        "2s3z": "https://tinyurl.com/2s3z-dataset",
-        "3s5z_vs_3s6z": "https://tinyurl.com/3s5z-vs-3s6z-dataset3",
-        "2c_vs_64zg": "https://tinyurl.com/2c-vs-64zg-dataset",
-        "27m_vs_30m": "https://tinyurl.com/27m-vs-30m-dataset",
-    },
-    "smac_v2": {
-        "terran_5_vs_5": "https://tinyurl.com/terran-5-vs-5-dataset",
-        "zerg_5_vs_5": "https://tinyurl.com/zerg-5-vs-5-dataset",
-        "terran_10_vs_10": "https://tinyurl.com/terran-10-vs-10-dataset",
-    },
-    "flatland": {
-        "3_trains": "https://tinyurl.com/3trains-dataset",
-        "5_trains": "https://tinyurl.com/5trains-dataset",
-    },
-    "pettingzoo": {
-        "pursuit": "https://tinyurl.com/pursuit-dataset",
-        "pistonball": "https://tinyurl.com/pistonball-dataset",
-        "coop_pong": "https://tinyurl.com/coop-pong-dataset",
-        "kaz": "https://tinyurl.com/kaz-dataset",
-    },
-    "mamujoco": {
-        "2_halfcheetah": "https://tinyurl.com/2halfcheetah-dataset",
-        "2_ant": "https://tinyurl.com/2ant-dataset",
-        "4_ant": "https://tinyurl.com/4ant-dataset",
-    },
-    "voltage_control": {
-        "case33_3min_final": "https://tinyurl.com/case33-3min-final-dataset",
-    },
-    "city_learn": {"2022_all_phases": "https://tinyurl.com/2022-all-phases-dataset"},
-    "mpe": {"simple_adversary": "https://tinyurl.com/simple-adversary-dataset"},
-}
-
-
 def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./datasets"):
-    dataset_download_url = DATASET_URLS[env_name][scenario_name]
+    dataset_download_url = DATASET_INFO[env_name][scenario_name]["url"]
+
+    # TODO add check to see if dataset exists already.
 
     os.makedirs(f"{dataset_base_dir}/tmp/", exist_ok=True)
-    os.makedirs(f"{dataset_base_dir}/{env_name}", exist_ok=True)
+    os.makedirs(f"{dataset_base_dir}/{env_name}/", exist_ok=True)
 
     zip_file_path = f"{dataset_base_dir}/tmp/tmp_dataset.zip"
 
-    extraction_path = f"{dataset_base_dir}/{env_name}/"
+    extraction_path = f"{dataset_base_dir}/{env_name}"
 
     response = requests.get(dataset_download_url, stream=True)
     total_length = response.headers.get("content-length")
@@ -181,23 +280,19 @@ def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./data
     # Optionally, delete the zip file after extraction
     os.remove(zip_file_path)
 
+def download_and_unzip_vault(env_name, scenario_name, dataset_base_dir="./vaults"):
+    dataset_download_url = VAULT_INFO[env_name][scenario_name]["url"]
 
-FLASHBAX_DATASET_URLS = {
-    "smac_v1": {"8m": "https://s3.kao.instadeep.io/offline-marl-dataset/flashbax_8m.zip"}
-}
+    if check_directory_exists_and_not_empty(f"{dataset_base_dir}/{env_name}/{scenario_name}.vlt"):
+        print(f"Vault '{dataset_base_dir}/{env_name}/{scenario_name}' already exists.")
+        return
 
+    os.makedirs(f"{dataset_base_dir}/tmp/", exist_ok=True)
+    os.makedirs(f"{dataset_base_dir}/{env_name}/", exist_ok=True)
 
-def download_flashbax_dataset(env_name, scenario_name, base_dir="./datasets/flashbax"):
-    dataset_download_url = FLASHBAX_DATASET_URLS[env_name][scenario_name]
+    zip_file_path = f"{dataset_base_dir}/tmp/tmp_dataset.zip"
 
-    os.makedirs(f"{base_dir}/tmp/", exist_ok=True)
-    os.makedirs(f"{base_dir}/{env_name}/{scenario_name}", exist_ok=True)
-
-    zip_file_path = f"{base_dir}/tmp/tmp_dataset.zip"
-
-    extraction_path = f"{base_dir}/{env_name}/{scenario_name}"
-
-    print("Downloading dataset. This could take a few minutes.")
+    extraction_path = f"{dataset_base_dir}/{env_name}"
 
     response = requests.get(dataset_download_url, stream=True)
     total_length = response.headers.get("content-length")
@@ -221,3 +316,14 @@ def download_flashbax_dataset(env_name, scenario_name, base_dir="./datasets/flas
 
     # Optionally, delete the zip file after extraction
     os.remove(zip_file_path)
+
+def check_directory_exists_and_not_empty(path):
+    # Check if the directory exists
+    if os.path.exists(path) and os.path.isdir(path):
+        # Check if the directory is not empty
+        if not os.listdir(path):  # This will return an empty list if the directory is empty
+            return False  # Directory exists but is empty
+        else:
+            return True  # Directory exists and is not empty
+    else:
+        return False  # Directory does not exist

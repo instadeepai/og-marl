@@ -17,49 +17,6 @@ import os
 import tensorflow as tf
 
 
-def get_system(system_name, environment, logger, **kwargs):
-    if system_name == "idrqn":
-        from og_marl.tf2.systems.idrqn import IDRQNSystem
-
-        return IDRQNSystem(environment, logger, **kwargs)
-    elif system_name == "idrqn+cql":
-        from og_marl.tf2.systems.idrqn_cql import IDRQNCQLSystem
-
-        return IDRQNCQLSystem(environment, logger, **kwargs)
-    elif system_name == "idrqn+bcq":
-        from og_marl.tf2.systems.idrqn_bcq import IDRQNBCQSystem
-
-        return IDRQNBCQSystem(environment, logger, **kwargs)
-    elif system_name == "qmix":
-        from og_marl.tf2.systems.qmix import QMIXSystem
-
-        return QMIXSystem(environment, logger, **kwargs)
-    elif system_name == "qmix+cql":
-        from og_marl.tf2.systems.qmix_cql import QMIXCQLSystem
-
-        return QMIXCQLSystem(environment, logger, **kwargs)
-    elif system_name == "maicq":
-        from og_marl.tf2.systems.maicq import MAICQSystem
-
-        return MAICQSystem(environment, logger, **kwargs)
-    elif system_name == "qmix+bcq":
-        from og_marl.tf2.systems.qmix_bcq import QMIXBCQSystem
-
-        return QMIXBCQSystem(environment, logger, **kwargs)
-    elif system_name == "iddpg":
-        from og_marl.tf2.systems.iddpg import IDDPGSystem
-
-        return IDDPGSystem(environment, logger, **kwargs)
-    elif system_name == "iddpg+cql":
-        from og_marl.tf2.systems.iddpg_cql import IDDPGCQLSystem
-
-        return IDDPGCQLSystem(environment, logger, **kwargs)
-    elif system_name == "omar":
-        from og_marl.tf2.systems.omar import OMARSystem
-
-        return OMARSystem(environment, logger, **kwargs)
-
-
 def set_growing_gpu_memory() -> None:
     """Solve gpu mem issues."""
     os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
@@ -132,6 +89,26 @@ def concat_agent_id_to_obs(obs, agent_id, N):
     return obs
 
 
+def unroll_rnn(rnn_network, inputs, resets):
+    T, B = inputs.shape[:2]
+
+    outputs = []
+    hidden_state = rnn_network.initial_state(B)
+    for i in range(T):
+        output, hidden_state = rnn_network(inputs[i], hidden_state)
+        outputs.append(output)
+
+        hidden_state = (
+            tf.where(
+                tf.cast(tf.expand_dims(resets[i], axis=-1), "bool"),
+                rnn_network.initial_state(B)[0],
+                hidden_state[0],
+            ),
+        )  # hidden state wrapped im tuple
+
+    return tf.stack(outputs, axis=0)
+
+
 def batch_concat_agent_id_to_obs(obs):
     B, T, N = obs.shape[:3]  # batch size, timedim, num_agents
     is_vector_obs = len(obs.shape) == 4
@@ -169,19 +146,27 @@ def batched_agents(agents, batch_dict):
         "truncations": [],
     }
 
-    if f"{agents[0]}_legals" in batch_dict:
-        batched_agents["legals"] = []
-
     for agent in agents:
         for key in batched_agents:
-            batched_agents[key].append(batch_dict[agent + "_" + key])
-
+            batched_agents[key].append(batch_dict[key][agent])
     for key, value in batched_agents.items():
         batched_agents[key] = tf.stack(value, axis=2)
 
-    batched_agents["mask"] = tf.convert_to_tensor(batch_dict["mask"], "float32")
+    batched_agents["terminals"] = tf.cast(batched_agents["terminals"], "float32")
+    batched_agents["truncations"] = tf.cast(batched_agents["truncations"], "float32")
 
-    if "state" in batch_dict:
-        batched_agents["state"] = tf.convert_to_tensor(batch_dict["state"], "float32")
+    if "legals" in batch_dict["infos"]:
+        batched_agents["legals"] = []
+        for agent in agents:
+            batched_agents["legals"].append(batch_dict["infos"]["legals"][agent])
+        batched_agents["legals"] = tf.stack(batched_agents["legals"], axis=2)
+
+    if "state" in batch_dict["infos"]:
+        batched_agents["state"] = tf.convert_to_tensor(batch_dict["infos"]["state"], "float32")
+
+    if "mask" in batch_dict["infos"]:
+        batched_agents["mask"] = tf.convert_to_tensor(batch_dict["infos"]["mask"], "float32")
+    else:
+        batched_agents["mask"] = tf.ones_like(batched_agents["terminals"][:, :, 0], "float32")
 
     return batched_agents

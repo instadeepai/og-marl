@@ -118,13 +118,13 @@ class BaseMARLSystem:
                 ):  # TODO burn in period
                     # Sample replay buffer
                     start_time = time.time()
-                    batch = next(replay_buffer)
+                    experience = replay_buffer.sample()
                     end_time = time.time()
                     time_to_sample = end_time - start_time
 
                     # Train step
                     start_time = time.time()
-                    train_logs = self.train_step(batch)
+                    train_logs = self.train_step(experience)
                     end_time = time.time()
                     time_train_step = end_time - start_time
 
@@ -146,7 +146,6 @@ class BaseMARLSystem:
                     self._logger.write(train_logs)
 
                 if all(terminals.values()) or all(truncations.values()):
-                    replay_buffer.end_of_episode()
                     break
 
             episodes += 1
@@ -165,7 +164,7 @@ class BaseMARLSystem:
 
     def train_offline(
         self,
-        batched_dataset,
+        replay_buffer,
         max_trainer_steps=1e5,
         evaluate_every=1000,
         num_eval_episodes=4,
@@ -181,7 +180,7 @@ class BaseMARLSystem:
             if evaluate_every is not None and trainer_step_ctr % evaluate_every == 0:
                 print("EVALUATION")
                 eval_logs = self.evaluate(num_eval_episodes)
-                self._logger.write(eval_logs, force=True)
+                self._logger.write(eval_logs | {"Trainer Steps (eval)": trainer_step_ctr}, force=True)
                 if json_writer is not None:
                     json_writer.write(
                         trainer_step_ctr,
@@ -191,12 +190,12 @@ class BaseMARLSystem:
                     )
 
             start_time = time.time()
-            batch = next(batched_dataset)
+            experience = replay_buffer.sample()
             end_time = time.time()
             time_to_sample = end_time - start_time
 
             start_time = time.time()
-            train_logs = self.train_step(batch)
+            train_logs = self.train_step(experience)
             end_time = time.time()
             time_train_step = end_time - start_time
 
@@ -216,7 +215,7 @@ class BaseMARLSystem:
 
         print("FINAL EVALUATION")
         eval_logs = self.evaluate(num_eval_episodes)
-        self._logger.write(eval_logs, force=True)
+        self._logger.write(eval_logs | {"Trainer Steps (eval)": trainer_step_ctr}, force=True)
         if json_writer is not None:
             eval_logs = {f"absolute/{key.split('/')[1]}": value for key, value in eval_logs.items()}
             json_writer.write(
@@ -225,6 +224,7 @@ class BaseMARLSystem:
                 eval_logs["absolute/episode_return"],
                 trainer_step_ctr // evaluate_every,
             )
+            json_writer.close()
 
     def reset():
         """Called at the start of each new episode."""

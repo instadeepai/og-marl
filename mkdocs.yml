@@ -1,4 +1,4 @@
-site_name: OG-MARL Documentation
+site_name: Off-the-Grid MARL
 site_author: InstaDeep Research
 site_url: https://instadeepai.github.io/og-marl/
 site_dir: public
@@ -39,6 +39,9 @@ theme:
 nav:
   - Home: 'index.md'
   - Datasets: 'datasets.md'
+  - Baseline Results: 'baselines.md'
+  - Updates: 'updates.md'
+  - API Reference: 'api.md'
 
 markdown_extensions:
   - attr_list
