@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Implementation of IDRQN+CQL"""
-from typing import Dict
+from typing import Any, Dict
 
 import tensorflow as tf
 from chex import Numeric
@@ -68,7 +68,7 @@ class IDRQNCQLSystem(QMIXSystem):
         self._cql_weight = cql_weight
 
     @tf.function(jit_compile=True)
-    def _tf_train_step(self, train_step: int, experience: Dict[str, Tensor]) -> Dict[str, Numeric]:
+    def _tf_train_step(self, train_step: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N)

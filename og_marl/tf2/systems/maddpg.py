@@ -14,7 +14,7 @@
 
 """Implementation of MADDPG+CQL"""
 import copy
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Any, Dict, Optional, Sequence, Tuple
 
 import numpy as np
 import sonnet as snt
@@ -234,7 +234,7 @@ class MADDPGSystem(BaseMARLSystem):
         return logs  # type: ignore
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
-    def _tf_train_step(self, experience: Dict[str, Tensor]) -> Dict[str, Numeric]:
+    def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N,A)

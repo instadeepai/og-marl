@@ -14,7 +14,7 @@
 
 """Implementation of independent Q-learning (DRQN style)"""
 import copy
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Any, Dict, Optional, Sequence, Tuple
 
 import numpy as np
 import sonnet as snt
@@ -170,7 +170,7 @@ class IDRQNSystem(BaseMARLSystem):
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(
-        self, train_step_ctr: int, experience: Dict[str, Tensor]
+        self, train_step_ctr: int, experience: Dict[str, Any]
     ) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)

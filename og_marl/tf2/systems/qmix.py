@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Implementation of QMIX"""
-from typing import Dict, Tuple
+from typing import Any, Dict, Tuple
 
 import sonnet as snt
 import tensorflow as tf
@@ -72,7 +72,7 @@ class QMIXSystem(IDRQNSystem):
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(
-        self, train_step_ctr: int, experience: Dict[str, Tensor]
+        self, train_step_ctr: int, experience: Dict[str, Any]
     ) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Implementation of QMIX+BCQ"""
-from typing import Dict
+from typing import Any, Dict
 
 import sonnet as snt
 import tensorflow as tf
@@ -77,7 +77,7 @@ class QMIXBCQSystem(QMIXSystem):
         )
 
     @tf.function(jit_compile=True)
-    def _tf_train_step(self, train_step: int, experience: Dict[str, Tensor]) -> Dict[str, Numeric]:
+    def _tf_train_step(self, train_step: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N)

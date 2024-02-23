@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Implementation of MAICQ"""
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 import sonnet as snt
@@ -143,7 +143,7 @@ class MAICQSystem(QMIXSystem):
     def _tf_train_step(
         self,
         train_step_ctr: int,
-        experience: Dict[str, Tensor],
+        experience: Dict[str, Any],
     ) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)

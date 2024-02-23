@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Implementation of MADDPG+CQL"""
-from typing import Dict
+from typing import Any, Dict
 
 import numpy as np
 import tensorflow as tf
@@ -70,7 +70,7 @@ class MADDPGCQLSystem(MADDPGSystem):
         self._cql_sigma = cql_sigma
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
-    def _tf_train_step(self, experience: Dict[str, Tensor]) -> Dict[str, Numeric]:
+    def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N,A)
