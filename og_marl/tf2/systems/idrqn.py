@@ -19,6 +19,7 @@ from typing import Dict, Optional, Sequence, Tuple
 import numpy as np
 import sonnet as snt
 import tensorflow as tf
+import tensorflow_probability as tfp
 import tree
 from chex import Numeric
 from tensorflow import Tensor, Variable
@@ -148,12 +149,13 @@ class IDRQNSystem(BaseMARLSystem):
 
             epsilon = tf.maximum(1.0 - self._eps_dec * env_step_ctr, self._eps_min)
 
-            greedy_logits = tf.math.log(tf.one_hot(greedy_action, masked_q_values.shape[-1]))
-            logits = (1.0 - epsilon) * greedy_logits + epsilon * tf.math.log(agent_legal_actions)
-            logits = tf.expand_dims(logits, axis=0)
+            greedy_probs = tf.one_hot(greedy_action, masked_q_values.shape[-1])
+            explore_probs = (agent_legal_actions / tf.reduce_sum(agent_legal_actions))
+            probs = (1.0 - epsilon) * greedy_probs + epsilon * explore_probs
+            probs = tf.expand_dims(probs, axis=0)
 
             if explore:
-                action = tf.random.categorical(logits, num_samples=1)
+                action = tfp.distributions.Categorical(probs=probs).sample()[0]
             else:
                 action = greedy_action
 
@@ -171,15 +173,14 @@ class IDRQNSystem(BaseMARLSystem):
     def _tf_train_step(
         self, train_step_ctr: int, experience: Dict[str, Tensor]
     ) -> Dict[str, Numeric]:
-        experience = batched_agents(self._environment.possible_agents, experience)
-
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N)
+        env_states = experience["infos"]["state"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
-        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
-        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
-        legal_actions = experience["legals"]  # (B,T,N,A)
+        truncations = experience["truncations"]  # (B,T,N)
+        terminals = experience["terminals"]  # (B,T,N)
+        legal_actions = experience["infos"]["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'

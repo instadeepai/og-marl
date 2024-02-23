@@ -73,17 +73,15 @@ class QMIXCQLSystem(QMIXSystem):
         self._cql_weight = cql_weight
 
     @tf.function(jit_compile=True)
-    def _tf_train_step(self, train_step: int, batch: Dict[str, Tensor]) -> Dict[str, Numeric]:
-        batch = batched_agents(self._environment.possible_agents, batch)
-
+    def _tf_train_step(self, train_step: int, experience: Dict[str, Tensor]) -> Dict[str, Numeric]:
         # Unpack the batch
-        observations = batch["observations"]  # (B,T,N,O)
-        actions = tf.cast(batch["actions"], "int32")  # (B,T,N)
-        env_states = batch["state"]  # (B,T,S)
-        rewards = batch["rewards"]  # (B,T,N)
-        truncations = batch["truncations"]  # (B,T,N)
-        terminals = batch["terminals"]  # (B,T,N)
-        legal_actions = batch["legals"]  # (B,T,N,A)
+        observations = experience["observations"]  # (B,T,N,O)
+        actions = experience["actions"]  # (B,T,N)
+        env_states = experience["infos"]["state"]  # (B,T,S)
+        rewards = experience["rewards"]  # (B,T,N)
+        truncations = experience["truncations"]  # (B,T,N)
+        terminals = experience["terminals"]  # (B,T,N)
+        legal_actions = experience["infos"]["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'

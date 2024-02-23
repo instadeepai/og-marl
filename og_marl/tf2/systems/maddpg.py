@@ -236,15 +236,13 @@ class MADDPGSystem(BaseMARLSystem):
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, experience: Dict[str, Tensor]) -> Dict[str, Numeric]:
-        batch = batched_agents(self._environment.possible_agents, experience)
-
         # Unpack the batch
-        observations = batch["observations"]  # (B,T,N,O)
-        actions = batch["actions"]  # (B,T,N,A)
-        env_states = batch["state"]  # (B,T,S)
-        rewards = batch["rewards"]  # (B,T,N)
-        truncations = tf.cast(batch["truncations"], "float32")  # (B,T,N)
-        terminals = tf.cast(batch["terminals"], "float32")  # (B,T,N)
+        observations = experience["observations"]  # (B,T,N,O)
+        actions = experience["actions"]  # (B,T,N,A)
+        env_states = experience["infos"]["state"]   # (B,T,S)
+        rewards = experience["rewards"]  # (B,T,N)
+        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
+        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
 
         # When to reset the RNN hidden state
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'

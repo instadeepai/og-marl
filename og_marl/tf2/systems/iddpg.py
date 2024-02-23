@@ -104,7 +104,7 @@ class IDDPGSystem(BaseMARLSystem):
         critic_learning_rate: float = 3e-4,
         policy_learning_rate: float = 1e-3,
         add_agent_id_to_obs: bool = True,
-        random_exploration_timesteps: int = 50_000,
+        random_exploration_timesteps: int = 50_000, # for online training
     ):
         super().__init__(
             environment, logger, add_agent_id_to_obs=add_agent_id_to_obs, discount=discount
@@ -216,15 +216,13 @@ class IDDPGSystem(BaseMARLSystem):
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, experience: Dict[str, Tensor]) -> Dict[str, Numeric]:
-        batch = batched_agents(self._environment.possible_agents, experience)
-
         # Unpack the batch
-        observations = batch["observations"]  # (B,T,N,O)
-        actions = batch["actions"]  # (B,T,N,A)
-        env_states = batch["state"]  # (B,T,S)
-        rewards = batch["rewards"]  # (B,T,N)
-        truncations = tf.cast(batch["truncations"], "float32")  # (B,T,N)
-        terminals = tf.cast(batch["terminals"], "float32")  # (B,T,N)
+        observations = experience["observations"]  # (B,T,N,O)
+        actions = experience["actions"]  # (B,T,N,A)
+        env_states = experience["infos"]["state"]  # (B,T,S)
+        rewards = experience["rewards"]  # (B,T,N)
+        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
+        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
 
         # When to reset the RNN hidden state
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
@@ -285,15 +283,15 @@ class IDDPGSystem(BaseMARLSystem):
 
             # Policy Loss
             # Unroll online policy
-            onlin_actions = unroll_rnn(
+            online_actions = unroll_rnn(
                 self._policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
                 merge_batch_and_agent_dim_of_time_major_sequence(resets),
             )
-            online_actions = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
+            online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
 
-            qs_1 = self._critic_network_1(env_states, replay_actions)
-            qs_2 = self._critic_network_2(env_states, replay_actions)
+            qs_1 = self._critic_network_1(env_states, online_actions)
+            qs_2 = self._critic_network_2(env_states, online_actions)
             qs = tf.minimum(qs_1, qs_2)
 
             policy_loss = -tf.squeeze(qs, axis=-1) + 1e-3 * tf.reduce_mean(online_actions**2)

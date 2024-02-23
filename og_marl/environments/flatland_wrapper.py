@@ -32,14 +32,14 @@ def get_config_key(num_agents):
 
 
 FLATLAND_MAP_CONFIGS = {
-    "3_trains": {
+    "3trains": {
         "num_trains": 3,
         "num_cities": 2,
         "width": 25,
         "height": 25,
         "max_episode_len": 80,
     },
-    "5_trains": {
+    "5trains": {
         "num_trains": 5,
         "num_cities": 2,
         "width": 25,
@@ -92,6 +92,8 @@ class Flatland(BaseEnvironment):
                 agent: np.zeros((self._num_actions,), "int64") for agent in self.possible_agents
             },
         }
+
+        self.max_episode_length = map_config["max_episode_len"]
 
     def reset(self):
         self._done = False

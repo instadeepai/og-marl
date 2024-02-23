@@ -78,16 +78,14 @@ class OMARSystem(IDDPGCQLSystem):
         self._init_omar_mu, self._init_omar_sigma = 0.0, omar_sigma
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
-    def _tf_train_step(self, batch: Dict[str, Tensor]) -> Dict[str, Numeric]:
-        batch = batched_agents(self._environment.possible_agents, batch)
-
+    def _tf_train_step(self, experience: Dict[str, Tensor]) -> Dict[str, Numeric]:
         # Unpack the batch
-        observations = batch["observations"]  # (B,T,N,O)
-        actions = batch["actions"]  # (B,T,N,A)
-        env_states = batch["state"]  # (B,T,S)
-        rewards = batch["rewards"]  # (B,T,N)
-        truncations = batch["truncations"]  # (B,T,N)
-        terminals = batch["terminals"]  # (B,T,N)
+        observations = experience["observations"]  # (B,T,N,O)
+        actions = experience["actions"]  # (B,T,N,A)
+        env_states = experience["infos"]["state"]   # (B,T,S)
+        rewards = experience["rewards"]  # (B,T,N)
+        truncations = experience["truncations"]  # (B,T,N)
+        terminals = experience["terminals"]  # (B,T,N)
 
         # When to reset the RNN hidden state
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'

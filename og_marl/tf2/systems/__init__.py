@@ -49,10 +49,6 @@ def get_system(  # noqa: C901
         from og_marl.tf2.systems.iddpg_cql import IDDPGCQLSystem
 
         return IDDPGCQLSystem(environment, logger, **kwargs)
-    elif system_name == "facmac+cql":
-        from og_marl.tf2.systems.facmac_cql import FACMACCQLSystem
-
-        return FACMACCQLSystem(environment, logger, **kwargs)
     elif system_name == "omar":
         from og_marl.tf2.systems.omar import OMARSystem
 
@@ -65,9 +61,9 @@ def get_system(  # noqa: C901
         from og_marl.tf2.systems.maddpg_cql import MADDPGCQLSystem
 
         return MADDPGCQLSystem(environment, logger, **kwargs)
-    elif system_name == "facmac+cql":
-        from og_marl.tf2.systems.facmac_cql import FACMACCQLSystem
+    elif system_name == "dbc":
+        from og_marl.tf2.systems.bc import DicreteActionBehaviourCloning
 
-        return FACMACCQLSystem(environment, logger, **kwargs)
+        return DicreteActionBehaviourCloning(environment, logger, **kwargs)
     else:
         raise ValueError(f"Unknown system name: {system_name}")
