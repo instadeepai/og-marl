@@ -25,13 +25,11 @@ class PettingZooBase(BaseEnvironment):
 
     def __init__(self) -> None:
         """Constructor."""
-        self._environment = None
-        self.possible_agents = None
-
-        self._num_actions = None
-
-        self.action_spaces = {agent: None for agent in self.possible_agents}  # type: ignore
-        self.observation_spaces = {agent: None for agent in self.possible_agents}  # type: ignore
+        # self._environment = None
+        # self.possible_agents = None
+        # self._num_actions = None
+        # self.action_spaces = {agent: None for agent in self.possible_agents}  # type: ignore
+        # self.observation_spaces = {agent: None for agent in self.possible_agents}  # type: ignore
 
         self.info_spec: Dict[str, Any] = {}
 
@@ -47,7 +45,7 @@ class PettingZooBase(BaseEnvironment):
         info = {"state": env_state}
 
         # Convert observations to OLT format
-        observations = self._convert_observations(observations)
+        observations = self._convert_observations(observations, False)
 
         return observations, info
 
@@ -79,7 +77,7 @@ class PettingZooBase(BaseEnvironment):
                 )
         return observations
 
-    def _convert_observations(self, observations: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+    def _convert_observations(self, observations: Dict[str, np.ndarray], done: bool) -> Dict[str, np.ndarray]:
         """Convert observations"""
         raise NotImplementedError
 

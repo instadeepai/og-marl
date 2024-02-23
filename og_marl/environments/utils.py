@@ -30,7 +30,7 @@ def get_environment(env_name: str, scenario: str) -> BaseEnvironment:
 
         return MAMuJoCo(scenario)
     elif env_name == "gymnasium_mamujoco":
-        from og_marl.environments.gymnasium_mamujoco import MAMuJoCo
+        from og_marl.environments.gymnasium_mamujoco import MAMuJoCo  # type: ignore
 
         return MAMuJoCo(scenario)
     elif env_name == "flatland":

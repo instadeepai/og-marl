@@ -22,7 +22,7 @@ import supersuit
 from dm_env import specs
 from pettingzoo.butterfly import pistonball_v6
 
-from og_marl.environments.base import OLT  # TODO!
+from og_marl.environments.base import OLT  # type: ignore
 from og_marl.environments.pettingzoo_base import PettingZooBase
 
 
@@ -63,11 +63,11 @@ class Pistonball(PettingZooBase):
         state = np.expand_dims(state, axis=-1)
         self._state_history = np.concatenate((state, self._state_history[:, :, :3]), axis=-1)
 
-        return self._state_history
+        return self._state_history  # type: ignore
 
     def _convert_observations(
         self, observations: Dict[str, np.ndarray], done: bool
-    ) -> Dict[str, OLT]:
+    ) -> Dict[str, np.ndarray]:
         olt_observations = {}
         for _, agent in enumerate(self._agents):
             agent_obs = np.expand_dims(observations[agent][50:, :], axis=-1)
@@ -79,7 +79,7 @@ class Pistonball(PettingZooBase):
                 terminal=np.asarray(done, dtype="float32"),
             )
 
-        return olt_observations
+        return olt_observations  # type: ignore
 
     def extra_spec(self) -> Dict[str, specs.BoundedArray]:
         """Function returns extra spec (format) of the env.

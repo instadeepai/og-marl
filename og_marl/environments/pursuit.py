@@ -40,7 +40,7 @@ class Pursuit(PettingZooBase):
 
         self.info_spec = {"state": np.zeros(8 * 2 + 30 * 2, "float32")}
 
-    def _convert_observations(self, observations: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+    def _convert_observations(self, observations: Dict[str, np.ndarray], done: bool) -> Dict[str, np.ndarray]:
         """Convert observations."""
         return observations
 
