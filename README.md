@@ -104,14 +104,13 @@ We are in the process of migrating our datasets from TF Records to Flashbax Vaul
 | 🔴MPE | simple_adversary | 3 | Discrete. | Vector | Dense | Competitive | [source](https://pettingzoo.farama.org/environments/mpe/simple_adversary/) |
 
 ## Dataset API
-You can easily inspect and manipulate Vault datasets as follows:
 
-```python
-
-```
+We provide a simple demonstrative notebook of how to use OG-MARL's dataset API here:
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/instadeepai/og-marl/blob/main/examples/dataset_api_demo.ipynb)
 
 
 ### Dataset and Vault Locations
+For OG-MARL's systems, we require the following dataset storage structure:
 
 ```
 examples/
