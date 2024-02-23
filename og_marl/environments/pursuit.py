@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Dict
+
 import numpy as np
 from gymnasium.spaces import Box, Discrete
 from pettingzoo.sisl import pursuit_v4
@@ -24,7 +26,7 @@ class Pursuit(PettingZooBase):
 
     """Environment wrapper for Pursuit."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor for Pursuit"""
         self._environment = black_death_v3(pursuit_v4.parallel_env())
         self.possible_agents = self._environment.possible_agents
@@ -38,11 +40,11 @@ class Pursuit(PettingZooBase):
 
         self.info_spec = {"state": np.zeros(8 * 2 + 30 * 2, "float32")}
 
-    def _convert_observations(self, observations):
+    def _convert_observations(self, observations: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         """Convert observations."""
         return observations
 
-    def _create_state_representation(self, observations):
+    def _create_state_representation(self, observations: Dict[str, np.ndarray]) -> np.ndarray:
         pursuer_pos = [
             agent.current_position() for agent in self._environment.aec_env.env.env.env.pursuers
         ]
@@ -54,4 +56,4 @@ class Pursuit(PettingZooBase):
         state = np.concatenate(tuple(pursuer_pos + evader_pos), axis=-1).astype("float32")
         state = state / 16  # normalize
 
-        return state
+        return state  # type: ignore

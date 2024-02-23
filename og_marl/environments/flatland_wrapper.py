@@ -106,8 +106,7 @@ class Flatland(BaseEnvironment):
         return observations, info
 
     def step(
-        self,
-        actions: Dict[str, np.ndarray]
+        self, actions: Dict[str, np.ndarray]
     ) -> Tuple[
         Dict[str, np.ndarray],
         Dict[str, np.ndarray],
@@ -133,9 +132,7 @@ class Flatland(BaseEnvironment):
         legal_actions = self._get_legal_actions()
 
         # Observations
-        next_observations = self._convert_observations(
-            next_observations, info
-        )
+        next_observations = self._convert_observations(next_observations, info)
 
         # Make extras
         state = self._make_state_representation()
