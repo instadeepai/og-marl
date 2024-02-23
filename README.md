@@ -5,7 +5,7 @@
 </p>
 
 <h2 align="center">
-    <p>Off-the-Grid MARL: Offline Multi-Agent Reinforcement Learning Datasets and Baselines</p>
+    <p>Offline Multi-Agent Reinforcement Learning Datasets and Baselines</p>
 </h2>
 <p align="center">
     <a href="https://www.python.org/doc/versions/">
@@ -16,9 +16,6 @@
     </a>
     <a href="https://arxiv.org/abs/2302.00521">
         <img src="https://img.shields.io/badge/PrePrint-ArXiv-red" alt="ArXiv">
-    </a>
-    <a href="https://sites.google.com/view/og-marl">
-        <img src="https://img.shields.io/badge/Datasets-Download-green" alt="Website">
     </a>
 </p>
 
@@ -106,6 +103,7 @@ We are in the process of migrating our datasets from TF Records to Flashbax Vaul
 ## Dataset API
 
 We provide a simple demonstrative notebook of how to use OG-MARL's dataset API here:
+
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/instadeepai/og-marl/blob/main/examples/dataset_api_demo.ipynb)
 
 
