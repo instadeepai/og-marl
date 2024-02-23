@@ -15,11 +15,15 @@
 """Base class for OG-MARL Environment Wrappers."""
 
 
-class BaseEnvironment:
+from typing import Any, Dict, Tuple
 
+import numpy as np
+
+
+class BaseEnvironment:
     """Base environment class for OG-MARL."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor."""
         self._environment = None
         self._agents = None
@@ -27,31 +31,19 @@ class BaseEnvironment:
         self.num_actions = None
         self.num_agents = None
 
-    def reset(self):
-        """Resets the env.
-
-        Returns:
-        -------
-            Dict: observations
-
-        """
+    def reset(self) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
         raise NotImplementedError
 
-    def step(self, actions):
-        """Steps in env.
-
-        Args:
-        ----
-            actions (Dict[str, np.ndarray]): actions per agent.
-
-        Returns:
-        -------
-            observations, rewards, done
-
-        """
+    def step(self, actions: Dict[str, np.ndarray]) -> Tuple[
+        Dict[str, np.ndarray],
+        Dict[str, np.ndarray],
+        Dict[str, np.ndarray],
+        Dict[str, np.ndarray],
+        Dict[str, Any],
+    ]:
         raise NotImplementedError
 
-    def get_stats(self):
+    def get_stats(self) -> Dict:
         """Return extra stats to be logged.
 
         Returns:
@@ -61,7 +53,7 @@ class BaseEnvironment:
         """
         return {}
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> Any:
         """Expose any other attributes of the underlying environment.
 
         Args:
