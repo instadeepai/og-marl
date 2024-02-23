@@ -81,31 +81,54 @@ We have generated datasets on a diverse set of popular MARL environments. A list
 
 <br/>
 
+## Dataset Backends 🔌
+We are in the process of migrating our datasets from TF Records to Flashbax Vaults. Flashbax Vaults have the advantage of being significantly more flexible than the TF Record Datasets.
+
+### Flashbax Vaults ⚡
 | Environment | Scenario | Agents | Act | Obs | Reward | Types | Repo |
 |-----|----|----|-----|-----|----|----|-----|
 | 🔫SMAC v1 | 3m <br/> 8m <br/> 2s3z <br/> 5m_vs_6m <br/> 27m_vs_30m <br/> 3s5z_vs_3s6z <br/> 2c_vs_64zg| 3 <br/> 8 <br/> 5 <br/> 5 <br/> 27 <br/> 8 <br/> 2 | Discrete  | Vector   |  Dense | Homog <br/> Homog <br/> Heterog <br/> Homog <br/> Homog <br/> Heterog <br/> Homog |[source](https://github.com/oxwhirl/smac) |
 | 💣SMAC v2 | terran_5_vs_5 <br/> zerg_5_vs_5 <br/> terran_10_vs_10 | 5 <br/> 5 <br/> 10 | Discrete | Vector | Dense | Heterog | [source](https://github.com/oxwhirl/smacv2) |
-| 🐻PettingZoo | Pursuit  <br/> Co-op Pong <br/> PistonBall <br/> KAZ| 8 <br/> 2 <br/> 15 <br/> 2| Discrete <br/> Discrete <br/> Cont. <br/> Discrete | Pixels <br/> Pixels <br/> Pixels <br/> Vector | Dense | Homog <br/> Heterog <br/> Homog <br/> Heterog| [source](https://pettingzoo.farama.org/) |
 | 🚅Flatland | 3 Trains  <br/> 5 Trains | 3 <br/> 5 | Discrete | Vector | Sparse | Homog | [source](https://flatland.aicrowd.com/intro.html) |
 | 🐜MAMuJoCo | 2-HalfCheetah <br/> 2-Ant <br/> 4-Ant | 2 <br/> 2 <br/> 4 | Cont. | Vector | Dense | Heterog <br/> Homog <br/> Homog | [source](https://github.com/schroederdewitt/multiagent_mujoco) |
+
+
+### Legacy Datasets (still to be migrated to Vault) 👴
+| Environment | Scenario | Agents | Act | Obs | Reward | Types | Repo |
+|-----|----|----|-----|-----|----|----|-----|
+| 🐻PettingZoo | Pursuit  <br/> Co-op Pong <br/> PistonBall <br/> KAZ| 8 <br/> 2 <br/> 15 <br/> 2| Discrete <br/> Discrete <br/> Cont. <br/> Discrete | Pixels <br/> Pixels <br/> Pixels <br/> Vector | Dense | Homog <br/> Heterog <br/> Homog <br/> Heterog| [source](https://pettingzoo.farama.org/) |
 | 🏙️CityLearn | 2022_all_phases | 17 | Cont. | Vector | Dense | Homog | [source](https://github.com/intelligent-environments-lab/CityLearn) |
 | 🔌Voltage Control | case33_3min_final | 6 | Cont. | Vector | Dense | Homog | [source](https://github.com/Future-Power-Networks/MAPDN) |
 | 🔴MPE | simple_adversary | 3 | Discrete. | Vector | Dense | Competitive | [source](https://pettingzoo.farama.org/environments/mpe/simple_adversary/) |
 
 ## Dataset API
-We are in the process of migrating all datasets to Flashbax Vaults, rather than TF Record files. This makes datasets a lot easier to work with. You can easily inspect and manipulate datasets by reloading the data from Vault.
+You can easily inspect and manipulate Vault datasets as follows:
 
-### Code Snippet
 ```python
 
 ```
 
+
 ### Dataset and Vault Locations
+
 ```
 examples/
     |_> ...
 og_marl/
     |_> ...
+vaults/
+    |_> smac_v1/
+        |_> 3m.vlt/
+        |   |_> Good/
+        |   |_> Medium/
+        |   |_> Poor/
+        |_> ...
+    |_> smac_v2/
+        |_> terran_5_vs_5.vlt/
+        |   |_> Good/
+        |   |_> Medium/
+        |   |_> Poor/
+        |_> ...
 datasets/
     |_> smac_v1/
         |_> 3m/
@@ -120,7 +143,6 @@ datasets/
         |   |_> Poor/
         |_> ...
 ...
-
 ```
 
 ## See Also 🔎
@@ -152,6 +174,8 @@ If you use OG-MARL in your work, please cite the library using:
     booktitle = {Extended Abstract at the 2023 International Conference on Autonomous Agents and Multiagent Systems},
 }
 ```
+
+<img src="docs/assets/aamas2023.png" alt="AAMAS 2023" width="20%"/>
 
 ## Acknowledgements 🙏
 
