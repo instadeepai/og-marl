@@ -19,7 +19,6 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 from chex import Numeric
-from tensorflow import Tensor
 
 from og_marl.environments.base import BaseEnvironment
 from og_marl.loggers import BaseLogger

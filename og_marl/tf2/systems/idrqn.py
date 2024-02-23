@@ -169,9 +169,7 @@ class IDRQNSystem(BaseMARLSystem):
         return logs  # type: ignore
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
-    def _tf_train_step(
-        self, train_step_ctr: int, experience: Dict[str, Any]
-    ) -> Dict[str, Numeric]:
+    def _tf_train_step(self, train_step_ctr: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N)

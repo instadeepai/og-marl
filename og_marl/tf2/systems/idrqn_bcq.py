@@ -18,7 +18,6 @@ from typing import Any, Dict
 import sonnet as snt
 import tensorflow as tf
 from chex import Numeric
-from tensorflow import Tensor
 
 from og_marl.environments.base import BaseEnvironment
 from og_marl.loggers import BaseLogger
