@@ -16,10 +16,18 @@ import os
 import sys
 import zipfile
 from pathlib import Path
+from typing import Dict, List
 
+import jax
+import jax.numpy as jnp
+import matplotlib.pyplot as plt
 import requests
+import seaborn as sns
 import tensorflow as tf
 import tree
+from chex import Array
+from flashbax.vault import Vault
+from git import Optional
 
 VAULT_INFO = {
     "smac_v1": {
@@ -327,3 +335,103 @@ def check_directory_exists_and_not_empty(path):
             return True  # Directory exists and is not empty
     else:
         return False  # Directory does not exist
+
+def calculate_returns(
+    experience: Dict[str, Array],
+    reward_key: str = "rewards",
+    terminal_key: str = "terminals"
+) -> Array:
+    """Calculate the returns in a dataset of experience.
+
+    Args:
+        experience (Dict[str, Array]): experience coming from an OG-MARL vault.
+        reward_key (str, optional):
+            Dictionary key of the rewards in the experience data.
+            Defaults to "rewards".
+        terminal_key (str, optional):
+            Dictionary key of the terminals in the experience data.
+            Defaults to "terminals".
+
+    Returns:
+        Array: jnp array of returns for each episode.
+    """
+    # Experience is of dimension of (1, T, N, *E)
+    # We want all the time data, but just from one agent
+    experience_one_agent = jax.tree_map(lambda x: x[0, :, 0, ...], experience)
+    rewards = experience_one_agent[reward_key]
+    terminals = experience_one_agent[terminal_key]
+
+    def sum_rewards(terminals, rewards):
+        def scan_fn(carry, inputs):
+            terminal, reward = inputs
+            new_carry = carry + reward
+            new_carry = jax.lax.cond(
+                terminal.all(),
+                lambda _: reward,  # Reset the cumulative sum if terminal
+                lambda _: new_carry,  # Continue accumulating otherwise
+                operand=None
+            )
+            return new_carry, new_carry
+
+        _, cumulative_rewards = jax.lax.scan(
+            scan_fn,
+            jnp.zeros_like(terminals[0]),
+            (
+                # We shift the terminals one timestep rightwards,
+                # for our cumulative sum approach to work
+                jnp.pad(terminals, ((1,0)))[:-1],
+                rewards,
+            )
+        )
+        return cumulative_rewards[terminals == 1]
+
+    episode_returns = sum_rewards(terminals, rewards)
+    return episode_returns
+
+
+def analyse_vault(
+    vault_name: str,
+    vault_uids: Optional[List[str]] = None,
+    rel_dir: str = "vaults",
+    visualise: bool = False,
+) -> Dict[str, Array]:
+    """Analyse a vault by computing the returns of each dataset quality.
+
+    Args:
+        vault_name (str): Name of vault.
+        vault_uids (Optional[List[str]], optional):
+            List of UIDs to process.
+            Defaults to None, which uses all the subdirectories.
+        rel_dir (str, optional): Base location of vaults. Defaults to "vaults".
+        visualise (bool, optional):
+            Optionally plot a violin distribution of this data.
+            Defaults to False.
+
+    Returns:
+        Dict[str, Array]: Dictionary of {uid: episode_returns}
+    """
+    vault_uids = sorted(
+        next(os.walk(os.path.join(rel_dir, vault_name)))[1],
+        reverse=True,
+    )
+    all_uid_returns: Dict[str, Array] = {}  # Dictionary to store returns for each UID
+
+    for uid in vault_uids:
+        vlt = Vault(vault_name=vault_name, rel_dir=rel_dir, vault_uid=uid)
+        exp = vlt.read().experience
+        uid_returns = calculate_returns(exp)
+        all_uid_returns[uid] = uid_returns
+
+    if visualise:
+        sns.set_theme(style="whitegrid")  # Set seaborn theme with a light blue background
+        plt.figure(figsize=(8, 6))  # Adjust figsize as needed
+
+        sns.violinplot(data=list(all_uid_returns.values()), inner="point")
+        plt.title(f"Violin Distributions of Returns for {vault_name}")
+        plt.xlabel('Dataset Quality')
+        plt.ylabel('Episode Returns')
+        plt.xticks(range(len(all_uid_returns)), list(all_uid_returns.keys()))
+
+        plt.show()
+
+    return all_uid_returns
