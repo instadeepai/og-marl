@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Wrapper for Flatland."""
-from typing import Any, Tuple
+from typing import Any, Dict, Tuple
 
 import numpy as np
 from flatland.core.grid.grid4_utils import get_new_position
@@ -24,12 +24,7 @@ from flatland.envs.rail_env import RailEnv
 from flatland.envs.rail_generators import sparse_rail_generator
 from gymnasium.spaces import Box, Discrete
 
-from og_marl.environments.base import BaseEnvironment
-
-
-def get_config_key(num_agents):
-    return str(num_agents) + "_trains"
-
+from og_marl.environments.base import BaseEnvironment, Observations, ResetReturn, StepReturn
 
 FLATLAND_MAP_CONFIGS = {
     "3trains": {
@@ -50,7 +45,7 @@ FLATLAND_MAP_CONFIGS = {
 
 
 class Flatland(BaseEnvironment):
-    def __init__(self, map_name="5_trains"):
+    def __init__(self, map_name: str = "5_trains"):
         map_config = FLATLAND_MAP_CONFIGS[map_name]
 
         self._num_actions = 5
@@ -95,14 +90,14 @@ class Flatland(BaseEnvironment):
 
         self.max_episode_length = map_config["max_episode_len"]
 
-    def reset(self):
+    def reset(self) -> ResetReturn:
         self._done = False
 
         observations, info = self._environment.reset()
 
         legal_actions = self._get_legal_actions()
 
-        observations = self._convert_observations(observations, legal_actions, self._done, info)
+        observations = self._convert_observations(observations, info)
 
         state = self._make_state_representation()
 
@@ -110,7 +105,7 @@ class Flatland(BaseEnvironment):
 
         return observations, info
 
-    def step(self, actions):
+    def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         actions = {int(agent): action.item() for agent, action in actions.items()}
 
         # Step the Flatland environment
@@ -129,21 +124,19 @@ class Flatland(BaseEnvironment):
         legal_actions = self._get_legal_actions()
 
         # Observations
-        next_observations = self._convert_observations(
-            next_observations, legal_actions, self._done, info
-        )
+        next_observations = self._convert_observations(next_observations, info)
 
         # Make extras
         state = self._make_state_representation()
 
         info = {"state": state, "legals": legal_actions}
 
-        terminals = {agent: self._done for agent in self.possible_agents}
-        truncations = {agent: False for agent in self.possible_agents}
+        terminals = {agent: np.array(self._done) for agent in self.possible_agents}
+        truncations = {agent: np.array(False) for agent in self.possible_agents}
 
         return next_observations, rewards, terminals, truncations, info
 
-    def _get_legal_actions(self):
+    def _get_legal_actions(self) -> Dict[str, np.ndarray]:
         legal_actions = {}
         for agent in self.possible_agents:
             agent_id = int(agent)
@@ -161,7 +154,7 @@ class Flatland(BaseEnvironment):
 
         return legal_actions
 
-    def _make_state_representation(self):
+    def _make_state_representation(self) -> np.ndarray:
         state = []
         for i, _ in enumerate(self.possible_agents):
             agent = self._environment.agents[i]
@@ -179,17 +172,21 @@ class Flatland(BaseEnvironment):
             one_hot_state[agent.state] = 1
             state.append(one_hot_state)
         state = np.concatenate(state)
-        return state
+        return state  # type: ignore
 
-    def _convert_observations(self, observations, legal_actions, done, info):
+    def _convert_observations(
+        self,
+        observations: Dict[int, np.ndarray],
+        info: Dict[str, Dict[int, np.ndarray]],
+    ) -> Observations:
         new_observations = {}
-        for agent in self.possible_agents:
-            agent_id = int(agent)
+        for i, agent in enumerate(self.possible_agents):
+            agent_id = i
             norm_observation = normalize_observation(
                 observations[agent_id],
                 tree_depth=self._tree_depth,
             )
-            state = info["state"][int(agent)]  # train state
+            state = info["state"][agent_id]  # train state
             one_hot_state = np.zeros((7,), "float32")
             one_hot_state[state] = 1
             obs = np.concatenate([one_hot_state, norm_observation], axis=-1)
@@ -200,7 +197,7 @@ class Flatland(BaseEnvironment):
 ### RailEnv Wrappers from: https://gitlab.aicrowd.com/flatland/flatland/-/blob/master/flatland/contrib/wrappers/flatland_wrappers.py
 
 
-def find_all_cells_where_agent_can_choose(env: RailEnv):
+def find_all_cells_where_agent_can_choose(env: RailEnv):  # type: ignore
     """input: a RailEnv (or something which behaves similarly, e.g. a wrapped RailEnv),
 
     WHICH HAS BEEN RESET ALREADY!
@@ -241,7 +238,7 @@ def find_all_cells_where_agent_can_choose(env: RailEnv):
 # serve as the default preprocessor for the Tree obs builder.
 
 
-def max_lt(seq: np.ndarray, val: Any) -> Any:
+def max_lt(seq: np.ndarray, val: Any) -> Any:  # type: ignore
     """Get max in sequence.
 
     Return greatest item in seq for which item < val applies.
@@ -251,12 +248,12 @@ def max_lt(seq: np.ndarray, val: Any) -> Any:
     idx = len(seq) - 1
     while idx >= 0:
         if seq[idx] < val and seq[idx] >= 0 and seq[idx] > max_val:
-            max_val = seq[idx]
+            max_val = seq[idx]  # type: ignore
         idx -= 1
     return max_val
 
 
-def min_gt(seq: np.ndarray, val: Any) -> Any:
+def min_gt(seq: np.ndarray, val: Any) -> Any:  # type: ignore
     """Gets min in a sequence.
 
     Return smallest item in seq for which item > val applies.
@@ -266,12 +263,12 @@ def min_gt(seq: np.ndarray, val: Any) -> Any:
     idx = len(seq) - 1
     while idx >= 0:
         if seq[idx] >= val and seq[idx] < min_val:
-            min_val = seq[idx]
+            min_val = seq[idx]  # type: ignore
         idx -= 1
     return min_val
 
 
-def norm_obs_clip(
+def norm_obs_clip(  # type: ignore
     obs: np.ndarray,
     clip_min: int = -1,
     clip_max: int = 1,
@@ -297,12 +294,12 @@ def norm_obs_clip(
     if min_obs > max_obs:
         min_obs = max_obs
     if max_obs == min_obs:
-        return np.clip(np.array(obs) / max_obs, clip_min, clip_max)
+        return np.clip(np.array(obs) / max_obs, clip_min, clip_max)  # type: ignore
     norm = np.abs(max_obs - min_obs)
-    return np.clip((np.array(obs) - min_obs) / norm, clip_min, clip_max)
+    return np.clip((np.array(obs) - min_obs) / norm, clip_min, clip_max)  # type: ignore
 
 
-def _split_node_into_feature_groups(
+def _split_node_into_feature_groups(  # type: ignore
     node: Node,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Splits node into features."""
@@ -327,7 +324,7 @@ def _split_node_into_feature_groups(
     return data, distance, agent_data
 
 
-def _split_subtree_into_feature_groups(
+def _split_subtree_into_feature_groups(  # type: ignore
     node: Node, current_tree_depth: int, max_tree_depth: int
 ) -> Tuple:
     """Split subtree."""
@@ -358,7 +355,7 @@ def _split_subtree_into_feature_groups(
     return data, distance, agent_data
 
 
-def split_tree_into_feature_groups(
+def split_tree_into_feature_groups(  # type: ignore
     tree: Node, max_tree_depth: int
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """This function splits the tree into three difference arrays."""
@@ -375,12 +372,12 @@ def split_tree_into_feature_groups(
     return data, distance, agent_data
 
 
-def normalize_observation(
+def normalize_observation(  # type: ignore
     observation: Node, tree_depth: int, observation_radius: int = 0
 ) -> np.ndarray:
     """This function normalizes the observation used by the RL algorithm."""
     if observation is None:
-        return np.zeros(
+        return np.zeros(  # type: ignore
             11 * sum(np.power(4, i) for i in range(tree_depth + 1)),
             dtype=np.float32,
         )
@@ -393,4 +390,4 @@ def normalize_observation(
         np.concatenate((np.concatenate((data, distance)), agent_data)),
         dtype=np.float32,
     )
-    return normalized_obs
+    return normalized_obs  # type: ignore

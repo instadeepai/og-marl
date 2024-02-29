@@ -2,7 +2,7 @@
 line-length = 100
 
 [tool.ruff.lint]
-select = ["A","B","C","D","E","F","G","I","N","T","W"]  # Specify list of error codes to report.
+select = ["A","B","C","D","E","F","G","N","T","W"]  # Specify list of error codes to report.
 exclude = [
     ".tox",
     ".git",
@@ -49,3 +49,40 @@ pydocstyle.convention = "google"
 
 [tool.ruff.format]
 quote-style = "double"
+
+[tool.mypy]
+python_version = 3.9
+namespace_packages = true
+incremental = false
+cache_dir = ""
+warn_redundant_casts = true
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = false
+allow_redefinition = true
+disallow_untyped_calls = false
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = false
+strict_optional = true
+strict_equality = true
+explicit_package_bases = true
+follow_imports = "skip"
+ignore_missing_imports = true
+exclude = "jax"  # Ignoring until JAX systems are fully supported
+
+[[tool.mypy.overrides]]
+module = [
+    "gymnasium_robotics.*",
+    "cv2.*",
+    "tree.*",
+    "dm_env.*",
+    "supersuit.*",
+    "pettingzoo.*",
+    "var_voltage_control.*",
+    "smac.*",
+    "smacv2.*",
+    "flatland.*",
+    "flashbax.*",
+]

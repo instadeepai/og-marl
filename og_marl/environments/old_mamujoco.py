@@ -11,14 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Any, Dict
+
 import numpy as np
 from gymnasium.spaces import Box
 from multiagent_mujoco.mujoco_multi import MujocoMulti
 
-from og_marl.environments.base import BaseEnvironment
+from og_marl.environments.base import BaseEnvironment, ResetReturn, StepReturn
 
 
-def get_mamujoco_args(scenario):
+def get_mamujoco_args(scenario: str) -> Dict[str, Any]:
     env_args = {
         "agent_obsk": 1,
         "episode_limit": 1000,
@@ -42,7 +44,7 @@ class MAMuJoCo(BaseEnvironment):
 
     """Environment wrapper Multi-Agent MuJoCo."""
 
-    def __init__(self, scenario):
+    def __init__(self, scenario: str):
         env_args = get_mamujoco_args(scenario)
         self._environment = MujocoMulti(env_args=env_args)
 
@@ -68,7 +70,7 @@ class MAMuJoCo(BaseEnvironment):
 
         self.max_episode_length = 1000
 
-    def reset(self):
+    def reset(self) -> ResetReturn:
         self._environment.reset()
 
         observations = self._environment.get_obs()
@@ -81,7 +83,7 @@ class MAMuJoCo(BaseEnvironment):
 
         return observations, info
 
-    def step(self, actions):
+    def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         mujoco_actions = []
         for agent in self.possible_agents:
             mujoco_actions.append(actions[agent])
@@ -101,9 +103,9 @@ class MAMuJoCo(BaseEnvironment):
 
         info["state"] = self._environment.get_state()
 
-        return observations, rewards, terminals, trunctations, info
+        return observations, rewards, terminals, trunctations, info  # type: ignore
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> Any:
         """Expose any other attributes of the underlying environment."""
         if hasattr(self.__class__, name):
             return self.__getattribute__(name)

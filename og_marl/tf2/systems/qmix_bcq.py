@@ -13,13 +13,17 @@
 # limitations under the License.
 
 """Implementation of QMIX+BCQ"""
+from typing import Any, Dict
+
 import sonnet as snt
 import tensorflow as tf
+from chex import Numeric
 
+from og_marl.environments.base import BaseEnvironment
+from og_marl.loggers import BaseLogger
 from og_marl.tf2.systems.qmix import QMIXSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
-    batched_agents,
     expand_batch_and_agent_dim_of_time_major_sequence,
     gather,
     merge_batch_and_agent_dim_of_time_major_sequence,
@@ -34,17 +38,17 @@ class QMIXBCQSystem(QMIXSystem):
 
     def __init__(
         self,
-        environment,
-        logger,
-        bc_threshold=0.4,  # BCQ parameter
-        linear_layer_dim=64,
-        recurrent_layer_dim=64,
-        mixer_embed_dim=32,
-        mixer_hyper_dim=64,
-        discount=0.99,
-        target_update_period=200,
-        learning_rate=3e-4,
-        add_agent_id_to_obs=False,
+        environment: BaseEnvironment,
+        logger: BaseLogger,
+        bc_threshold: float = 0.4,  # BCQ parameter
+        linear_layer_dim: int = 64,
+        recurrent_layer_dim: int = 64,
+        mixer_embed_dim: int = 32,
+        mixer_hyper_dim: int = 64,
+        discount: float = 0.99,
+        target_update_period: int = 200,
+        learning_rate: float = 3e-4,
+        add_agent_id_to_obs: bool = False,
     ):
         super().__init__(
             environment,
@@ -72,17 +76,15 @@ class QMIXBCQSystem(QMIXSystem):
         )
 
     @tf.function(jit_compile=True)
-    def _tf_train_step(self, train_step, batch):
-        # batch = batched_agents(self._environment.possible_agents, batch)
-
+    def _tf_train_step(self, train_step: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
-        observations = batch["observations"]  # (B,T,N,O)
-        actions = batch["actions"]  # (B,T,N)
-        env_states = batch["infos"]["state"]  # (B,T,S)
-        rewards = batch["rewards"]  # (B,T,N)
-        truncations = batch["truncations"]  # (B,T,N)
-        terminals = batch["terminals"]  # (B,T,N)
-        legal_actions = batch["infos"]["legals"]  # (B,T,N,A)
+        observations = experience["observations"]  # (B,T,N,O)
+        actions = experience["actions"]  # (B,T,N)
+        env_states = experience["infos"]["state"]  # (B,T,S)
+        rewards = experience["rewards"]  # (B,T,N)
+        truncations = experience["truncations"]  # (B,T,N)
+        terminals = experience["terminals"]  # (B,T,N)
+        legal_actions = experience["infos"]["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'

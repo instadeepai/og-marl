@@ -1,4 +1,16 @@
-def get_system(system_name, environment, logger, **kwargs):  # noqa: C901
+from typing import Any
+
+from og_marl.environments.base import BaseEnvironment
+from og_marl.loggers import BaseLogger
+from og_marl.tf2.systems.base import BaseMARLSystem
+
+
+def get_system(  # noqa: C901
+    system_name: str,
+    environment: BaseEnvironment,
+    logger: BaseLogger,
+    **kwargs: Any,
+) -> BaseMARLSystem:
     # TODO: Fix the cognitive complexity here
 
     if system_name == "idrqn":
@@ -53,3 +65,5 @@ def get_system(system_name, environment, logger, **kwargs):  # noqa: C901
         from og_marl.tf2.systems.bc import DicreteActionBehaviourCloning
 
         return DicreteActionBehaviourCloning(environment, logger, **kwargs)
+    else:
+        raise ValueError(f"Unknown system name: {system_name}")

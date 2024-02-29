@@ -14,15 +14,21 @@
 
 """Implementation of TD3"""
 import copy
+from typing import Any, Dict, Optional, Sequence, Tuple
 
+import numpy as np
 import sonnet as snt
 import tensorflow as tf
 import tree
+from chex import Numeric
+from tensorflow import Tensor, Variable
 
+from og_marl.environments.base import BaseEnvironment
+from og_marl.loggers import BaseLogger
+from og_marl.replay_buffers import Experience
 from og_marl.tf2.systems.base import BaseMARLSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
-    batched_agents,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
     merge_batch_and_agent_dim_of_time_major_sequence,
@@ -31,76 +37,13 @@ from og_marl.tf2.utils import (
 )
 
 
-class StateAndJointActionCritic(snt.Module):
-    def __init__(self, num_agents, num_actions):
-        self.N = num_agents
-        self.A = num_actions
-
-        self._critic_network = snt.Sequential(
-            [
-                snt.Linear(256),
-                tf.keras.layers.ReLU(),
-                snt.Linear(256),
-                tf.keras.layers.ReLU(),
-                snt.Linear(1),
-            ]
-        )
-
-        super().__init__()
-
-    def __call__(
-        self, observations, states, agent_actions, other_actions, stop_other_actions_gradient=True
-    ):
-        """Forward pass of critic network.
-
-        observations [T,B,N,O]
-        states [T,B,S]
-        agent_actions [T,B,N,A]: the actions the agent took.
-        other_actions [T,B,N,A]: the actions the other agents took.
-        """
-        if stop_other_actions_gradient:
-            other_actions = tf.stop_gradient(other_actions)
-
-        # Make joint action
-        joint_actions = make_joint_action(agent_actions, other_actions)
-
-        # Repeat states for each agent
-        states = tf.stack([states] * self.N, axis=2)  # [T,B,S] -> [T,B,N,S]
-
-        # Concat states and joint actions
-        critic_input = tf.concat([states, joint_actions], axis=-1)
-
-        # Concat agent IDs to critic input
-        # critic_input = batch_concat_agent_id_to_obs(critic_input)
-
-        q_values = self._critic_network(critic_input)
-        return q_values
-
-
-def make_joint_action(agent_actions, other_actions):
-    """Method to construct the joint action.
-
-    agent_actions [T,B,N,A]: tensor of actions the agent took. Usually
-        the actions from the learnt policy network.
-    other_actions [[T,B,N,A]]: tensor of actions the agent took. Usually
-        the actions from the replay buffer.
-    """
-    T, B, N, A = agent_actions.shape[:4]  # (B,N,A)
-    all_joint_actions = []
-    for i in range(N):
-        one_hot = tf.expand_dims(
-            tf.cast(tf.stack([tf.stack([tf.one_hot(i, N)] * B, axis=0)] * T, axis=0), "bool"),
-            axis=-1,
-        )
-        joint_action = tf.where(one_hot, agent_actions, agent_actions)
-        joint_action = tf.reshape(joint_action, (T, B, N * A))
-        all_joint_actions.append(joint_action)
-    all_joint_actions = tf.stack(all_joint_actions, axis=2)
-    return all_joint_actions
-
-
 class StateAndActionCritic(snt.Module):
-    def __init__(self, num_agents, num_actions, preprocess_network=None):
+    def __init__(
+        self,
+        num_agents: int,
+        num_actions: int,
+        preprocess_network: Optional[snt.Module] = None,
+    ):
         self.N = num_agents
         self.A = num_actions
 
@@ -119,8 +62,10 @@ class StateAndActionCritic(snt.Module):
         super().__init__()
 
     def __call__(
-        self, states, agent_actions
-    ):
+        self,
+        states: Tensor,
+        agent_actions: Tensor,
+    ) -> Tensor:
         """Forward pass of critic network.
 
         states [T,B,S]
@@ -128,7 +73,7 @@ class StateAndActionCritic(snt.Module):
         """
         if self._preprocess_network is not None:
             embeds = []
-            for t in range(states.shape[0]):
+            for t in range(states.shape[0]):  # type: ignore
                 embeds.append(self._preprocess_network(states[t]))
             states = tf.stack(embeds, axis=0)  # stack along time
 
@@ -138,7 +83,7 @@ class StateAndActionCritic(snt.Module):
         # Concat states and joint actions
         critic_input = tf.concat([states, agent_actions], axis=-1)
 
-        q_values = self._critic_network(critic_input)
+        q_values: Tensor = self._critic_network(critic_input)
 
         return q_values
 
@@ -149,16 +94,16 @@ class IDDPGSystem(BaseMARLSystem):
 
     def __init__(
         self,
-        environment,
-        logger,
-        linear_layer_dim=100,
-        recurrent_layer_dim=100,
-        discount=0.99,
-        target_update_rate=0.005,
-        critic_learning_rate=3e-4,
-        policy_learning_rate=1e-3,
-        add_agent_id_to_obs=True,
-        random_exploration_timesteps=50_000, # for online training
+        environment: BaseEnvironment,
+        logger: BaseLogger,
+        linear_layer_dim: int = 100,
+        recurrent_layer_dim: int = 100,
+        discount: float = 0.99,
+        target_update_rate: float = 0.005,
+        critic_learning_rate: float = 3e-4,
+        policy_learning_rate: float = 1e-3,
+        add_agent_id_to_obs: bool = True,
+        random_exploration_timesteps: int = 50_000,  # for online training
     ):
         super().__init__(
             environment, logger, add_agent_id_to_obs=add_agent_id_to_obs, discount=discount
@@ -198,7 +143,7 @@ class IDDPGSystem(BaseMARLSystem):
         self._policy_optimizer = snt.optimizers.RMSProp(learning_rate=policy_learning_rate)
 
         # Exploration
-        self._random_exploration_timesteps = tf.Variable(random_exploration_timesteps)
+        self._random_exploration_timesteps = tf.Variable(tf.constant(random_exploration_timesteps))
 
         # Reset the recurrent neural network
         self._rnn_states = {
@@ -206,25 +151,34 @@ class IDDPGSystem(BaseMARLSystem):
             for agent in self._environment.possible_agents
         }
 
-    def reset(self):
+    def reset(self) -> None:
         """Called at the start of a new episode."""
         # Reset the recurrent neural network
         self._rnn_states = {
             agent: self._policy_network.initial_state(1)
             for agent in self._environment.possible_agents
         }
-
         return
 
-    def select_actions(self, observations, legal_actions=None, explore=True):
+    def select_actions(
+        self,
+        observations: Dict[str, np.ndarray],
+        legal_actions: Optional[Dict[str, np.ndarray]] = None,
+        explore: bool = True,
+    ) -> Dict[str, np.ndarray]:
         actions, next_rnn_states = self._tf_select_actions(observations, self._rnn_states, explore)
         self._rnn_states = next_rnn_states
-        return tree.map_structure(
+        return tree.map_structure(  # type: ignore
             lambda x: x[0].numpy(), actions
         )  # convert to numpy and squeeze batch dim
 
     @tf.function()
-    def _tf_select_actions(self, observations, rnn_states, explore=False):
+    def _tf_select_actions(
+        self,
+        observations: Dict[str, Tensor],
+        rnn_states: Dict[str, Tensor],
+        explore: bool = False,
+    ) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
         actions = {}
         next_rnn_states = {}
         for i, agent in enumerate(self._environment.possible_agents):
@@ -252,22 +206,22 @@ class IDDPGSystem(BaseMARLSystem):
 
         return actions, next_rnn_states
 
-    def train_step(self, experience):
+    def train_step(
+        self,
+        experience: Experience,
+    ) -> Dict[str, Numeric]:
         logs = self._tf_train_step(experience)
-        return logs
+        return logs  # type: ignore
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
-    def _tf_train_step(self, experience):
-        # batch = batched_agents(self._environment.possible_agents, experience)
-        batch = experience
-
+    def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
-        observations = batch["observations"]  # (B,T,N,O)
-        actions = batch["actions"]  # (B,T,N,A)
-        env_states = batch["infos"]["state"]  # (B,T,S)
-        rewards = batch["rewards"]  # (B,T,N)
-        truncations = tf.cast(batch["truncations"], "float32")  # (B,T,N)
-        terminals = tf.cast(batch["terminals"], "float32")  # (B,T,N)
+        observations = experience["observations"]  # (B,T,N,O)
+        actions = experience["actions"]  # (B,T,N,A)
+        env_states = experience["infos"]["state"]  # (B,T,S)
+        rewards = experience["rewards"]  # (B,T,N)
+        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
+        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
 
         # When to reset the RNN hidden state
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
@@ -296,12 +250,8 @@ class IDDPGSystem(BaseMARLSystem):
         target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
         # Target critics
-        target_qs_1 = self._target_critic_network_1(
-            env_states, target_actions
-        )
-        target_qs_2 = self._target_critic_network_2(
-            env_states, target_actions
-        )
+        target_qs_1 = self._target_critic_network_1(env_states, target_actions)
+        target_qs_2 = self._target_critic_network_2(env_states, target_actions)
 
         # Take minimum between two target critics
         target_qs = tf.minimum(target_qs_1, target_qs_2)
@@ -332,12 +282,12 @@ class IDDPGSystem(BaseMARLSystem):
 
             # Policy Loss
             # Unroll online policy
-            onlin_actions = unroll_rnn(
+            online_actions = unroll_rnn(
                 self._policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
                 merge_batch_and_agent_dim_of_time_major_sequence(resets),
             )
-            online_actions = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
+            online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
 
             qs_1 = self._critic_network_1(env_states, online_actions)
             qs_2 = self._critic_network_2(env_states, online_actions)
@@ -387,7 +337,11 @@ class IDDPGSystem(BaseMARLSystem):
 
         return logs
 
-    def _update_target_network(self, online_variables, target_variables):
+    def _update_target_network(
+        self,
+        online_variables: Sequence[Variable],
+        target_variables: Sequence[Variable],
+    ) -> None:
         """Update the target networks."""
         tau = self._target_update_rate
         for src, dest in zip(online_variables, target_variables):

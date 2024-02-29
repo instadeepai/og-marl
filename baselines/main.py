@@ -15,8 +15,8 @@ from absl import app, flags
 
 from og_marl.environments.utils import get_environment
 from og_marl.loggers import JsonWriter, WandbLogger
-from og_marl.replay_buffers import FlashbaxReplayBuffer
 from og_marl.offline_dataset import download_and_unzip_vault
+from og_marl.replay_buffers import FlashbaxReplayBuffer
 from og_marl.tf2.systems import get_system
 from og_marl.tf2.utils import set_growing_gpu_memory
 
@@ -50,12 +50,18 @@ def main(_):
     is_vault_loaded = buffer.populate_from_vault(FLAGS.env, FLAGS.scenario, FLAGS.dataset)
     if not is_vault_loaded:
         print("Vault not found. Exiting.")
-        return 
+        return
 
     logger = WandbLogger(project="og-marl-baselines", config=config)
 
     json_writer = JsonWriter(
-        "logs", f"{FLAGS.system}", f"{FLAGS.scenario}_{FLAGS.dataset}", FLAGS.env, FLAGS.seed, file_name=f"{FLAGS.scenario}_{FLAGS.dataset}_{FLAGS.seed}.json", save_to_wandb=True
+        "logs",
+        f"{FLAGS.system}",
+        f"{FLAGS.scenario}_{FLAGS.dataset}",
+        FLAGS.env,
+        FLAGS.seed,
+        file_name=f"{FLAGS.scenario}_{FLAGS.dataset}_{FLAGS.seed}.json",
+        save_to_wandb=True,
     )
 
     system_kwargs = {"add_agent_id_to_obs": True}

@@ -5,14 +5,14 @@ import numpy as np
 from gymnasium.spaces import Box
 from var_voltage_control.voltage_control_env import VoltageControl
 
-from og_marl.environments.base import BaseEnvironment
+from og_marl.environments.base import BaseEnvironment, Observations, ResetReturn, StepReturn
 
 
 class VoltageControlEnv(BaseEnvironment):
 
     """Environment wrapper for MAPDN environment."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor for VoltageControl."""
         self._environment = VoltageControl()
         self.possible_agents = [
@@ -34,14 +34,7 @@ class VoltageControlEnv(BaseEnvironment):
             },  # placeholder
         }
 
-    def reset(self):
-        """Resets the env.
-
-        Returns:
-        -------
-            dm_env.TimeStep: dm timestep.
-
-        """
+    def reset(self) -> ResetReturn:
         # Reset the environment
         observations, state = self._environment.reset()
 
@@ -58,7 +51,7 @@ class VoltageControlEnv(BaseEnvironment):
 
         return observations, info
 
-    def step(self, actions: Dict[str, np.ndarray]):
+    def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         """Steps in env."""
         actions = self._preprocess_actions(actions)
 
@@ -84,31 +77,19 @@ class VoltageControlEnv(BaseEnvironment):
             "legals": np.zeros((1,), "float32"),  # placeholder
         }
 
-        terminals = {agent: done for agent in self.possible_agents}
-        truncations = {agent: False for agent in self.possible_agents}
+        terminals = {agent: np.array(done) for agent in self.possible_agents}
+        truncations = {agent: np.array(False) for agent in self.possible_agents}
 
         return next_observations, rewards, terminals, truncations, info
 
-    def _preprocess_actions(self, actions):
+    def _preprocess_actions(self, actions: Dict[str, np.ndarray]) -> np.ndarray:
         concat_action = []
         for agent in self.possible_agents:
             concat_action.append(actions[agent])
         concat_action = np.concatenate(concat_action)
-        return concat_action
+        return concat_action  # type: ignore
 
-    def _convert_observations(self, observations: List, done: bool):
-        """Convert observation so it's dm_env compatible.
-
-        Args:
-        ----
-            observes (Dict[str, np.ndarray]): observations per agent.
-            dones (Dict[str, bool]): dones per agent.
-
-        Returns:
-        -------
-            types.Observation: dm compatible observations.
-
-        """
+    def _convert_observations(self, observations: List, done: bool) -> Observations:
         dict_observations = {}
         for i, agent in enumerate(self.possible_agents):
             obs = np.array(observations[i], "float32")

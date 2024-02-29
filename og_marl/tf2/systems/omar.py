@@ -13,15 +13,18 @@
 # limitations under the License.
 
 """Implementation of OMAR"""
+from typing import Any, Dict
+
 import numpy as np
-import sonnet as snt
 import tensorflow as tf
 import tensorflow_probability as tfp
+from chex import Numeric
 
+from og_marl.environments.base import BaseEnvironment
+from og_marl.loggers import BaseLogger
 from og_marl.tf2.systems.iddpg_cql import IDDPGCQLSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
-    batched_agents,
     expand_batch_and_agent_dim_of_time_major_sequence,
     merge_batch_and_agent_dim_of_time_major_sequence,
     switch_two_leading_dims,
@@ -32,23 +35,23 @@ from og_marl.tf2.utils import (
 class OMARSystem(IDDPGCQLSystem):
     def __init__(
         self,
-        environment,
-        logger,
-        linear_layer_dim=64,
-        recurrent_layer_dim=64,
-        discount=0.99,
-        target_update_rate=0.005,
-        critic_learning_rate=3e-4,
-        policy_learning_rate=1e-3,
-        add_agent_id_to_obs=False,
-        num_ood_actions=10,  # CQL
-        cql_weight=5.0,  # CQL
-        cql_sigma=0.2,  # CQL
-        omar_iters=3,  # OMAR
-        omar_num_samples=10,  # OMAR
-        omar_num_elites=10,  # OMAR
-        omar_sigma=2.0,  # OMAR
-        omar_coe=0.7,  # OMAR
+        environment: BaseEnvironment,
+        logger: BaseLogger,
+        linear_layer_dim: int = 64,
+        recurrent_layer_dim: int = 64,
+        discount: float = 0.99,
+        target_update_rate: float = 0.005,
+        critic_learning_rate: float = 3e-4,
+        policy_learning_rate: float = 1e-3,
+        add_agent_id_to_obs: bool = False,
+        num_ood_actions: int = 10,  # CQL
+        cql_weight: float = 5.0,  # CQL
+        cql_sigma: float = 0.2,  # CQL
+        omar_iters: int = 3,  # OMAR
+        omar_num_samples: int = 10,  # OMAR
+        omar_num_elites: int = 10,  # OMAR
+        omar_sigma: float = 2.0,  # OMAR
+        omar_coe: float = 0.7,  # OMAR
     ):
         super().__init__(
             environment=environment,
@@ -73,19 +76,17 @@ class OMARSystem(IDDPGCQLSystem):
         self._init_omar_mu, self._init_omar_sigma = 0.0, omar_sigma
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
-    def _tf_train_step(self, batch):
-        # batch = batched_agents(self._environment.possible_agents, batch)
-
+    def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
-        observations = batch["observations"]  # (B,T,N,O)
-        actions = batch["actions"]  # (B,T,N,A)
-        env_states = batch["infos"]["state"]   # (B,T,S)
-        rewards = batch["rewards"]  # (B,T,N)
-        truncations = batch["truncations"]  # (B,T,N)
-        terminals = batch["terminals"]  # (B,T,N)
+        observations = experience["observations"]  # (B,T,N,O)
+        actions = experience["actions"]  # (B,T,N,A)
+        env_states = experience["infos"]["state"]  # (B,T,S)
+        rewards = experience["rewards"]  # (B,T,N)
+        truncations = experience["truncations"]  # (B,T,N)
+        terminals = experience["terminals"]  # (B,T,N)
 
         # When to reset the RNN hidden state
-        resets = tf.maximum(terminals, truncations) # equivalent to logical 'or'
+        resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
 
         # Get dims
         B, T, N, A = actions.shape[:4]
@@ -111,12 +112,8 @@ class OMARSystem(IDDPGCQLSystem):
         target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
         # Target critics
-        target_qs_1 = self._target_critic_network_1(
-            env_states, target_actions
-        )
-        target_qs_2 = self._target_critic_network_2(
-            env_states, target_actions
-        )
+        target_qs_1 = self._target_critic_network_1(env_states, target_actions)
+        target_qs_2 = self._target_critic_network_2(env_states, target_actions)
 
         # Take minimum between two target critics
         target_qs = tf.minimum(target_qs_1, target_qs_2)
@@ -183,15 +180,11 @@ class OMARSystem(IDDPGCQLSystem):
             random_ood_action_log_pi = tf.math.log(0.5 ** (random_ood_actions.shape[-1]))
 
             ood_qs_1 = (
-                self._critic_network_1(
-                    repeat_env_states, random_ood_actions
-                )[:-1]
+                self._critic_network_1(repeat_env_states, random_ood_actions)[:-1]
                 - random_ood_action_log_pi
             )
             ood_qs_2 = (
-                self._critic_network_2(
-                    repeat_env_states, random_ood_actions
-                )[:-1]
+                self._critic_network_2(repeat_env_states, random_ood_actions)[:-1]
                 - random_ood_action_log_pi
             )
 
@@ -307,16 +300,14 @@ class OMARSystem(IDDPGCQLSystem):
                 formatted_cem_sampled_acs = tf.reshape(
                     cem_sampled_acs, (T, -1, *cem_sampled_acs.shape[3:])
                 )
-                all_pred_qvals = self._critic_network_1(
-                    env_states, formatted_cem_sampled_acs
-                )
+                all_pred_qvals = self._critic_network_1(env_states, formatted_cem_sampled_acs)
                 all_pred_qvals = tf.reshape(all_pred_qvals, (T, B, self._omar_num_samples, N))
                 all_pred_qvals = tf.transpose(all_pred_qvals, (0, 1, 3, 2))
                 cem_sampled_acs = tf.transpose(cem_sampled_acs, (0, 1, 3, 4, 2))
 
                 if iter_idx > 0:
-                    all_pred_qvals = tf.concat((all_pred_qvals, last_top_k_qvals), axis=-1)
-                    cem_sampled_acs = tf.concat((cem_sampled_acs, last_elite_acs), axis=-1)
+                    all_pred_qvals = tf.concat((all_pred_qvals, last_top_k_qvals), axis=-1)  # type: ignore
+                    cem_sampled_acs = tf.concat((cem_sampled_acs, last_elite_acs), axis=-1)  # type: ignore
 
                 top_k_qvals, top_k_inds = tf.math.top_k(all_pred_qvals, self._omar_num_elites)
                 elite_ac_inds = tf.stack([top_k_inds] * A, axis=-2)
@@ -349,7 +340,8 @@ class OMARSystem(IDDPGCQLSystem):
             max_acs = tf.stop_gradient(tf.reshape(max_acs, max_acs.shape[:-1]))
 
             policy_loss = (
-                self._omar_coe * tf.reduce_mean(tf.reduce_mean((curr_pol_out - max_acs) ** 2, axis=-1))
+                self._omar_coe
+                * tf.reduce_mean(tf.reduce_mean((curr_pol_out - max_acs) ** 2, axis=-1))
                 - (1 - self._omar_coe) * tf.reduce_mean(tf.squeeze(pred_qvals))
                 + tf.reduce_mean(tf.reduce_mean(curr_pol_out**2, axis=-1)) * 1e-3
             )

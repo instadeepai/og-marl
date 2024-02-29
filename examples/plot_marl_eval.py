@@ -3,10 +3,7 @@
 import json
 
 # Relevant imports
-from marl_eval.plotting_tools.plotting import (
-    performance_profiles,
-    sample_efficiency_curves,
-)
+from marl_eval.plotting_tools.plotting import performance_profiles, sample_efficiency_curves
 from marl_eval.utils.data_processing_utils import create_matrices_for_rliable, data_process_pipeline
 
 # Specify any metrics that should be normalised

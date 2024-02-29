@@ -14,16 +14,22 @@
 
 """Implementation of independent Q-learning (DRQN style)"""
 import copy
+from typing import Any, Dict, Optional, Sequence, Tuple
 
+import numpy as np
 import sonnet as snt
 import tensorflow as tf
 import tensorflow_probability as tfp
 import tree
+from chex import Numeric
+from tensorflow import Tensor, Variable
 
+from og_marl.environments.base import BaseEnvironment
+from og_marl.loggers import BaseLogger
+from og_marl.replay_buffers import Experience
 from og_marl.tf2.systems.base import BaseMARLSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
-    batched_agents,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
     gather,
@@ -35,20 +41,20 @@ from og_marl.tf2.utils import (
 
 class IDRQNSystem(BaseMARLSystem):
 
-    """Independent Deep Recurrent Q-Networs System"""
+    """Independent Deep Recurrent Q-Networks System"""
 
     def __init__(
         self,
-        environment,
-        logger,
-        linear_layer_dim=64,
-        recurrent_layer_dim=64,
-        discount=0.99,
-        target_update_period=200,
-        learning_rate=3e-4,
-        eps_min=0.05,
-        eps_decay_timesteps=50_000,
-        add_agent_id_to_obs=False,
+        environment: BaseEnvironment,
+        logger: BaseLogger,
+        linear_layer_dim: int = 64,
+        recurrent_layer_dim: int = 64,
+        discount: float = 0.99,
+        target_update_period: int = 200,
+        learning_rate: float = 3e-4,
+        eps_min: float = 0.05,
+        eps_decay_timesteps: int = 50_000,
+        add_agent_id_to_obs: bool = False,
     ):
         super().__init__(
             environment, logger, add_agent_id_to_obs=add_agent_id_to_obs, discount=discount
@@ -83,7 +89,7 @@ class IDRQNSystem(BaseMARLSystem):
             agent: self._q_network.initial_state(1) for agent in self._environment.possible_agents
         }
 
-    def reset(self):
+    def reset(self) -> None:
         """Called at the start of a new episode."""
         # Reset the recurrent neural network
         self._rnn_states = {
@@ -92,7 +98,12 @@ class IDRQNSystem(BaseMARLSystem):
 
         return
 
-    def select_actions(self, observations, legal_actions=None, explore=True):
+    def select_actions(
+        self,
+        observations: Dict[str, np.ndarray],
+        legal_actions: Optional[Dict[str, np.ndarray]] = None,
+        explore: bool = True,
+    ) -> Dict[str, np.ndarray]:
         if explore:
             self._env_step_ctr += 1.0
 
@@ -103,12 +114,19 @@ class IDRQNSystem(BaseMARLSystem):
             env_step_ctr, observations, legal_actions, self._rnn_states, explore
         )
         self._rnn_states = next_rnn_states
-        return tree.map_structure(
+        return tree.map_structure(  # type: ignore
             lambda x: x.numpy(), actions
         )  # convert to numpy and squeeze batch dim
 
     @tf.function(jit_compile=True)
-    def _tf_select_actions(self, env_step_ctr, observations, legal_actions, rnn_states, explore):
+    def _tf_select_actions(
+        self,
+        env_step_ctr: int,
+        observations: Dict[str, Tensor],
+        legal_actions: Dict[str, Tensor],
+        rnn_states: Dict[str, Tensor],
+        explore: bool,
+    ) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
         actions = {}
         next_rnn_states = {}
         for i, agent in enumerate(self._environment.possible_agents):
@@ -131,7 +149,7 @@ class IDRQNSystem(BaseMARLSystem):
             epsilon = tf.maximum(1.0 - self._eps_dec * env_step_ctr, self._eps_min)
 
             greedy_probs = tf.one_hot(greedy_action, masked_q_values.shape[-1])
-            explore_probs = (agent_legal_actions / tf.reduce_sum(agent_legal_actions))
+            explore_probs = agent_legal_actions / tf.reduce_sum(agent_legal_actions)
             probs = (1.0 - epsilon) * greedy_probs + epsilon * explore_probs
             probs = tf.expand_dims(probs, axis=0)
 
@@ -145,19 +163,16 @@ class IDRQNSystem(BaseMARLSystem):
 
         return actions, next_rnn_states
 
-    def train_step(self, experience):
+    def train_step(self, experience: Experience) -> Dict[str, Numeric]:
         self._train_step_ctr += 1
         logs = self._tf_train_step(tf.convert_to_tensor(self._train_step_ctr), experience)
-        return logs
+        return logs  # type: ignore
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
-    def _tf_train_step(self, train_step_ctr, experience):
-        # experience = batched_agents(self._environment.possible_agents, experience)
-
+    def _tf_train_step(self, train_step_ctr: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N)
-        env_states = experience["infos"]["state"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
         truncations = experience["truncations"]  # (B,T,N)
         terminals = experience["terminals"]  # (B,T,N)
@@ -249,16 +264,21 @@ class IDRQNSystem(BaseMARLSystem):
             "Mean Chosen Q-values": tf.reduce_mean(chosen_action_qs),
         }
 
-    def get_stats(self):
+    def get_stats(self) -> Dict[str, Numeric]:
         return {"Epsilon": max(1.0 - self._env_step_ctr * self._eps_dec, self._eps_min)}
 
-    def _apply_mask(self, loss, mask):
+    def _apply_mask(self, loss: Tensor, mask: Tensor) -> Numeric:
         mask = tf.expand_dims(mask, axis=-1)
         mask = tf.broadcast_to(mask[:, :-1], loss.shape)
         loss = tf.reduce_sum(loss * mask) / tf.reduce_sum(mask)
         return loss
 
-    def _update_target_network(self, train_step, online_variables, target_variables):
+    def _update_target_network(
+        self,
+        train_step: int,
+        online_variables: Sequence[Variable],
+        target_variables: Sequence[Variable],
+    ) -> None:
         """Update the target networks."""
         if train_step % self._target_update_period == 0:
             for src, dest in zip(online_variables, target_variables):

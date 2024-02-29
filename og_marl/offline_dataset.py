@@ -16,33 +16,28 @@ import os
 import sys
 import zipfile
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-import requests
+import requests  # type: ignore
 import seaborn as sns
 import tensorflow as tf
 import tree
 from chex import Array
 from flashbax.vault import Vault
 from git import Optional
+from tensorflow import DType
+
+from og_marl.environments.base import BaseEnvironment
 
 VAULT_INFO = {
     "smac_v1": {
-        "3m": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3m.zip"
-        },
-        "8m": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/8m.zip"
-        },
-        "5m_vs_6m": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/5m_vs_6m.zip"
-        },
-        "2s3z": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2s3z.zip"
-        },
+        "3m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3m.zip"},
+        "8m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/8m.zip"},
+        "5m_vs_6m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/5m_vs_6m.zip"},
+        "2s3z": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2s3z.zip"},
         "3s5z_vs_3s6z": {
             "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3s5z_vs_3s6z.zip"
         },
@@ -56,16 +51,12 @@ VAULT_INFO = {
         },
     },
     "mamujoco": {
-        "2ant": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2ant.zip"
-        },
+        "2ant": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2ant.zip"},
         "2halfcheetah": {
             "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2halfcheetah.zip"
         },
-        "4ant": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/4ant.zip"
-        },
-    }
+        "4ant": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/4ant.zip"},
+    },
 }
 
 DATASET_INFO = {
@@ -142,7 +133,7 @@ DATASET_INFO = {
 }
 
 
-def get_schema_dtypes(environment):
+def get_schema_dtypes(environment: BaseEnvironment) -> Dict[str, DType]:
     act_type = list(environment.action_spaces.values())[0].dtype
     schema = {}
     for agent in environment.possible_agents:
@@ -168,11 +159,11 @@ def get_schema_dtypes(environment):
 class OfflineMARLDataset:
     def __init__(
         self,
-        environment,
-        env_name,
-        scenario_name,
-        dataset_type,
-        base_dataset_dir="./datasets",
+        environment: BaseEnvironment,
+        env_name: str,
+        scenario_name: str,
+        dataset_type: str,
+        base_dataset_dir: str = "./datasets",
     ):
         self._environment = environment
         self._schema = get_schema_dtypes(environment)
@@ -188,7 +179,7 @@ class OfflineMARLDataset:
                 sub_dir_to_idx[subdir] = idx
                 idx += 1
 
-        def get_fname_idx(file_name):
+        def get_fname_idx(file_name: str) -> int:
             dir_idx = sub_dir_to_idx[file_name.split("/")[-2]] * 1000
             return dir_idx + int(file_name.split("log_")[-1].split(".")[0])
 
@@ -204,7 +195,7 @@ class OfflineMARLDataset:
         self.sequence_length = DATASET_INFO[env_name][scenario_name]["sequence_length"]
         self.max_episode_length = environment.max_episode_length
 
-    def _decode_fn(self, record_bytes):
+    def _decode_fn(self, record_bytes: Any) -> Dict[str, Any]:
         example = tf.io.parse_single_example(
             record_bytes,
             tree.map_structure(lambda x: tf.io.FixedLenFeature([], dtype=tf.string), self._schema),
@@ -213,7 +204,7 @@ class OfflineMARLDataset:
         for key, dtype in self._schema.items():
             example[key] = tf.io.parse_tensor(example[key], dtype)
 
-        sample = {
+        sample: Dict[str, dict] = {
             "observations": {},
             "actions": {},
             "rewards": {},
@@ -235,7 +226,7 @@ class OfflineMARLDataset:
 
         return sample
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: Any) -> Any:
         """Expose any other attributes of the underlying environment.
 
         Args:
@@ -253,7 +244,11 @@ class OfflineMARLDataset:
             return getattr(self._tf_dataset, name)
 
 
-def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./datasets"):
+def download_and_unzip_dataset(
+    env_name: str,
+    scenario_name: str,
+    dataset_base_dir: str = "./datasets",
+) -> None:
     dataset_download_url = DATASET_INFO[env_name][scenario_name]["url"]
 
     # TODO add check to see if dataset exists already.
@@ -265,7 +260,7 @@ def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./data
 
     extraction_path = f"{dataset_base_dir}/{env_name}"
 
-    response = requests.get(dataset_download_url, stream=True)
+    response = requests.get(dataset_download_url, stream=True)  # type: ignore
     total_length = response.headers.get("content-length")
 
     with open(zip_file_path, "wb") as file:
@@ -273,11 +268,11 @@ def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./data
             file.write(response.content)
         else:
             dl = 0
-            total_length = int(total_length)
+            total_length = int(total_length)  # type: ignore
             for data in response.iter_content(chunk_size=4096):
                 dl += len(data)
                 file.write(data)
-                done = int(50 * dl / total_length)
+                done = int(50 * dl / total_length)  # type: ignore
                 sys.stdout.write("\r[%s%s]" % ("=" * done, " " * (50 - done)))
                 sys.stdout.flush()
 
@@ -288,7 +283,12 @@ def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./data
     # Optionally, delete the zip file after extraction
     os.remove(zip_file_path)
 
-def download_and_unzip_vault(env_name, scenario_name, dataset_base_dir="./vaults"):
+
+def download_and_unzip_vault(
+    env_name: str,
+    scenario_name: str,
+    dataset_base_dir: str = "./vaults",
+) -> None:
     dataset_download_url = VAULT_INFO[env_name][scenario_name]["url"]
 
     if check_directory_exists_and_not_empty(f"{dataset_base_dir}/{env_name}/{scenario_name}.vlt"):
@@ -310,11 +310,11 @@ def download_and_unzip_vault(env_name, scenario_name, dataset_base_dir="./vaults
             file.write(response.content)
         else:
             dl = 0
-            total_length = int(total_length)
+            total_length = int(total_length)  # type: ignore
             for data in response.iter_content(chunk_size=4096):
                 dl += len(data)
                 file.write(data)
-                done = int(50 * dl / total_length)
+                done = int(50 * dl / total_length)  # type: ignore
                 sys.stdout.write("\r[%s%s]" % ("=" * done, " " * (50 - done)))
                 sys.stdout.flush()
 
@@ -325,7 +325,8 @@ def download_and_unzip_vault(env_name, scenario_name, dataset_base_dir="./vaults
     # Optionally, delete the zip file after extraction
     os.remove(zip_file_path)
 
-def check_directory_exists_and_not_empty(path):
+
+def check_directory_exists_and_not_empty(path: str) -> bool:
     # Check if the directory exists
     if os.path.exists(path) and os.path.isdir(path):
         # Check if the directory is not empty
@@ -336,10 +337,9 @@ def check_directory_exists_and_not_empty(path):
     else:
         return False  # Directory does not exist
 
+
 def calculate_returns(
-    experience: Dict[str, Array],
-    reward_key: str = "rewards",
-    terminal_key: str = "terminals"
+    experience: Dict[str, Array], reward_key: str = "rewards", terminal_key: str = "terminals"
 ) -> Array:
     """Calculate the returns in a dataset of experience.
 
@@ -361,15 +361,15 @@ def calculate_returns(
     rewards = experience_one_agent[reward_key]
     terminals = experience_one_agent[terminal_key]
 
-    def sum_rewards(terminals, rewards):
-        def scan_fn(carry, inputs):
+    def sum_rewards(terminals: Array, rewards: Array) -> Array:
+        def scan_fn(carry: Array, inputs: Array) -> Array:
             terminal, reward = inputs
             new_carry = carry + reward
             new_carry = jax.lax.cond(
                 terminal.all(),
                 lambda _: reward,  # Reset the cumulative sum if terminal
                 lambda _: new_carry,  # Continue accumulating otherwise
-                operand=None
+                operand=None,
             )
             return new_carry, new_carry
 
@@ -379,9 +379,9 @@ def calculate_returns(
             (
                 # We shift the terminals one timestep rightwards,
                 # for our cumulative sum approach to work
-                jnp.pad(terminals, ((1,0)))[:-1],
+                jnp.pad(terminals, ((1, 0)))[:-1],
                 rewards,
-            )
+            ),
         )
         return cumulative_rewards[terminals == 1]
 
@@ -428,8 +428,8 @@ def analyse_vault(
 
         sns.violinplot(data=list(all_uid_returns.values()), inner="point")
         plt.title(f"Violin Distributions of Returns for {vault_name}")
-        plt.xlabel('Dataset Quality')
-        plt.ylabel('Episode Returns')
+        plt.xlabel("Dataset Quality")
+        plt.ylabel("Episode Returns")
         plt.xticks(range(len(all_uid_returns)), list(all_uid_returns.keys()))
 
         plt.show()

@@ -14,15 +14,21 @@
 
 """Implementation of MADDPG+CQL"""
 import copy
+from typing import Any, Dict, Optional, Sequence, Tuple
 
+import numpy as np
 import sonnet as snt
 import tensorflow as tf
 import tree
+from chex import Numeric
+from tensorflow import Tensor, Variable
 
+from og_marl.environments.base import BaseEnvironment
+from og_marl.loggers import BaseLogger
+from og_marl.replay_buffers import Experience
 from og_marl.tf2.systems.base import BaseMARLSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
-    batched_agents,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
     merge_batch_and_agent_dim_of_time_major_sequence,
@@ -32,7 +38,7 @@ from og_marl.tf2.utils import (
 
 
 class StateAndJointActionCritic(snt.Module):
-    def __init__(self, num_agents, num_actions):
+    def __init__(self, num_agents: int, num_actions: int):
         self.N = num_agents
         self.A = num_actions
 
@@ -49,8 +55,12 @@ class StateAndJointActionCritic(snt.Module):
         super().__init__()
 
     def __call__(
-        self, states, agent_actions, other_actions, stop_other_actions_gradient=True
-    ):
+        self,
+        states: Tensor,
+        agent_actions: Tensor,
+        other_actions: Tensor,
+        stop_other_actions_gradient: bool = True,
+    ) -> Tensor:
         """Forward pass of critic network.
 
         observations [T,B,N,O]
@@ -73,11 +83,12 @@ class StateAndJointActionCritic(snt.Module):
         # Concat agent IDs to critic input
         # critic_input = batch_concat_agent_id_to_obs(critic_input)
 
-        q_values = self._critic_network(critic_input)
+        q_values: Tensor = self._critic_network(critic_input)
+
         return q_values
 
 
-def make_joint_action(agent_actions, other_actions):
+def make_joint_action(agent_actions: Tensor, other_actions: Tensor) -> Tensor:
     """Method to construct the joint action.
 
     agent_actions [T,B,N,A]: tensor of actions the agent took. Usually
@@ -87,15 +98,16 @@ def make_joint_action(agent_actions, other_actions):
     """
     T, B, N, A = agent_actions.shape[:4]  # (B,N,A)
     all_joint_actions = []
-    for i in range(N):
+    for i in range(N):  # type: ignore
         one_hot = tf.expand_dims(
-            tf.cast(tf.stack([tf.stack([tf.one_hot(i, N)] * B, axis=0)] * T, axis=0), "bool"),
+            tf.cast(tf.stack([tf.stack([tf.one_hot(i, N)] * B, axis=0)] * T, axis=0), "bool"),  # type: ignore
             axis=-1,
         )
         joint_action = tf.where(one_hot, agent_actions, other_actions)
-        joint_action = tf.reshape(joint_action, (T, B, N * A))
+        joint_action = tf.reshape(joint_action, (T, B, N * A))  # type: ignore
         all_joint_actions.append(joint_action)
-    all_joint_actions = tf.stack(all_joint_actions, axis=2)
+    all_joint_actions: Tensor = tf.stack(all_joint_actions, axis=2)
+
     return all_joint_actions
 
 
@@ -105,16 +117,16 @@ class MADDPGSystem(BaseMARLSystem):
 
     def __init__(
         self,
-        environment,
-        logger,
-        linear_layer_dim=100,
-        recurrent_layer_dim=100,
-        discount=0.99,
-        target_update_rate=0.005,
-        critic_learning_rate=3e-4,
-        policy_learning_rate=1e-3,
-        add_agent_id_to_obs=True,
-        random_exploration_timesteps=50_000,
+        environment: BaseEnvironment,
+        logger: BaseLogger,
+        linear_layer_dim: int = 100,
+        recurrent_layer_dim: int = 100,
+        discount: float = 0.99,
+        target_update_rate: float = 0.005,
+        critic_learning_rate: float = 3e-4,
+        policy_learning_rate: float = 1e-3,
+        add_agent_id_to_obs: bool = True,
+        random_exploration_timesteps: int = 50_000,
     ):
         super().__init__(
             environment, logger, add_agent_id_to_obs=add_agent_id_to_obs, discount=discount
@@ -154,7 +166,7 @@ class MADDPGSystem(BaseMARLSystem):
         self._policy_optimizer = snt.optimizers.RMSProp(learning_rate=policy_learning_rate)
 
         # Exploration
-        self._random_exploration_timesteps = tf.Variable(random_exploration_timesteps)
+        self._random_exploration_timesteps = tf.Variable(tf.constant(random_exploration_timesteps))
 
         # Reset the recurrent neural network
         self._rnn_states = {
@@ -162,25 +174,34 @@ class MADDPGSystem(BaseMARLSystem):
             for agent in self._environment.possible_agents
         }
 
-    def reset(self):
+    def reset(self) -> None:
         """Called at the start of a new episode."""
         # Reset the recurrent neural network
         self._rnn_states = {
             agent: self._policy_network.initial_state(1)
             for agent in self._environment.possible_agents
         }
-
         return
 
-    def select_actions(self, observations, legal_actions=None, explore=True):
+    def select_actions(
+        self,
+        observations: Dict[str, np.ndarray],
+        legal_actions: Optional[Dict[str, np.ndarray]] = None,
+        explore: bool = True,
+    ) -> Dict[str, np.ndarray]:
         actions, next_rnn_states = self._tf_select_actions(observations, self._rnn_states, explore)
         self._rnn_states = next_rnn_states
-        return tree.map_structure(
+        return tree.map_structure(  # type: ignore
             lambda x: x[0].numpy(), actions
         )  # convert to numpy and squeeze batch dim
 
     @tf.function()
-    def _tf_select_actions(self, observations, rnn_states, explore=False):
+    def _tf_select_actions(
+        self,
+        observations: Dict[str, Tensor],
+        rnn_states: Dict[str, Tensor],
+        explore: bool = False,
+    ) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
         actions = {}
         next_rnn_states = {}
         for i, agent in enumerate(self._environment.possible_agents):
@@ -208,22 +229,19 @@ class MADDPGSystem(BaseMARLSystem):
 
         return actions, next_rnn_states
 
-    def train_step(self, experience):
+    def train_step(self, experience: Experience) -> Dict[str, Numeric]:
         logs = self._tf_train_step(experience)
-        return logs
+        return logs  # type: ignore
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
-    def _tf_train_step(self, experience):
-        # batch = batched_agents(self._environment.possible_agents, experience)
-        batch = experience
-
+    def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
-        observations = batch["observations"]  # (B,T,N,O)
-        actions = batch["actions"]  # (B,T,N,A)
-        env_states = batch["infos"]["state"]   # (B,T,S)
-        rewards = batch["rewards"]  # (B,T,N)
-        truncations = tf.cast(batch["truncations"], "float32")  # (B,T,N)
-        terminals = tf.cast(batch["terminals"], "float32")  # (B,T,N)
+        observations = experience["observations"]  # (B,T,N,O)
+        actions = experience["actions"]  # (B,T,N,A)
+        env_states = experience["infos"]["state"]  # (B,T,S)
+        rewards = experience["rewards"]  # (B,T,N)
+        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
+        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
 
         # When to reset the RNN hidden state
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
@@ -252,12 +270,8 @@ class MADDPGSystem(BaseMARLSystem):
         target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
         # Target critics
-        target_qs_1 = self._target_critic_network_1(
-            env_states, target_actions, target_actions
-        )
-        target_qs_2 = self._target_critic_network_2(
-            env_states, target_actions, target_actions
-        )
+        target_qs_1 = self._target_critic_network_1(env_states, target_actions, target_actions)
+        target_qs_2 = self._target_critic_network_2(env_states, target_actions, target_actions)
 
         # Take minimum between two target critics
         target_qs = tf.minimum(target_qs_1, target_qs_2)
@@ -341,7 +355,11 @@ class MADDPGSystem(BaseMARLSystem):
 
         return logs
 
-    def _update_target_network(self, online_variables, target_variables):
+    def _update_target_network(
+        self,
+        online_variables: Sequence[Variable],
+        target_variables: Sequence[Variable],
+    ) -> None:
         """Update the target networks."""
         tau = self._target_update_rate
         for src, dest in zip(online_variables, target_variables):

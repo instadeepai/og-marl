@@ -13,14 +13,20 @@
 # limitations under the License.
 
 """Implementation of MAICQ"""
+from typing import Any, Dict, Optional, Tuple
+
+import numpy as np
 import sonnet as snt
 import tensorflow as tf
 import tree
+from chex import Numeric
+from tensorflow import Tensor
 
+from og_marl.environments.base import BaseEnvironment
+from og_marl.loggers import BaseLogger
 from og_marl.tf2.systems.qmix import QMIXSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
-    batched_agents,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
     gather,
@@ -36,18 +42,18 @@ class MAICQSystem(QMIXSystem):
 
     def __init__(
         self,
-        environment,
-        logger,
-        icq_advantages_beta=0.1,  # from MAICQ code
-        icq_target_q_taken_beta=1000,  # from MAICQ code
-        linear_layer_dim=64,
-        recurrent_layer_dim=64,
-        mixer_embed_dim=32,
-        mixer_hyper_dim=64,
-        discount=0.99,
-        target_update_period=200,
-        learning_rate=3e-4,
-        add_agent_id_to_obs=False,
+        environment: BaseEnvironment,
+        logger: BaseLogger,
+        icq_advantages_beta: float = 0.1,  # from MAICQ code
+        icq_target_q_taken_beta: int = 1000,  # from MAICQ code
+        linear_layer_dim: int = 64,
+        recurrent_layer_dim: int = 64,
+        mixer_embed_dim: int = 32,
+        mixer_hyper_dim: int = 64,
+        discount: float = 0.99,
+        target_update_period: int = 200,
+        learning_rate: float = 3e-4,
+        add_agent_id_to_obs: bool = False,
     ):
         super().__init__(
             environment,
@@ -78,28 +84,37 @@ class MAICQSystem(QMIXSystem):
             ]
         )
 
-    def reset(self):
+    def reset(self) -> None:
         """Called at the start of a new episode."""
         # Reset the recurrent neural network
         self._rnn_states = {
             agent: self._policy_network.initial_state(1)
             for agent in self._environment.possible_agents
         }
-
         return
 
-    def select_actions(self, observations, legal_actions=None, explore=False):
+    def select_actions(
+        self,
+        observations: Dict[str, np.ndarray],
+        legal_actions: Optional[Dict[str, np.ndarray]] = None,
+        explore: bool = False,
+    ) -> Dict[str, np.ndarray]:
         observations = tree.map_structure(tf.convert_to_tensor, observations)
         actions, next_rnn_states = self._tf_select_actions(
             observations, legal_actions, self._rnn_states
         )
         self._rnn_states = next_rnn_states
-        return tree.map_structure(
+        return tree.map_structure(  # type: ignore
             lambda x: x.numpy(), actions
         )  # convert to numpy and squeeze batch dim
 
     @tf.function()
-    def _tf_select_actions(self, observations, legal_actions, rnn_states):
+    def _tf_select_actions(
+        self,
+        observations: Dict[str, Tensor],
+        legal_actions: Dict[str, Tensor],
+        rnn_states: Dict[str, Tensor],
+    ) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
         actions = {}
         next_rnn_states = {}
         for i, agent in enumerate(self._environment.possible_agents):
@@ -125,20 +140,22 @@ class MAICQSystem(QMIXSystem):
         return actions, next_rnn_states
 
     @tf.function(jit_compile=True)
-    def _tf_train_step(self, train_step_ctr, batch):
-        # batch = batched_agents(self._environment.possible_agents, batch)
-
+    def _tf_train_step(
+        self,
+        train_step_ctr: int,
+        experience: Dict[str, Any],
+    ) -> Dict[str, Numeric]:
         # Unpack the batch
-        observations = batch["observations"]  # (B,T,N,O)
-        actions = batch["actions"]  # (B,T,N)
-        env_states = batch["infos"]["state"]  # (B,T,S)
-        rewards = batch["rewards"]  # (B,T,N)
-        truncations = batch["truncations"]  # (B,T,N)
-        terminals = batch["terminals"]  # (B,T,N)
-        legal_actions = batch["infos"]["legals"]  # (B,T,N,A)
+        observations = experience["observations"]  # (B,T,N,O)
+        actions = experience["actions"]  # (B,T,N)
+        env_states = experience["infos"]["state"]  # (B,T,S)
+        rewards = experience["rewards"]  # (B,T,N)
+        truncations = experience["truncations"]  # (B,T,N)
+        terminals = experience["terminals"]  # (B,T,N)
+        legal_actions = experience["infos"]["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state
-        resets = tf.maximum(terminals, truncations) # equivalent to logical 'or'
+        resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
 
         # Get dims
         B, T, N, A = legal_actions.shape
@@ -156,11 +173,7 @@ class MAICQSystem(QMIXSystem):
         resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
         # Unroll target network
-        target_qs_out = unroll_rnn(
-            self._target_q_network, 
-            observations,
-            resets
-        )
+        target_qs_out = unroll_rnn(self._target_q_network, observations, resets)
 
         # Expand batch and agent_dim
         target_qs_out = expand_batch_and_agent_dim_of_time_major_sequence(target_qs_out, B, N)
@@ -170,11 +183,7 @@ class MAICQSystem(QMIXSystem):
 
         with tf.GradientTape(persistent=True) as tape:
             # Unroll online network
-            qs_out = unroll_rnn(
-                self._q_network, 
-                observations, 
-                resets
-            )
+            qs_out = unroll_rnn(self._q_network, observations, resets)
 
             # Expand batch and agent_dim
             qs_out = expand_batch_and_agent_dim_of_time_major_sequence(qs_out, B, N)
@@ -183,9 +192,7 @@ class MAICQSystem(QMIXSystem):
             q_vals = switch_two_leading_dims(qs_out)
 
             # Unroll the policy
-            probs_out = unroll_rnn(
-                self._policy_network, observations, resets
-            )
+            probs_out = unroll_rnn(self._policy_network, observations, resets)
 
             # Expand batch and agent_dim
             probs_out = expand_batch_and_agent_dim_of_time_major_sequence(probs_out, B, N)
@@ -211,9 +218,7 @@ class MAICQSystem(QMIXSystem):
 
             coe = self._mixer.k(env_states)
 
-            coma_loss = -tf.reduce_mean(
-                coe * (len(advantages) * advantages * log_pi_taken)
-            )
+            coma_loss = -tf.reduce_mean(coe * (len(advantages) * advantages * log_pi_taken))
 
             # Critic learning
             q_taken = gather(q_vals, actions, axis=-1)
@@ -227,7 +232,9 @@ class MAICQSystem(QMIXSystem):
             target_q_taken = len(advantage_Q) * advantage_Q * target_q_taken
 
             # Compute targets
-            targets = rewards[:, :-1] + (1 - terminals[:, :-1]) * self._discount * target_q_taken[:, 1:]
+            targets = (
+                rewards[:, :-1] + (1 - terminals[:, :-1]) * self._discount * target_q_taken[:, 1:]
+            )
             targets = tf.stop_gradient(targets)
 
             # TD error

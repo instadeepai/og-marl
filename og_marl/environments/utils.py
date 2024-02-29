@@ -1,3 +1,5 @@
+# type: ignore
+
 # Copyright 2023 InstaDeep Ltd. All rights reserved.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +15,10 @@
 # limitations under the License.
 
 
-def get_environment(env_name, scenario):
+from og_marl.environments.base import BaseEnvironment
+
+
+def get_environment(env_name: str, scenario: str) -> BaseEnvironment:
     if env_name == "smac_v1":
         from og_marl.environments.smacv1 import SMACv1
 

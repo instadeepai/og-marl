@@ -13,7 +13,7 @@
 # limitations under the License.
 # limitations under the License.
 """Wrapper for Pistonball."""
-from typing import Dict, List
+from typing import Dict
 
 import cv2
 import dm_env
@@ -22,7 +22,7 @@ import supersuit
 from dm_env import specs
 from pettingzoo.butterfly import pistonball_v6
 
-from og_marl.environments.base import OLT
+from og_marl.environments.base import OLT  # type: ignore
 from og_marl.environments.pettingzoo_base import PettingZooBase
 
 
@@ -30,18 +30,7 @@ class Pistonball(PettingZooBase):
 
     """Environment wrapper for PettingZoo MARL environments."""
 
-    def __init__(self, n_pistons=15):
-        """Constructor for parallel PZ wrapper.
-
-        Args:
-        ----
-            environment (ParallelEnv): parallel PZ env.
-            env_preprocess_wrappers (Optional[List], optional): Wrappers
-                that preprocess envs.
-                Format (env_preprocessor, dict_with_preprocessor_params).
-            return_state_info: return extra state info
-
-        """
+    def __init__(self, n_pistons: int = 15):
         self._environment = pistonball_v6.parallel_env(
             n_pistons=n_pistons, continuous=True, render_mode="rgb_array"
         )
@@ -60,7 +49,7 @@ class Pistonball(PettingZooBase):
         self._reset_next_step = True
         self._done = False
 
-    def _create_state_representation(self, observations):
+    def _create_state_representation(self, observations: Dict[str, np.ndarray]) -> np.ndarray:
         if self._step_type == dm_env.StepType.FIRST:
             self._state_history = np.zeros((56, 88, 4), "float32")
 
@@ -74,21 +63,11 @@ class Pistonball(PettingZooBase):
         state = np.expand_dims(state, axis=-1)
         self._state_history = np.concatenate((state, self._state_history[:, :, :3]), axis=-1)
 
-        return self._state_history
+        return self._state_history  # type: ignore
 
-    def _convert_observations(self, observations: List, done: bool):
-        """Convert SMAC observation so it's dm_env compatible.
-
-        Args:
-        ----
-            observes (Dict[str, np.ndarray]): observations per agent.
-            dones (Dict[str, bool]): dones per agent.
-
-        Returns:
-        -------
-            types.Observation: dm compatible observations.
-
-        """
+    def _convert_observations(
+        self, observations: Dict[str, np.ndarray], done: bool
+    ) -> Dict[str, np.ndarray]:
         olt_observations = {}
         for _, agent in enumerate(self._agents):
             agent_obs = np.expand_dims(observations[agent][50:, :], axis=-1)
@@ -100,7 +79,7 @@ class Pistonball(PettingZooBase):
                 terminal=np.asarray(done, dtype="float32"),
             )
 
-        return olt_observations
+        return olt_observations  # type: ignore
 
     def extra_spec(self) -> Dict[str, specs.BoundedArray]:
         """Function returns extra spec (format) of the env.
@@ -125,7 +104,7 @@ class Pistonball(PettingZooBase):
 
         return action_spec
 
-    def observation_spec(self):
+    def observation_spec(self) -> Dict[str, OLT]:
         """Observation spec.
 
         Returns:

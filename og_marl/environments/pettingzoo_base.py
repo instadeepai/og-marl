@@ -12,31 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Base wrapper for Cooperative Pettingzoo environments."""
+from typing import Any, Dict
+
 import numpy as np
 
-from og_marl.environments.base import BaseEnvironment
+from og_marl.environments.base import BaseEnvironment, Observations, ResetReturn, StepReturn
 
 
 class PettingZooBase(BaseEnvironment):
 
     """Environment wrapper for PettingZoo environments."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor."""
-        self._environment = None
-        self.possible_agents = None
+        self.info_spec: Dict[str, Any] = {}
 
-        self._num_actions = None
-
-        self.action_spaces = {agent: None for agent in self.possible_agents}
-        self.observation_spaces = {agent: None for agent in self.possible_agents}
-
-        self.info_spec = {}
-
-    def reset(self):
+    def reset(self) -> ResetReturn:
         """Resets the env."""
         # Reset the environment
-        observations = self._environment.reset()
+        observations = self._environment.reset()  # type: ignore
 
         # Global state
         env_state = self._create_state_representation(observations)
@@ -45,11 +39,11 @@ class PettingZooBase(BaseEnvironment):
         info = {"state": env_state}
 
         # Convert observations to OLT format
-        observations = self._convert_observations(observations)
+        observations = self._convert_observations(observations, False)
 
         return observations, info
 
-    def step(self, actions):
+    def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         """Steps in env."""
         # Step the environment
         observations, rewards, terminals, truncations, _ = self._environment.step(actions)
@@ -62,18 +56,21 @@ class PettingZooBase(BaseEnvironment):
 
         return observations, rewards, terminals, truncations, info
 
-    def _add_zero_obs_for_missing_agent(self, observations):
+    def _add_zero_obs_for_missing_agent(self, observations: Observations) -> Observations:
         for agent in self._agents:
             if agent not in observations:
                 observations[agent] = np.zeros(
-                    self.observation_spaces[agent].shape, self.observation_spaces[agent].dtype
+                    self.observation_spaces[agent].shape,  # type: ignore
+                    self.observation_spaces[agent].dtype,  # type: ignore
                 )
         return observations
 
-    def _convert_observations(self, observations):
+    def _convert_observations(
+        self, observations: Dict[str, np.ndarray], done: bool
+    ) -> Dict[str, np.ndarray]:
         """Convert observations"""
         raise NotImplementedError
 
-    def _create_state_representation(self, observations):
+    def _create_state_representation(self, observations: Dict[str, np.ndarray]) -> np.ndarray:
         """Create global state representation from agent observations."""
         raise NotImplementedError

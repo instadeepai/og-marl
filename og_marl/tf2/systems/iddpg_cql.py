@@ -13,13 +13,17 @@
 # limitations under the License.
 
 """Implementation of TD3"""
+from typing import Any, Dict
+
 import numpy as np
 import tensorflow as tf
+from chex import Numeric
 
+from og_marl.environments.base import BaseEnvironment
+from og_marl.loggers import BaseLogger
 from og_marl.tf2.systems.iddpg import IDDPGSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
-    batched_agents,
     expand_batch_and_agent_dim_of_time_major_sequence,
     merge_batch_and_agent_dim_of_time_major_sequence,
     switch_two_leading_dims,
@@ -30,19 +34,19 @@ from og_marl.tf2.utils import (
 class IDDPGCQLSystem(IDDPGSystem):
     def __init__(
         self,
-        environment,
-        logger,
-        linear_layer_dim=64,
-        recurrent_layer_dim=64,
-        discount=0.99,
-        target_update_rate=0.005,
-        critic_learning_rate=1e-3,
-        policy_learning_rate=1e-3,
-        add_agent_id_to_obs=False,
-        random_exploration_timesteps=0,
-        num_ood_actions=10,  # CQL
-        cql_weight=5.0,  # CQL
-        cql_sigma=0.2,  # CQL
+        environment: BaseEnvironment,
+        logger: BaseLogger,
+        linear_layer_dim: int = 64,
+        recurrent_layer_dim: int = 64,
+        discount: float = 0.99,
+        target_update_rate: float = 0.005,
+        critic_learning_rate: float = 1e-3,
+        policy_learning_rate: float = 1e-3,
+        add_agent_id_to_obs: bool = False,
+        random_exploration_timesteps: int = 0,
+        num_ood_actions: int = 10,  # CQL
+        cql_weight: float = 5.0,  # CQL
+        cql_sigma: float = 0.2,  # CQL
     ):
         super().__init__(
             environment=environment,
@@ -62,17 +66,14 @@ class IDDPGCQLSystem(IDDPGSystem):
         self._cql_sigma = cql_sigma
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
-    def _tf_train_step(self, experience):
-        # batch = batched_agents(self._environment.possible_agents, batch)
-        batch = experience
-
+    def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
-        observations = batch["observations"]  # (B,T,N,O)
-        actions = batch["actions"]  # (B,T,N,A)
-        env_states = batch["infos"]["state"]  # (B,T,S)
-        rewards = batch["rewards"]  # (B,T,N)
-        truncations = tf.cast(batch["truncations"], "float32")  # (B,T,N)
-        terminals = tf.cast(batch["terminals"], "float32")  # (B,T,N)
+        observations = experience["observations"]  # (B,T,N,O)
+        actions = experience["actions"]  # (B,T,N,A)
+        env_states = experience["infos"]["state"]  # (B,T,S)
+        rewards = experience["rewards"]  # (B,T,N)
+        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
+        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
 
         # When to reset the RNN hidden state
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
@@ -101,12 +102,8 @@ class IDDPGCQLSystem(IDDPGSystem):
         target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
         # Target critics
-        target_qs_1 = self._target_critic_network_1(
-            env_states, target_actions
-        )
-        target_qs_2 = self._target_critic_network_2(
-            env_states, target_actions
-        )
+        target_qs_1 = self._target_critic_network_1(env_states, target_actions)
+        target_qs_2 = self._target_critic_network_2(env_states, target_actions)
 
         # Take minimum between two target critics
         target_qs = tf.minimum(target_qs_1, target_qs_2)
@@ -173,15 +170,11 @@ class IDDPGCQLSystem(IDDPGSystem):
             random_ood_action_log_pi = tf.math.log(0.5 ** (random_ood_actions.shape[-1]))
 
             ood_qs_1 = (
-                self._critic_network_1(
-                    repeat_env_states, random_ood_actions
-                )[:-1]
+                self._critic_network_1(repeat_env_states, random_ood_actions)[:-1]
                 - random_ood_action_log_pi
             )
             ood_qs_2 = (
-                self._critic_network_2(
-                    repeat_env_states, random_ood_actions
-                )[:-1]
+                self._critic_network_2(repeat_env_states, random_ood_actions)[:-1]
                 - random_ood_action_log_pi
             )
 
@@ -274,12 +267,8 @@ class IDDPGCQLSystem(IDDPGSystem):
                 target_online_actions, B, N
             )
 
-            qs_1 = self._critic_network_1(
-                env_states, online_actions
-            )
-            qs_2 = self._critic_network_2(
-                env_states, online_actions
-            )
+            qs_1 = self._critic_network_1(env_states, online_actions)
+            qs_2 = self._critic_network_2(env_states, online_actions)
             qs = tf.minimum(qs_1, qs_2)
 
             policy_loss = -tf.squeeze(qs, axis=-1) + 1e-3 * tf.reduce_mean(
