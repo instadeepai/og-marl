@@ -238,7 +238,9 @@ class OfflineMARLDataset:
 
 
 def download_and_unzip_dataset(
-    env_name: str, scenario_name: str, dataset_base_dir: str = "./datasets",
+    env_name: str,
+    scenario_name: str,
+    dataset_base_dir: str = "./datasets",
 ) -> None:
     dataset_download_url = DATASET_INFO[env_name][scenario_name]["url"]
 
@@ -276,7 +278,9 @@ def download_and_unzip_dataset(
 
 
 def download_and_unzip_vault(
-    env_name: str, scenario_name: str, dataset_base_dir: str= "./vaults",
+    env_name: str,
+    scenario_name: str,
+    dataset_base_dir: str = "./vaults",
 ) -> None:
     dataset_download_url = VAULT_INFO[env_name][scenario_name]["url"]
 

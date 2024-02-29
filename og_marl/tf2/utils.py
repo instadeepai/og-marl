@@ -54,11 +54,13 @@ def merge_batch_and_agent_dim_of_time_major_sequence(x: Tensor) -> Tensor:
 def merge_time_batch_and_agent_dim(x: Tensor) -> Tensor:
     T, B, N = x.shape[:3]  # assume time major
     trailing_dims = x.shape[3:]
-    x = tf.reshape(x, shape=(T * B * N, *trailing_dims))   # type: ignore
+    x = tf.reshape(x, shape=(T * B * N, *trailing_dims))  # type: ignore
     return x
 
 
-def expand_time_batch_and_agent_dim_of_time_major_sequence(x: Tensor, T: int, B: int, N: int) -> Tensor:
+def expand_time_batch_and_agent_dim_of_time_major_sequence(
+    x: Tensor, T: int, B: int, N: int
+) -> Tensor:
     TNB = x.shape[:1]  # assume time major
     assert TNB == T * B * N  # type: ignore
     trailing_dims = x.shape[1:]
@@ -169,6 +171,8 @@ def batched_agents(agents, batch_dict):  # type: ignore
     if "mask" in batch_dict["infos"]:
         batched_agents_dict["mask"] = tf.convert_to_tensor(batch_dict["infos"]["mask"], "float32")
     else:
-        batched_agents_dict["mask"] = tf.ones_like(batched_agents_dict["terminals"][:, :, 0], "float32")
+        batched_agents_dict["mask"] = tf.ones_like(
+            batched_agents_dict["terminals"][:, :, 0], "float32"
+        )
 
     return batched_agents_dict
