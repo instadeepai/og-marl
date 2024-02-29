@@ -1,3 +1,5 @@
+# type: ignore
+
 # Copyright 2023 InstaDeep Ltd. All rights reserved.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +32,7 @@ def get_environment(env_name: str, scenario: str) -> BaseEnvironment:
 
         return MAMuJoCo(scenario)
     elif env_name == "gymnasium_mamujoco":
-        from og_marl.environments.gymnasium_mamujoco import MAMuJoCo  # type: ignore
+        from og_marl.environments.gymnasium_mamujoco import MAMuJoCo
 
         return MAMuJoCo(scenario)
     elif env_name == "flatland":
