@@ -70,6 +70,7 @@ strict_equality = true
 explicit_package_bases = true
 follow_imports = "skip"
 ignore_missing_imports = true
+exclude = "jax"  # Ignoring until JAX systems are fully supported
 
 [[tool.mypy.overrides]]
 module = [

@@ -50,6 +50,15 @@ repos:
         stages: [ commit-msg ]
         additional_dependencies: [ '@commitlint/config-conventional' ]
 
+  - repo: local
+    hooks:
+      - id: mypy
+        name: "Static type checker"
+        entry: python -m mypy og_marl
+        language: system
+        types: [ python ]
+        pass_filenames: false
+
   # - repo: https://github.com/Lucas-C/pre-commit-hooks
   #   rev: v1.3.0
   #   hooks:
