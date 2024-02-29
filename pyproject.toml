@@ -87,4 +87,5 @@ module = [
     "smacv2.*",
     "flatland.*",
     "flashbax.*",
+    "requests.*",
 ]
