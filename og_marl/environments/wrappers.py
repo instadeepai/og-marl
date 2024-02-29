@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 import flashbax as fbx
 import jax
@@ -26,7 +26,9 @@ BUFFER_TIME_AXIS_LEN = 100_000
 
 
 class ExperienceRecorder:
-    def __init__(self, environment: BaseEnvironment, vault_name: str, write_to_vault_every: int = 10_000):
+    def __init__(
+        self, environment: BaseEnvironment, vault_name: str, write_to_vault_every: int = 10_000
+    ):
         self._environment = environment
         self._buffer = fbx.make_flat_buffer(
             max_length=2 * 10_000,

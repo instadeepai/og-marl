@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 import numpy as np
 from gymnasium.spaces import Box
@@ -83,9 +83,7 @@ class MAMuJoCo(BaseEnvironment):
 
         return observations, info
 
-    def step(
-        self, actions: Dict[str, np.ndarray]
-    ) -> StepReturn:
+    def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         mujoco_actions = []
         for agent in self.possible_agents:
             mujoco_actions.append(actions[agent])

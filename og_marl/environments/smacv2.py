@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Wrapper for SMACv2."""
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 import numpy as np
 from gymnasium.spaces import Box, Discrete

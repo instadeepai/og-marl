@@ -110,9 +110,7 @@ class Flatland(BaseEnvironment):
 
         return observations, info
 
-    def step(
-        self, actions: Dict[str, np.ndarray]
-    ) -> StepReturn:
+    def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         actions = {int(agent): action.item() for agent, action in actions.items()}
 
         # Step the Flatland environment

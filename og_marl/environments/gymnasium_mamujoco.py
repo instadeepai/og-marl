@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 import gymnasium_robotics
 import numpy as np
@@ -66,9 +66,7 @@ class MAMuJoCo:
 
         return observations, info
 
-    def step(
-        self, actions: Dict[str, np.ndarray]
-    ) -> StepReturn:
+    def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         observations, rewards, terminals, trunctations, _ = self._environment.step(actions)
 
         info = {"state": self._environment.state().astype("float32")}

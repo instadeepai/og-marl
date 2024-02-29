@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Base wrapper for Cooperative Pettingzoo environments."""
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 import numpy as np
 
@@ -65,7 +65,9 @@ class PettingZooBase(BaseEnvironment):
                 )
         return observations
 
-    def _convert_observations(self, observations: Dict[str, np.ndarray], done: bool) -> Dict[str, np.ndarray]:
+    def _convert_observations(
+        self, observations: Dict[str, np.ndarray], done: bool
+    ) -> Dict[str, np.ndarray]:
         """Convert observations"""
         raise NotImplementedError
 

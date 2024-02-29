@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Wrapper for SMAC."""
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 import numpy as np
 from gymnasium.spaces import Box, Discrete
