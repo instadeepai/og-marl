@@ -17,7 +17,7 @@ import numpy as np
 from gymnasium.spaces import Box
 from multiagent_mujoco.mujoco_multi import MujocoMulti
 
-from og_marl.environments.base import BaseEnvironment
+from og_marl.environments.base import BaseEnvironment, ResetReturn, StepReturn
 
 
 def get_mamujoco_args(scenario: str) -> Dict[str, Any]:
@@ -70,7 +70,7 @@ class MAMuJoCo(BaseEnvironment):
 
         self.max_episode_length = 1000
 
-    def reset(self) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
+    def reset(self) -> ResetReturn:
         self._environment.reset()
 
         observations = self._environment.get_obs()
@@ -85,13 +85,7 @@ class MAMuJoCo(BaseEnvironment):
 
     def step(
         self, actions: Dict[str, np.ndarray]
-    ) -> Tuple[
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, Any],
-    ]:
+    ) -> StepReturn:
         mujoco_actions = []
         for agent in self.possible_agents:
             mujoco_actions.append(actions[agent])

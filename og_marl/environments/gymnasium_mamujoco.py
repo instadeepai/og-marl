@@ -17,6 +17,8 @@ from typing import Any, Dict, Tuple
 import gymnasium_robotics
 import numpy as np
 
+from og_marl.environments.base import ResetReturn, StepReturn
+
 
 def get_env_config(scenario: str) -> Dict[str, Any]:
     """Helper method to get env_args."""
@@ -57,7 +59,7 @@ class MAMuJoCo:
 
         self.info_spec = {"state": self._environment.state()}
 
-    def reset(self) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
+    def reset(self) -> ResetReturn:
         observations, _ = self._environment.reset()
 
         info = {"state": self._environment.state().astype("float32")}
@@ -66,13 +68,7 @@ class MAMuJoCo:
 
     def step(
         self, actions: Dict[str, np.ndarray]
-    ) -> Tuple[
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, Any],
-    ]:
+    ) -> StepReturn:
         observations, rewards, terminals, trunctations, _ = self._environment.step(actions)
 
         info = {"state": self._environment.state().astype("float32")}

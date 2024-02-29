@@ -19,7 +19,7 @@ import numpy as np
 from gymnasium.spaces import Box, Discrete
 from smacv2.env.starcraft2.wrapper import StarCraftCapabilityEnvWrapper
 
-from og_marl.environments.base import BaseEnvironment
+from og_marl.environments.base import BaseEnvironment, ResetReturn, StepReturn
 
 DISTRIBUTION_CONFIGS = {
     "terran_5_vs_5": {
@@ -120,7 +120,7 @@ class SMACv2(BaseEnvironment):
 
         self.max_episode_length = self._environment.episode_limit
 
-    def reset(self) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
+    def reset(self) -> ResetReturn:
         """Resets the env."""
         # Reset the environment
         self._environment.reset()
@@ -139,13 +139,7 @@ class SMACv2(BaseEnvironment):
 
         return observations, info
 
-    def step(self, actions: Dict[str, np.ndarray]) -> Tuple[
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, Any],
-    ]:
+    def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         """Step in env."""
         # Convert dict of actions to list for SMAC
         smac_actions = []

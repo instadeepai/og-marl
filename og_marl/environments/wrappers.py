@@ -20,7 +20,7 @@ import jax
 import numpy as np
 from flashbax.vault import Vault
 
-from og_marl.environments.base import BaseEnvironment
+from og_marl.environments.base import BaseEnvironment, ResetReturn, StepReturn
 
 BUFFER_TIME_AXIS_LEN = 100_000
 
@@ -62,7 +62,7 @@ class ExperienceRecorder:
         packed_timestep: Dict[str, Any] = jax.tree_map(lambda x: np.array(x), packed_timestep)
         return packed_timestep
 
-    def reset(self) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
+    def reset(self) -> ResetReturn:
         observations, infos = self._environment.reset()
 
         self._observations = observations
@@ -70,13 +70,7 @@ class ExperienceRecorder:
 
         return observations, infos
 
-    def step(self, actions: Dict[str, np.ndarray]) -> Tuple[
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, Any],
-    ]:
+    def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         observations, rewards, terminals, truncations, infos = self._environment.step(actions)
 
         packed_timestep = self._pack_timestep(
@@ -129,7 +123,7 @@ class Dtype:
         self._environment = environment
         self._dtype = dtype
 
-    def reset(self) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
+    def reset(self) -> ResetReturn:
         observations = self._environment.reset()
 
         if isinstance(observations, tuple):
@@ -142,13 +136,7 @@ class Dtype:
 
         return observations, infos
 
-    def step(self, actions: Dict[str, np.ndarray]) -> Tuple[
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, Any],
-    ]:
+    def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         next_observations, rewards, terminals, truncations, infos = self._environment.step(actions)
 
         for agent, observation in next_observations.items():
@@ -181,7 +169,7 @@ class PadObsandActs:
             if obs_dim > self._obs_dim:
                 self._obs_dim = obs_dim
 
-    def reset(self) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
+    def reset(self) -> ResetReturn:
         observations = self._environment.reset()
 
         if isinstance(observations, tuple):
@@ -198,13 +186,7 @@ class PadObsandActs:
 
         return observations, infos
 
-    def step(self, actions: Dict[str, np.ndarray]) -> Tuple[
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, Any],
-    ]:
+    def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         actions = {
             agent: action[: self._environment.action_spaces[agent].shape[0]]
             for agent, action in actions.items()

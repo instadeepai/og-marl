@@ -24,7 +24,13 @@ from flatland.envs.rail_env import RailEnv
 from flatland.envs.rail_generators import sparse_rail_generator
 from gymnasium.spaces import Box, Discrete
 
-from og_marl.environments.base import BaseEnvironment
+from og_marl.environments.base import (
+    BaseEnvironment,
+    Observations,
+    ResetReturn,
+    StepReturn,
+    Timestep,
+)
 
 FLATLAND_MAP_CONFIGS = {
     "3trains": {
@@ -90,7 +96,7 @@ class Flatland(BaseEnvironment):
 
         self.max_episode_length = map_config["max_episode_len"]
 
-    def reset(self) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
+    def reset(self) -> ResetReturn:
         self._done = False
 
         observations, info = self._environment.reset()
@@ -107,13 +113,7 @@ class Flatland(BaseEnvironment):
 
     def step(
         self, actions: Dict[str, np.ndarray]
-    ) -> Tuple[
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, Any],
-    ]:
+    ) -> StepReturn:
         actions = {int(agent): action.item() for agent, action in actions.items()}
 
         # Step the Flatland environment
@@ -186,7 +186,7 @@ class Flatland(BaseEnvironment):
         self,
         observations: Dict[int, np.ndarray],
         info: Dict[str, Dict[int, np.ndarray]],
-    ) -> Dict[str, np.ndarray]:
+    ) -> Observations:
         new_observations = {}
         for i, agent in enumerate(self.possible_agents):
             agent_id = i

@@ -5,7 +5,7 @@ import numpy as np
 from gymnasium.spaces import Box
 from var_voltage_control.voltage_control_env import VoltageControl
 
-from og_marl.environments.base import BaseEnvironment
+from og_marl.environments.base import BaseEnvironment, Observations, ResetReturn, StepReturn
 
 
 class VoltageControlEnv(BaseEnvironment):
@@ -34,7 +34,7 @@ class VoltageControlEnv(BaseEnvironment):
             },  # placeholder
         }
 
-    def reset(self) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
+    def reset(self) -> ResetReturn:
         # Reset the environment
         observations, state = self._environment.reset()
 
@@ -51,13 +51,7 @@ class VoltageControlEnv(BaseEnvironment):
 
         return observations, info
 
-    def step(self, actions: Dict[str, np.ndarray]) -> Tuple[
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, Any],
-    ]:
+    def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         """Steps in env."""
         actions = self._preprocess_actions(actions)
 
@@ -95,7 +89,7 @@ class VoltageControlEnv(BaseEnvironment):
         concat_action = np.concatenate(concat_action)
         return concat_action  # type: ignore
 
-    def _convert_observations(self, observations: List, done: bool) -> Dict[str, np.ndarray]:
+    def _convert_observations(self, observations: List, done: bool) -> Observations:
         dict_observations = {}
         for i, agent in enumerate(self.possible_agents):
             obs = np.array(observations[i], "float32")

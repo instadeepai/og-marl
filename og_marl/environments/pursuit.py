@@ -19,6 +19,7 @@ from gymnasium.spaces import Box, Discrete
 from pettingzoo.sisl import pursuit_v4
 from supersuit import black_death_v3
 
+from og_marl.environments.base import Observations
 from og_marl.environments.pettingzoo_base import PettingZooBase
 
 
@@ -40,11 +41,11 @@ class Pursuit(PettingZooBase):
 
         self.info_spec = {"state": np.zeros(8 * 2 + 30 * 2, "float32")}
 
-    def _convert_observations(self, observations: Dict[str, np.ndarray], done: bool) -> Dict[str, np.ndarray]:
+    def _convert_observations(self, observations: Observations, done: bool) -> Observations:
         """Convert observations."""
         return observations
 
-    def _create_state_representation(self, observations: Dict[str, np.ndarray]) -> np.ndarray:
+    def _create_state_representation(self, observations: Observations) -> np.ndarray:
         pursuer_pos = [
             agent.current_position() for agent in self._environment.aec_env.env.env.env.pursuers
         ]

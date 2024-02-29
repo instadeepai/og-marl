@@ -19,6 +19,16 @@ from typing import Any, Dict, Tuple
 
 import numpy as np
 
+Observations = Dict[str, np.ndarray]
+NextObservations = Observations
+Rewards = Dict[str, np.ndarray]
+Terminals = Dict[str, np.ndarray]
+Truncations = Dict[str, np.ndarray]
+Info = Dict[str, Any]
+
+ResetReturn = Tuple[Observations, Info]
+StepReturn = Tuple[NextObservations, Rewards, Terminals, Truncations, Info]
+
 
 class BaseEnvironment:
     """Base environment class for OG-MARL."""
@@ -30,16 +40,10 @@ class BaseEnvironment:
         # self.num_actions = None
         # self.num_agents = None
 
-    def reset(self) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
+    def reset(self) -> ResetReturn:
         raise NotImplementedError
 
-    def step(self, actions: Dict[str, np.ndarray]) -> Tuple[
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, Any],
-    ]:
+    def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         raise NotImplementedError
 
     def get_stats(self) -> Dict:

@@ -16,7 +16,7 @@ from typing import Any, Dict, Tuple
 
 import numpy as np
 
-from og_marl.environments.base import BaseEnvironment
+from og_marl.environments.base import BaseEnvironment, Observations, ResetReturn, StepReturn
 
 
 class PettingZooBase(BaseEnvironment):
@@ -33,7 +33,7 @@ class PettingZooBase(BaseEnvironment):
 
         self.info_spec: Dict[str, Any] = {}
 
-    def reset(self) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
+    def reset(self) -> ResetReturn:
         """Resets the env."""
         # Reset the environment
         observations = self._environment.reset()  # type: ignore
@@ -49,13 +49,7 @@ class PettingZooBase(BaseEnvironment):
 
         return observations, info
 
-    def step(self, actions: Dict[str, np.ndarray]) -> Tuple[
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, np.ndarray],
-        Dict[str, Any],
-    ]:
+    def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         """Steps in env."""
         # Step the environment
         observations, rewards, terminals, truncations, _ = self._environment.step(actions)
@@ -68,7 +62,7 @@ class PettingZooBase(BaseEnvironment):
 
         return observations, rewards, terminals, truncations, info
 
-    def _add_zero_obs_for_missing_agent(self, observations: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+    def _add_zero_obs_for_missing_agent(self, observations: Observations) -> Observations:
         for agent in self._agents:
             if agent not in observations:
                 observations[agent] = np.zeros(
