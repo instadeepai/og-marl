@@ -103,7 +103,7 @@ class IDRQNSystem(BaseMARLSystem):
         observations: Dict[str, np.ndarray],
         legal_actions: Optional[Dict[str, np.ndarray]] = None,
         explore: bool = True,
-    ) -> np.ndarray:
+    ) -> Dict[str, np.ndarray]:
         if explore:
             self._env_step_ctr += 1.0
 

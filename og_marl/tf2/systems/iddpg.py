@@ -165,7 +165,7 @@ class IDDPGSystem(BaseMARLSystem):
         observations: Dict[str, np.ndarray],
         legal_actions: Optional[Dict[str, np.ndarray]] = None,
         explore: bool = True,
-    ) -> np.ndarray:
+    ) -> Dict[str, np.ndarray]:
         actions, next_rnn_states = self._tf_select_actions(observations, self._rnn_states, explore)
         self._rnn_states = next_rnn_states
         return tree.map_structure(  # type: ignore

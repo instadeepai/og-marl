@@ -72,7 +72,7 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
         observations: Dict[str, np.ndarray],
         legal_actions: Optional[Dict[str, np.ndarray]] = None,
         explore: bool = True,
-    ) -> np.ndarray:
+    ) -> Dict[str, np.ndarray]:
         observations, legal_actions = tree.map_structure(
             tf.convert_to_tensor, (observations, legal_actions)
         )

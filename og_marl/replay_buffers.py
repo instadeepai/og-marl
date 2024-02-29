@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict
+from typing import Any, Dict
 
 import flashbax as fbx
 import jax
@@ -57,12 +57,12 @@ class FlashbaxReplayBuffer:
 
     def add(
         self,
-        observations: np.ndarray,
-        actions: np.ndarray,
-        rewards: np.ndarray,
-        terminals: np.ndarray,
-        truncations: np.ndarray,
-        infos: np.ndarray,
+        observations: Dict[str, np.ndarray],
+        actions: Dict[str, np.ndarray],
+        rewards: Dict[str, np.ndarray],
+        terminals: Dict[str, np.ndarray],
+        truncations: Dict[str, np.ndarray],
+        infos: Dict[str, Any],
     ) -> None:
         timestep = {
             "observations": observations,

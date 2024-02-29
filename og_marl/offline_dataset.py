@@ -16,10 +16,14 @@ import os
 import sys
 import zipfile
 from pathlib import Path
+from typing import Any, Dict
 
 import requests
 import tensorflow as tf
 import tree
+from tensorflow import DType
+
+from og_marl.environments.base import BaseEnvironment
 
 VAULT_INFO = {
     "smac_v1": {
@@ -122,7 +126,7 @@ DATASET_INFO = {
 }
 
 
-def get_schema_dtypes(environment):
+def get_schema_dtypes(environment: BaseEnvironment) -> Dict[str, DType]:
     act_type = list(environment.action_spaces.values())[0].dtype
     schema = {}
     for agent in environment.possible_agents:
@@ -148,11 +152,11 @@ def get_schema_dtypes(environment):
 class OfflineMARLDataset:
     def __init__(
         self,
-        environment,
-        env_name,
-        scenario_name,
-        dataset_type,
-        base_dataset_dir="./datasets",
+        environment: BaseEnvironment,
+        env_name: str,
+        scenario_name: str,
+        dataset_type: str,
+        base_dataset_dir: str = "./datasets",
     ):
         self._environment = environment
         self._schema = get_schema_dtypes(environment)
@@ -168,7 +172,7 @@ class OfflineMARLDataset:
                 sub_dir_to_idx[subdir] = idx
                 idx += 1
 
-        def get_fname_idx(file_name):
+        def get_fname_idx(file_name: str) -> int:
             dir_idx = sub_dir_to_idx[file_name.split("/")[-2]] * 1000
             return dir_idx + int(file_name.split("log_")[-1].split(".")[0])
 
@@ -184,7 +188,7 @@ class OfflineMARLDataset:
         self.sequence_length = DATASET_INFO[env_name][scenario_name]["sequence_length"]
         self.max_episode_length = environment.max_episode_length
 
-    def _decode_fn(self, record_bytes):
+    def _decode_fn(self, record_bytes: Any) -> Dict[str, Any]:
         example = tf.io.parse_single_example(
             record_bytes,
             tree.map_structure(lambda x: tf.io.FixedLenFeature([], dtype=tf.string), self._schema),
@@ -193,7 +197,7 @@ class OfflineMARLDataset:
         for key, dtype in self._schema.items():
             example[key] = tf.io.parse_tensor(example[key], dtype)
 
-        sample = {
+        sample: Dict[str, dict] = {
             "observations": {},
             "actions": {},
             "rewards": {},
@@ -215,7 +219,7 @@ class OfflineMARLDataset:
 
         return sample
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: Any) -> Any:
         """Expose any other attributes of the underlying environment.
 
         Args:
@@ -233,7 +237,9 @@ class OfflineMARLDataset:
             return getattr(self._tf_dataset, name)
 
 
-def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./datasets"):
+def download_and_unzip_dataset(
+    env_name: str, scenario_name: str, dataset_base_dir: str = "./datasets",
+) -> None:
     dataset_download_url = DATASET_INFO[env_name][scenario_name]["url"]
 
     # TODO add check to see if dataset exists already.
@@ -245,7 +251,7 @@ def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./data
 
     extraction_path = f"{dataset_base_dir}/{env_name}"
 
-    response = requests.get(dataset_download_url, stream=True)
+    response = requests.get(dataset_download_url, stream=True)  # type: ignore
     total_length = response.headers.get("content-length")
 
     with open(zip_file_path, "wb") as file:
@@ -253,11 +259,11 @@ def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./data
             file.write(response.content)
         else:
             dl = 0
-            total_length = int(total_length)
+            total_length = int(total_length)  # type: ignore
             for data in response.iter_content(chunk_size=4096):
                 dl += len(data)
                 file.write(data)
-                done = int(50 * dl / total_length)
+                done = int(50 * dl / total_length)  # type: ignore
                 sys.stdout.write("\r[%s%s]" % ("=" * done, " " * (50 - done)))
                 sys.stdout.flush()
 
@@ -269,7 +275,9 @@ def download_and_unzip_dataset(env_name, scenario_name, dataset_base_dir="./data
     os.remove(zip_file_path)
 
 
-def download_and_unzip_vault(env_name, scenario_name, dataset_base_dir="./vaults"):
+def download_and_unzip_vault(
+    env_name: str, scenario_name: str, dataset_base_dir: str= "./vaults",
+) -> None:
     dataset_download_url = VAULT_INFO[env_name][scenario_name]["url"]
 
     if check_directory_exists_and_not_empty(f"{dataset_base_dir}/{env_name}/{scenario_name}.vlt"):
@@ -291,11 +299,11 @@ def download_and_unzip_vault(env_name, scenario_name, dataset_base_dir="./vaults
             file.write(response.content)
         else:
             dl = 0
-            total_length = int(total_length)
+            total_length = int(total_length)  # type: ignore
             for data in response.iter_content(chunk_size=4096):
                 dl += len(data)
                 file.write(data)
-                done = int(50 * dl / total_length)
+                done = int(50 * dl / total_length)  # type: ignore
                 sys.stdout.write("\r[%s%s]" % ("=" * done, " " * (50 - done)))
                 sys.stdout.flush()
 
@@ -307,7 +315,7 @@ def download_and_unzip_vault(env_name, scenario_name, dataset_base_dir="./vaults
     os.remove(zip_file_path)
 
 
-def check_directory_exists_and_not_empty(path):
+def check_directory_exists_and_not_empty(path: str) -> bool:
     # Check if the directory exists
     if os.path.exists(path) and os.path.isdir(path):
         # Check if the directory is not empty

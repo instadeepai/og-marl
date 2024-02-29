@@ -98,7 +98,7 @@ class MAICQSystem(QMIXSystem):
         observations: Dict[str, np.ndarray],
         legal_actions: Optional[Dict[str, np.ndarray]] = None,
         explore: bool = False,
-    ) -> np.ndarray:
+    ) -> Dict[str, np.ndarray]:
         observations = tree.map_structure(tf.convert_to_tensor, observations)
         actions, next_rnn_states = self._tf_select_actions(
             observations, legal_actions, self._rnn_states

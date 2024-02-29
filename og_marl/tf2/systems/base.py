@@ -47,11 +47,12 @@ class BaseMARLSystem:
         episode_returns = []
         for _ in range(num_eval_episodes):
             self.reset()
-            observations = self._environment.reset()
+            observations_ = self._environment.reset()
 
-            if isinstance(observations, tuple):
-                observations, infos = observations
+            if isinstance(observations_, tuple):
+                observations, infos = observations_
             else:
+                observations = observations_
                 infos = {}
 
             done = False
@@ -83,11 +84,12 @@ class BaseMARLSystem:
         episodes = 0
         while True:  # breaks out when env_steps > max_env_steps
             self.reset()  # reset the system
-            observations = self._environment.reset()
+            observations_ = self._environment.reset()
 
-            if isinstance(observations, tuple):
-                observations, infos = observations
+            if isinstance(observations_, tuple):
+                observations, infos = observations_
             else:
+                observations = observations_
                 infos = {}
 
             episode_return = 0.0
@@ -248,7 +250,7 @@ class BaseMARLSystem:
         observations: Dict[str, np.ndarray],
         legal_actions: Dict[str, np.ndarray],
         explore: bool = True,
-    ) -> np.ndarray:
+    ) -> Dict[str, np.ndarray]:
         raise NotImplementedError
 
     def train_step(self, batch: Experience) -> Dict[str, Numeric]:
