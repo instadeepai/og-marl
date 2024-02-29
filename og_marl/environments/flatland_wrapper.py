@@ -29,7 +29,6 @@ from og_marl.environments.base import (
     Observations,
     ResetReturn,
     StepReturn,
-    Timestep,
 )
 
 FLATLAND_MAP_CONFIGS = {

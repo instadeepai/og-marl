@@ -35,10 +35,7 @@ class BaseEnvironment:
 
     def __init__(self) -> None:
         """Constructor."""
-        # self._environment = None
-        # self._agents = None
-        # self.num_actions = None
-        # self.num_agents = None
+        pass
 
     def reset(self) -> ResetReturn:
         raise NotImplementedError
