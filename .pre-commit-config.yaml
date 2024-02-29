@@ -25,11 +25,6 @@ repos:
       # Run the formatter.
       - id: ruff-format
 
-  - repo: https://github.com/timothycrosley/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.1.0
     hooks:

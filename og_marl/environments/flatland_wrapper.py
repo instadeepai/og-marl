@@ -24,12 +24,7 @@ from flatland.envs.rail_env import RailEnv
 from flatland.envs.rail_generators import sparse_rail_generator
 from gymnasium.spaces import Box, Discrete
 
-from og_marl.environments.base import (
-    BaseEnvironment,
-    Observations,
-    ResetReturn,
-    StepReturn,
-)
+from og_marl.environments.base import BaseEnvironment, Observations, ResetReturn, StepReturn
 
 FLATLAND_MAP_CONFIGS = {
     "3trains": {

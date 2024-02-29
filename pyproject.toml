@@ -2,7 +2,7 @@
 line-length = 100
 
 [tool.ruff.lint]
-select = ["A","B","C","D","E","F","G","I","N","T","W"]  # Specify list of error codes to report.
+select = ["A","B","C","D","E","F","G","N","T","W"]  # Specify list of error codes to report.
 exclude = [
     ".tox",
     ".git",
