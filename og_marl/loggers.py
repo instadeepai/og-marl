@@ -15,7 +15,7 @@
 import json
 import os
 import time
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from chex import Numeric
 
@@ -23,7 +23,7 @@ import wandb
 
 
 class BaseLogger:
-    def write(self, logs: Dict[str, Numeric], force: bool = False):
+    def write(self, logs: Dict[str, Numeric], force: bool = False) -> None:
         raise NotImplementedError
 
     def close(self) -> None:
@@ -39,7 +39,7 @@ class TerminalLogger(BaseLogger):
         self._ctr = 0
         self._last_log = time.time()
 
-    def write(self, logs: Dict[str, Numeric], force: bool = False):
+    def write(self, logs: Dict[str, Numeric], force: bool = False) -> None:
         if time.time() - self._last_log > self._log_every or force:
             for key, log in logs.items():
                 print(f"{key}: {float(log)} |", end=" ")
@@ -67,7 +67,7 @@ class WandbLogger(BaseLogger):
         self._ctr = 0
         self._last_log = time.time()
 
-    def write(self, logs: Dict[str, Numeric], force: bool = False):
+    def write(self, logs: Dict[str, Numeric], force: bool = False) -> None:
         if time.time() - self._last_log > self._log_every or force:
             wandb.log(logs)
 
@@ -80,7 +80,7 @@ class WandbLogger(BaseLogger):
 
         self._ctr += 1
 
-    def close(self):
+    def close(self) -> None:
         wandb.finish()
 
 
@@ -114,7 +114,7 @@ class JsonWriter:
     ):
         self.path = path
         self.file_name = file_name
-        self.run_data = {"absolute_metrics": {}}
+        self.run_data: Dict[str, Any] = {"absolute_metrics": {}}
         self._save_to_wandb = save_to_wandb
 
         # If the file already exists, load it
@@ -177,6 +177,6 @@ class JsonWriter:
         with open(f"{self.path}/{self.file_name}", "w") as f:
             json.dump(self.data, f, indent=4)
 
-    def close(self):
+    def close(self) -> None:
         if self._save_to_wandb:
             wandb.save(f"{self.path}/{self.file_name}")
