@@ -17,6 +17,15 @@
     <a href="https://arxiv.org/abs/2302.00521">
         <img src="https://img.shields.io/badge/PrePrint-ArXiv-red" alt="ArXiv">
     </a>
+    <a href="https://github.com/instadeepai/og-marl/actions/workflows/tests_linters.yml">
+        <img src="https://github.com/instadeepai/og-marl/actions/workflows/tests_linters.yml/badge.svg" alt="Tests and Linters">
+    </a>
+    <a href="https://github.com/psf/black">
+        <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
+    </a>
+    <a href="http://mypy-lang.org/">
+        <img src="http://www.mypy-lang.org/static/mypy_badge.svg" alt="MyPy">
+    </a>
 </p>
 
 <p align="center">
