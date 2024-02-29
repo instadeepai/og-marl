@@ -74,6 +74,7 @@ exclude = "jax"  # Ignoring until JAX systems are fully supported
 
 [[tool.mypy.overrides]]
 module = [
+    "requests",
     "setuptools.*",
     "gymnasium_robotics.*",
     "marl_eval.*",
@@ -87,5 +88,4 @@ module = [
     "smacv2.*",
     "flatland.*",
     "flashbax.*",
-    "requests.*",
 ]
