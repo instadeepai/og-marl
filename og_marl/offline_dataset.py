@@ -21,7 +21,7 @@ from typing import Any, Dict, List
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-import requests
+import requests  # type: ignore
 import seaborn as sns
 import tensorflow as tf
 import tree

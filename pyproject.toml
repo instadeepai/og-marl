@@ -74,10 +74,7 @@ exclude = "jax"  # Ignoring until JAX systems are fully supported
 
 [[tool.mypy.overrides]]
 module = [
-    "requests",
-    "setuptools.*",
     "gymnasium_robotics.*",
-    "marl_eval.*",
     "cv2.*",
     "tree.*",
     "dm_env.*",
