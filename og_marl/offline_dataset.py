@@ -65,9 +65,7 @@ VAULT_INFO = {
     },
     "flatland": {
         "5trains": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3trains.zip"},
-        "2trains": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/5trains.zip"
-        },
+        "2trains": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/5trains.zip"},
     },
 }
 
