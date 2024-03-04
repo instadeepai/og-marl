@@ -65,6 +65,12 @@ Run a baseline. In this example we will run MAICQ.
 
 `python baselines/main.py --env=smac_v1 --scenario=3m --dataset=Good --system=maicq`
 
+## Dataset API
+
+We provide a simple demonstrative notebook of how to use OG-MARL's dataset API here:
+
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/instadeepai/og-marl/blob/main/examples/dataset_api_demo.ipynb)
+
 ## Datasets 🎥
 
 We have generated datasets on a diverse set of popular MARL environments. A list of currently supported environments is included in the table below. It is well known from the single-agent offline RL literature that the quality of experience in offline datasets can play a large role in the final performance of offline RL algorithms. Therefore in OG-MARL, for each environment and scenario, we include a range of dataset distributions including `Good`, `Medium`, `Poor` and `Replay` datasets in order to benchmark offline MARL algorithms on a range of different dataset qualities. For more information on why we chose to include each environment and its task properties, please read our accompanying [paper](https://arxiv.org/abs/2302.00521).
@@ -108,13 +114,6 @@ We are in the process of migrating our datasets from TF Records to Flashbax Vaul
 | 🏙️CityLearn | 2022_all_phases | 17 | Cont. | Vector | Dense | Homog | [source](https://github.com/intelligent-environments-lab/CityLearn) |
 | 🔌Voltage Control | case33_3min_final | 6 | Cont. | Vector | Dense | Homog | [source](https://github.com/Future-Power-Networks/MAPDN) |
 | 🔴MPE | simple_adversary | 3 | Discrete. | Vector | Dense | Competitive | [source](https://pettingzoo.farama.org/environments/mpe/simple_adversary/) |
-
-## Dataset API
-
-We provide a simple demonstrative notebook of how to use OG-MARL's dataset API here:
-
-[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/instadeepai/og-marl/blob/main/examples/dataset_api_demo.ipynb)
-
 
 ### Dataset and Vault Locations
 For OG-MARL's systems, we require the following dataset storage structure:
