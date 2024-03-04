@@ -14,7 +14,7 @@
 
 """Implementation of independent Q-learning (DRQN style)"""
 import copy
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Dict, Sequence, Tuple
 
 import numpy as np
 import sonnet as snt
@@ -101,7 +101,7 @@ class IDRQNSystem(BaseMARLSystem):
     def select_actions(
         self,
         observations: Dict[str, np.ndarray],
-        legal_actions: Optional[Dict[str, np.ndarray]] = None,
+        legal_actions: Dict[str, np.ndarray] = None,
         explore: bool = True,
     ) -> Dict[str, np.ndarray]:
         if explore:

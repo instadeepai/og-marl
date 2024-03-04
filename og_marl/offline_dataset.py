@@ -133,6 +133,18 @@ DATASET_INFO = {
         "2ant": {"url": "https://tinyurl.com/2ant-dataset", "sequence_length": 20, "period": 10},
         "4ant": {"url": "https://tinyurl.com/4ant-dataset", "sequence_length": 20, "period": 10},
     },
+    "pettingzoo": {
+        "pursuit": {
+            "url": "https://tinyurl.com/pursuit-dataset",
+            "sequence_length": 20,
+            "period": 10,
+        },
+        "pistonball": {
+            "url": "https://tinyurl.com/pistonball-dataset",
+            "sequence_length": 5,
+            "period": 5,
+        },
+    },
     "voltage_control": {
         "case33_3min_final": {
             "url": "https://tinyurl.com/case33-3min-final-dataset",
@@ -299,11 +311,11 @@ def download_and_unzip_vault(
     scenario_name: str,
     dataset_base_dir: str = "./vaults",
 ) -> None:
-    dataset_download_url = VAULT_INFO[env_name][scenario_name]["url"]
-
     if check_directory_exists_and_not_empty(f"{dataset_base_dir}/{env_name}/{scenario_name}.vlt"):
         print(f"Vault '{dataset_base_dir}/{env_name}/{scenario_name}' already exists.")
         return
+
+    dataset_download_url = VAULT_INFO[env_name][scenario_name]["url"]
 
     os.makedirs(f"{dataset_base_dir}/tmp/", exist_ok=True)
     os.makedirs(f"{dataset_base_dir}/{env_name}/", exist_ok=True)

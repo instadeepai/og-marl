@@ -40,6 +40,8 @@ class Pursuit(PettingZooBase):
 
         self.info_spec = {"state": np.zeros(8 * 2 + 30 * 2, "float32")}
 
+        self.max_episode_length = 500
+
     def _convert_observations(self, observations: Observations, done: bool) -> Observations:
         """Convert observations."""
         return observations

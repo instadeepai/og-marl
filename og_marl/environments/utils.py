@@ -43,5 +43,9 @@ def get_environment(env_name: str, scenario: str) -> BaseEnvironment:
         from og_marl.environments.voltage_control import VoltageControlEnv
 
         return VoltageControlEnv()
+    elif env_name == "pettingzoo":
+        from og_marl.environments.pursuit import Pursuit
+
+        return Pursuit()
     else:
         raise ValueError("Environment not recognised.")

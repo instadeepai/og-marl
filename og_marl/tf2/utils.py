@@ -17,6 +17,17 @@ from typing import Any, Dict
 
 import tensorflow as tf
 from tensorflow import Module, Tensor
+import sonnet as snt
+
+
+@snt.allow_empty_variables
+class IdentityNetwork(snt.Module):  # TODO typing
+    def __init__(self) -> None:
+        super().__init__()
+        return
+
+    def __call__(self, x: Any) -> Any:
+        return x
 
 
 def set_growing_gpu_memory() -> None:
