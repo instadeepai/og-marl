@@ -11,18 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from typing import Any, Dict
 
 import numpy as np
 from gymnasium.spaces import Box, Discrete
 from pettingzoo.sisl import pursuit_v4
 from supersuit import black_death_v3
 
-from og_marl.environments.base import Observations
+from og_marl.environments.base import BaseEnvironment, Observations, ResetReturn, StepReturn
 from og_marl.environments.pettingzoo_base import PettingZooBase
 
 
-class Pursuit(PettingZooBase):
+class Pursuit(BaseEnvironment):
 
     """Environment wrapper for Pursuit."""
 
@@ -38,13 +38,37 @@ class Pursuit(PettingZooBase):
             agent: Box(-np.inf, np.inf, (*self._obs_dim,)) for agent in self.possible_agents
         }
 
-        self.info_spec = {"state": np.zeros(8 * 2 + 30 * 2, "float32")}
+        self._legals = {agent: np.ones((self._num_actions,), "int32") for agent in self.possible_agents}
+
+        self.info_spec = {"state": np.zeros(8 * 2 + 30 * 2, "float32"), "legals": self._legals}
 
         self.max_episode_length = 500
 
-    def _convert_observations(self, observations: Observations, done: bool) -> Observations:
-        """Convert observations."""
-        return observations
+    def reset(self) -> ResetReturn:
+        """Resets the env."""
+        # Reset the environment
+        observations, _ = self._environment.reset()  # type: ignore
+
+        # Global state
+        env_state = self._create_state_representation(observations)
+
+        # Infos
+        info = {"state": env_state, "legals": self._legals}
+
+        return observations, info
+
+    def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
+        """Steps in env."""
+        # Step the environment
+        observations, rewards, terminals, truncations, _ = self._environment.step(actions)
+
+        # Global state
+        env_state = self._create_state_representation(observations)
+
+        # Extra infos
+        info = {"state": env_state, "legals": self._legals}
+
+        return observations, rewards, terminals, truncations, info
 
     def _create_state_representation(self, observations: Observations) -> np.ndarray:
         pursuer_pos = [

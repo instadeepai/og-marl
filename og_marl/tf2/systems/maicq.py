@@ -51,6 +51,7 @@ class CNNEmbeddingNetwork(snt.Module):  # TODO typing
         x = tf.reshape(x, shape=(-1, *trailing_dims))
         embed = self.nn(x)
         embed = tf.reshape(embed, shape=(*leading_dims, -1))
+        return embed
 
 
 class MAICQSystem(QMIXSystem):
@@ -145,7 +146,6 @@ class MAICQSystem(QMIXSystem):
         actions = {}
         next_rnn_states = {}
         for i, agent in enumerate(self._environment.possible_agents):
-            print(observations[agent])
             agent_observation = observations[agent]
             agent_observation = concat_agent_id_to_obs(
                 agent_observation, i, len(self._environment.possible_agents)
