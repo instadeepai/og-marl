@@ -115,7 +115,7 @@ We are in the process of migrating our datasets from TF Records to Flashbax Vaul
 | 🔴MPE | simple_adversary | 3 | Discrete. | Vector | Dense | Competitive | [source](https://pettingzoo.farama.org/environments/mpe/simple_adversary/) |
 
 ### Dataset and Vault Locations
-For OG-MARL's systems, we require the following dataset storage structure:
+For OG-MARL's systems, we require the following dataset file structure:
 
 ```
 examples/
