@@ -108,7 +108,7 @@ def unroll_rnn(rnn_network: Module, inputs: Tensor, resets: Tensor) -> Tensor:
                 rnn_network.initial_state(B)[0],  # type: ignore
                 hidden_state[0],
             ),
-        )  # hidden state wrapped im tuple
+        )  # hidden state wrapped in tuple
 
     return tf.stack(outputs, axis=0)  # type: ignore
 
@@ -148,25 +148,34 @@ def batched_agents(agents, batch_dict):  # type: ignore
         "rewards": [],
         "terminals": [],
         "truncations": [],
+        "infos": {},
     }
 
     for agent in agents:
         for key in batched_agents_dict:
+            if key == "infos":
+                continue
             batched_agents_dict[key].append(batch_dict[key][agent])
     for key, value in batched_agents_dict.items():
+        if key == "infos":
+            continue
         batched_agents_dict[key] = tf.stack(value, axis=2)
 
     batched_agents_dict["terminals"] = tf.cast(batched_agents_dict["terminals"], "float32")
     batched_agents_dict["truncations"] = tf.cast(batched_agents_dict["truncations"], "float32")
 
     if "legals" in batch_dict["infos"]:
-        batched_agents_dict["legals"] = []
+        batched_agents_dict["infos"]["legals"] = []
         for agent in agents:
-            batched_agents_dict["legals"].append(batch_dict["infos"]["legals"][agent])
-        batched_agents_dict["legals"] = tf.stack(batched_agents_dict["legals"], axis=2)
+            batched_agents_dict["infos"]["legals"].append(batch_dict["infos"]["legals"][agent])
+        batched_agents_dict["infos"]["legals"] = tf.stack(
+            batched_agents_dict["infos"]["legals"], axis=2
+        )
 
     if "state" in batch_dict["infos"]:
-        batched_agents_dict["state"] = tf.convert_to_tensor(batch_dict["infos"]["state"], "float32")
+        batched_agents_dict["infos"]["state"] = tf.convert_to_tensor(
+            batch_dict["infos"]["state"], "float32"
+        )
 
     if "mask" in batch_dict["infos"]:
         batched_agents_dict["mask"] = tf.convert_to_tensor(batch_dict["infos"]["mask"], "float32")
