@@ -3,7 +3,7 @@ import os
 # import module
 import traceback
 
-from og_marl.environments.utils import get_environment
+from og_marl.environments import get_environment
 from og_marl.loggers import TerminalLogger, JsonWriter
 from og_marl.replay_buffers import FlashbaxReplayBuffer
 from og_marl.tf2.networks import CNNEmbeddingNetwork
