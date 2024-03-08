@@ -11,21 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from absl import app, flags
 
-from og_marl.environments import smacv1
-from og_marl.offline_dataset import OfflineMARLDataset, download_and_unzip_dataset
+from og_marl.offline_dataset import download_and_unzip_vault
 
-# Comment this out if you already downloaded the dataset
-download_and_unzip_dataset("smac_v1", "3m", dataset_base_dir="datasets")
+FLAGS = flags.FLAGS
+flags.DEFINE_string("env", "smac_v1", "Environment name.")
+flags.DEFINE_string("scenario", "3m", "Environment scenario name.")
 
-# Compute mean episode return of Good dataset
 
-env = smacv1.SMACv1("3m")  # Change SMAC Scenario Here
-dataset = OfflineMARLDataset(env, "datasets/smac_v1/3m/Good")
+def main(_):
+    # Download vault
+    download_and_unzip_vault(FLAGS.env_name, FLAGS.scenario_name)
 
-sample_cnt = 0
-tot_returns = 0
-for sample in dataset._tf_dataset:
-    sample_cnt += 1
-    tot_returns += sample["episode_return"].numpy()
-print("Mean Episode return:", tot_returns / sample_cnt)
+    # NEXT STEPS: See `examples/dataset_api_demo.ipynb`
+
+
+if __name__ == "__main__":
+    app.run(main)

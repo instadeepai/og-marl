@@ -59,7 +59,7 @@ Download environment dependencies. We will use SMACv1 in this example.
 
 Download a dataset.
 
-`python examples/download_vault.py --env=smac_v1 --scenario=3m`
+`python examples/download_dataset.py --env=smac_v1 --scenario=3m`
 
 Run a baseline. In this example we will run MAICQ.
 
