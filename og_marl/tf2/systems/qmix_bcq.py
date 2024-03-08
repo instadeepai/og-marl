@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Implementation of QMIX+BCQ"""
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import sonnet as snt
 import tensorflow as tf
@@ -30,6 +30,7 @@ from og_marl.tf2.utils import (
     switch_two_leading_dims,
     unroll_rnn,
 )
+from og_marl.tf2.networks import IdentityNetwork
 
 
 class QMIXBCQSystem(QMIXSystem):
@@ -49,6 +50,8 @@ class QMIXBCQSystem(QMIXSystem):
         target_update_period: int = 200,
         learning_rate: float = 3e-4,
         add_agent_id_to_obs: bool = False,
+        observation_embedding_network: Optional[snt.Module] = None,
+        state_embedding_network: Optional[snt.Module] = None,
     ):
         super().__init__(
             environment,
@@ -61,6 +64,8 @@ class QMIXBCQSystem(QMIXSystem):
             discount=discount,
             target_update_period=target_update_period,
             learning_rate=learning_rate,
+            observation_embedding_network=observation_embedding_network,
+            state_embedding_network=state_embedding_network,
         )
 
         self._threshold = bc_threshold
@@ -74,6 +79,10 @@ class QMIXBCQSystem(QMIXSystem):
                 tf.nn.softmax,
             ]
         )
+
+        if observation_embedding_network is None:
+            observation_embedding_network = IdentityNetwork()
+        self._bc_embedding_network = observation_embedding_network
 
     @tf.function(jit_compile=True)
     def _tf_train_step(self, train_step: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
@@ -105,7 +114,8 @@ class QMIXBCQSystem(QMIXSystem):
         resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
         # Unroll target network
-        target_qs_out = unroll_rnn(self._target_q_network, observations, resets)
+        target_embeddings = self._target_q_embedding_network(observations)
+        target_qs_out = unroll_rnn(self._target_q_network, target_embeddings, resets)
 
         # Expand batch and agent_dim
         target_qs_out = expand_batch_and_agent_dim_of_time_major_sequence(target_qs_out, B, N)
@@ -115,7 +125,8 @@ class QMIXBCQSystem(QMIXSystem):
 
         with tf.GradientTape() as tape:
             # Unroll online network
-            qs_out = unroll_rnn(self._q_network, observations, resets)
+            q_embeddings = self._q_embedding_network(observations)
+            qs_out = unroll_rnn(self._q_network, q_embeddings, resets)
 
             # Expand batch and agent_dim
             qs_out = expand_batch_and_agent_dim_of_time_major_sequence(qs_out, B, N)
@@ -131,7 +142,8 @@ class QMIXBCQSystem(QMIXSystem):
             ###################
 
             # Unroll behaviour cloning network
-            probs_out = unroll_rnn(self._behaviour_cloning_network, observations, resets)
+            bc_embeddings = self._bc_embedding_network(observations)
+            probs_out = unroll_rnn(self._behaviour_cloning_network, bc_embeddings, resets)
 
             # Expand batch and agent_dim
             probs_out = expand_batch_and_agent_dim_of_time_major_sequence(probs_out, B, N)
@@ -162,9 +174,17 @@ class QMIXBCQSystem(QMIXSystem):
             ####### END #######
             ###################
 
-            # Maybe do mixing (e.g. QMIX) but not in independent system
+            # Q-MIXING
+            env_state_embeddings, target_env_state_embeddings = (
+                self._state_embedding_network(env_states),
+                self._target_state_embedding_network(env_states),
+            )
             chosen_action_qs, target_max_qs, rewards = self._mixing(
-                chosen_action_qs, target_max_qs, env_states, rewards
+                chosen_action_qs,
+                target_max_qs,
+                env_state_embeddings,
+                target_env_state_embeddings,
+                rewards,
             )
 
             # Compute targets
@@ -185,8 +205,10 @@ class QMIXBCQSystem(QMIXSystem):
         # Get trainable variables
         variables = (
             *self._q_network.trainable_variables,
+            *self._q_embedding_network.trainable_variables,
             *self._mixer.trainable_variables,
-            *self._behaviour_cloning_network.trainable_variables,
+            *self._state_embedding_network.trainable_variables
+            * self._behaviour_cloning_network.trainable_variables,
         )
 
         # Compute gradients.
@@ -198,13 +220,17 @@ class QMIXBCQSystem(QMIXSystem):
         # Online variables
         online_variables = (
             *self._q_network.variables,
+            *self._q_embedding_network.variables,
             *self._mixer.variables,
+            *self._state_embedding_network.variables,
         )
 
         # Get target variables
         target_variables = (
             *self._target_q_network.variables,
+            *self._target_q_embedding_network.variables,
             *self._target_mixer.variables,
+            *self._target_state_embedding_network.variables,
         )
 
         # Maybe update target network

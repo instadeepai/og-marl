@@ -11,15 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict
+from typing import Dict
 
 import numpy as np
 from gymnasium.spaces import Box, Discrete
 from pettingzoo.sisl import pursuit_v4
-from supersuit import black_death_v3
 
 from og_marl.environments.base import BaseEnvironment, Observations, ResetReturn, StepReturn
-from og_marl.environments.pettingzoo_base import PettingZooBase
 
 
 class Pursuit(BaseEnvironment):
@@ -28,7 +26,7 @@ class Pursuit(BaseEnvironment):
 
     def __init__(self) -> None:
         """Constructor for Pursuit"""
-        self._environment = black_death_v3(pursuit_v4.parallel_env())
+        self._environment = pursuit_v4.parallel_env()
         self.possible_agents = self._environment.possible_agents
         self._num_actions = 5
         self._obs_dim = (7, 7, 3)
@@ -38,7 +36,9 @@ class Pursuit(BaseEnvironment):
             agent: Box(-np.inf, np.inf, (*self._obs_dim,)) for agent in self.possible_agents
         }
 
-        self._legals = {agent: np.ones((self._num_actions,), "int32") for agent in self.possible_agents}
+        self._legals = {
+            agent: np.ones((self._num_actions,), "int32") for agent in self.possible_agents
+        }
 
         self.info_spec = {"state": np.zeros(8 * 2 + 30 * 2, "float32"), "legals": self._legals}
 

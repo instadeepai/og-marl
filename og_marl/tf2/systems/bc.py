@@ -19,6 +19,7 @@ from og_marl.tf2.utils import (
     switch_two_leading_dims,
     unroll_rnn,
 )
+from og_marl.tf2.networks import IdentityNetwork
 
 
 class DicreteActionBehaviourCloning(BaseMARLSystem):
@@ -33,6 +34,7 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
         discount: float = 0.99,
         learning_rate: float = 1e-3,
         add_agent_id_to_obs: bool = True,
+        observation_embedding_network: Optional[snt.Module] = None,
     ):
         super().__init__(
             environment, logger, discount=discount, add_agent_id_to_obs=add_agent_id_to_obs
@@ -48,6 +50,9 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
                 snt.Linear(self._environment._num_actions),
             ]
         )  # shared network for all agents
+        if observation_embedding_network is None:
+            observation_embedding_network = IdentityNetwork()
+        self._policy_embedding_network = observation_embedding_network
 
         self._optimizer = snt.optimizers.RMSProp(learning_rate=learning_rate)
 
@@ -147,11 +152,16 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
         resets = switch_two_leading_dims(resets)
         actions = switch_two_leading_dims(actions)
 
+        # Merge batch_dim and agent_dim
+        observations = merge_batch_and_agent_dim_of_time_major_sequence(observations)
+        resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
+
         with tf.GradientTape() as tape:
+            embeddings = self._policy_embedding_network(observations)
             probs_out = unroll_rnn(
                 self._policy_network,
-                merge_batch_and_agent_dim_of_time_major_sequence(observations),
-                merge_batch_and_agent_dim_of_time_major_sequence(resets),
+                embeddings,
+                resets,
             )
             probs_out = expand_batch_and_agent_dim_of_time_major_sequence(probs_out, B, N)
 
@@ -163,7 +173,10 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
             bc_loss = tf.reduce_mean(bc_loss)
 
         # Apply gradients to policy
-        variables = (*self._policy_network.trainable_variables,)  # Get trainable variables
+        variables = (
+            *self._policy_network.trainable_variables,
+            *self._policy_embedding_network.trainable_variables,
+        )  # Get trainable variables
 
         gradients = tape.gradient(bc_loss, variables)  # Compute gradients.
         self._optimizer.apply(gradients, variables)

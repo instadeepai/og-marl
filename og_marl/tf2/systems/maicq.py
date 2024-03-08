@@ -13,8 +13,7 @@
 # limitations under the License.
 
 """Implementation of MAICQ"""
-from typing import Any, Dict, Tuple
-import copy
+from typing import Any, Dict, Tuple, Optional
 
 import numpy as np
 import sonnet as snt
@@ -34,24 +33,8 @@ from og_marl.tf2.utils import (
     merge_batch_and_agent_dim_of_time_major_sequence,
     switch_two_leading_dims,
     unroll_rnn,
-    IdentityNetwork,
 )
-
-
-class CNNEmbeddingNetwork(snt.Module):  # TODO typing
-    def __init__(self) -> None:
-        super().__init__()
-
-        self.nn = snt.Sequential([snt.Conv2D(8, 3), snt.Conv2D(16, 2), tf.keras.layers.Flatten()])
-
-    def __call__(self, x: Any) -> Any:
-        leading_dims = x.shape[:-3]  # B,T,N
-        trailing_dims = x.shape[-3:]  # W,H,C
-
-        x = tf.reshape(x, shape=(-1, *trailing_dims))
-        embed = self.nn(x)
-        embed = tf.reshape(embed, shape=(*leading_dims, -1))
-        return embed
+from og_marl.tf2.networks import IdentityNetwork
 
 
 class MAICQSystem(QMIXSystem):
@@ -72,8 +55,8 @@ class MAICQSystem(QMIXSystem):
         target_update_period: int = 200,
         learning_rate: float = 3e-4,
         add_agent_id_to_obs: bool = False,
-        observation_embedding_network: snt.Module = IdentityNetwork(),
-        state_embedding_network: snt.Module = IdentityNetwork(),
+        observation_embedding_network: Optional[snt.Module] = None,
+        state_embedding_network: Optional[snt.Module] = None,
     ):
         super().__init__(
             environment,
@@ -86,19 +69,18 @@ class MAICQSystem(QMIXSystem):
             learning_rate=learning_rate,
             mixer_embed_dim=mixer_embed_dim,
             mixer_hyper_dim=mixer_hyper_dim,
+            observation_embedding_network=observation_embedding_network,
+            state_embedding_network=state_embedding_network,
         )
 
-        # ICQ
+        # ICQ hyper-params
         self._icq_advantages_beta = icq_advantages_beta
         self._icq_target_q_taken_beta = icq_target_q_taken_beta
 
         # Embedding Networks
-        observation_embedding_network = CNNEmbeddingNetwork()
+        if observation_embedding_network is None:
+            observation_embedding_network = IdentityNetwork()
         self._policy_embedding_network = observation_embedding_network
-        self._critic_embedding_network = copy.deepcopy(observation_embedding_network)
-        self._target_critic_embedding_network = copy.deepcopy(observation_embedding_network)
-        self._state_embedding_network = state_embedding_network
-        self._target_state_embedding_network = copy.deepcopy(state_embedding_network)
 
         # Policy Network
         self._policy_network = snt.DeepRNN(
@@ -136,7 +118,7 @@ class MAICQSystem(QMIXSystem):
             lambda x: x.numpy(), actions
         )  # convert to numpy and squeeze batch dim
 
-    # @tf.function()
+    @tf.function()
     def _tf_select_actions(
         self,
         observations: Dict[str, Tensor],
@@ -200,7 +182,7 @@ class MAICQSystem(QMIXSystem):
         resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
         # Unroll target network
-        target_embeddings = self._target_critic_embedding_network(observations)
+        target_embeddings = self._target_q_embedding_network(observations)
         target_qs_out = unroll_rnn(self._target_q_network, target_embeddings, resets)
 
         # Expand batch and agent_dim
@@ -211,8 +193,8 @@ class MAICQSystem(QMIXSystem):
 
         with tf.GradientTape(persistent=True) as tape:
             # Unroll online network
-            critic_embeddings = self._critic_embedding_network(observations)
-            qs_out = unroll_rnn(self._q_network, critic_embeddings, resets)
+            q_embeddings = self._q_embedding_network(observations)
+            qs_out = unroll_rnn(self._q_network, q_embeddings, resets)
 
             # Expand batch and agent_dim
             qs_out = expand_batch_and_agent_dim_of_time_major_sequence(qs_out, B, N)
@@ -284,7 +266,7 @@ class MAICQSystem(QMIXSystem):
             *self._policy_network.trainable_variables,
             *self._q_network.trainable_variables,
             *self._mixer.trainable_variables,
-            *self._critic_embedding_network.trainable_variables,
+            *self._q_embedding_network.trainable_variables,
             *self._policy_embedding_network.trainable_variables,
         )  # Get trainable variables
 
@@ -296,7 +278,7 @@ class MAICQSystem(QMIXSystem):
         online_variables = (
             *self._q_network.variables,
             *self._mixer.variables,
-            *self._critic_embedding_network.variables,
+            *self._q_embedding_network.variables,
             *self._state_embedding_network.variables,
         )
 
@@ -304,7 +286,7 @@ class MAICQSystem(QMIXSystem):
         target_variables = (
             *self._target_q_network.variables,
             *self._target_mixer.variables,
-            *self._target_critic_embedding_network.variables,
+            *self._target_q_embedding_network.variables,
             *self._target_state_embedding_network.variables,
         )
 
