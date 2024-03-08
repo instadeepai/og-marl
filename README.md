@@ -77,7 +77,6 @@ We have generated datasets on a diverse set of popular MARL environments. A list
 
 <div class="collage">
   <div class="row" align="center">
-<!--     <img src="docs/assets/smac.png" alt="SMAC v1" width="16%"/> -->
     <img src="docs/assets/smacv2.png" alt="SMAC v2" width="16%"/>
     <img src="docs/assets/pistonball.png" alt="Pistonball" width="16%"/>
     <img src="docs/assets/coop_pong.png" alt="Cooperative Pong" width="16%"/>
