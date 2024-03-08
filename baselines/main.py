@@ -13,7 +13,7 @@
 # limitations under the License.
 from absl import app, flags
 
-from og_marl.environments.utils import get_environment
+from og_marl.environments import get_environment
 from og_marl.loggers import JsonWriter, WandbLogger
 from og_marl.offline_dataset import download_and_unzip_vault
 from og_marl.replay_buffers import FlashbaxReplayBuffer
@@ -29,7 +29,7 @@ flags.DEFINE_string("scenario", "pursuit", "Environment scenario name.")
 flags.DEFINE_string("dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
 flags.DEFINE_string("system", "qmix", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
-flags.DEFINE_float("trainer_steps", 5e4, "Number of training steps.")
+flags.DEFINE_float("trainer_steps", 3e4, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
 
 
@@ -53,7 +53,7 @@ def main(_):
         print("Vault not found. Exiting.")
         return
 
-    logger = WandbLogger(config=config)
+    logger = WandbLogger(project="og-marl-baselines", config=config)
 
     json_writer = JsonWriter(
         "logs",
