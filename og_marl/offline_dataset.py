@@ -67,6 +67,9 @@ VAULT_INFO = {
         "5trains": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3trains.zip"},
         "2trains": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/5trains.zip"},
     },
+    "pettingzoo": {
+        "pursuit": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/pursuit.zip"}
+    },
 }
 
 DATASET_INFO = {
