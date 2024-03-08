@@ -37,6 +37,8 @@ setup(
         "gymnasium",
         "requests",
         "jax[cpu]==0.4.20",
+        "matplotlib",
+        "seaborn",
         # "flashbax==0.1.0", # install post
     ],
     extras_require={
