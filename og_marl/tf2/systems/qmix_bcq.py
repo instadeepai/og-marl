@@ -207,8 +207,8 @@ class QMIXBCQSystem(QMIXSystem):
             *self._q_network.trainable_variables,
             *self._q_embedding_network.trainable_variables,
             *self._mixer.trainable_variables,
-            *self._state_embedding_network.trainable_variables
-            * self._behaviour_cloning_network.trainable_variables,
+            *self._state_embedding_network.trainable_variables,
+            *self._behaviour_cloning_network.trainable_variables,
         )
 
         # Compute gradients.

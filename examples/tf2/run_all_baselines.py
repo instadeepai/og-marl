@@ -16,20 +16,19 @@ set_growing_gpu_memory()
 os.environ["SUPPRESS_GR_PROMPT"] = "1"
 
 scenario_system_configs = {
-    # "smac_v1": {
-    #     "3m": {
-    #         "systems": ["idrqn", "idrqn+cql", "idrqn+bcq", "qmix+cql", "qmix+bcq",
-    #                        "maicq", "dbc"],
-    #         "datasets": ["Good"],
-    #         "trainer_steps": 3000,
-    #         "evaluate_every": 1000,
-    #     },
-    # },
+    "smac_v1": {
+        "3m": {
+            "systems": ["idrqn", "idrqn+cql", "idrqn+bcq", "qmix+cql", "qmix+bcq", "maicq", "dbc"],
+            "datasets": ["Good"],
+            "trainer_steps": 2000,
+            "evaluate_every": 1000,
+        },
+    },
     "pettingzoo": {
         "pursuit": {
             "systems": ["idrqn", "idrqn+cql", "idrqn+bcq", "qmix+cql", "qmix+bcq", "maicq", "dbc"],
             "datasets": ["Good"],
-            "trainer_steps": 3000,
+            "trainer_steps": 2000,
             "evaluate_every": 1000,
         },
     },
@@ -80,8 +79,6 @@ for seed in seeds:
 
                         if scenario_name == "pursuit":
                             system_kwargs["observation_embedding_network"] = CNNEmbeddingNetwork()
-                            if system_name in ["qmix", "qmix+cql", "qmix+bcq", "maicq"]:
-                                system_kwargs["state_embedding_network"] = CNNEmbeddingNetwork()
 
                         system = get_system(system_name, env, logger, **system_kwargs)
 

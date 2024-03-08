@@ -106,14 +106,13 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
                     agent_observation, i, len(self._environment.possible_agents)
                 )
             agent_observation = tf.expand_dims(agent_observation, axis=0)  # add batch dimension
-            logits, next_rnn_states[agent] = self._policy_network(
-                agent_observation, rnn_states[agent]
-            )
+            embedding = self._policy_embedding_network(agent_observation)
+            logits, next_rnn_states[agent] = self._policy_network(embedding, rnn_states[agent])
 
             probs = tf.nn.softmax(logits)
 
             if legal_actions is not None:
-                agent_legals = tf.expand_dims(legal_actions[agent], axis=0)
+                agent_legals = tf.cast(tf.expand_dims(legal_actions[agent], axis=0), "float32")
                 probs = (probs * agent_legals) / tf.reduce_sum(
                     probs * agent_legals
                 )  # mask and renorm
@@ -121,7 +120,7 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
             action = tfp.distributions.Categorical(probs=probs).sample(1)
 
             # Store agent action
-            actions[agent] = action
+            actions[agent] = action[0]
 
         return actions, next_rnn_states
 

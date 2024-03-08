@@ -185,8 +185,8 @@ class IDRQNBCQSystem(IDRQNSystem):
         # Get trainable variables
         variables = (
             *self._q_network.trainable_variables,
-            *self._q_embedding_network.trainable_variables
-            * self._behaviour_cloning_network.trainable_variables,
+            *self._q_embedding_network.trainable_variables,
+            *self._behaviour_cloning_network.trainable_variables,
             *self._bc_embedding_network.trainable_variables,
         )
 

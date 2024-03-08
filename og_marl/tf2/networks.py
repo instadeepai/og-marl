@@ -128,12 +128,12 @@ class CNNEmbeddingNetwork(snt.Module):
     def __call__(self, x: Tensor) -> Tensor:
         """Embed a pixel-styled input into a vector using a conv net.
 
-        We assume the input has leading batch, time and agent dims. With trailing dims
+        We assume the input has trailing dims
         being the width, height and channel dimensions of the input.
 
         The output shape is then given as (B,T,N,Embed)
         """
-        leading_dims = x.shape[:-3]  # B,T,N
+        leading_dims = x.shape[:-3]
         trailing_dims = x.shape[-3:]  # W,H,C
 
         x = tf.reshape(x, shape=(-1, *trailing_dims))
