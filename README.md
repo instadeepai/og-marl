@@ -136,19 +136,6 @@ vaults/
         |   |_> Medium/
         |   |_> Poor/
         |_> ...
-datasets/
-    |_> smac_v1/
-        |_> 3m/
-        |   |_> Good/
-        |   |_> Medium/
-        |   |_> Poor/
-        |_> ...
-    |_> smac_v2/
-        |_> terran_5_vs_5/
-        |   |_> Good/
-        |   |_> Medium/
-        |   |_> Poor/
-        |_> ...
 ...
 ```
 
