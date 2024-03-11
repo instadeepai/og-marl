@@ -24,7 +24,7 @@ spec:
         cpus: 12
         # mandatory (must be >= 2): RAM ratio wanted (in GB)
         # memory = cpus * ramRatio
-        ramRatio: 2
+        ramRatio: 3
         accelerators:
           gpu:
             count: 0
