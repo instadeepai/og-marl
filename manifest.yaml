@@ -13,8 +13,8 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  # command: python baselines/main.py --env=pettingzoo --scenario=pursuit
-  command: wandb agent off-the-grid-marl-team/og-marl-baselines/i87akim6
+  command: python baselines/main.py --env=pettingzoo --scenario=pursuit
+  # command: wandb agent off-the-grid-marl-team/og-marl-baselines/i87akim6
 
   types:
     Worker:
@@ -22,10 +22,10 @@ spec:
 
       resources:
         # 10-15 cpus for single process
-        cpus: 4
+        cpus: 8
         # mandatory (must be >= 2): RAM ratio wanted (in GB)
         # memory = cpus * ramRatio
-        ramRatio: 2
+        ramRatio: 3
         accelerators:
           gpu:
             count: 0
