@@ -2,7 +2,7 @@ autorom
 gym
 numpy
 opencv-python
-pettingzoo==1.22.0
+pettingzoo==1.22.3
 pygame
 pymunk
 scipy
