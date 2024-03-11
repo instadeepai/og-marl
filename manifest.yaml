@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: python baselines/main.py
+  command: python baselines/main.py --env=flatland --scenario=5trains --system=dbc
 
   types:
     Worker:
@@ -21,10 +21,10 @@ spec:
 
       resources:
         # 10-15 cpus for single process
-        cpus: 12
+        cpus: 6
         # mandatory (must be >= 2): RAM ratio wanted (in GB)
         # memory = cpus * ramRatio
-        ramRatio: 3
+        ramRatio: 2
         accelerators:
           gpu:
             count: 0
