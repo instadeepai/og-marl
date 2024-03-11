@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: python baselines/main.py --env=flatland --scenario=5trains --system=dbc
+  command: wandb agent off-the-grid-marl-team/og-marl-baselines/i87akim6
 
   types:
     Worker:
@@ -21,7 +21,7 @@ spec:
 
       resources:
         # 10-15 cpus for single process
-        cpus: 6
+        cpus: 4
         # mandatory (must be >= 2): RAM ratio wanted (in GB)
         # memory = cpus * ramRatio
         ramRatio: 2
