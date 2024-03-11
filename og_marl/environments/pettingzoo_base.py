@@ -30,7 +30,7 @@ class PettingZooBase(BaseEnvironment):
     def reset(self) -> ResetReturn:
         """Resets the env."""
         # Reset the environment
-        observations = self._environment.reset()  # type: ignore
+        observations, _ = self._environment.reset()  # type: ignore
 
         # Global state
         env_state = self._create_state_representation(observations)

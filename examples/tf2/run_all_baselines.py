@@ -1,32 +1,45 @@
 import os
 
+# import module
+import traceback
+
 from og_marl.environments import get_environment
-from og_marl.loggers import JsonWriter, WandbLogger
+from og_marl.loggers import TerminalLogger, JsonWriter
 from og_marl.replay_buffers import FlashbaxReplayBuffer
+from og_marl.tf2.networks import CNNEmbeddingNetwork
 from og_marl.tf2.systems import get_system
 from og_marl.tf2.utils import set_growing_gpu_memory
 
 set_growing_gpu_memory()
 
-os.environ["SUPPRESS_GR_PROMPT"] = 1
+# For MAMuJoCo
+os.environ["SUPPRESS_GR_PROMPT"] = "1"
 
 scenario_system_configs = {
     "smac_v1": {
         "3m": {
-            "systems": ["idrqn", "idrqn+cql", "idrqn+bcq", "qmix+cql", "qmix+bcq", "maicq"],
+            "systems": ["idrqn", "idrqn+cql", "idrqn+bcq", "qmix+cql", "qmix+bcq", "maicq", "dbc"],
             "datasets": ["Good"],
-            "trainer_steps": 3000,
+            "trainer_steps": 2000,
             "evaluate_every": 1000,
         },
     },
-    "mamujoco": {
-        "2halfcheetah": {
-            "systems": ["iddpg", "iddpg+cql", "maddpg+cql", "maddpg", "omar"],
+    "pettingzoo": {
+        "pursuit": {
+            "systems": ["idrqn", "idrqn+cql", "idrqn+bcq", "qmix+cql", "qmix+bcq", "maicq", "dbc"],
             "datasets": ["Good"],
-            "trainer_steps": 3000,
+            "trainer_steps": 2000,
             "evaluate_every": 1000,
         },
     },
+    # "mamujoco": {
+    #     "2halfcheetah": {
+    #         "systems": ["iddpg", "iddpg+cql", "maddpg+cql", "maddpg", "omar"],
+    #         "datasets": ["Good"],
+    #         "trainer_steps": 3000,
+    #         "evaluate_every": 1000,
+    #     },
+    # },
 }
 
 seeds = [42]
@@ -44,7 +57,7 @@ for seed in seeds:
                             "system": env_name,
                             "seed": seed,
                         }
-                        logger = WandbLogger(config, project="og-marl-baselines")
+                        logger = TerminalLogger()
                         env = get_environment(env_name, scenario_name)
 
                         buffer = FlashbaxReplayBuffer(sequence_length=20, sample_period=1)
@@ -55,10 +68,18 @@ for seed in seeds:
                             raise ValueError("Vault not found. Exiting.")
 
                         json_writer = JsonWriter(
-                            "logs", system_name, f"{scenario_name}_{dataset_name}", env_name, seed
+                            "test_all_baselines",
+                            system_name,
+                            f"{scenario_name}_{dataset_name}",
+                            env_name,
+                            seed,
                         )
 
                         system_kwargs = {"add_agent_id_to_obs": True}
+
+                        if scenario_name == "pursuit":
+                            system_kwargs["observation_embedding_network"] = CNNEmbeddingNetwork()
+
                         system = get_system(system_name, env, logger, **system_kwargs)
 
                         trainer_steps = scenario_system_configs[env_name][scenario_name][
@@ -75,7 +96,7 @@ for seed in seeds:
                         )
                     except:  # noqa: E722
                         logger.close()
-                        print()
-                        print("BROKEN")
+                        print("BROKEN:", env_name, scenario_name, system_name)
+                        traceback.print_exc()
                         print()
                         continue

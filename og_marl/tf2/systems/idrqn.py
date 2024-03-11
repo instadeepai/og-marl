@@ -14,7 +14,7 @@
 
 """Implementation of independent Q-learning (DRQN style)"""
 import copy
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Dict, Sequence, Tuple, Optional
 
 import numpy as np
 import sonnet as snt
@@ -37,6 +37,7 @@ from og_marl.tf2.utils import (
     switch_two_leading_dims,
     unroll_rnn,
 )
+from og_marl.tf2.networks import IdentityNetwork
 
 
 class IDRQNSystem(BaseMARLSystem):
@@ -55,6 +56,7 @@ class IDRQNSystem(BaseMARLSystem):
         eps_min: float = 0.05,
         eps_decay_timesteps: int = 50_000,
         add_agent_id_to_obs: bool = False,
+        observation_embedding_network: Optional[snt.Module] = None,
     ):
         super().__init__(
             environment, logger, add_agent_id_to_obs=add_agent_id_to_obs, discount=discount
@@ -75,6 +77,12 @@ class IDRQNSystem(BaseMARLSystem):
                 snt.Linear(self._environment._num_actions),
             ]
         )  # shared network for all agents
+
+        # Embedding network
+        if observation_embedding_network is None:
+            observation_embedding_network = IdentityNetwork()
+        self._q_embedding_network = observation_embedding_network
+        self._target_q_embedding_network = copy.deepcopy(observation_embedding_network)
 
         # Target Q-network
         self._target_q_network = copy.deepcopy(self._q_network)
@@ -101,7 +109,7 @@ class IDRQNSystem(BaseMARLSystem):
     def select_actions(
         self,
         observations: Dict[str, np.ndarray],
-        legal_actions: Optional[Dict[str, np.ndarray]] = None,
+        legal_actions: Dict[str, np.ndarray],
         explore: bool = True,
     ) -> Dict[str, np.ndarray]:
         if explore:
@@ -136,7 +144,8 @@ class IDRQNSystem(BaseMARLSystem):
                     agent_observation, i, len(self._environment.possible_agents)
                 )
             agent_observation = tf.expand_dims(agent_observation, axis=0)  # add batch dimension
-            q_values, next_rnn_states[agent] = self._q_network(agent_observation, rnn_states[agent])
+            embedding = self._q_embedding_network(agent_observation)
+            q_values, next_rnn_states[agent] = self._q_network(embedding, rnn_states[agent])
 
             agent_legal_actions = legal_actions[agent]
             masked_q_values = tf.where(
@@ -149,7 +158,9 @@ class IDRQNSystem(BaseMARLSystem):
             epsilon = tf.maximum(1.0 - self._eps_dec * env_step_ctr, self._eps_min)
 
             greedy_probs = tf.one_hot(greedy_action, masked_q_values.shape[-1])
-            explore_probs = agent_legal_actions / tf.reduce_sum(agent_legal_actions)
+            explore_probs = tf.cast(
+                agent_legal_actions / tf.reduce_sum(agent_legal_actions), "float32"
+            )
             probs = (1.0 - epsilon) * greedy_probs + epsilon * explore_probs
             probs = tf.expand_dims(probs, axis=0)
 
@@ -197,7 +208,8 @@ class IDRQNSystem(BaseMARLSystem):
         resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
         # Unroll target network
-        target_qs_out = unroll_rnn(self._target_q_network, observations, resets)
+        target_embeddings = self._target_q_embedding_network(observations)
+        target_qs_out = unroll_rnn(self._target_q_network, target_embeddings, resets)
 
         # Expand batch and agent_dim
         target_qs_out = expand_batch_and_agent_dim_of_time_major_sequence(target_qs_out, B, N)
@@ -207,7 +219,8 @@ class IDRQNSystem(BaseMARLSystem):
 
         with tf.GradientTape() as tape:
             # Unroll online network
-            qs_out = unroll_rnn(self._q_network, observations, resets)
+            embeddings = self._q_embedding_network(observations)
+            qs_out = unroll_rnn(self._q_network, embeddings, resets)
 
             # Expand batch and agent_dim
             qs_out = expand_batch_and_agent_dim_of_time_major_sequence(qs_out, B, N)
@@ -241,7 +254,10 @@ class IDRQNSystem(BaseMARLSystem):
             loss = tf.reduce_mean(loss)
 
         # Get trainable variables
-        variables = (*self._q_network.trainable_variables,)
+        variables = (
+            *self._q_network.trainable_variables,
+            *self._q_embedding_network.trainable_variables,
+        )
 
         # Compute gradients.
         gradients = tape.gradient(loss, variables)
@@ -250,10 +266,13 @@ class IDRQNSystem(BaseMARLSystem):
         self._optimizer.apply(gradients, variables)
 
         # Online variables
-        online_variables = (*self._q_network.variables,)
+        online_variables = (*self._q_network.variables, *self._q_embedding_network.variables)
 
         # Get target variables
-        target_variables = (*self._target_q_network.variables,)
+        target_variables = (
+            *self._target_q_network.variables,
+            *self._target_q_embedding_network.variables,
+        )
 
         # Maybe update target network
         self._update_target_network(train_step_ctr, online_variables, target_variables)

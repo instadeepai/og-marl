@@ -104,12 +104,12 @@ We are in the process of migrating our datasets from TF Records to Flashbax Vaul
 | 💣SMAC v2 | terran_5_vs_5 <br/> zerg_5_vs_5 <br/> terran_10_vs_10 | 5 <br/> 5 <br/> 10 | Discrete | Vector | Dense | Heterog | [source](https://github.com/oxwhirl/smacv2) |
 | 🚅Flatland | 3 Trains  <br/> 5 Trains | 3 <br/> 5 | Discrete | Vector | Sparse | Homog | [source](https://flatland.aicrowd.com/intro.html) |
 | 🐜MAMuJoCo | 2-HalfCheetah <br/> 2-Ant <br/> 4-Ant | 2 <br/> 2 <br/> 4 | Cont. | Vector | Dense | Heterog <br/> Homog <br/> Homog | [source](https://github.com/schroederdewitt/multiagent_mujoco) |
-
+| 🐻PettingZoo | Pursuit  <br/> Co-op Pong | 8 <br/> 2 | Discrete <br/> Discrete  | Pixels <br/> Pixels | Dense | Homog <br/> Heterog | [source](https://pettingzoo.farama.org/) |
 
 ### Legacy Datasets (still to be migrated to Vault) 👴
 | Environment | Scenario | Agents | Act | Obs | Reward | Types | Repo |
 |-----|----|----|-----|-----|----|----|-----|
-| 🐻PettingZoo | Pursuit  <br/> Co-op Pong <br/> PistonBall <br/> KAZ| 8 <br/> 2 <br/> 15 <br/> 2| Discrete <br/> Discrete <br/> Cont. <br/> Discrete | Pixels <br/> Pixels <br/> Pixels <br/> Vector | Dense | Homog <br/> Heterog <br/> Homog <br/> Heterog| [source](https://pettingzoo.farama.org/) |
+| 🐻PettingZoo | PistonBall <br/> KAZ| 15 <br/> 2|  Cont. <br/> Discrete | Pixels <br/> Vector | Dense | Homog <br/> Heterog| [source](https://pettingzoo.farama.org/) |
 | 🏙️CityLearn | 2022_all_phases | 17 | Cont. | Vector | Dense | Homog | [source](https://github.com/intelligent-environments-lab/CityLearn) |
 | 🔌Voltage Control | case33_3min_final | 6 | Cont. | Vector | Dense | Homog | [source](https://github.com/Future-Power-Networks/MAPDN) |
 | 🔴MPE | simple_adversary | 3 | Discrete. | Vector | Dense | Competitive | [source](https://pettingzoo.farama.org/environments/mpe/simple_adversary/) |

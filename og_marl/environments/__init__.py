@@ -18,7 +18,7 @@
 from og_marl.environments.base import BaseEnvironment
 
 
-def get_environment(env_name: str, scenario: str) -> BaseEnvironment:
+def get_environment(env_name: str, scenario: str) -> BaseEnvironment:  # noqa: C901
     if env_name == "smac_v1":
         from og_marl.environments.smacv1 import SMACv1
 
@@ -31,6 +31,14 @@ def get_environment(env_name: str, scenario: str) -> BaseEnvironment:
         from og_marl.environments.old_mamujoco import MAMuJoCo
 
         return MAMuJoCo(scenario)
+    elif scenario == "pursuit":
+        from og_marl.environments.pursuit import Pursuit
+
+        return Pursuit()
+    elif scenario == "coop_pong":
+        from og_marl.environments.coop_pong import CooperativePong
+
+        return CooperativePong()
     elif env_name == "gymnasium_mamujoco":
         from og_marl.environments.gymnasium_mamujoco import MAMuJoCo
 

@@ -97,14 +97,13 @@ class FlashbaxReplayBuffer:
             ).read()
 
             # Recreate the buffer and associated pure functions
-            self._max_size = self._buffer_state.current_index
             self._replay_buffer = fbx.make_trajectory_buffer(
                 add_batch_size=1,
                 sample_batch_size=self._batch_size,
                 sample_sequence_length=self._sequence_length,
                 period=1,
                 min_length_time_axis=1,
-                max_size=self._max_size,
+                max_size=self._sequence_length,
             )
             self._buffer_sample_fn = jax.jit(self._replay_buffer.sample)
             self._buffer_add_fn = jax.jit(self._replay_buffer.add)

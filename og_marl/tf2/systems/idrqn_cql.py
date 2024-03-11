@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Implementation of IDRQN+CQL"""
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import tensorflow as tf
+import sonnet as snt
 from chex import Numeric
 
 from og_marl.environments.base import BaseEnvironment
 from og_marl.loggers import BaseLogger
-from og_marl.tf2.systems.qmix import QMIXSystem
+from og_marl.tf2.systems.idrqn import IDRQNSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
@@ -30,7 +31,7 @@ from og_marl.tf2.utils import (
 )
 
 
-class IDRQNCQLSystem(QMIXSystem):
+class IDRQNCQLSystem(IDRQNSystem):
 
     """IDRQN+CQL System"""
 
@@ -42,24 +43,22 @@ class IDRQNCQLSystem(QMIXSystem):
         cql_weight: float = 1.0,
         linear_layer_dim: int = 64,
         recurrent_layer_dim: int = 64,
-        mixer_embed_dim: int = 32,
-        mixer_hyper_dim: int = 64,
         discount: float = 0.99,
         target_update_period: int = 200,
         learning_rate: float = 3e-4,
         add_agent_id_to_obs: bool = False,
+        observation_embedding_network: Optional[snt.Module] = None,
     ):
         super().__init__(
             environment,
             logger,
             linear_layer_dim=linear_layer_dim,
             recurrent_layer_dim=recurrent_layer_dim,
-            mixer_embed_dim=mixer_embed_dim,
-            mixer_hyper_dim=mixer_hyper_dim,
             add_agent_id_to_obs=add_agent_id_to_obs,
             discount=discount,
             target_update_period=target_update_period,
             learning_rate=learning_rate,
+            observation_embedding_network=observation_embedding_network,
         )
 
         # CQL
@@ -95,7 +94,8 @@ class IDRQNCQLSystem(QMIXSystem):
         resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
         # Unroll target network
-        target_qs_out = unroll_rnn(self._target_q_network, observations, resets)
+        target_embeddings = self._target_q_embedding_network(observations)
+        target_qs_out = unroll_rnn(self._target_q_network, target_embeddings, resets)
 
         # Expand batch and agent_dim
         target_qs_out = expand_batch_and_agent_dim_of_time_major_sequence(target_qs_out, B, N)
@@ -105,7 +105,8 @@ class IDRQNCQLSystem(QMIXSystem):
 
         with tf.GradientTape() as tape:
             # Unroll online network
-            qs_out = unroll_rnn(self._q_network, observations, resets)
+            embeddings = self._q_embedding_network(observations)
+            qs_out = unroll_rnn(self._q_network, embeddings, resets)
 
             # Expand batch and agent_dim
             qs_out = expand_batch_and_agent_dim_of_time_major_sequence(qs_out, B, N)
@@ -166,7 +167,10 @@ class IDRQNCQLSystem(QMIXSystem):
             loss = td_loss + cql_loss
 
         # Get trainable variables
-        variables = (*self._q_network.trainable_variables,)
+        variables = (
+            *self._q_network.trainable_variables,
+            *self._q_embedding_network.trainable_variables,
+        )
 
         # Compute gradients.
         gradients = tape.gradient(loss, variables)
@@ -175,10 +179,13 @@ class IDRQNCQLSystem(QMIXSystem):
         self._optimizer.apply(gradients, variables)
 
         # Online variables
-        online_variables = (*self._q_network.variables,)
+        online_variables = (*self._q_network.variables, *self._q_embedding_network.variables)
 
         # Get target variables
-        target_variables = (*self._target_q_network.variables,)
+        target_variables = (
+            *self._target_q_network.variables,
+            *self._target_q_embedding_network.variables,
+        )
 
         # Maybe update target network
         self._update_target_network(train_step, online_variables, target_variables)
