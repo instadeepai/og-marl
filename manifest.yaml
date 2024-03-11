@@ -22,7 +22,7 @@ spec:
 
       resources:
         # 10-15 cpus for single process
-        cpus: 25
+        cpus: 4
         # mandatory (must be >= 2): RAM ratio wanted (in GB)
         # memory = cpus * ramRatio
         ramRatio: 2
