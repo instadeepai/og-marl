@@ -13,12 +13,12 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: python baselines/main.py --env=pettingzoo --scenario=pursuit
-  # command: wandb agent off-the-grid-marl-team/og-marl-baselines/i87akim6
+  # command: python baselines/main.py --env=pettingzoo --scenario=pursuit
+  command: wandb agent off-the-grid-marl-team/og-marl-baselines/i87akim6
 
   types:
     Worker:
-      count: 1
+      count: 60
 
       resources:
         # 10-15 cpus for single process
