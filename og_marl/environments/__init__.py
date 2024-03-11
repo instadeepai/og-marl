@@ -31,6 +31,10 @@ def get_environment(env_name: str, scenario: str) -> BaseEnvironment:
         from og_marl.environments.old_mamujoco import MAMuJoCo
 
         return MAMuJoCo(scenario)
+    elif scenario == "pursuit": 
+        from og_marl.environments.pursuit import Pursuit
+
+        return Pursuit()
     elif env_name == "gymnasium_mamujoco":
         from og_marl.environments.gymnasium_mamujoco import MAMuJoCo
 
