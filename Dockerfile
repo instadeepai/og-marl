@@ -42,7 +42,7 @@ RUN pip install --quiet --upgrade pip setuptools wheel &&  \
 # RUN ./install_environments/mamujoco.sh
 
 RUN ./install_environments/pettingzoo.sh
-ENV LD_PRELOAD /usr/lib/x86_64-linux-gnu/libstdc++.so.6;
+# ENV LD_PRELOAD /usr/lib/x86_64-e-gnu/libstdc++.so.6;
 
 # Copy all code
 COPY ./examples ./examples
