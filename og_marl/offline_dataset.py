@@ -64,8 +64,8 @@ VAULT_INFO = {
         "4ant": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/4ant.zip"},
     },
     "flatland": {
-        "5trains": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3trains.zip"},
-        "2trains": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/5trains.zip"},
+        "3trains": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3trains.zip"},
+        "5trains": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/5trains.zip"},
     },
     "pettingzoo": {
         "pursuit": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/pursuit.zip"}
@@ -146,6 +146,11 @@ DATASET_INFO = {
             "url": "https://tinyurl.com/pistonball-dataset",
             "sequence_length": 5,
             "period": 5,
+        },
+        "coop_pong": {
+            "url": "https://tinyurl.com/coop-pong-dataset",
+            "sequence_length": 20,
+            "period": 10,
         },
     },
     "voltage_control": {
