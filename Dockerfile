@@ -42,8 +42,10 @@ RUN pip install --quiet --upgrade pip setuptools wheel &&  \
 # ENV SUPPRESS_GR_PROMPT 1
 # RUN ./install_environments/mamujoco.sh
 
-RUN ./install_environments/pettingzoo.sh
+# RUN ./install_environments/pettingzoo.sh
 # ENV LD_PRELOAD /usr/lib/x86_64-e-gnu/libstdc++.so.6;
+
+RUN ./install_environments/flatland.sh
 
 # Copy all code
 COPY ./examples ./examples
