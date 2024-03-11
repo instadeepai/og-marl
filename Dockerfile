@@ -2,6 +2,7 @@ FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
 
 # Ensure no installs try to launch interactive screen
 ARG DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
 
 # Update packages and install python3.9 and other dependencies
 RUN apt-get update -y && \
