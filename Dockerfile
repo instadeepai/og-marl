@@ -32,7 +32,7 @@ COPY setup.py .
 RUN echo "Installing requirements..."
 RUN pip install --quiet --upgrade pip setuptools wheel &&  \
     pip install -e . && \
-    pip install flashbax==0.1.0
+    pip install flashbax==0.1.1
 
 # ENV SC2PATH /home/app/StarCraftII
 # RUN ./install_environments/smacv1.sh
