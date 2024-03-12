@@ -39,9 +39,9 @@ setup(
         "jax[cpu]==0.4.20",
         "matplotlib",
         "seaborn",
-        # "flashbax==0.1.0", # install post
+        # "flashbax==0.1.1", # install post
     ],
     extras_require={
-        "jax": ["flashbax", "optax", "jax", "flax", "orbax-checkpoint"],
+        "jax": ["flashbax==0.1.1", "optax", "jax", "flax", "orbax-checkpoint"],
     },
 )
