@@ -34,24 +34,27 @@ class CooperativePong(BaseEnvironment):
         self._environment = cooperative_pong_v5.parallel_env(render_mode="rgb_array")
         # Wrap environment with supersuit pre-process wrappers
         self._environment = supersuit.color_reduction_v0(self._environment, mode="R")
-        self._environment = supersuit.resize_v0(self._environment, x_size=145, y_size=84)
+        self._environment = supersuit.resize_v1(self._environment, x_size=145, y_size=84)
         self._environment = supersuit.dtype_v0(self._environment, dtype="float32")
         self._environment = supersuit.normalize_obs_v0(self._environment)
 
         self._agents = self._environment.possible_agents
+
+        self._num_actions = 3
         self._done = False
         self.max_episode_length = 900
+        self._legals = {agent: np.ones((self._num_actions,), "float32") for agent in self._agents}
 
     def reset(self) -> ResetReturn:
         """Resets the env."""
         # Reset the environment
         observations, _ = self._environment.reset()  # type: ignore
 
-        # Convert observations
-        observations = self._convert_observations(observations)
-
         # Global state
         env_state = self._create_state_representation(observations, first=True)
+
+        # Convert observations
+        observations = self._convert_observations(observations)
 
         # Infos
         info = {"state": env_state, "legals": self._legals}
@@ -63,11 +66,11 @@ class CooperativePong(BaseEnvironment):
         # Step the environment
         observations, rewards, terminals, truncations, _ = self._environment.step(actions)
 
-        # Convert observations
-        observations = self._convert_observations(observations)
-
         # Global state
         env_state = self._create_state_representation(observations)
+
+        # Convert observations
+        observations = self._convert_observations(observations)
 
         # Extra infos
         info = {"state": env_state, "legals": self._legals}

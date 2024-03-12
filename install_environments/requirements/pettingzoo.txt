@@ -6,4 +6,4 @@ pettingzoo==1.23.1
 pygame
 pymunk
 scipy
-supersuit==3.3.4
+supersuit==3.8.1
