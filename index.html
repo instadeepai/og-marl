@@ -1,0 +1,1040 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+        <meta name="author" content="InstaDeep Research">
+      
+      
+        <link rel="canonical" href="https://instadeepai.github.io/og-marl/">
+      
+      
+      
+        <link rel="next" href="baselines/smac_v1/">
+      
+      
+      <link rel="icon" href="assets/instadeep_logo.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.13">
+    
+    
+      
+        <title>Off-the-Grid MARL</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.7e359304.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#going-off-the-grid" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Off-the-Grid MARL" class="md-header__button md-logo" aria-label="Off-the-Grid MARL" data-md-component="logo">
+      
+  <img src="assets/instadeep_logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Off-the-Grid MARL
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Home
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5c-.84 0-1.65.15-2.39.42L12 2M3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29L3.34 7m.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14L3.36 17M20.65 7l-1.77 3.79a7.023 7.023 0 0 0-2.38-4.15l4.15.36m-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29L20.64 17M12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44L12 22Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="lime"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3 3.19.09m3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95 2.06.05m-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08Z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/instadeepai/og-marl" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    instadeepai/og-marl
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="baselines/smac_v1/" class="md-tabs__link">
+          
+  
+    
+  
+  Baseline Results
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="updates/" class="md-tabs__link">
+        
+  
+    
+  
+  Updates
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="api/" class="md-tabs__link">
+        
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Off-the-Grid MARL" class="md-nav__button md-logo" aria-label="Off-the-Grid MARL" data-md-component="logo">
+      
+  <img src="assets/instadeep_logo.png" alt="logo">
+
+    </a>
+    Off-the-Grid MARL
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/instadeepai/og-marl" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    instadeepai/og-marl
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#going-off-the-grid" class="md-nav__link">
+    <span class="md-ellipsis">
+      Going Off-the-Grid! 🤖 ⚡ 🔌 🔋
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quickstart" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quickstart 🏎️
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataset-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataset API
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#datasets" class="md-nav__link">
+    <span class="md-ellipsis">
+      Datasets 🎥
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataset-backends" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataset Backends 🔌
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dataset Backends 🔌">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#flashbax-vaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      Flashbax Vaults ⚡
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#legacy-datasets-still-to-be-migrated-to-vault" class="md-nav__link">
+    <span class="md-ellipsis">
+      Legacy Datasets (still to be migrated to Vault) 👴
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dataset-and-vault-locations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataset and Vault Locations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also 🔎
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#citing-og-marl" class="md-nav__link">
+    <span class="md-ellipsis">
+      Citing OG-MARL
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acknowledgements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Acknowledgements 🙏
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Baseline Results
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Baseline Results
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="baselines/smac_v1/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SMACv1
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="baselines/smac_v2/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SMACv2
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="baselines/mamujoco/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MAMuJoCo
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="baselines/pettingzoo/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    PettingZoo
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="baselines/flatland/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Flatland
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="updates/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Updates
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    API Reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+  <h1>Home</h1>
+
+<p align="center">
+    <a href="assets/offline_marl_diagram.jpg">
+        <img src="assets/og_marl_logo.png" alt="Offline MARL diagram" width="70%"/>
+    </a>
+</p>
+
+<h2 align="center">
+    <p>Offline Multi-Agent Reinforcement Learning Datasets and Baselines</p>
+</h2>
+<p align="center">
+    <a href="https://www.python.org/doc/versions/">
+        <img src="https://img.shields.io/badge/python-3.9-blue" alt="Python Versions">
+    </a>
+    <a href="https://opensource.org/licenses/Apache-2.0">
+        <img src="https://img.shields.io/badge/License-Apache%202.0-orange.svg" alt="License">
+    </a>
+    <a href="https://arxiv.org/abs/2302.00521">
+        <img src="https://img.shields.io/badge/PrePrint-ArXiv-red" alt="ArXiv">
+    </a>
+    <a href="https://github.com/instadeepai/og-marl/actions/workflows/tests_linters.yml">
+        <img src="https://github.com/instadeepai/og-marl/actions/workflows/tests_linters.yml/badge.svg" alt="Tests and Linters">
+    </a>
+    <a href="https://github.com/psf/black">
+        <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
+    </a>
+    <a href="http://mypy-lang.org/">
+        <img src="http://www.mypy-lang.org/static/mypy_badge.svg" alt="MyPy">
+    </a>
+</p>
+
+<p align="center">
+    <a href="assets/offline_marl_diagram.jpg">
+        <img src="assets/offline_marl_diagram.jpg" alt="Offline MARL diagram" width="70%"/>
+    </a>
+</p>
+
+<h2 id="going-off-the-grid">Going Off-the-Grid! 🤖 ⚡ 🔌 🔋<a class="headerlink" href="#going-off-the-grid" title="Permanent link">#</a></h2>
+<p>Offline MARL holds great promise for real-world applications by utilising static datasets to build decentralised controllers of complex multi-agent systems. However, currently offline MARL lacks a standardised benchmark for measuring meaningful research progress. Off-the-Grid MARL (OG-MARL) fills this gap by providing a diverse suite of datasets with baselines on popular MARL benchmark environments in one place, with a unified API and an easy-to-use set of tools.</p>
+<p>OG-MARL forms part of the <a href="https://www.instadeep.com/">InstaDeep</a> MARL <a href="#see-also-🔎">ecosystem</a>, developed jointly with the open-source
+community. To join us in these efforts, reach out, raise issues or just
+🌟 to stay up to date with the latest developments!</p>
+<h2 id="quickstart">Quickstart 🏎️<a class="headerlink" href="#quickstart" title="Permanent link">#</a></h2>
+<p>Clone this repository.</p>
+<p><code>git clone https://github.com/instadeepai/og-marl.git</code></p>
+<p>Install <code>og-marl</code> and its dependencies. We tested <code>og-marl</code> with Python 3.9. Consider using a <code>conda</code> virtual environment.</p>
+<p><code>pip install -e .</code></p>
+<p><code>pip install flashbax==0.1.2</code></p>
+<p>Download environment dependencies. We will use SMACv1 in this example.</p>
+<p><code>bash install_environments/smacv1.sh</code></p>
+<p>Download a dataset.</p>
+<p><code>python examples/download_dataset.py --env=smac_v1 --scenario=3m</code></p>
+<p>Run a baseline. In this example we will run MAICQ.</p>
+<p><code>python baselines/main.py --env=smac_v1 --scenario=3m --dataset=Good --system=maicq</code></p>
+<h2 id="dataset-api">Dataset API<a class="headerlink" href="#dataset-api" title="Permanent link">#</a></h2>
+<p>We provide a simple demonstrative notebook of how to use OG-MARL's dataset API here:</p>
+<p><a href="https://colab.research.google.com/github/instadeepai/og-marl/blob/main/examples/dataset_api_demo.ipynb"><img alt="Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
+<h2 id="datasets">Datasets 🎥<a class="headerlink" href="#datasets" title="Permanent link">#</a></h2>
+<p>We have generated datasets on a diverse set of popular MARL environments. A list of currently supported environments is included in the table below. It is well known from the single-agent offline RL literature that the quality of experience in offline datasets can play a large role in the final performance of offline RL algorithms. Therefore in OG-MARL, for each environment and scenario, we include a range of dataset distributions including <code>Good</code>, <code>Medium</code>, <code>Poor</code> and <code>Replay</code> datasets in order to benchmark offline MARL algorithms on a range of different dataset qualities. For more information on why we chose to include each environment and its task properties, please read our accompanying <a href="https://arxiv.org/abs/2302.00521">paper</a>.</p>
+<div class="collage">
+  <div class="row" align="center">
+    <img src="assets/smacv2.png" alt="SMAC v2" width="16%"/>
+    <img src="assets/pistonball.png" alt="Pistonball" width="16%"/>
+    <img src="assets/coop_pong.png" alt="Cooperative Pong" width="16%"/>
+    <img src="assets/pursuit.png" alt="Pursuit" width="16%"/>
+    <img src="assets/kaz.png" alt="Pursuit" width="16%"/>
+  </div>
+  <div class="row" align="center">
+    <img src="assets/flatland.png" alt="Flatland" width="16%"/>
+    <img src="assets/mamujoco.png" alt="MAMuJoCo" width="16%"/>
+    <img src="assets/city_learn.png" alt="CityLearn" width="16%"/>
+    <img src="assets/voltage.png" alt="Voltage Control" width="16%"/>
+    <img src="assets/mpe.png" alt="Pursuit" width="16%"/>
+  </div>
+</div>
+
+<p><br/></p>
+<h2 id="dataset-backends">Dataset Backends 🔌<a class="headerlink" href="#dataset-backends" title="Permanent link">#</a></h2>
+<p>We are in the process of migrating our datasets from TF Records to Flashbax Vaults. Flashbax Vaults have the advantage of being significantly more flexible than the TF Record Datasets.</p>
+<h3 id="flashbax-vaults">Flashbax Vaults ⚡<a class="headerlink" href="#flashbax-vaults" title="Permanent link">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Environment</th>
+<th>Scenario</th>
+<th>Agents</th>
+<th>Act</th>
+<th>Obs</th>
+<th>Reward</th>
+<th>Types</th>
+<th>Repo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>🔫SMAC v1</td>
+<td>3m <br/> 8m <br/> 2s3z <br/> 5m_vs_6m <br/> 27m_vs_30m <br/> 3s5z_vs_3s6z <br/> 2c_vs_64zg</td>
+<td>3 <br/> 8 <br/> 5 <br/> 5 <br/> 27 <br/> 8 <br/> 2</td>
+<td>Discrete</td>
+<td>Vector</td>
+<td>Dense</td>
+<td>Homog <br/> Homog <br/> Heterog <br/> Homog <br/> Homog <br/> Heterog <br/> Homog</td>
+<td><a href="https://github.com/oxwhirl/smac">source</a></td>
+</tr>
+<tr>
+<td>💣SMAC v2</td>
+<td>terran_5_vs_5 <br/> zerg_5_vs_5 <br/> terran_10_vs_10</td>
+<td>5 <br/> 5 <br/> 10</td>
+<td>Discrete</td>
+<td>Vector</td>
+<td>Dense</td>
+<td>Heterog</td>
+<td><a href="https://github.com/oxwhirl/smacv2">source</a></td>
+</tr>
+<tr>
+<td>🚅Flatland</td>
+<td>3 Trains  <br/> 5 Trains</td>
+<td>3 <br/> 5</td>
+<td>Discrete</td>
+<td>Vector</td>
+<td>Sparse</td>
+<td>Homog</td>
+<td><a href="https://flatland.aicrowd.com/intro.html">source</a></td>
+</tr>
+<tr>
+<td>🐜MAMuJoCo</td>
+<td>2-HalfCheetah <br/> 2-Ant <br/> 4-Ant</td>
+<td>2 <br/> 2 <br/> 4</td>
+<td>Cont.</td>
+<td>Vector</td>
+<td>Dense</td>
+<td>Heterog <br/> Homog <br/> Homog</td>
+<td><a href="https://github.com/schroederdewitt/multiagent_mujoco">source</a></td>
+</tr>
+<tr>
+<td>🐻PettingZoo</td>
+<td>Pursuit  <br/> Co-op Pong</td>
+<td>8 <br/> 2</td>
+<td>Discrete <br/> Discrete</td>
+<td>Pixels <br/> Pixels</td>
+<td>Dense</td>
+<td>Homog <br/> Heterog</td>
+<td><a href="https://pettingzoo.farama.org/">source</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="legacy-datasets-still-to-be-migrated-to-vault">Legacy Datasets (still to be migrated to Vault) 👴<a class="headerlink" href="#legacy-datasets-still-to-be-migrated-to-vault" title="Permanent link">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Environment</th>
+<th>Scenario</th>
+<th>Agents</th>
+<th>Act</th>
+<th>Obs</th>
+<th>Reward</th>
+<th>Types</th>
+<th>Repo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>🐻PettingZoo</td>
+<td>PistonBall <br/> KAZ</td>
+<td>15 <br/> 2</td>
+<td>Cont. <br/> Discrete</td>
+<td>Pixels <br/> Vector</td>
+<td>Dense</td>
+<td>Homog <br/> Heterog</td>
+<td><a href="https://pettingzoo.farama.org/">source</a></td>
+</tr>
+<tr>
+<td>🏙️CityLearn</td>
+<td>2022_all_phases</td>
+<td>17</td>
+<td>Cont.</td>
+<td>Vector</td>
+<td>Dense</td>
+<td>Homog</td>
+<td><a href="https://github.com/intelligent-environments-lab/CityLearn">source</a></td>
+</tr>
+<tr>
+<td>🔌Voltage Control</td>
+<td>case33_3min_final</td>
+<td>6</td>
+<td>Cont.</td>
+<td>Vector</td>
+<td>Dense</td>
+<td>Homog</td>
+<td><a href="https://github.com/Future-Power-Networks/MAPDN">source</a></td>
+</tr>
+<tr>
+<td>🔴MPE</td>
+<td>simple_adversary</td>
+<td>3</td>
+<td>Discrete.</td>
+<td>Vector</td>
+<td>Dense</td>
+<td>Competitive</td>
+<td><a href="https://pettingzoo.farama.org/environments/mpe/simple_adversary/">source</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="dataset-and-vault-locations">Dataset and Vault Locations<a class="headerlink" href="#dataset-and-vault-locations" title="Permanent link">#</a></h3>
+<p>For OG-MARL's systems, we require the following dataset file structure:</p>
+<pre><code>examples/
+    |_&gt; ...
+og_marl/
+    |_&gt; ...
+vaults/
+    |_&gt; smac_v1/
+        |_&gt; 3m.vlt/
+        |   |_&gt; Good/
+        |   |_&gt; Medium/
+        |   |_&gt; Poor/
+        |_&gt; ...
+    |_&gt; smac_v2/
+        |_&gt; terran_5_vs_5.vlt/
+        |   |_&gt; Good/
+        |   |_&gt; Medium/
+        |   |_&gt; Poor/
+        |_&gt; ...
+...
+</code></pre>
+<h2 id="see-also">See Also 🔎<a class="headerlink" href="#see-also" title="Permanent link">#</a></h2>
+<p><strong>InstaDeep's MARL ecosystem in JAX.</strong> In particular, we suggest users check out the following sister repositories:</p>
+<ul>
+<li>🦁 <a href="https://github.com/instadeepai/Mava">Mava</a>: a research-friendly codebase for distributed MARL in JAX.</li>
+<li>🌴 <a href="https://github.com/instadeepai/jumanji">Jumanji</a>: a diverse suite of scalable reinforcement learning environments in JAX.</li>
+<li>😎 <a href="https://github.com/instadeepai/matrax">Matrax</a>: a collection of matrix games in JAX.</li>
+<li>🔦 <a href="https://github.com/instadeepai/flashbax">Flashbax</a>: accelerated replay buffers in JAX.</li>
+<li>📈 <a href="https://github.com/instadeepai/marl-eval">MARL-eval</a>: standardised experiment data aggregation and visualisation for MARL.</li>
+</ul>
+<p><strong>Related.</strong> Other libraries related to accelerated MARL in JAX.</p>
+<ul>
+<li>🦊 <a href="https://github.com/flairox/jaxmarl">JaxMARL</a>: accelerated MARL environments with baselines in JAX.</li>
+<li>♟️  <a href="https://github.com/sotetsuk/pgx">Pgx</a>: JAX implementations of classic board games, such as Chess, Go and Shogi.</li>
+<li>🔼 <a href="https://github.com/facebookresearch/minimax/">Minimax</a>: JAX implementations of autocurricula baselines for RL.</li>
+</ul>
+<h2 id="citing-og-marl">Citing OG-MARL <img alt="✏️" class="gemoji" src="https://cdnjs.cloudflare.com/ajax/libs/emojione/2.2.7/assets/svg/270f.svg" title=":pencil2:" /><a class="headerlink" href="#citing-og-marl" title="Permanent link">#</a></h2>
+<p>If you use OG-MARL in your work, please cite the library using:</p>
+<pre><code>@inproceedings{formanek2023ogmarl,
+    author = {Formanek, Claude and Jeewa, Asad and Shock, Jonathan and Pretorius, Arnu},
+    title = {Off-the-Grid MARL: Datasets and Baselines for Offline Multi-Agent Reinforcement Learning},
+    year = {2023},
+    publisher = {AAMAS},
+    booktitle = {Extended Abstract at the 2023 International Conference on Autonomous Agents and Multiagent Systems},
+}
+</code></pre>
+<p><img src="assets/aamas2023.png" alt="AAMAS 2023" width="20%"/></p>
+<h2 id="acknowledgements">Acknowledgements 🙏<a class="headerlink" href="#acknowledgements" title="Permanent link">#</a></h2>
+<p>The development of this library was supported with Cloud TPUs
+from Google's <a href="https://sites.research.google/trc/about/">TPU Research Cloud</a> (TRC) 🌤.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      InstaDeep © 2022 Copyright, all rights reserved.
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.tracking", "navigation.sections", "navigation.tabs", "navigation.tabs.sticky", "navigation.indexes", "search.highlight", "search.share", "search.suggest", "toc.integrate", "toc.follow", "content.code.annotate", "navigation.tabs", "navigation.top"], "search": "assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="assets/javascripts/bundle.c8d2eff1.min.js"></script>
+      
+    
+  </body>
+</html>
