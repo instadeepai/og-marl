@@ -21,7 +21,7 @@ We have made our TF2 systems compatible with jit compilation. This combined with
 
 <div class="collage">
     <div class="row" align="center">
-        <img src="docs/assets/system_speed_comparison.png" alt="OG-MARL Speed Comparison" width="65%"/>
+        <img src="assets/system_speed_comparison.png" alt="OG-MARL Speed Comparison" width="65%"/>
   </div>
 </div>
 
@@ -29,7 +29,7 @@ We have made our TF2 systems compatible with jit compilation. This combined with
 
 <div class="collage">
   <div class="row" align="center">
-    <img src="docs/assets/sample_efficiency.png" alt="Sample Efficiency" width="45%"/>
-    <img src="docs/assets/performance_profile.png" alt="Performance Profile" width="35%"/>
+    <img src="assets/sample_efficiency.png" alt="Sample Efficiency" width="45%"/>
+    <img src="assets/performance_profile.png" alt="Performance Profile" width="35%"/>
   </div>
 </div>
