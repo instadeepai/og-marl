@@ -37,10 +37,15 @@ theme:
         name: Switch to light mode
 
 nav:
-  - Home: 'index.md'
-  - Baseline Results: 'baselines.md'
-  - Updates: 'updates.md'
-  - API Reference: 'api.md'
+  - "Home": 'index.md'
+  - "Baseline Results":
+    - "SMACv1": baselines/smac_v1.md
+    - "SMACv2": baselines/smac_v2.md
+    - "MAMuJoCo": baselines/mamujoco.md
+    - "PettingZoo": baselines/pettingzoo.md
+    - "Flatland": baselines/flatland.md
+  - "Updates": 'updates.md'
+  - "API Reference": 'api.md'
 
 markdown_extensions:
   - attr_list
