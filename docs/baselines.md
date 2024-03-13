@@ -1,3 +1,3 @@
 # Latest Baseline Results
 
-<iframe src="https://wandb.ai/off-the-grid-marl-team/og-marl-baselines/reports/OG-MARL-Refactor-Results--Vmlldzo2ODk4NjYw" style="border:none;height:1024px;width:100%">
+<iframe src="https://wandb.ai/off-the-grid-marl-team/public-baselines/reports/SMACv1-Baseline-Results--Vmlldzo3MTM2NTQy" style="border:none;height:1024px;width:100%">
