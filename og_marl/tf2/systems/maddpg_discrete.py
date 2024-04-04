@@ -14,11 +14,12 @@
 
 """Implementation of MADDPG+CQL"""
 import copy
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Dict, Sequence, Tuple
 
 import numpy as np
 import sonnet as snt
 import tensorflow as tf
+import tensorflow_probability as tfp
 import tree
 from chex import Numeric
 from tensorflow import Tensor, Variable
@@ -111,7 +112,7 @@ def make_joint_action(agent_actions: Tensor, other_actions: Tensor) -> Tensor:
     return all_joint_actions
 
 
-class MADDPGSystem(BaseMARLSystem):
+class MADDPGSystemDiscrete(BaseMARLSystem):
 
     """Independent Deep Recurrent Q-Networs System"""
 
@@ -186,10 +187,15 @@ class MADDPGSystem(BaseMARLSystem):
     def select_actions(
         self,
         observations: Dict[str, np.ndarray],
-        legal_actions: Optional[Dict[str, np.ndarray]] = None,
+        legal_actions: Dict[str, np.ndarray],
         explore: bool = True,
     ) -> Dict[str, np.ndarray]:
-        actions, next_rnn_states = self._tf_select_actions(observations, self._rnn_states, explore)
+        actions, next_rnn_states = self._tf_select_actions(
+            observations,
+            legal_actions,
+            self._rnn_states,
+            explore,
+        )
         self._rnn_states = next_rnn_states
         return tree.map_structure(  # type: ignore
             lambda x: x[0].numpy(), actions
@@ -199,6 +205,7 @@ class MADDPGSystem(BaseMARLSystem):
     def _tf_select_actions(
         self,
         observations: Dict[str, Tensor],
+        legal_actions: Dict[str, np.ndarray],
         rnn_states: Dict[str, Tensor],
         explore: bool = False,
     ) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
@@ -211,21 +218,32 @@ class MADDPGSystem(BaseMARLSystem):
                     agent_observation, i, len(self._environment.possible_agents)
                 )
             agent_observation = tf.expand_dims(agent_observation, axis=0)  # add batch dimension
-            action, next_rnn_states[agent] = self._policy_network(
+            logits, next_rnn_states[agent] = self._policy_network(
                 agent_observation, rnn_states[agent]
             )
 
-            # Add exploration noise
-            if explore:
-                if self._random_exploration_timesteps > 0:
-                    action = tf.random.uniform(action.shape, -1, 1, dtype=action.dtype)
-                    self._random_exploration_timesteps.assign_sub(1)
-                else:
-                    noise = tf.random.normal(action.shape, 0.0, 0.2)  # TODO: make variable
-                    action = tf.clip_by_value(action + noise, -1, 1)
+            # # Add exploration noise
+            # if explore:
+            #     if self._random_exploration_timesteps > 0:
+            #         action = tf.random.uniform(action.shape, -1, 1, dtype=action.dtype)
+            #         self._random_exploration_timesteps.assign_sub(1)
+            #     else:
+            #         noise = tf.random.normal(action.shape, 0.0, 0.2)  # TODO: make variable
+            #         action = tf.clip_by_value(action + noise, -1, 1)
 
+            agent_legal_actions = legal_actions[agent]
+            masked_logits = tf.where(
+                tf.equal(agent_legal_actions, 1),
+                logits,
+                -99999999,
+            )
+
+            soft_actions = tfp.distributions.RelaxedOneHotCategorical(
+                temperature=0.5,
+                logits=masked_logits,
+            ).sample()
             # Store agent action
-            actions[agent] = action
+            actions[agent] = tf.argmax(soft_actions, axis=-1)
 
         return actions, next_rnn_states
 
@@ -237,7 +255,8 @@ class MADDPGSystem(BaseMARLSystem):
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
-        actions = experience["actions"]  # (B,T,N,A)
+        actions_ints = experience["actions"]  # (B,T,N,A)
+        actions = tf.one_hot(indices=actions_ints, depth=self._environment._num_actions, axis=-1)
         env_states = experience["infos"]["state"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
         truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
@@ -300,12 +319,24 @@ class MADDPGSystem(BaseMARLSystem):
 
             # Policy Loss
             # Unroll online policy
-            online_actions = unroll_rnn(
+            online_logits = unroll_rnn(
                 self._policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
                 merge_batch_and_agent_dim_of_time_major_sequence(resets),
             )
-            online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
+            online_logits = expand_batch_and_agent_dim_of_time_major_sequence(online_logits, B, N)
+            online_actions_soft = tfp.distributions.RelaxedOneHotCategorical(
+                temperature=0.5,
+                logits=online_logits,
+            ).sample()
+            online_actions_hard = tf.one_hot(
+                indices=tf.argmax(online_actions_soft, axis=-1),
+                depth=self._environment._num_actions,
+                axis=-1,
+            )
+            online_actions = online_actions_soft + tf.stop_gradient(
+                online_actions_hard - online_actions_soft
+            )
 
             qs_1 = self._critic_network_1(env_states, online_actions, replay_actions)
             qs_2 = self._critic_network_2(env_states, online_actions, replay_actions)
