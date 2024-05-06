@@ -282,14 +282,18 @@ class MADDPGCQLSystem(MADDPGSystem):
                 qs_1 = self._critic_network_1(env_states, online_actions, replay_actions)
                 qs_2 = self._critic_network_2(env_states, online_actions, replay_actions)
             elif self.joint_action == "online":
-                qs_1 = self._critic_network_1(env_states, online_actions, tf.stop_gradient(online_actions))
-                qs_2 = self._critic_network_2(env_states, online_actions, tf.stop_gradient(online_actions))
+                qs_1 = self._critic_network_1(
+                    env_states, online_actions, tf.stop_gradient(online_actions)
+                )
+                qs_2 = self._critic_network_2(
+                    env_states, online_actions, tf.stop_gradient(online_actions)
+                )
             elif self.joint_action == "target":
                 qs_1 = self._critic_network_1(env_states, online_actions, target_actions)
                 qs_2 = self._critic_network_2(env_states, online_actions, target_actions)
-            else: 
+            else:
                 raise ValueError("Not valid joint action.")
-            
+
             qs = tf.minimum(qs_1, qs_2)
 
             policy_loss = -tf.reduce_mean(qs) + 1e-3 * tf.reduce_mean(online_actions**2)

@@ -14,7 +14,7 @@
 from absl import app, flags
 
 from og_marl.environments import get_environment
-from og_marl.loggers import JsonWriter, WandbLogger
+from og_marl.loggers import WandbLogger
 from og_marl.offline_dataset import download_and_unzip_vault
 from og_marl.replay_buffers import FlashbaxReplayBuffer
 from og_marl.tf2.networks import CNNEmbeddingNetwork
@@ -33,6 +33,7 @@ flags.DEFINE_float("trainer_steps", 5e4, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
 
 flags.DEFINE_string("joint_action", "buffer", "Type of joint action to send to critic.")
+
 
 def main(_):
     config = {
@@ -56,7 +57,7 @@ def main(_):
 
     logger = WandbLogger(project="og-marl-baselines", config=config)
 
-    json_writer = None#JsonWriter(
+    json_writer = None  # JsonWriter(
     #     "logs",
     #     f"{FLAGS.system}",
     #     f"{FLAGS.scenario}_{FLAGS.dataset}",
@@ -72,7 +73,9 @@ def main(_):
 
     system = get_system(FLAGS.system, env, logger, **system_kwargs)
 
-    system.train_offline(buffer, max_trainer_steps=FLAGS.trainer_steps, json_writer=json_writer, evaluate_every=5000)
+    system.train_offline(
+        buffer, max_trainer_steps=FLAGS.trainer_steps, json_writer=json_writer, evaluate_every=5000
+    )
 
 
 if __name__ == "__main__":
