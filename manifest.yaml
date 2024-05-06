@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: bash run_mamujoco.sh
+  command: wandb agent off-the-grid-marl-team/og-marl-baselines/8t1k47dw
 
   types:
     Worker:
