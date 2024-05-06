@@ -49,3 +49,4 @@ RUN ./install_environments/mamujoco.sh
 # Copy all code
 COPY ./examples ./examples
 COPY ./baselines ./baselines
+COPY ./run_mamujoco.sh ./run_mamujoco.sh
