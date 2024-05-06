@@ -16,7 +16,7 @@ spec:
   command: wandb agent off-the-grid-marl-team/og-marl-baselines/8t1k47dw
 
   types:
-    Worker:
+    Worker: 
       count: 1 
 
       resources:
