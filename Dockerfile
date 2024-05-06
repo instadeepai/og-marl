@@ -38,11 +38,11 @@ RUN pip install --quiet --upgrade pip setuptools wheel &&  \
 # RUN ./install_environments/smacv1.sh
 # RUN ./install_environments/smacv2.sh
 
-# ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
-# ENV SUPPRESS_GR_PROMPT 1
-# RUN ./install_environments/mamujoco.sh
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
+ENV SUPPRESS_GR_PROMPT 1
+RUN ./install_environments/mamujoco.sh
 
-RUN ./install_environments/pettingzoo.sh
+# RUN ./install_environments/pettingzoo.sh
 
 # RUN ./install_environments/flatland.sh
 

@@ -39,6 +39,7 @@ class MADDPGCQLSystem(MADDPGSystem):
         self,
         environment: BaseEnvironment,
         logger: BaseLogger,
+        joint_action: str,
         linear_layer_dim: int = 64,
         recurrent_layer_dim: int = 64,
         discount: float = 0.99,
@@ -67,6 +68,8 @@ class MADDPGCQLSystem(MADDPGSystem):
         self._num_ood_actions = num_ood_actions
         self._cql_weight = cql_weight
         self._cql_sigma = cql_sigma
+
+        self.joint_action = joint_action
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
@@ -275,8 +278,18 @@ class MADDPGCQLSystem(MADDPGSystem):
             )
             online_actions = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
 
-            qs_1 = self._critic_network_1(env_states, online_actions, replay_actions)
-            qs_2 = self._critic_network_2(env_states, online_actions, replay_actions)
+            if self.joint_action == "buffer":
+                qs_1 = self._critic_network_1(env_states, online_actions, replay_actions)
+                qs_2 = self._critic_network_2(env_states, online_actions, replay_actions)
+            elif self.joint_action == "online":
+                qs_1 = self._critic_network_1(env_states, online_actions, tf.stop_gradient(online_actions))
+                qs_2 = self._critic_network_2(env_states, online_actions, tf.stop_gradient(online_actions))
+            elif self.joint_action == "target":
+                qs_1 = self._critic_network_1(env_states, online_actions, target_actions)
+                qs_2 = self._critic_network_2(env_states, online_actions, target_actions)
+            else: 
+                raise ValueError("Not valid joint action.")
+            
             qs = tf.minimum(qs_1, qs_2)
 
             policy_loss = -tf.reduce_mean(qs) + 1e-3 * tf.reduce_mean(online_actions**2)
