@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: wandb agent off-the-grid-marl-team/og-marl-baselines/8t1k47dw
+  command: bash run_mamujoco.sh
 
   types:
     Worker:
@@ -30,4 +30,4 @@ spec:
             count: 1
             # mandatory (if gpus amount is > 0): gpu type wanted
             type: gpu
-            product: Quadro-RTX-4000  # Quadro-RTX-4000 | Tesla-V100-SXM3-32GB
+            product: NVIDIA-A100-SXM4-80GB-MIG-3g.40gb  # Quadro-RTX-4000 | Tesla-V100-SXM3-32GB
