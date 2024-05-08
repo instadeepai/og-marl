@@ -138,36 +138,34 @@ class IDRQNSystem(BaseMARLSystem):
         actions = {}
         next_rnn_states = {}
         for i, agent in enumerate(self._environment.possible_agents):
-            agent_observation = observations[agent]
-            if self._add_agent_id_to_obs:
-                agent_observation = concat_agent_id_to_obs(
-                    agent_observation, i, len(self._environment.possible_agents)
-                )
-            agent_observation = tf.expand_dims(agent_observation, axis=0)  # add batch dimension
-            embedding = self._q_embedding_network(agent_observation)
-            q_values, next_rnn_states[agent] = self._q_network(embedding, rnn_states[agent])
+            # agent_observation = observations[agent]
+            # if self._add_agent_id_to_obs:
+            #     agent_observation = concat_agent_id_to_obs(
+            #         agent_observation, i, len(self._environment.possible_agents)
+            #     )
+            # agent_observation = tf.expand_dims(agent_observation, axis=0)  # add batch dimension
+            # embedding = self._q_embedding_network(agent_observation)
+            # q_values, next_rnn_states[agent] = self._q_network(embedding, rnn_states[agent])
 
             agent_legal_actions = legal_actions[agent]
-            masked_q_values = tf.where(
-                tf.equal(agent_legal_actions, 1),
-                q_values[0],
-                -99999999,
-            )
-            greedy_action = tf.argmax(masked_q_values)
+            # masked_q_values = tf.where(
+            #     tf.equal(agent_legal_actions, 1),
+            #     q_values[0],
+            #     -99999999,
+            # )
+            # greedy_action = tf.argmax(masked_q_values)
 
-            epsilon = tf.maximum(1.0 - self._eps_dec * env_step_ctr, self._eps_min)
+            # epsilon = tf.maximum(1.0 - self._eps_dec * env_step_ctr, self._eps_min)
+            # epsilon = 1
 
-            greedy_probs = tf.one_hot(greedy_action, masked_q_values.shape[-1])
+            # greedy_probs = tf.one_hot(greedy_action, masked_q_values.shape[-1])
             explore_probs = tf.cast(
                 agent_legal_actions / tf.reduce_sum(agent_legal_actions), "float32"
             )
-            probs = (1.0 - epsilon) * greedy_probs + epsilon * explore_probs
-            probs = tf.expand_dims(probs, axis=0)
+            # probs = (1.0 - epsilon) * greedy_probs + epsilon * explore_probs
+            probs = tf.expand_dims(explore_probs, axis=0)
 
-            if explore:
-                action = tfp.distributions.Categorical(probs=probs).sample()[0]
-            else:
-                action = greedy_action
+            action = tfp.distributions.Categorical(probs=probs).sample()[0]
 
             # Max Q-value over legal actions
             actions[agent] = action
@@ -176,115 +174,128 @@ class IDRQNSystem(BaseMARLSystem):
 
     def train_step(self, experience: Experience) -> Dict[str, Numeric]:
         self._train_step_ctr += 1
-        logs = self._tf_train_step(tf.convert_to_tensor(self._train_step_ctr), experience)
+        logs = {
+            "Loss": 0,
+            "Mean Q-values": 0,
+            "Mean Chosen Q-values": 0,
+        }
+        #self._tf_train_step(tf.convert_to_tensor(self._train_step_ctr), experience)
         return logs  # type: ignore
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, train_step_ctr: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
-        observations = experience["observations"]  # (B,T,N,O)
-        actions = experience["actions"]  # (B,T,N)
-        rewards = experience["rewards"]  # (B,T,N)
-        truncations = experience["truncations"]  # (B,T,N)
-        terminals = experience["terminals"]  # (B,T,N)
-        legal_actions = experience["infos"]["legals"]  # (B,T,N,A)
+        # observations = experience["observations"]  # (B,T,N,O)
+        # actions = experience["actions"]  # (B,T,N)
+        # rewards = experience["rewards"]  # (B,T,N)
+        # truncations = tf.cast(experience["truncations"],"float32")  # (B,T,N)
+        # terminals = tf.cast(experience["terminals"],"float32")  # (B,T,N)
+        # legal_actions = experience["infos"]["legals"]  # (B,T,N,A)
 
-        # When to reset the RNN hidden state
-        resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
+        # # When to reset the RNN hidden state
+        # resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
 
-        # Get dims
-        B, T, N, A = legal_actions.shape
+        # # Get dims
+        # B, T, N, A = legal_actions.shape
 
-        # Maybe add agent ids to observation
-        if self._add_agent_id_to_obs:
-            observations = batch_concat_agent_id_to_obs(observations)
+        # # Maybe add agent ids to observation
+        # if self._add_agent_id_to_obs:
+        #     observations = batch_concat_agent_id_to_obs(observations)
 
-        # Make time-major
-        observations = switch_two_leading_dims(observations)
-        resets = switch_two_leading_dims(resets)
+        # # Make time-major
+        # observations = switch_two_leading_dims(observations)
+        # resets = switch_two_leading_dims(resets)
 
-        # Merge batch_dim and agent_dim
-        observations = merge_batch_and_agent_dim_of_time_major_sequence(observations)
-        resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
+        # # Merge batch_dim and agent_dim
+        # observations = merge_batch_and_agent_dim_of_time_major_sequence(observations)
+        # resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
-        # Unroll target network
-        target_embeddings = self._target_q_embedding_network(observations)
-        target_qs_out = unroll_rnn(self._target_q_network, target_embeddings, resets)
+        # # Unroll target network
+        # target_embeddings = self._target_q_embedding_network(observations)
+        # target_qs_out = unroll_rnn(self._target_q_network, target_embeddings, resets)
 
-        # Expand batch and agent_dim
-        target_qs_out = expand_batch_and_agent_dim_of_time_major_sequence(target_qs_out, B, N)
+        # # Expand batch and agent_dim
+        # target_qs_out = expand_batch_and_agent_dim_of_time_major_sequence(target_qs_out, B, N)
 
-        # Make batch-major again
-        target_qs_out = switch_two_leading_dims(target_qs_out)
+        # # Make batch-major again
+        # target_qs_out = switch_two_leading_dims(target_qs_out)
 
-        with tf.GradientTape() as tape:
-            # Unroll online network
-            embeddings = self._q_embedding_network(observations)
-            qs_out = unroll_rnn(self._q_network, embeddings, resets)
+        # with tf.GradientTape() as tape:
+        #     # Unroll online network
+        #     embeddings = self._q_embedding_network(observations)
+        #     qs_out = unroll_rnn(self._q_network, embeddings, resets)
 
-            # Expand batch and agent_dim
-            qs_out = expand_batch_and_agent_dim_of_time_major_sequence(qs_out, B, N)
+        #     # Expand batch and agent_dim
+        #     qs_out = expand_batch_and_agent_dim_of_time_major_sequence(qs_out, B, N)
 
-            # Make batch-major again
-            qs_out = switch_two_leading_dims(qs_out)
+        #     # Make batch-major again
+        #     qs_out = switch_two_leading_dims(qs_out)
 
-            # Pick the Q-Values for the actions taken by each agent
-            chosen_action_qs = gather(qs_out, tf.cast(actions, "int32"), axis=3, keepdims=False)
+        #     # Pick the Q-Values for the actions taken by each agent
+        #     chosen_action_qs = gather(qs_out, tf.cast(actions, "int32"), axis=3, keepdims=False)
 
-            # Max over target Q-Values/ Double q learning
-            qs_out_selector = tf.where(
-                tf.cast(legal_actions, "bool"), qs_out, -9999999
-            )  # legal action masking
-            cur_max_actions = tf.argmax(qs_out_selector, axis=3)
-            target_max_qs = gather(target_qs_out, cur_max_actions, axis=-1, keepdims=False)
+        #     # Max over target Q-Values/ Double q learning
+        #     qs_out_selector = tf.where(
+        #         tf.cast(legal_actions, "bool"), qs_out, -9999999
+        #     )  # legal action masking
+        #     cur_max_actions = tf.argmax(qs_out_selector, axis=3)
+        #     target_max_qs = gather(target_qs_out, cur_max_actions, axis=-1, keepdims=False)
 
-            # Compute targets
-            targets = (
-                rewards[:, :-1] + (1 - terminals[:, :-1]) * self._discount * target_max_qs[:, 1:]
-            )
-            targets = tf.stop_gradient(targets)
+        #     # Compute targets
+        #     targets = (
+        #         rewards[:, :-1] + (1 - terminals[:, :-1]) * self._discount * target_max_qs[:, 1:]
+        #     )
+        #     targets = tf.stop_gradient(targets)
 
-            # Chop off last time step
-            chosen_action_qs = chosen_action_qs[:, :-1]  # shape=(B,T-1)
+        #     # Chop off last time step
+        #     chosen_action_qs = chosen_action_qs[:, :-1]  # shape=(B,T-1)
 
-            # TD-Error Loss
-            loss = 0.5 * tf.square(targets - chosen_action_qs)
+        #     # TD-Error Loss
+        #     loss = 0.5 * tf.square(targets - chosen_action_qs)
 
-            # Mask out zero-padded timesteps
-            loss = tf.reduce_mean(loss)
+        #     # Mask out zero-padded timesteps
+        #     loss = tf.reduce_mean(loss)
 
-        # Get trainable variables
-        variables = (
-            *self._q_network.trainable_variables,
-            *self._q_embedding_network.trainable_variables,
-        )
+        # # Get trainable variables
+        # variables = (
+        #     *self._q_network.trainable_variables,
+        #     *self._q_embedding_network.trainable_variables,
+        # )
 
-        # Compute gradients.
-        gradients = tape.gradient(loss, variables)
+        # # Compute gradients.
+        # gradients = tape.gradient(loss, variables)
 
-        # Apply gradients.
-        self._optimizer.apply(gradients, variables)
+        # # Apply gradients.
+        # self._optimizer.apply(gradients, variables)
 
-        # Online variables
-        online_variables = (*self._q_network.variables, *self._q_embedding_network.variables)
+        # # Online variables
+        # online_variables = (*self._q_network.variables, *self._q_embedding_network.variables)
 
-        # Get target variables
-        target_variables = (
-            *self._target_q_network.variables,
-            *self._target_q_embedding_network.variables,
-        )
+        # # Get target variables
+        # target_variables = (
+        #     *self._target_q_network.variables,
+        #     *self._target_q_embedding_network.variables,
+        # )
 
-        # Maybe update target network
-        self._update_target_network(train_step_ctr, online_variables, target_variables)
+        # # Maybe update target network
+        # self._update_target_network(train_step_ctr, online_variables, target_variables)
+
+        # return {
+        #     "Loss": loss,
+        #     "Mean Q-values": tf.reduce_mean(qs_out),
+        #     "Mean Chosen Q-values": tf.reduce_mean(chosen_action_qs),
+        # }
 
         return {
-            "Loss": loss,
-            "Mean Q-values": tf.reduce_mean(qs_out),
-            "Mean Chosen Q-values": tf.reduce_mean(chosen_action_qs),
+            "Loss": 0,
+            "Mean Q-values": 0,
+            "Mean Chosen Q-values": 0,
         }
 
     def get_stats(self) -> Dict[str, Numeric]:
-        return {"Epsilon": max(1.0 - self._env_step_ctr * self._eps_dec, self._eps_min)}
+        # return {"Epsilon": max(1.0 - self._env_step_ctr * self._eps_dec, self._eps_min)}
+        return {"Epsilon": 1}
+
 
     def _apply_mask(self, loss: Tensor, mask: Tensor) -> Numeric:
         mask = tf.expand_dims(mask, axis=-1)

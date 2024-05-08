@@ -1,0 +1,4707 @@
+{
+    "smac_v1": {
+        "3m_Good": {
+            "maicq": {
+                "5": {
+                    "absolute_metrics": {
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_0": {
+                        "step_count": 0,
+                        "episode_return": [
+                            3.917808160185814
+                        ]
+                    },
+                    "step_1": {
+                        "step_count": 1,
+                        "episode_return": [
+                            16.917808204889297
+                        ]
+                    },
+                    "step_2": {
+                        "step_count": 2,
+                        "episode_return": [
+                            16.835616320371628
+                        ]
+                    },
+                    "step_3": {
+                        "step_count": 3,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_4": {
+                        "step_count": 4,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_5": {
+                        "step_count": 5,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_6": {
+                        "step_count": 6,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_7": {
+                        "step_count": 7,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_8": {
+                        "step_count": 8,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_9": {
+                        "step_count": 9,
+                        "episode_return": [
+                            17.082191810011864
+                        ]
+                    },
+                    "step_10": {
+                        "step_count": 10,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_11": {
+                        "step_count": 11,
+                        "episode_return": [
+                            16.999999970197678
+                        ]
+                    },
+                    "step_12": {
+                        "step_count": 12,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_13": {
+                        "step_count": 13,
+                        "episode_return": [
+                            19.999999910593033
+                        ]
+                    },
+                    "step_14": {
+                        "step_count": 14,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_15": {
+                        "step_count": 15,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_16": {
+                        "step_count": 16,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_17": {
+                        "step_count": 17,
+                        "episode_return": [
+                            19.99999989569187
+                        ]
+                    },
+                    "step_18": {
+                        "step_count": 18,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_19": {
+                        "step_count": 19,
+                        "episode_return": [
+                            19.99999989569187
+                        ]
+                    },
+                    "step_20": {
+                        "step_count": 20,
+                        "episode_return": [
+                            19.99999988079071
+                        ]
+                    },
+                    "step_21": {
+                        "step_count": 21,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_22": {
+                        "step_count": 22,
+                        "episode_return": [
+                            19.99999989569187
+                        ]
+                    },
+                    "step_23": {
+                        "step_count": 23,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_24": {
+                        "step_count": 24,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_25": {
+                        "step_count": 25,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_26": {
+                        "step_count": 26,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_27": {
+                        "step_count": 27,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_28": {
+                        "step_count": 28,
+                        "episode_return": [
+                            16.999999955296516
+                        ]
+                    },
+                    "step_29": {
+                        "step_count": 29,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_30": {
+                        "step_count": 30,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_31": {
+                        "step_count": 31,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_32": {
+                        "step_count": 32,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_33": {
+                        "step_count": 33,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_34": {
+                        "step_count": 34,
+                        "episode_return": [
+                            19.999999821186066
+                        ]
+                    },
+                    "step_35": {
+                        "step_count": 35,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_36": {
+                        "step_count": 36,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_37": {
+                        "step_count": 37,
+                        "episode_return": [
+                            20.000000223517418
+                        ]
+                    },
+                    "step_38": {
+                        "step_count": 38,
+                        "episode_return": [
+                            16.90410965681076
+                        ]
+                    },
+                    "step_39": {
+                        "step_count": 39,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_40": {
+                        "step_count": 40,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_41": {
+                        "step_count": 41,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_42": {
+                        "step_count": 42,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_43": {
+                        "step_count": 43,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_44": {
+                        "step_count": 44,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_45": {
+                        "step_count": 45,
+                        "episode_return": [
+                            19.999999836087227
+                        ]
+                    },
+                    "step_46": {
+                        "step_count": 46,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_47": {
+                        "step_count": 47,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_48": {
+                        "step_count": 48,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_49": {
+                        "step_count": 49,
+                        "episode_return": [
+                            19.99999989569187
+                        ]
+                    },
+                    "step_50": {
+                        "step_count": 50,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    }
+                },
+                "4": {
+                    "absolute_metrics": {
+                        "episode_return": [
+                            17.082191735506058
+                        ]
+                    },
+                    "step_0": {
+                        "step_count": 0,
+                        "episode_return": [
+                            0.0
+                        ]
+                    },
+                    "step_1": {
+                        "step_count": 1,
+                        "episode_return": [
+                            10.301369845867157
+                        ]
+                    },
+                    "step_2": {
+                        "step_count": 2,
+                        "episode_return": [
+                            17.000000029802322
+                        ]
+                    },
+                    "step_3": {
+                        "step_count": 3,
+                        "episode_return": [
+                            20.00000023841858
+                        ]
+                    },
+                    "step_4": {
+                        "step_count": 4,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_5": {
+                        "step_count": 5,
+                        "episode_return": [
+                            19.99999989569187
+                        ]
+                    },
+                    "step_6": {
+                        "step_count": 6,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_7": {
+                        "step_count": 7,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_8": {
+                        "step_count": 8,
+                        "episode_return": [
+                            17.082191914319992
+                        ]
+                    },
+                    "step_9": {
+                        "step_count": 9,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_10": {
+                        "step_count": 10,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_11": {
+                        "step_count": 11,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_12": {
+                        "step_count": 12,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_13": {
+                        "step_count": 13,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_14": {
+                        "step_count": 14,
+                        "episode_return": [
+                            19.999999821186066
+                        ]
+                    },
+                    "step_15": {
+                        "step_count": 15,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_16": {
+                        "step_count": 16,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_17": {
+                        "step_count": 17,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_18": {
+                        "step_count": 18,
+                        "episode_return": [
+                            20.000000074505806
+                        ]
+                    },
+                    "step_19": {
+                        "step_count": 19,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_20": {
+                        "step_count": 20,
+                        "episode_return": [
+                            19.99999989569187
+                        ]
+                    },
+                    "step_21": {
+                        "step_count": 21,
+                        "episode_return": [
+                            16.999999955296516
+                        ]
+                    },
+                    "step_22": {
+                        "step_count": 22,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_23": {
+                        "step_count": 23,
+                        "episode_return": [
+                            17.082191824913025
+                        ]
+                    },
+                    "step_24": {
+                        "step_count": 24,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_25": {
+                        "step_count": 25,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_26": {
+                        "step_count": 26,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_27": {
+                        "step_count": 27,
+                        "episode_return": [
+                            13.657534301280975
+                        ]
+                    },
+                    "step_28": {
+                        "step_count": 28,
+                        "episode_return": [
+                            17.082191735506058
+                        ]
+                    },
+                    "step_29": {
+                        "step_count": 29,
+                        "episode_return": [
+                            16.835616320371628
+                        ]
+                    },
+                    "step_30": {
+                        "step_count": 30,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_31": {
+                        "step_count": 31,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_32": {
+                        "step_count": 32,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_33": {
+                        "step_count": 33,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_34": {
+                        "step_count": 34,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_35": {
+                        "step_count": 35,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_36": {
+                        "step_count": 36,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_37": {
+                        "step_count": 37,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_38": {
+                        "step_count": 38,
+                        "episode_return": [
+                            17.08219178020954
+                        ]
+                    },
+                    "step_39": {
+                        "step_count": 39,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_40": {
+                        "step_count": 40,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_41": {
+                        "step_count": 41,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_42": {
+                        "step_count": 42,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_43": {
+                        "step_count": 43,
+                        "episode_return": [
+                            16.57534258067608
+                        ]
+                    },
+                    "step_44": {
+                        "step_count": 44,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_45": {
+                        "step_count": 45,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_46": {
+                        "step_count": 46,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_47": {
+                        "step_count": 47,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_48": {
+                        "step_count": 48,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_49": {
+                        "step_count": 49,
+                        "episode_return": [
+                            16.91780810058117
+                        ]
+                    },
+                    "step_50": {
+                        "step_count": 50,
+                        "episode_return": [
+                            17.082191735506058
+                        ]
+                    }
+                },
+                "3": {
+                    "absolute_metrics": {
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_0": {
+                        "step_count": 0,
+                        "episode_return": [
+                            3.054794490337372
+                        ]
+                    },
+                    "step_1": {
+                        "step_count": 1,
+                        "episode_return": [
+                            13.630136966705322
+                        ]
+                    },
+                    "step_2": {
+                        "step_count": 2,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_3": {
+                        "step_count": 3,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_4": {
+                        "step_count": 4,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_5": {
+                        "step_count": 5,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_6": {
+                        "step_count": 6,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_7": {
+                        "step_count": 7,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_8": {
+                        "step_count": 8,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_9": {
+                        "step_count": 9,
+                        "episode_return": [
+                            16.657534390687943
+                        ]
+                    },
+                    "step_10": {
+                        "step_count": 10,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_11": {
+                        "step_count": 11,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_12": {
+                        "step_count": 12,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_13": {
+                        "step_count": 13,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_14": {
+                        "step_count": 14,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_15": {
+                        "step_count": 15,
+                        "episode_return": [
+                            17.00000010430813
+                        ]
+                    },
+                    "step_16": {
+                        "step_count": 16,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_17": {
+                        "step_count": 17,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_18": {
+                        "step_count": 18,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_19": {
+                        "step_count": 19,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_20": {
+                        "step_count": 20,
+                        "episode_return": [
+                            19.99999989569187
+                        ]
+                    },
+                    "step_21": {
+                        "step_count": 21,
+                        "episode_return": [
+                            19.99999989569187
+                        ]
+                    },
+                    "step_22": {
+                        "step_count": 22,
+                        "episode_return": [
+                            19.99999989569187
+                        ]
+                    },
+                    "step_23": {
+                        "step_count": 23,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_24": {
+                        "step_count": 24,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_25": {
+                        "step_count": 25,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_26": {
+                        "step_count": 26,
+                        "episode_return": [
+                            19.999999910593033
+                        ]
+                    },
+                    "step_27": {
+                        "step_count": 27,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_28": {
+                        "step_count": 28,
+                        "episode_return": [
+                            19.999999910593033
+                        ]
+                    },
+                    "step_29": {
+                        "step_count": 29,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_30": {
+                        "step_count": 30,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_31": {
+                        "step_count": 31,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_32": {
+                        "step_count": 32,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_33": {
+                        "step_count": 33,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_34": {
+                        "step_count": 34,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_35": {
+                        "step_count": 35,
+                        "episode_return": [
+                            16.657534286379814
+                        ]
+                    },
+                    "step_36": {
+                        "step_count": 36,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_37": {
+                        "step_count": 37,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_38": {
+                        "step_count": 38,
+                        "episode_return": [
+                            19.999999836087227
+                        ]
+                    },
+                    "step_39": {
+                        "step_count": 39,
+                        "episode_return": [
+                            16.91780810058117
+                        ]
+                    },
+                    "step_40": {
+                        "step_count": 40,
+                        "episode_return": [
+                            19.999999836087227
+                        ]
+                    },
+                    "step_41": {
+                        "step_count": 41,
+                        "episode_return": [
+                            17.082191810011864
+                        ]
+                    },
+                    "step_42": {
+                        "step_count": 42,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_43": {
+                        "step_count": 43,
+                        "episode_return": [
+                            19.999999821186066
+                        ]
+                    },
+                    "step_44": {
+                        "step_count": 44,
+                        "episode_return": [
+                            19.99999988079071
+                        ]
+                    },
+                    "step_45": {
+                        "step_count": 45,
+                        "episode_return": [
+                            20.000000149011612
+                        ]
+                    },
+                    "step_46": {
+                        "step_count": 46,
+                        "episode_return": [
+                            19.999999791383743
+                        ]
+                    },
+                    "step_47": {
+                        "step_count": 47,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_48": {
+                        "step_count": 48,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_49": {
+                        "step_count": 49,
+                        "episode_return": [
+                            20.0
+                        ]
+                    },
+                    "step_50": {
+                        "step_count": 50,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    }
+                },
+                "2": {
+                    "absolute_metrics": {
+                        "episode_return": [
+                            17.00000013411045
+                        ]
+                    },
+                    "step_0": {
+                        "step_count": 0,
+                        "episode_return": [
+                            0.4109589010477066
+                        ]
+                    },
+                    "step_1": {
+                        "step_count": 1,
+                        "episode_return": [
+                            13.835616484284401
+                        ]
+                    },
+                    "step_2": {
+                        "step_count": 2,
+                        "episode_return": [
+                            10.561643823981285
+                        ]
+                    },
+                    "step_3": {
+                        "step_count": 3,
+                        "episode_return": [
+                            20.000000149011612
+                        ]
+                    },
+                    "step_4": {
+                        "step_count": 4,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_5": {
+                        "step_count": 5,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_6": {
+                        "step_count": 6,
+                        "episode_return": [
+                            20.000000149011612
+                        ]
+                    },
+                    "step_7": {
+                        "step_count": 7,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_8": {
+                        "step_count": 8,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_9": {
+                        "step_count": 9,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_10": {
+                        "step_count": 10,
+                        "episode_return": [
+                            17.08219175040722
+                        ]
+                    },
+                    "step_11": {
+                        "step_count": 11,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_12": {
+                        "step_count": 12,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_13": {
+                        "step_count": 13,
+                        "episode_return": [
+                            19.999999910593033
+                        ]
+                    },
+                    "step_14": {
+                        "step_count": 14,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_15": {
+                        "step_count": 15,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_16": {
+                        "step_count": 16,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_17": {
+                        "step_count": 17,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_18": {
+                        "step_count": 18,
+                        "episode_return": [
+                            19.999999806284904
+                        ]
+                    },
+                    "step_19": {
+                        "step_count": 19,
+                        "episode_return": [
+                            19.999999776482582
+                        ]
+                    },
+                    "step_20": {
+                        "step_count": 20,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_21": {
+                        "step_count": 21,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_22": {
+                        "step_count": 22,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_23": {
+                        "step_count": 23,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_24": {
+                        "step_count": 24,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_25": {
+                        "step_count": 25,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_26": {
+                        "step_count": 26,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_27": {
+                        "step_count": 27,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_28": {
+                        "step_count": 28,
+                        "episode_return": [
+                            17.00000010430813
+                        ]
+                    },
+                    "step_29": {
+                        "step_count": 29,
+                        "episode_return": [
+                            19.999999806284904
+                        ]
+                    },
+                    "step_30": {
+                        "step_count": 30,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_31": {
+                        "step_count": 31,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_32": {
+                        "step_count": 32,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_33": {
+                        "step_count": 33,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_34": {
+                        "step_count": 34,
+                        "episode_return": [
+                            17.08219178020954
+                        ]
+                    },
+                    "step_35": {
+                        "step_count": 35,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_36": {
+                        "step_count": 36,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_37": {
+                        "step_count": 37,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_38": {
+                        "step_count": 38,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_39": {
+                        "step_count": 39,
+                        "episode_return": [
+                            16.99999998509884
+                        ]
+                    },
+                    "step_40": {
+                        "step_count": 40,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_41": {
+                        "step_count": 41,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_42": {
+                        "step_count": 42,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_43": {
+                        "step_count": 43,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_44": {
+                        "step_count": 44,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_45": {
+                        "step_count": 45,
+                        "episode_return": [
+                            19.99999988079071
+                        ]
+                    },
+                    "step_46": {
+                        "step_count": 46,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_47": {
+                        "step_count": 47,
+                        "episode_return": [
+                            17.08219175040722
+                        ]
+                    },
+                    "step_48": {
+                        "step_count": 48,
+                        "episode_return": [
+                            16.999999970197678
+                        ]
+                    },
+                    "step_49": {
+                        "step_count": 49,
+                        "episode_return": [
+                            19.999999910593033
+                        ]
+                    },
+                    "step_50": {
+                        "step_count": 50,
+                        "episode_return": [
+                            17.00000013411045
+                        ]
+                    }
+                },
+                "1": {
+                    "absolute_metrics": {
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_0": {
+                        "step_count": 0,
+                        "episode_return": [
+                            0.0
+                        ]
+                    },
+                    "step_1": {
+                        "step_count": 1,
+                        "episode_return": [
+                            13.657534286379814
+                        ]
+                    },
+                    "step_2": {
+                        "step_count": 2,
+                        "episode_return": [
+                            20.000000149011612
+                        ]
+                    },
+                    "step_3": {
+                        "step_count": 3,
+                        "episode_return": [
+                            20.000000074505806
+                        ]
+                    },
+                    "step_4": {
+                        "step_count": 4,
+                        "episode_return": [
+                            16.739725932478905
+                        ]
+                    },
+                    "step_5": {
+                        "step_count": 5,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_6": {
+                        "step_count": 6,
+                        "episode_return": [
+                            17.082191824913025
+                        ]
+                    },
+                    "step_7": {
+                        "step_count": 7,
+                        "episode_return": [
+                            19.99999988079071
+                        ]
+                    },
+                    "step_8": {
+                        "step_count": 8,
+                        "episode_return": [
+                            17.082191616296768
+                        ]
+                    },
+                    "step_9": {
+                        "step_count": 9,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_10": {
+                        "step_count": 10,
+                        "episode_return": [
+                            19.999999836087227
+                        ]
+                    },
+                    "step_11": {
+                        "step_count": 11,
+                        "episode_return": [
+                            20.000000149011612
+                        ]
+                    },
+                    "step_12": {
+                        "step_count": 12,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_13": {
+                        "step_count": 13,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_14": {
+                        "step_count": 14,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_15": {
+                        "step_count": 15,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_16": {
+                        "step_count": 16,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_17": {
+                        "step_count": 17,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_18": {
+                        "step_count": 18,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_19": {
+                        "step_count": 19,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_20": {
+                        "step_count": 20,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_21": {
+                        "step_count": 21,
+                        "episode_return": [
+                            20.00000023841858
+                        ]
+                    },
+                    "step_22": {
+                        "step_count": 22,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_23": {
+                        "step_count": 23,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_24": {
+                        "step_count": 24,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_25": {
+                        "step_count": 25,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_26": {
+                        "step_count": 26,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_27": {
+                        "step_count": 27,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_28": {
+                        "step_count": 28,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_29": {
+                        "step_count": 29,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_30": {
+                        "step_count": 30,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_31": {
+                        "step_count": 31,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_32": {
+                        "step_count": 32,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_33": {
+                        "step_count": 33,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_34": {
+                        "step_count": 34,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_35": {
+                        "step_count": 35,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_36": {
+                        "step_count": 36,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_37": {
+                        "step_count": 37,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_38": {
+                        "step_count": 38,
+                        "episode_return": [
+                            19.99999989569187
+                        ]
+                    },
+                    "step_39": {
+                        "step_count": 39,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_40": {
+                        "step_count": 40,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_41": {
+                        "step_count": 41,
+                        "episode_return": [
+                            19.99999988079071
+                        ]
+                    },
+                    "step_42": {
+                        "step_count": 42,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_43": {
+                        "step_count": 43,
+                        "episode_return": [
+                            17.08219189941883
+                        ]
+                    },
+                    "step_44": {
+                        "step_count": 44,
+                        "episode_return": [
+                            19.999999806284904
+                        ]
+                    },
+                    "step_45": {
+                        "step_count": 45,
+                        "episode_return": [
+                            20.000000149011612
+                        ]
+                    },
+                    "step_46": {
+                        "step_count": 46,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_47": {
+                        "step_count": 47,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_48": {
+                        "step_count": 48,
+                        "episode_return": [
+                            20.0
+                        ]
+                    },
+                    "step_49": {
+                        "step_count": 49,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_50": {
+                        "step_count": 50,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    }
+                }
+            },
+            "idrqn+cql": {
+                "5": {
+                    "absolute_metrics": {
+                        "episode_return": [
+                            17.08219189941883
+                        ]
+                    },
+                    "step_0": {
+                        "step_count": 0,
+                        "episode_return": [
+                            0.5753424614667892
+                        ]
+                    },
+                    "step_1": {
+                        "step_count": 1,
+                        "episode_return": [
+                            17.082191810011864
+                        ]
+                    },
+                    "step_2": {
+                        "step_count": 2,
+                        "episode_return": [
+                            16.91780833899975
+                        ]
+                    },
+                    "step_3": {
+                        "step_count": 3,
+                        "episode_return": [
+                            20.000000089406967
+                        ]
+                    },
+                    "step_4": {
+                        "step_count": 4,
+                        "episode_return": [
+                            14.164383515715599
+                        ]
+                    },
+                    "step_5": {
+                        "step_count": 5,
+                        "episode_return": [
+                            13.739725932478905
+                        ]
+                    },
+                    "step_6": {
+                        "step_count": 6,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_7": {
+                        "step_count": 7,
+                        "episode_return": [
+                            16.999999955296516
+                        ]
+                    },
+                    "step_8": {
+                        "step_count": 8,
+                        "episode_return": [
+                            16.739726066589355
+                        ]
+                    },
+                    "step_9": {
+                        "step_count": 9,
+                        "episode_return": [
+                            16.917808264493942
+                        ]
+                    },
+                    "step_10": {
+                        "step_count": 10,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_11": {
+                        "step_count": 11,
+                        "episode_return": [
+                            17.082191616296768
+                        ]
+                    },
+                    "step_12": {
+                        "step_count": 12,
+                        "episode_return": [
+                            16.739726081490517
+                        ]
+                    },
+                    "step_13": {
+                        "step_count": 13,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_14": {
+                        "step_count": 14,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_15": {
+                        "step_count": 15,
+                        "episode_return": [
+                            17.000000029802322
+                        ]
+                    },
+                    "step_16": {
+                        "step_count": 16,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_17": {
+                        "step_count": 17,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_18": {
+                        "step_count": 18,
+                        "episode_return": [
+                            20.000000074505806
+                        ]
+                    },
+                    "step_19": {
+                        "step_count": 19,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_20": {
+                        "step_count": 20,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_21": {
+                        "step_count": 21,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_22": {
+                        "step_count": 22,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_23": {
+                        "step_count": 23,
+                        "episode_return": [
+                            20.000000074505806
+                        ]
+                    },
+                    "step_24": {
+                        "step_count": 24,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_25": {
+                        "step_count": 25,
+                        "episode_return": [
+                            19.99999989569187
+                        ]
+                    },
+                    "step_26": {
+                        "step_count": 26,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_27": {
+                        "step_count": 27,
+                        "episode_return": [
+                            20.00000038743019
+                        ]
+                    },
+                    "step_28": {
+                        "step_count": 28,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_29": {
+                        "step_count": 29,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_30": {
+                        "step_count": 30,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_31": {
+                        "step_count": 31,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_32": {
+                        "step_count": 32,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_33": {
+                        "step_count": 33,
+                        "episode_return": [
+                            16.739726096391678
+                        ]
+                    },
+                    "step_34": {
+                        "step_count": 34,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_35": {
+                        "step_count": 35,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_36": {
+                        "step_count": 36,
+                        "episode_return": [
+                            20.0
+                        ]
+                    },
+                    "step_37": {
+                        "step_count": 37,
+                        "episode_return": [
+                            19.99999989569187
+                        ]
+                    },
+                    "step_38": {
+                        "step_count": 38,
+                        "episode_return": [
+                            17.00000011920929
+                        ]
+                    },
+                    "step_39": {
+                        "step_count": 39,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_40": {
+                        "step_count": 40,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_41": {
+                        "step_count": 41,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_42": {
+                        "step_count": 42,
+                        "episode_return": [
+                            17.082191810011864
+                        ]
+                    },
+                    "step_43": {
+                        "step_count": 43,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_44": {
+                        "step_count": 44,
+                        "episode_return": [
+                            17.08219175040722
+                        ]
+                    },
+                    "step_45": {
+                        "step_count": 45,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_46": {
+                        "step_count": 46,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_47": {
+                        "step_count": 47,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_48": {
+                        "step_count": 48,
+                        "episode_return": [
+                            17.082191735506058
+                        ]
+                    },
+                    "step_49": {
+                        "step_count": 49,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_50": {
+                        "step_count": 50,
+                        "episode_return": [
+                            17.08219189941883
+                        ]
+                    }
+                },
+                "4": {
+                    "absolute_metrics": {
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_0": {
+                        "step_count": 0,
+                        "episode_return": [
+                            0.0
+                        ]
+                    },
+                    "step_1": {
+                        "step_count": 1,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_2": {
+                        "step_count": 2,
+                        "episode_return": [
+                            14.082191675901413
+                        ]
+                    },
+                    "step_3": {
+                        "step_count": 3,
+                        "episode_return": [
+                            16.739726066589355
+                        ]
+                    },
+                    "step_4": {
+                        "step_count": 4,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_5": {
+                        "step_count": 5,
+                        "episode_return": [
+                            16.821917697787285
+                        ]
+                    },
+                    "step_6": {
+                        "step_count": 6,
+                        "episode_return": [
+                            16.91780833899975
+                        ]
+                    },
+                    "step_7": {
+                        "step_count": 7,
+                        "episode_return": [
+                            20.000000149011612
+                        ]
+                    },
+                    "step_8": {
+                        "step_count": 8,
+                        "episode_return": [
+                            16.917808264493942
+                        ]
+                    },
+                    "step_9": {
+                        "step_count": 9,
+                        "episode_return": [
+                            16.83561646938324
+                        ]
+                    },
+                    "step_10": {
+                        "step_count": 10,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_11": {
+                        "step_count": 11,
+                        "episode_return": [
+                            17.082191824913025
+                        ]
+                    },
+                    "step_12": {
+                        "step_count": 12,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_13": {
+                        "step_count": 13,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_14": {
+                        "step_count": 14,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_15": {
+                        "step_count": 15,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_16": {
+                        "step_count": 16,
+                        "episode_return": [
+                            20.000000074505806
+                        ]
+                    },
+                    "step_17": {
+                        "step_count": 17,
+                        "episode_return": [
+                            16.397260412573814
+                        ]
+                    },
+                    "step_18": {
+                        "step_count": 18,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_19": {
+                        "step_count": 19,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_20": {
+                        "step_count": 20,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_21": {
+                        "step_count": 21,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_22": {
+                        "step_count": 22,
+                        "episode_return": [
+                            17.082191601395607
+                        ]
+                    },
+                    "step_23": {
+                        "step_count": 23,
+                        "episode_return": [
+                            10.835616394877434
+                        ]
+                    },
+                    "step_24": {
+                        "step_count": 24,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_25": {
+                        "step_count": 25,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_26": {
+                        "step_count": 26,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_27": {
+                        "step_count": 27,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_28": {
+                        "step_count": 28,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_29": {
+                        "step_count": 29,
+                        "episode_return": [
+                            20.000000149011612
+                        ]
+                    },
+                    "step_30": {
+                        "step_count": 30,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_31": {
+                        "step_count": 31,
+                        "episode_return": [
+                            16.67123283445835
+                        ]
+                    },
+                    "step_32": {
+                        "step_count": 32,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_33": {
+                        "step_count": 33,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_34": {
+                        "step_count": 34,
+                        "episode_return": [
+                            19.999999910593033
+                        ]
+                    },
+                    "step_35": {
+                        "step_count": 35,
+                        "episode_return": [
+                            16.999999970197678
+                        ]
+                    },
+                    "step_36": {
+                        "step_count": 36,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_37": {
+                        "step_count": 37,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_38": {
+                        "step_count": 38,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_39": {
+                        "step_count": 39,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_40": {
+                        "step_count": 40,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_41": {
+                        "step_count": 41,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_42": {
+                        "step_count": 42,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_43": {
+                        "step_count": 43,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_44": {
+                        "step_count": 44,
+                        "episode_return": [
+                            16.917808279395103
+                        ]
+                    },
+                    "step_45": {
+                        "step_count": 45,
+                        "episode_return": [
+                            16.835616543889046
+                        ]
+                    },
+                    "step_46": {
+                        "step_count": 46,
+                        "episode_return": [
+                            19.99999989569187
+                        ]
+                    },
+                    "step_47": {
+                        "step_count": 47,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_48": {
+                        "step_count": 48,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_49": {
+                        "step_count": 49,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_50": {
+                        "step_count": 50,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    }
+                },
+                "3": {
+                    "absolute_metrics": {
+                        "episode_return": [
+                            20.0
+                        ]
+                    },
+                    "step_0": {
+                        "step_count": 0,
+                        "episode_return": [
+                            0.08219178020954132
+                        ]
+                    },
+                    "step_1": {
+                        "step_count": 1,
+                        "episode_return": [
+                            17.082191824913025
+                        ]
+                    },
+                    "step_2": {
+                        "step_count": 2,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_3": {
+                        "step_count": 3,
+                        "episode_return": [
+                            13.917808249592781
+                        ]
+                    },
+                    "step_4": {
+                        "step_count": 4,
+                        "episode_return": [
+                            17.000000044703484
+                        ]
+                    },
+                    "step_5": {
+                        "step_count": 5,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_6": {
+                        "step_count": 6,
+                        "episode_return": [
+                            16.835616409778595
+                        ]
+                    },
+                    "step_7": {
+                        "step_count": 7,
+                        "episode_return": [
+                            17.082191839814186
+                        ]
+                    },
+                    "step_8": {
+                        "step_count": 8,
+                        "episode_return": [
+                            16.99999998509884
+                        ]
+                    },
+                    "step_9": {
+                        "step_count": 9,
+                        "episode_return": [
+                            17.000000044703484
+                        ]
+                    },
+                    "step_10": {
+                        "step_count": 10,
+                        "episode_return": [
+                            16.917808279395103
+                        ]
+                    },
+                    "step_11": {
+                        "step_count": 11,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_12": {
+                        "step_count": 12,
+                        "episode_return": [
+                            17.08219166100025
+                        ]
+                    },
+                    "step_13": {
+                        "step_count": 13,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_14": {
+                        "step_count": 14,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_15": {
+                        "step_count": 15,
+                        "episode_return": [
+                            17.000000059604645
+                        ]
+                    },
+                    "step_16": {
+                        "step_count": 16,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_17": {
+                        "step_count": 17,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_18": {
+                        "step_count": 18,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_19": {
+                        "step_count": 19,
+                        "episode_return": [
+                            20.000000074505806
+                        ]
+                    },
+                    "step_20": {
+                        "step_count": 20,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_21": {
+                        "step_count": 21,
+                        "episode_return": [
+                            19.999999836087227
+                        ]
+                    },
+                    "step_22": {
+                        "step_count": 22,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_23": {
+                        "step_count": 23,
+                        "episode_return": [
+                            16.835616543889046
+                        ]
+                    },
+                    "step_24": {
+                        "step_count": 24,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_25": {
+                        "step_count": 25,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_26": {
+                        "step_count": 26,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_27": {
+                        "step_count": 27,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_28": {
+                        "step_count": 28,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_29": {
+                        "step_count": 29,
+                        "episode_return": [
+                            20.000000074505806
+                        ]
+                    },
+                    "step_30": {
+                        "step_count": 30,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_31": {
+                        "step_count": 31,
+                        "episode_return": [
+                            20.0
+                        ]
+                    },
+                    "step_32": {
+                        "step_count": 32,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_33": {
+                        "step_count": 33,
+                        "episode_return": [
+                            16.671232864260674
+                        ]
+                    },
+                    "step_34": {
+                        "step_count": 34,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_35": {
+                        "step_count": 35,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_36": {
+                        "step_count": 36,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_37": {
+                        "step_count": 37,
+                        "episode_return": [
+                            19.999999836087227
+                        ]
+                    },
+                    "step_38": {
+                        "step_count": 38,
+                        "episode_return": [
+                            19.999999910593033
+                        ]
+                    },
+                    "step_39": {
+                        "step_count": 39,
+                        "episode_return": [
+                            19.99999988079071
+                        ]
+                    },
+                    "step_40": {
+                        "step_count": 40,
+                        "episode_return": [
+                            19.999999806284904
+                        ]
+                    },
+                    "step_41": {
+                        "step_count": 41,
+                        "episode_return": [
+                            17.08219188451767
+                        ]
+                    },
+                    "step_42": {
+                        "step_count": 42,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_43": {
+                        "step_count": 43,
+                        "episode_return": [
+                            13.410958871245384
+                        ]
+                    },
+                    "step_44": {
+                        "step_count": 44,
+                        "episode_return": [
+                            20.000000163912773
+                        ]
+                    },
+                    "step_45": {
+                        "step_count": 45,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_46": {
+                        "step_count": 46,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_47": {
+                        "step_count": 47,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_48": {
+                        "step_count": 48,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_49": {
+                        "step_count": 49,
+                        "episode_return": [
+                            16.91780824959278
+                        ]
+                    },
+                    "step_50": {
+                        "step_count": 50,
+                        "episode_return": [
+                            20.0
+                        ]
+                    }
+                },
+                "2": {
+                    "absolute_metrics": {
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_0": {
+                        "step_count": 0,
+                        "episode_return": [
+                            0.0
+                        ]
+                    },
+                    "step_1": {
+                        "step_count": 1,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_2": {
+                        "step_count": 2,
+                        "episode_return": [
+                            17.082191601395607
+                        ]
+                    },
+                    "step_3": {
+                        "step_count": 3,
+                        "episode_return": [
+                            20.000000149011612
+                        ]
+                    },
+                    "step_4": {
+                        "step_count": 4,
+                        "episode_return": [
+                            17.08219175040722
+                        ]
+                    },
+                    "step_5": {
+                        "step_count": 5,
+                        "episode_return": [
+                            19.999999910593033
+                        ]
+                    },
+                    "step_6": {
+                        "step_count": 6,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_7": {
+                        "step_count": 7,
+                        "episode_return": [
+                            16.739726170897484
+                        ]
+                    },
+                    "step_8": {
+                        "step_count": 8,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_9": {
+                        "step_count": 9,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_10": {
+                        "step_count": 10,
+                        "episode_return": [
+                            16.91780833899975
+                        ]
+                    },
+                    "step_11": {
+                        "step_count": 11,
+                        "episode_return": [
+                            16.83561636507511
+                        ]
+                    },
+                    "step_12": {
+                        "step_count": 12,
+                        "episode_return": [
+                            16.657534405589104
+                        ]
+                    },
+                    "step_13": {
+                        "step_count": 13,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_14": {
+                        "step_count": 14,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_15": {
+                        "step_count": 15,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_16": {
+                        "step_count": 16,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_17": {
+                        "step_count": 17,
+                        "episode_return": [
+                            16.835616275668144
+                        ]
+                    },
+                    "step_18": {
+                        "step_count": 18,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_19": {
+                        "step_count": 19,
+                        "episode_return": [
+                            20.000000223517418
+                        ]
+                    },
+                    "step_20": {
+                        "step_count": 20,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_21": {
+                        "step_count": 21,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_22": {
+                        "step_count": 22,
+                        "episode_return": [
+                            20.000000074505806
+                        ]
+                    },
+                    "step_23": {
+                        "step_count": 23,
+                        "episode_return": [
+                            19.999999910593033
+                        ]
+                    },
+                    "step_24": {
+                        "step_count": 24,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_25": {
+                        "step_count": 25,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_26": {
+                        "step_count": 26,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_27": {
+                        "step_count": 27,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_28": {
+                        "step_count": 28,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_29": {
+                        "step_count": 29,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_30": {
+                        "step_count": 30,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_31": {
+                        "step_count": 31,
+                        "episode_return": [
+                            16.91780835390091
+                        ]
+                    },
+                    "step_32": {
+                        "step_count": 32,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_33": {
+                        "step_count": 33,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_34": {
+                        "step_count": 34,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_35": {
+                        "step_count": 35,
+                        "episode_return": [
+                            16.410958915948868
+                        ]
+                    },
+                    "step_36": {
+                        "step_count": 36,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_37": {
+                        "step_count": 37,
+                        "episode_return": [
+                            17.082191824913025
+                        ]
+                    },
+                    "step_38": {
+                        "step_count": 38,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_39": {
+                        "step_count": 39,
+                        "episode_return": [
+                            17.000000029802322
+                        ]
+                    },
+                    "step_40": {
+                        "step_count": 40,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_41": {
+                        "step_count": 41,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_42": {
+                        "step_count": 42,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_43": {
+                        "step_count": 43,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_44": {
+                        "step_count": 44,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_45": {
+                        "step_count": 45,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_46": {
+                        "step_count": 46,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_47": {
+                        "step_count": 47,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_48": {
+                        "step_count": 48,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_49": {
+                        "step_count": 49,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_50": {
+                        "step_count": 50,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    }
+                },
+                "1": {
+                    "absolute_metrics": {
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_0": {
+                        "step_count": 0,
+                        "episode_return": [
+                            4.397260218858719
+                        ]
+                    },
+                    "step_1": {
+                        "step_count": 1,
+                        "episode_return": [
+                            14.000000044703484
+                        ]
+                    },
+                    "step_2": {
+                        "step_count": 2,
+                        "episode_return": [
+                            13.835616394877434
+                        ]
+                    },
+                    "step_3": {
+                        "step_count": 3,
+                        "episode_return": [
+                            19.999999940395355
+                        ]
+                    },
+                    "step_4": {
+                        "step_count": 4,
+                        "episode_return": [
+                            10.726027309894562
+                        ]
+                    },
+                    "step_5": {
+                        "step_count": 5,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_6": {
+                        "step_count": 6,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_7": {
+                        "step_count": 7,
+                        "episode_return": [
+                            16.82191777229309
+                        ]
+                    },
+                    "step_8": {
+                        "step_count": 8,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_9": {
+                        "step_count": 9,
+                        "episode_return": [
+                            17.082191824913025
+                        ]
+                    },
+                    "step_10": {
+                        "step_count": 10,
+                        "episode_return": [
+                            17.00000013411045
+                        ]
+                    },
+                    "step_11": {
+                        "step_count": 11,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_12": {
+                        "step_count": 12,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_13": {
+                        "step_count": 13,
+                        "episode_return": [
+                            19.999999910593033
+                        ]
+                    },
+                    "step_14": {
+                        "step_count": 14,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_15": {
+                        "step_count": 15,
+                        "episode_return": [
+                            16.821917846798897
+                        ]
+                    },
+                    "step_16": {
+                        "step_count": 16,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_17": {
+                        "step_count": 17,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_18": {
+                        "step_count": 18,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_19": {
+                        "step_count": 19,
+                        "episode_return": [
+                            17.00000013411045
+                        ]
+                    },
+                    "step_20": {
+                        "step_count": 20,
+                        "episode_return": [
+                            20.0
+                        ]
+                    },
+                    "step_21": {
+                        "step_count": 21,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_22": {
+                        "step_count": 22,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_23": {
+                        "step_count": 23,
+                        "episode_return": [
+                            16.917808264493942
+                        ]
+                    },
+                    "step_24": {
+                        "step_count": 24,
+                        "episode_return": [
+                            16.904109701514244
+                        ]
+                    },
+                    "step_25": {
+                        "step_count": 25,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_26": {
+                        "step_count": 26,
+                        "episode_return": [
+                            16.90410965681076
+                        ]
+                    },
+                    "step_27": {
+                        "step_count": 27,
+                        "episode_return": [
+                            16.9041096419096
+                        ]
+                    },
+                    "step_28": {
+                        "step_count": 28,
+                        "episode_return": [
+                            16.91780833899975
+                        ]
+                    },
+                    "step_29": {
+                        "step_count": 29,
+                        "episode_return": [
+                            16.999999970197678
+                        ]
+                    },
+                    "step_30": {
+                        "step_count": 30,
+                        "episode_return": [
+                            19.99999989569187
+                        ]
+                    },
+                    "step_31": {
+                        "step_count": 31,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_32": {
+                        "step_count": 32,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_33": {
+                        "step_count": 33,
+                        "episode_return": [
+                            17.08219189941883
+                        ]
+                    },
+                    "step_34": {
+                        "step_count": 34,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_35": {
+                        "step_count": 35,
+                        "episode_return": [
+                            17.082191810011864
+                        ]
+                    },
+                    "step_36": {
+                        "step_count": 36,
+                        "episode_return": [
+                            16.9041096419096
+                        ]
+                    },
+                    "step_37": {
+                        "step_count": 37,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_38": {
+                        "step_count": 38,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_39": {
+                        "step_count": 39,
+                        "episode_return": [
+                            16.753424495458603
+                        ]
+                    },
+                    "step_40": {
+                        "step_count": 40,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_41": {
+                        "step_count": 41,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_42": {
+                        "step_count": 42,
+                        "episode_return": [
+                            20.000000074505806
+                        ]
+                    },
+                    "step_43": {
+                        "step_count": 43,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_44": {
+                        "step_count": 44,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_45": {
+                        "step_count": 45,
+                        "episode_return": [
+                            16.99999998509884
+                        ]
+                    },
+                    "step_46": {
+                        "step_count": 46,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_47": {
+                        "step_count": 47,
+                        "episode_return": [
+                            16.835616558790207
+                        ]
+                    },
+                    "step_48": {
+                        "step_count": 48,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_49": {
+                        "step_count": 49,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_50": {
+                        "step_count": 50,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    }
+                }
+            },
+            "qmix+cql": {
+                "5": {
+                    "absolute_metrics": {
+                        "episode_return": [
+                            16.671232759952545
+                        ]
+                    },
+                    "step_0": {
+                        "step_count": 0,
+                        "episode_return": [
+                            0.0
+                        ]
+                    },
+                    "step_1": {
+                        "step_count": 1,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_2": {
+                        "step_count": 2,
+                        "episode_return": [
+                            17.082191914319992
+                        ]
+                    },
+                    "step_3": {
+                        "step_count": 3,
+                        "episode_return": [
+                            13.08219176530838
+                        ]
+                    },
+                    "step_4": {
+                        "step_count": 4,
+                        "episode_return": [
+                            13.41095894575119
+                        ]
+                    },
+                    "step_5": {
+                        "step_count": 5,
+                        "episode_return": [
+                            16.410959020256996
+                        ]
+                    },
+                    "step_6": {
+                        "step_count": 6,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_7": {
+                        "step_count": 7,
+                        "episode_return": [
+                            16.506849348545074
+                        ]
+                    },
+                    "step_8": {
+                        "step_count": 8,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_9": {
+                        "step_count": 9,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_10": {
+                        "step_count": 10,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_11": {
+                        "step_count": 11,
+                        "episode_return": [
+                            17.000000044703484
+                        ]
+                    },
+                    "step_12": {
+                        "step_count": 12,
+                        "episode_return": [
+                            17.000000029802322
+                        ]
+                    },
+                    "step_13": {
+                        "step_count": 13,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_14": {
+                        "step_count": 14,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_15": {
+                        "step_count": 15,
+                        "episode_return": [
+                            16.999999955296516
+                        ]
+                    },
+                    "step_16": {
+                        "step_count": 16,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_17": {
+                        "step_count": 17,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_18": {
+                        "step_count": 18,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_19": {
+                        "step_count": 19,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_20": {
+                        "step_count": 20,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_21": {
+                        "step_count": 21,
+                        "episode_return": [
+                            16.835616543889046
+                        ]
+                    },
+                    "step_22": {
+                        "step_count": 22,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_23": {
+                        "step_count": 23,
+                        "episode_return": [
+                            16.7534246891737
+                        ]
+                    },
+                    "step_24": {
+                        "step_count": 24,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_25": {
+                        "step_count": 25,
+                        "episode_return": [
+                            17.08219188451767
+                        ]
+                    },
+                    "step_26": {
+                        "step_count": 26,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_27": {
+                        "step_count": 27,
+                        "episode_return": [
+                            19.99999988079071
+                        ]
+                    },
+                    "step_28": {
+                        "step_count": 28,
+                        "episode_return": [
+                            16.999999970197678
+                        ]
+                    },
+                    "step_29": {
+                        "step_count": 29,
+                        "episode_return": [
+                            16.999999970197678
+                        ]
+                    },
+                    "step_30": {
+                        "step_count": 30,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_31": {
+                        "step_count": 31,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_32": {
+                        "step_count": 32,
+                        "episode_return": [
+                            20.000000074505806
+                        ]
+                    },
+                    "step_33": {
+                        "step_count": 33,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_34": {
+                        "step_count": 34,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_35": {
+                        "step_count": 35,
+                        "episode_return": [
+                            19.99999989569187
+                        ]
+                    },
+                    "step_36": {
+                        "step_count": 36,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_37": {
+                        "step_count": 37,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_38": {
+                        "step_count": 38,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_39": {
+                        "step_count": 39,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_40": {
+                        "step_count": 40,
+                        "episode_return": [
+                            17.082191735506058
+                        ]
+                    },
+                    "step_41": {
+                        "step_count": 41,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_42": {
+                        "step_count": 42,
+                        "episode_return": [
+                            19.99999989569187
+                        ]
+                    },
+                    "step_43": {
+                        "step_count": 43,
+                        "episode_return": [
+                            17.082191675901413
+                        ]
+                    },
+                    "step_44": {
+                        "step_count": 44,
+                        "episode_return": [
+                            19.999999821186066
+                        ]
+                    },
+                    "step_45": {
+                        "step_count": 45,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_46": {
+                        "step_count": 46,
+                        "episode_return": [
+                            13.917808175086975
+                        ]
+                    },
+                    "step_47": {
+                        "step_count": 47,
+                        "episode_return": [
+                            17.082191839814186
+                        ]
+                    },
+                    "step_48": {
+                        "step_count": 48,
+                        "episode_return": [
+                            19.99999988079071
+                        ]
+                    },
+                    "step_49": {
+                        "step_count": 49,
+                        "episode_return": [
+                            12.575342401862144
+                        ]
+                    },
+                    "step_50": {
+                        "step_count": 50,
+                        "episode_return": [
+                            16.671232759952545
+                        ]
+                    }
+                },
+                "4": {
+                    "absolute_metrics": {
+                        "episode_return": [
+                            0.24657534062862396
+                        ]
+                    },
+                    "step_0": {
+                        "step_count": 0,
+                        "episode_return": [
+                            2.2328766882419586
+                        ]
+                    },
+                    "step_1": {
+                        "step_count": 1,
+                        "episode_return": [
+                            16.91780833899975
+                        ]
+                    },
+                    "step_2": {
+                        "step_count": 2,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_3": {
+                        "step_count": 3,
+                        "episode_return": [
+                            19.99999988079071
+                        ]
+                    },
+                    "step_4": {
+                        "step_count": 4,
+                        "episode_return": [
+                            14.000000044703484
+                        ]
+                    },
+                    "step_5": {
+                        "step_count": 5,
+                        "episode_return": [
+                            13.657534286379814
+                        ]
+                    },
+                    "step_6": {
+                        "step_count": 6,
+                        "episode_return": [
+                            17.08219166100025
+                        ]
+                    },
+                    "step_7": {
+                        "step_count": 7,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_8": {
+                        "step_count": 8,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_9": {
+                        "step_count": 9,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_10": {
+                        "step_count": 10,
+                        "episode_return": [
+                            16.917808324098587
+                        ]
+                    },
+                    "step_11": {
+                        "step_count": 11,
+                        "episode_return": [
+                            19.99999988079071
+                        ]
+                    },
+                    "step_12": {
+                        "step_count": 12,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_13": {
+                        "step_count": 13,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_14": {
+                        "step_count": 14,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_15": {
+                        "step_count": 15,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_16": {
+                        "step_count": 16,
+                        "episode_return": [
+                            16.58904092013836
+                        ]
+                    },
+                    "step_17": {
+                        "step_count": 17,
+                        "episode_return": [
+                            16.835616573691368
+                        ]
+                    },
+                    "step_18": {
+                        "step_count": 18,
+                        "episode_return": [
+                            17.08219189941883
+                        ]
+                    },
+                    "step_19": {
+                        "step_count": 19,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_20": {
+                        "step_count": 20,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_21": {
+                        "step_count": 21,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_22": {
+                        "step_count": 22,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_23": {
+                        "step_count": 23,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_24": {
+                        "step_count": 24,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_25": {
+                        "step_count": 25,
+                        "episode_return": [
+                            16.589041143655777
+                        ]
+                    },
+                    "step_26": {
+                        "step_count": 26,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_27": {
+                        "step_count": 27,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_28": {
+                        "step_count": 28,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_29": {
+                        "step_count": 29,
+                        "episode_return": [
+                            13.260273858904839
+                        ]
+                    },
+                    "step_30": {
+                        "step_count": 30,
+                        "episode_return": [
+                            16.50684928894043
+                        ]
+                    },
+                    "step_31": {
+                        "step_count": 31,
+                        "episode_return": [
+                            13.835616484284401
+                        ]
+                    },
+                    "step_32": {
+                        "step_count": 32,
+                        "episode_return": [
+                            13.013698667287827
+                        ]
+                    },
+                    "step_33": {
+                        "step_count": 33,
+                        "episode_return": [
+                            9.260273948311806
+                        ]
+                    },
+                    "step_34": {
+                        "step_count": 34,
+                        "episode_return": [
+                            13.013698667287827
+                        ]
+                    },
+                    "step_35": {
+                        "step_count": 35,
+                        "episode_return": [
+                            5.753424599766731
+                        ]
+                    },
+                    "step_36": {
+                        "step_count": 36,
+                        "episode_return": [
+                            5.575342386960983
+                        ]
+                    },
+                    "step_37": {
+                        "step_count": 37,
+                        "episode_return": [
+                            2.9726027101278305
+                        ]
+                    },
+                    "step_38": {
+                        "step_count": 38,
+                        "episode_return": [
+                            2.1369862854480743
+                        ]
+                    },
+                    "step_39": {
+                        "step_count": 39,
+                        "episode_return": [
+                            2.7123287469148636
+                        ]
+                    },
+                    "step_40": {
+                        "step_count": 40,
+                        "episode_return": [
+                            2.4657534062862396
+                        ]
+                    },
+                    "step_41": {
+                        "step_count": 41,
+                        "episode_return": [
+                            2.7123287469148636
+                        ]
+                    },
+                    "step_42": {
+                        "step_count": 42,
+                        "episode_return": [
+                            2.3835616260766983
+                        ]
+                    },
+                    "step_43": {
+                        "step_count": 43,
+                        "episode_return": [
+                            0.6575342416763306
+                        ]
+                    },
+                    "step_44": {
+                        "step_count": 44,
+                        "episode_return": [
+                            1.3972602635622025
+                        ]
+                    },
+                    "step_45": {
+                        "step_count": 45,
+                        "episode_return": [
+                            1.3972602635622025
+                        ]
+                    },
+                    "step_46": {
+                        "step_count": 46,
+                        "episode_return": [
+                            0.9041095823049545
+                        ]
+                    },
+                    "step_47": {
+                        "step_count": 47,
+                        "episode_return": [
+                            0.4931506812572479
+                        ]
+                    },
+                    "step_48": {
+                        "step_count": 48,
+                        "episode_return": [
+                            3.041095867753029
+                        ]
+                    },
+                    "step_49": {
+                        "step_count": 49,
+                        "episode_return": [
+                            0.0
+                        ]
+                    },
+                    "step_50": {
+                        "step_count": 50,
+                        "episode_return": [
+                            0.24657534062862396
+                        ]
+                    }
+                },
+                "3": {
+                    "absolute_metrics": {
+                        "episode_return": [
+                            2.1369862854480743
+                        ]
+                    },
+                    "step_0": {
+                        "step_count": 0,
+                        "episode_return": [
+                            0.0
+                        ]
+                    },
+                    "step_1": {
+                        "step_count": 1,
+                        "episode_return": [
+                            13.589041069149971
+                        ]
+                    },
+                    "step_2": {
+                        "step_count": 2,
+                        "episode_return": [
+                            16.835616543889046
+                        ]
+                    },
+                    "step_3": {
+                        "step_count": 3,
+                        "episode_return": [
+                            13.91780810058117
+                        ]
+                    },
+                    "step_4": {
+                        "step_count": 4,
+                        "episode_return": [
+                            9.821917787194252
+                        ]
+                    },
+                    "step_5": {
+                        "step_count": 5,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_6": {
+                        "step_count": 6,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_7": {
+                        "step_count": 7,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_8": {
+                        "step_count": 8,
+                        "episode_return": [
+                            13.095890372991562
+                        ]
+                    },
+                    "step_9": {
+                        "step_count": 9,
+                        "episode_return": [
+                            13.57534246146679
+                        ]
+                    },
+                    "step_10": {
+                        "step_count": 10,
+                        "episode_return": [
+                            16.99999988079071
+                        ]
+                    },
+                    "step_11": {
+                        "step_count": 11,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_12": {
+                        "step_count": 12,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_13": {
+                        "step_count": 13,
+                        "episode_return": [
+                            17.00000010430813
+                        ]
+                    },
+                    "step_14": {
+                        "step_count": 14,
+                        "episode_return": [
+                            16.917808026075363
+                        ]
+                    },
+                    "step_15": {
+                        "step_count": 15,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_16": {
+                        "step_count": 16,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_17": {
+                        "step_count": 17,
+                        "episode_return": [
+                            17.082191810011864
+                        ]
+                    },
+                    "step_18": {
+                        "step_count": 18,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_19": {
+                        "step_count": 19,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_20": {
+                        "step_count": 20,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_21": {
+                        "step_count": 21,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_22": {
+                        "step_count": 22,
+                        "episode_return": [
+                            17.000000029802322
+                        ]
+                    },
+                    "step_23": {
+                        "step_count": 23,
+                        "episode_return": [
+                            16.8356164842844
+                        ]
+                    },
+                    "step_24": {
+                        "step_count": 24,
+                        "episode_return": [
+                            16.671232849359512
+                        ]
+                    },
+                    "step_25": {
+                        "step_count": 25,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_26": {
+                        "step_count": 26,
+                        "episode_return": [
+                            16.50684943795204
+                        ]
+                    },
+                    "step_27": {
+                        "step_count": 27,
+                        "episode_return": [
+                            17.08219189941883
+                        ]
+                    },
+                    "step_28": {
+                        "step_count": 28,
+                        "episode_return": [
+                            16.91780824959278
+                        ]
+                    },
+                    "step_29": {
+                        "step_count": 29,
+                        "episode_return": [
+                            16.917808026075363
+                        ]
+                    },
+                    "step_30": {
+                        "step_count": 30,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_31": {
+                        "step_count": 31,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_32": {
+                        "step_count": 32,
+                        "episode_return": [
+                            16.328767254948616
+                        ]
+                    },
+                    "step_33": {
+                        "step_count": 33,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_34": {
+                        "step_count": 34,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_35": {
+                        "step_count": 35,
+                        "episode_return": [
+                            16.16438353061676
+                        ]
+                    },
+                    "step_36": {
+                        "step_count": 36,
+                        "episode_return": [
+                            17.00000010430813
+                        ]
+                    },
+                    "step_37": {
+                        "step_count": 37,
+                        "episode_return": [
+                            16.506849199533463
+                        ]
+                    },
+                    "step_38": {
+                        "step_count": 38,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_39": {
+                        "step_count": 39,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_40": {
+                        "step_count": 40,
+                        "episode_return": [
+                            9.34246577322483
+                        ]
+                    },
+                    "step_41": {
+                        "step_count": 41,
+                        "episode_return": [
+                            9.424657508730888
+                        ]
+                    },
+                    "step_42": {
+                        "step_count": 42,
+                        "episode_return": [
+                            9.164383545517921
+                        ]
+                    },
+                    "step_43": {
+                        "step_count": 43,
+                        "episode_return": [
+                            5.589041009545326
+                        ]
+                    },
+                    "step_44": {
+                        "step_count": 44,
+                        "episode_return": [
+                            5.506849244236946
+                        ]
+                    },
+                    "step_45": {
+                        "step_count": 45,
+                        "episode_return": [
+                            6.013698548078537
+                        ]
+                    },
+                    "step_46": {
+                        "step_count": 46,
+                        "episode_return": [
+                            3.657534196972847
+                        ]
+                    },
+                    "step_47": {
+                        "step_count": 47,
+                        "episode_return": [
+                            3.068493112921715
+                        ]
+                    },
+                    "step_48": {
+                        "step_count": 48,
+                        "episode_return": [
+                            2.2191780656576157
+                        ]
+                    },
+                    "step_49": {
+                        "step_count": 49,
+                        "episode_return": [
+                            2.054794505238533
+                        ]
+                    },
+                    "step_50": {
+                        "step_count": 50,
+                        "episode_return": [
+                            2.1369862854480743
+                        ]
+                    }
+                },
+                "2": {
+                    "absolute_metrics": {
+                        "episode_return": [
+                            2.7123287469148636
+                        ]
+                    },
+                    "step_0": {
+                        "step_count": 0,
+                        "episode_return": [
+                            0.16438356041908264
+                        ]
+                    },
+                    "step_1": {
+                        "step_count": 1,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_2": {
+                        "step_count": 2,
+                        "episode_return": [
+                            14.082191839814186
+                        ]
+                    },
+                    "step_3": {
+                        "step_count": 3,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_4": {
+                        "step_count": 4,
+                        "episode_return": [
+                            17.000000044703484
+                        ]
+                    },
+                    "step_5": {
+                        "step_count": 5,
+                        "episode_return": [
+                            17.082191810011864
+                        ]
+                    },
+                    "step_6": {
+                        "step_count": 6,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_7": {
+                        "step_count": 7,
+                        "episode_return": [
+                            16.91780810058117
+                        ]
+                    },
+                    "step_8": {
+                        "step_count": 8,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_9": {
+                        "step_count": 9,
+                        "episode_return": [
+                            16.589041158556938
+                        ]
+                    },
+                    "step_10": {
+                        "step_count": 10,
+                        "episode_return": [
+                            16.328767254948616
+                        ]
+                    },
+                    "step_11": {
+                        "step_count": 11,
+                        "episode_return": [
+                            19.99999989569187
+                        ]
+                    },
+                    "step_12": {
+                        "step_count": 12,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_13": {
+                        "step_count": 13,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_14": {
+                        "step_count": 14,
+                        "episode_return": [
+                            16.7534246891737
+                        ]
+                    },
+                    "step_15": {
+                        "step_count": 15,
+                        "episode_return": [
+                            20.000000223517418
+                        ]
+                    },
+                    "step_16": {
+                        "step_count": 16,
+                        "episode_return": [
+                            17.082191810011864
+                        ]
+                    },
+                    "step_17": {
+                        "step_count": 17,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_18": {
+                        "step_count": 18,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_19": {
+                        "step_count": 19,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_20": {
+                        "step_count": 20,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_21": {
+                        "step_count": 21,
+                        "episode_return": [
+                            13.01369859278202
+                        ]
+                    },
+                    "step_22": {
+                        "step_count": 22,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_23": {
+                        "step_count": 23,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_24": {
+                        "step_count": 24,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_25": {
+                        "step_count": 25,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_26": {
+                        "step_count": 26,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_27": {
+                        "step_count": 27,
+                        "episode_return": [
+                            16.50684943795204
+                        ]
+                    },
+                    "step_28": {
+                        "step_count": 28,
+                        "episode_return": [
+                            17.082191810011864
+                        ]
+                    },
+                    "step_29": {
+                        "step_count": 29,
+                        "episode_return": [
+                            20.000000074505806
+                        ]
+                    },
+                    "step_30": {
+                        "step_count": 30,
+                        "episode_return": [
+                            16.50684942305088
+                        ]
+                    },
+                    "step_31": {
+                        "step_count": 31,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_32": {
+                        "step_count": 32,
+                        "episode_return": [
+                            16.8356164842844
+                        ]
+                    },
+                    "step_33": {
+                        "step_count": 33,
+                        "episode_return": [
+                            16.493150755763054
+                        ]
+                    },
+                    "step_34": {
+                        "step_count": 34,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_35": {
+                        "step_count": 35,
+                        "episode_return": [
+                            17.082191839814186
+                        ]
+                    },
+                    "step_36": {
+                        "step_count": 36,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_37": {
+                        "step_count": 37,
+                        "episode_return": [
+                            16.589041128754616
+                        ]
+                    },
+                    "step_38": {
+                        "step_count": 38,
+                        "episode_return": [
+                            17.082191810011864
+                        ]
+                    },
+                    "step_39": {
+                        "step_count": 39,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_40": {
+                        "step_count": 40,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_41": {
+                        "step_count": 41,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_42": {
+                        "step_count": 42,
+                        "episode_return": [
+                            17.08219189941883
+                        ]
+                    },
+                    "step_43": {
+                        "step_count": 43,
+                        "episode_return": [
+                            13.493150681257248
+                        ]
+                    },
+                    "step_44": {
+                        "step_count": 44,
+                        "episode_return": [
+                            9.50684930384159
+                        ]
+                    },
+                    "step_45": {
+                        "step_count": 45,
+                        "episode_return": [
+                            10.342465713620186
+                        ]
+                    },
+                    "step_46": {
+                        "step_count": 46,
+                        "episode_return": [
+                            5.164383485913277
+                        ]
+                    },
+                    "step_47": {
+                        "step_count": 47,
+                        "episode_return": [
+                            3.890410915017128
+                        ]
+                    },
+                    "step_48": {
+                        "step_count": 48,
+                        "episode_return": [
+                            3.12328764796257
+                        ]
+                    },
+                    "step_49": {
+                        "step_count": 49,
+                        "episode_return": [
+                            2.2191780656576157
+                        ]
+                    },
+                    "step_50": {
+                        "step_count": 50,
+                        "episode_return": [
+                            2.7123287469148636
+                        ]
+                    }
+                },
+                "1": {
+                    "absolute_metrics": {
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_0": {
+                        "step_count": 0,
+                        "episode_return": [
+                            0.0
+                        ]
+                    },
+                    "step_1": {
+                        "step_count": 1,
+                        "episode_return": [
+                            10.657534211874008
+                        ]
+                    },
+                    "step_2": {
+                        "step_count": 2,
+                        "episode_return": [
+                            9.821917787194252
+                        ]
+                    },
+                    "step_3": {
+                        "step_count": 3,
+                        "episode_return": [
+                            9.917808040976524
+                        ]
+                    },
+                    "step_4": {
+                        "step_count": 4,
+                        "episode_return": [
+                            17.000000044703484
+                        ]
+                    },
+                    "step_5": {
+                        "step_count": 5,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_6": {
+                        "step_count": 6,
+                        "episode_return": [
+                            16.91780835390091
+                        ]
+                    },
+                    "step_7": {
+                        "step_count": 7,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_8": {
+                        "step_count": 8,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    },
+                    "step_9": {
+                        "step_count": 9,
+                        "episode_return": [
+                            19.999999940395355
+                        ]
+                    },
+                    "step_10": {
+                        "step_count": 10,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_11": {
+                        "step_count": 11,
+                        "episode_return": [
+                            17.08219189941883
+                        ]
+                    },
+                    "step_12": {
+                        "step_count": 12,
+                        "episode_return": [
+                            16.821917861700058
+                        ]
+                    },
+                    "step_13": {
+                        "step_count": 13,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_14": {
+                        "step_count": 14,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_15": {
+                        "step_count": 15,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_16": {
+                        "step_count": 16,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_17": {
+                        "step_count": 17,
+                        "episode_return": [
+                            19.99999998509884
+                        ]
+                    },
+                    "step_18": {
+                        "step_count": 18,
+                        "episode_return": [
+                            16.67123283445835
+                        ]
+                    },
+                    "step_19": {
+                        "step_count": 19,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_20": {
+                        "step_count": 20,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_21": {
+                        "step_count": 21,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_22": {
+                        "step_count": 22,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_23": {
+                        "step_count": 23,
+                        "episode_return": [
+                            20.00000013411045
+                        ]
+                    },
+                    "step_24": {
+                        "step_count": 24,
+                        "episode_return": [
+                            20.000000044703484
+                        ]
+                    },
+                    "step_25": {
+                        "step_count": 25,
+                        "episode_return": [
+                            20.000000163912773
+                        ]
+                    },
+                    "step_26": {
+                        "step_count": 26,
+                        "episode_return": [
+                            20.000000149011612
+                        ]
+                    },
+                    "step_27": {
+                        "step_count": 27,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_28": {
+                        "step_count": 28,
+                        "episode_return": [
+                            20.000000178813934
+                        ]
+                    },
+                    "step_29": {
+                        "step_count": 29,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_30": {
+                        "step_count": 30,
+                        "episode_return": [
+                            16.493150427937508
+                        ]
+                    },
+                    "step_31": {
+                        "step_count": 31,
+                        "episode_return": [
+                            13.753424689173698
+                        ]
+                    },
+                    "step_32": {
+                        "step_count": 32,
+                        "episode_return": [
+                            16.506849348545074
+                        ]
+                    },
+                    "step_33": {
+                        "step_count": 33,
+                        "episode_return": [
+                            16.41095896065235
+                        ]
+                    },
+                    "step_34": {
+                        "step_count": 34,
+                        "episode_return": [
+                            19.999999806284904
+                        ]
+                    },
+                    "step_35": {
+                        "step_count": 35,
+                        "episode_return": [
+                            19.999999955296516
+                        ]
+                    },
+                    "step_36": {
+                        "step_count": 36,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_37": {
+                        "step_count": 37,
+                        "episode_return": [
+                            20.00000010430813
+                        ]
+                    },
+                    "step_38": {
+                        "step_count": 38,
+                        "episode_return": [
+                            16.753424778580666
+                        ]
+                    },
+                    "step_39": {
+                        "step_count": 39,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_40": {
+                        "step_count": 40,
+                        "episode_return": [
+                            17.082191810011864
+                        ]
+                    },
+                    "step_41": {
+                        "step_count": 41,
+                        "episode_return": [
+                            16.83561646938324
+                        ]
+                    },
+                    "step_42": {
+                        "step_count": 42,
+                        "episode_return": [
+                            17.082191824913025
+                        ]
+                    },
+                    "step_43": {
+                        "step_count": 43,
+                        "episode_return": [
+                            16.835616558790207
+                        ]
+                    },
+                    "step_44": {
+                        "step_count": 44,
+                        "episode_return": [
+                            19.999999970197678
+                        ]
+                    },
+                    "step_45": {
+                        "step_count": 45,
+                        "episode_return": [
+                            16.506849721074104
+                        ]
+                    },
+                    "step_46": {
+                        "step_count": 46,
+                        "episode_return": [
+                            20.00000011920929
+                        ]
+                    },
+                    "step_47": {
+                        "step_count": 47,
+                        "episode_return": [
+                            20.000000193715096
+                        ]
+                    },
+                    "step_48": {
+                        "step_count": 48,
+                        "episode_return": [
+                            20.000000059604645
+                        ]
+                    },
+                    "step_49": {
+                        "step_count": 49,
+                        "episode_return": [
+                            20.000000029802322
+                        ]
+                    },
+                    "step_50": {
+                        "step_count": 50,
+                        "episode_return": [
+                            20.000000208616257
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}

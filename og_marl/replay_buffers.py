@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from typing import Any, Dict
+import copy
 
 import flashbax as fbx
 import jax
@@ -64,13 +65,18 @@ class FlashbaxReplayBuffer:
         truncations: Dict[str, np.ndarray],
         infos: Dict[str, Any],
     ) -> None:
+        
+        if "legals" in infos:
+            new_infos = copy.deepcopy(infos)
+            new_infos["legals"]=np.stack(list(infos["legals"].values()),axis=0)
+
         timestep = {
-            "observations": observations,
-            "actions": actions,
-            "rewards": rewards,
-            "terminals": terminals,
-            "truncations": truncations,
-            "infos": infos,
+            "observations": np.stack(list(observations.values()),axis=0),
+            "actions": np.stack(list(actions.values()),axis=0),
+            "rewards": np.stack(list(rewards.values()),axis=0),
+            "terminals": np.stack(list(terminals.values()),axis=0),
+            "truncations": np.stack(list(truncations.values()),axis=0),
+            "infos": new_infos,
         }
 
         if self._buffer_state is None:

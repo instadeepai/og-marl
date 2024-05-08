@@ -22,7 +22,7 @@ flags.DEFINE_string("scenario", "3m", "Environment scenario name.")
 
 def main(_):
     # Download vault
-    download_and_unzip_vault(FLAGS.env_name, FLAGS.scenario_name)
+    download_and_unzip_vault(FLAGS.env, FLAGS.scenario)
 
     # NEXT STEPS: See `examples/dataset_api_demo.ipynb`
 
