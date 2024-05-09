@@ -62,10 +62,6 @@ class MAMuJoCo(BaseEnvironment):
 
         self.info_spec = {
             "state": self._environment.get_state(),
-            "legals": {
-                agent: np.zeros(self.action_spaces[agent].shape, "int64")
-                for agent in self.possible_agents
-            },
         }
 
         self.max_episode_length = 1000
@@ -101,6 +97,7 @@ class MAMuJoCo(BaseEnvironment):
             agent: observations[i].astype("float32") for i, agent in enumerate(self.possible_agents)
         }
 
+        info = {}
         info["state"] = self._environment.get_state()
 
         return observations, rewards, terminals, trunctations, info  # type: ignore

@@ -29,10 +29,12 @@ flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
 flags.DEFINE_string("dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
 flags.DEFINE_string("system", "maddpg+cql", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
-flags.DEFINE_float("trainer_steps", 5e4, "Number of training steps.")
+flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
 
 flags.DEFINE_string("joint_action", "buffer", "Type of joint action to send to critic.")
+flags.DEFINE_integer("mean", 2000, "Mean.")
+flags.DEFINE_integer("std", 300, "std.")
 
 
 def main(_):
@@ -50,7 +52,7 @@ def main(_):
 
     download_and_unzip_vault(FLAGS.env, FLAGS.scenario)
 
-    is_vault_loaded = buffer.populate_from_vault(FLAGS.env, FLAGS.scenario, FLAGS.dataset)
+    is_vault_loaded = buffer.populate_from_vault("2halfcheetah_mean_std_exp", f"{FLAGS.mean}_{FLAGS.std}")
     if not is_vault_loaded:
         print("Vault not found. Exiting.")
         return
@@ -67,7 +69,7 @@ def main(_):
     #     save_to_wandb=True,
     # )
 
-    system_kwargs = {"add_agent_id_to_obs": True, "joint_action": FLAGS.joint_action}
+    system_kwargs = {"add_agent_id_to_obs": True, "joint_action": "buffer"}
     if FLAGS.scenario == "pursuit":
         system_kwargs["observation_embedding_network"] = CNNEmbeddingNetwork()
 

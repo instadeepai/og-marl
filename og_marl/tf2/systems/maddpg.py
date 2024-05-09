@@ -124,7 +124,7 @@ class MADDPGSystem(BaseMARLSystem):
         discount: float = 0.99,
         target_update_rate: float = 0.005,
         critic_learning_rate: float = 3e-4,
-        policy_learning_rate: float = 1e-3,
+        policy_learning_rate: float = 3e-4,
         add_agent_id_to_obs: bool = True,
         random_exploration_timesteps: int = 50_000,
     ):
@@ -274,7 +274,7 @@ class MADDPGSystem(BaseMARLSystem):
         target_qs_2 = self._target_critic_network_2(env_states, target_actions, target_actions)
 
         # Take minimum between two target critics
-        target_qs = tf.minimum(target_qs_1, target_qs_2)
+        target_qs = tf.reduce_min((target_qs_1, target_qs_2), axis=0)
 
         # Compute Bellman targets
         targets = rewards[:-1] + self._discount * (1 - terminals[:-1]) * tf.squeeze(
@@ -296,7 +296,7 @@ class MADDPGSystem(BaseMARLSystem):
             # Squared TD-error
             critic_loss_1 = tf.reduce_mean(0.5 * (targets - qs_1[:-1]) ** 2)
             critic_loss_2 = tf.reduce_mean(0.5 * (targets - qs_2[:-1]) ** 2)
-            critic_loss = (critic_loss_1 + critic_loss_2) / 2
+            critic_loss = (critic_loss_1 + critic_loss_2) / 5
 
             # Policy Loss
             # Unroll online policy
@@ -309,7 +309,7 @@ class MADDPGSystem(BaseMARLSystem):
 
             qs_1 = self._critic_network_1(env_states, online_actions, replay_actions)
             qs_2 = self._critic_network_2(env_states, online_actions, replay_actions)
-            qs = tf.minimum(qs_1, qs_2)
+            qs = tf.reduce_min((qs_1, qs_2), axis=0)
 
             policy_loss = -tf.squeeze(qs, axis=-1) + 1e-3 * tf.reduce_mean(online_actions**2)
 

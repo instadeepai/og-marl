@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from typing import Any, Dict
+import copy
 
 import flashbax as fbx
 import jax
@@ -53,13 +54,18 @@ class ExperienceRecorder:
         truncations: Dict[str, np.ndarray],
         infos: Dict[str, Any],
     ) -> Dict[str, Any]:
+        
+        new_infos = copy.deepcopy(infos)
+        if "legals" in infos:
+            new_infos["legals"]=np.stack(list(infos["legals"].values()),axis=0)
+
         packed_timestep = {
-            "observations": observations,
-            "actions": actions,
-            "rewards": rewards,
-            "terminals": terminals,
-            "truncations": truncations,
-            "infos": infos,
+            "observations": np.stack(list(observations.values()),axis=0),
+            "actions": np.stack(list(actions.values()),axis=0),
+            "rewards": np.stack(list(rewards.values()),axis=0),
+            "terminals": np.stack(list(terminals.values()),axis=0),
+            "truncations": np.stack(list(truncations.values()),axis=0),
+            "infos": new_infos,
         }
         packed_timestep: Dict[str, Any] = jax.tree_map(lambda x: np.array(x), packed_timestep)
         return packed_timestep
@@ -88,8 +94,8 @@ class ExperienceRecorder:
         if not self._has_initialised:
             self._buffer_state = self._buffer.init(packed_timestep)
             self._vault = Vault(
-                vault_name=self.vault_name,
-                init_fbx_state=self._buffer_state,
+                vault_name=self.vault_name, #TODO (Louise) pr this
+                experience_structure=self._buffer_state.experience,
             )
             self._has_initialised = True
 
