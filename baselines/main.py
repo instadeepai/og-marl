@@ -52,7 +52,9 @@ def main(_):
 
     download_and_unzip_vault(FLAGS.env, FLAGS.scenario)
 
-    is_vault_loaded = buffer.populate_from_vault("2halfcheetah_mean_std_exp", f"{FLAGS.mean}_{FLAGS.std}")
+    is_vault_loaded = buffer.populate_from_vault(
+        "2halfcheetah_mean_std_exp", f"{FLAGS.mean}_{FLAGS.std}"
+    )
     if not is_vault_loaded:
         print("Vault not found. Exiting.")
         return
@@ -69,7 +71,7 @@ def main(_):
     #     save_to_wandb=True,
     # )
 
-    system_kwargs = {"add_agent_id_to_obs": True, "joint_action": "buffer"}
+    system_kwargs = {"add_agent_id_to_obs": True, "joint_action": "online"}
     if FLAGS.scenario == "pursuit":
         system_kwargs["observation_embedding_network"] = CNNEmbeddingNetwork()
 
