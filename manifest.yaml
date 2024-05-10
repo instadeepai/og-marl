@@ -17,7 +17,7 @@ spec:
 
   types:
     Worker:
-      count: 9
+      count: 6
 
       resources:
         # 10-15 cpus for single process
@@ -30,4 +30,4 @@ spec:
             count: 1
             # mandatory (if gpus amount is > 0): gpu type wanted
             type: gpu
-            product: Quadro-RTX-4000 # Quadro-RTX-4000 | Tesla-V100-SXM3-32GB
+            product: Tesla-V100-SXM3-32GB # Quadro-RTX-4000 | Tesla-V100-SXM3-32GB
