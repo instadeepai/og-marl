@@ -87,6 +87,8 @@ class FlashbaxReplayBuffer:
 
     def populate_from_vault(
         self,
+        # env_name,
+        # scenario_name,
         vault_name="tmp",
         dataset_name="tmp",
         rel_dir: str = "vaults",
