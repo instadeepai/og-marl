@@ -50,21 +50,21 @@ def main(_):
 
     # buffer = FlashbaxReplayBuffer(sequence_length=20, sample_period=1)
 
-    buffer = PrioritisedFlashbaxReplayBuffer(sequence_length=20, sample_period=1)
+    buffer = PrioritisedFlashbaxReplayBuffer(sequence_length=20, sample_period=1, seed=FLAGS.seed)
 
     download_and_unzip_vault(FLAGS.env, FLAGS.scenario)
 
     is_vault_loaded = buffer.populate_from_vault(
-        FLAGS.env,
-        FLAGS.scenario,
-        FLAGS.dataset,
-        # "2halfcheetah_mean_std_exp", f"{FLAGS.mean}_{FLAGS.std}"
+        # FLAGS.env,
+        # FLAGS.scenario,
+        # FLAGS.dataset,
+        "2halfcheetah_mean_std_exp", f"{FLAGS.mean}_{FLAGS.std}"
     )
     if not is_vault_loaded:
         print("Vault not found. Exiting.")
         return
 
-    logger = WandbLogger(entity="off-the-grid-marl-team", project="maddpg_cql_bc", config=config)
+    logger = WandbLogger(entity="off-the-grid-marl-team", project="og-marl-baselines", config=config)
 
     json_writer = None  # JsonWriter(
     #     "logs",
@@ -83,7 +83,7 @@ def main(_):
     system = get_system(FLAGS.system, env, logger, **system_kwargs)
 
     system.train_offline(
-        buffer, max_trainer_steps=FLAGS.trainer_steps, json_writer=json_writer, evaluate_every=1000
+        buffer, max_trainer_steps=FLAGS.trainer_steps, json_writer=json_writer, evaluate_every=5000
     )
 
 

@@ -13,11 +13,11 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: wandb agent off-the-grid-marl-team/og-marl-baselines/gfywyg05
+  command: wandb agent off-the-grid-marl-team/og-marl-baselines/h21rc6t8
 
   types:
     Worker:
-      count: 4
+      count: 8
 
       resources:
         # 10-15 cpus for single process
@@ -30,4 +30,4 @@ spec:
             count: 1
             # mandatory (if gpus amount is > 0): gpu type wanted
             type: gpu
-            product: NVIDIA-A100-SXM4-80GB-MIG-3g.40gb # Quadro-RTX-4000 | Tesla-V100-SXM3-32GB
+            product: Quadro-RTX-4000 # Quadro-RTX-4000 | Tesla-V100-SXM3-32GB
