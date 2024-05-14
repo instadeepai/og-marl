@@ -20,7 +20,7 @@ from chex import Numeric
 
 from og_marl.environments.base import BaseEnvironment
 from og_marl.loggers import BaseLogger, JsonWriter
-from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
+from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer, PrioritisedFlashbaxReplayBuffer
 
 
 class BaseMARLSystem:
@@ -177,7 +177,7 @@ class BaseMARLSystem:
 
     def train_offline(
         self,
-        replay_buffer: FlashbaxReplayBuffer,
+        replay_buffer: PrioritisedFlashbaxReplayBuffer,
         max_trainer_steps: int = int(1e5),
         evaluate_every: int = 1000,
         num_eval_episodes: int = 4,
@@ -205,14 +205,17 @@ class BaseMARLSystem:
                     )
 
             start_time = time.time()
-            experience = replay_buffer.sample()
+            batch = replay_buffer.sample()
             end_time = time.time()
             time_to_sample = end_time - start_time
 
             start_time = time.time()
-            train_logs = self.train_step(experience)
+            train_logs, priorities_delta = self.train_step(batch.experience, trainer_step_ctr)
             end_time = time.time()
             time_train_step = end_time - start_time
+
+            new_priorities = batch.priorities + priorities_delta
+            replay_buffer.update_priorities(batch.indices, new_priorities)
 
             train_steps_per_second = 1 / (time_train_step + time_to_sample)
 

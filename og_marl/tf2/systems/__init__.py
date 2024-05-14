@@ -65,5 +65,9 @@ def get_system(  # noqa: C901
         from og_marl.tf2.systems.bc import DicreteActionBehaviourCloning
 
         return DicreteActionBehaviourCloning(environment, logger, **kwargs)
+    elif system_name == "maddpg+cql+bc":
+        from og_marl.tf2.systems.maddpg_cql_bc import MADDPGCQLBCSystem
+
+        return MADDPGCQLBCSystem(environment, logger, **kwargs)
     else:
         raise ValueError(f"Unknown system name: {system_name}")
