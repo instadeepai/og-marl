@@ -113,11 +113,11 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         discount: float = 0.99,
         target_update_rate: float = 0.005,
         critic_learning_rate: float = 1e-3,
-        policy_learning_rate: float = 1e-3,
-        bc_learning_rate: float = 2e-3,
+        policy_learning_rate: float = 3e-4,
+        bc_learning_rate: float = 1e-3,
         add_agent_id_to_obs: bool = False,
         random_exploration_timesteps: int = 0,
-        num_ood_actions: int = 10,  # CQL
+        num_ood_actions: int = 20,  # CQL
         cql_weight: float = 5.0,  # CQL
         cql_sigma: float = 0.2,  # CQL
     ):
