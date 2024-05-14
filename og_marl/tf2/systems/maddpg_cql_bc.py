@@ -395,26 +395,28 @@ class MADDPGCQLBCSystem(MADDPGSystem):
             policy_loss = -tf.reduce_mean(qs) + 1e-3 * tf.reduce_mean(online_actions**2)
 
             ### BC Training
-            A = replay_actions.shape[-1]
-            O = observations.shape[-1]
-            joint_replay_action = tf.reshape(replay_actions, (T, B, N * A))
-            joint_observation = tf.reshape(observations, (T, B, N * O))
+            # A = replay_actions.shape[-1]
+            # O = observations.shape[-1]
+            # joint_replay_action = tf.reshape(replay_actions, (T, B, N * A))
+            # joint_observation = tf.reshape(observations, (T, B, N * O))
 
-            target_actions = tf.reshape(target_actions, (T, B, N * A))
+            # target_actions = tf.reshape(target_actions, (T, B, N * A))
 
-            bc_joint_action = self._bc_network(joint_observation)
+            # bc_joint_action = self._bc_network(joint_observation)
 
-            squared_distance = tf.reduce_sum(
-                (bc_joint_action - joint_replay_action) ** 2, axis=-1
-            )  # sum across action dim
-            squared_distance = tf.reduce_sum(squared_distance, axis=0)  # Sum across time dim
+            # squared_distance = tf.reduce_sum(
+            #     (bc_joint_action - joint_replay_action) ** 2, axis=-1
+            # )  # sum across action dim
+            # squared_distance = tf.reduce_sum(squared_distance, axis=0)  # Sum across time dim
 
-            priority = 1 / (1 + tf.exp(squared_distance))
+            # # priority = 1 / (1 + tf.exp(squared_distance))
+            # zeta = 1
+            # priority = tf.exp(-zeta * squared_distance)
 
-            if train_step < self._bc_burn_in:
-                priority = tf.ones_like(priority)
+            # if train_step < self._bc_burn_in:
+            #     priority = tf.ones_like(priority)
 
-            bc_loss = tf.reduce_mean(0.5 * (bc_joint_action - target_actions) ** 2)
+            # bc_loss = tf.reduce_mean(0.5 * (bc_joint_action - target_actions) ** 2)
 
         # Train critics
         variables = (
@@ -430,9 +432,18 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         self._policy_optimizer.apply(gradients, variables)
 
         # Train BC network
-        variables = (*self._bc_network.trainable_variables,)
-        gradients = tape.gradient(bc_loss, variables)
-        self._bc_optimizer.apply(gradients, variables)
+        # variables = (*self._bc_network.trainable_variables,)
+        # gradients = tape.gradient(bc_loss, variables)
+        # self._bc_optimizer.apply(gradients, variables)
+    
+        A = replay_actions.shape[-1]
+        joint_replay_action = tf.reshape(replay_actions, (T, B, N * A))
+        joint_target_actions = tf.reshape(target_actions, (T, B, N * A))
+        squared_distance = tf.reduce_sum(
+            (joint_target_actions - joint_replay_action) ** 2, axis=-1
+        )  # sum across action dim
+        squared_distance = tf.reduce_sum(squared_distance, axis=0)  # Sum across time dim
+        priority = tf.exp(-squared_distance)
 
         # Update target networks
         online_variables = (
@@ -456,11 +467,11 @@ class MADDPGCQLBCSystem(MADDPGSystem):
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),
             "Mean Critic Loss": (critic_loss),
             "Policy Loss": policy_loss,
-            "BC Loss": bc_loss,
+            # "BC Loss": bc_loss,
             "Max Priority": tf.reduce_max(priority),
             "Priorities": tf.reduce_mean(priority),
-            "mean bc action": tf.reduce_mean(bc_joint_action),
-            "std bc action": tf.math.reduce_std(bc_joint_action),
+            # "mean bc action": tf.reduce_mean(bc_joint_action),
+            # "std bc action": tf.math.reduce_std(bc_joint_action),
         }
 
         return logs, priority

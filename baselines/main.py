@@ -64,7 +64,7 @@ def main(_):
         print("Vault not found. Exiting.")
         return
 
-    logger = WandbLogger(project="maddpg_cql_bc", config=config)
+    logger = WandbLogger(entity="off-the-grid-marl-team", project="maddpg_cql_bc", config=config)
 
     json_writer = None  # JsonWriter(
     #     "logs",

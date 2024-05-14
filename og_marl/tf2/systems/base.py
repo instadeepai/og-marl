@@ -210,11 +210,10 @@ class BaseMARLSystem:
             time_to_sample = end_time - start_time
 
             start_time = time.time()
-            train_logs, priorities_delta = self.train_step(batch.experience, trainer_step_ctr)
+            train_logs, new_priorities = self.train_step(batch.experience, trainer_step_ctr)
             end_time = time.time()
             time_train_step = end_time - start_time
 
-            new_priorities = batch.priorities + priorities_delta
             replay_buffer.update_priorities(batch.indices, new_priorities)
 
             train_steps_per_second = 1 / (time_train_step + time_to_sample)
