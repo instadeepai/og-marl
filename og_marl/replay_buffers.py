@@ -216,7 +216,7 @@ class PrioritisedFlashbaxReplayBuffer:
             add_batch_size=1,
             sample_batch_size=self._batch_size,
             sample_sequence_length=self._sequence_length,
-            period=1, #self._sequence_length, #1,
+            period=1,  # self._sequence_length, #1,
             min_length_time_axis=1,
             max_size=self._vault_buffer_state.experience["truncations"].shape[1] + 1,
             priority_exponent=self._priority_exponent,

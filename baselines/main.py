@@ -58,13 +58,16 @@ def main(_):
         # FLAGS.env,
         # FLAGS.scenario,
         # FLAGS.dataset,
-        "2halfcheetah_mean_std_exp", f"{FLAGS.mean}_{FLAGS.std}"
+        "2halfcheetah_mean_std_exp",
+        f"{FLAGS.mean}_{FLAGS.std}",
     )
     if not is_vault_loaded:
         print("Vault not found. Exiting.")
         return
 
-    logger = WandbLogger(entity="off-the-grid-marl-team", project="og-marl-baselines", config=config)
+    logger = WandbLogger(
+        entity="off-the-grid-marl-team", project="og-marl-baselines", config=config
+    )
 
     json_writer = None  # JsonWriter(
     #     "logs",
