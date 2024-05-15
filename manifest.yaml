@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: wandb agent off-the-grid-marl-team/og-marl-baselines/xxt26woe
+  command: wandb agent off-the-grid-marl-team/og-marl-baselines/hl0khjof
 
   types:
     Worker:

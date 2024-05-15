@@ -36,69 +36,6 @@ from og_marl.tf2.utils import (
 tfd = tfp.distributions
 snt_init = snt.initializers
 
-
-class MultivariateNormalDiagHead(snt.Module):
-    """Module that produces a multivariate normal distribution using tfd.Independent or tfd.MultivariateNormalDiag."""
-
-    def __init__(
-        self,
-        num_dimensions: int,
-        init_scale: float = 0.3,
-        min_scale: float = 1e-6,
-        tanh_mean: bool = False,
-        fixed_scale: bool = False,
-        use_tfd_independent: bool = False,
-        w_init: snt_init.Initializer = tf.initializers.VarianceScaling(1e-4),
-        b_init: snt_init.Initializer = tf.initializers.Zeros(),
-    ):
-        """Initialization.
-
-        Args:
-          num_dimensions: Number of dimensions of MVN distribution.
-          init_scale: Initial standard deviation.
-          min_scale: Minimum standard deviation.
-          tanh_mean: Whether to transform the mean (via tanh) before passing it to
-            the distribution.
-          fixed_scale: Whether to use a fixed variance.
-          use_tfd_independent: Whether to use tfd.Independent or
-            tfd.MultivariateNormalDiag class
-          w_init: Initialization for linear layer weights.
-          b_init: Initialization for linear layer biases.
-        """
-        super().__init__(name="MultivariateNormalDiagHead")
-        self._init_scale = init_scale
-        self._min_scale = min_scale
-        self._tanh_mean = tanh_mean
-        self._mean_layer = snt.Linear(num_dimensions, w_init=w_init, b_init=b_init)
-        self._fixed_scale = fixed_scale
-
-        if not fixed_scale:
-            self._scale_layer = snt.Linear(num_dimensions, w_init=w_init, b_init=b_init)
-        self._use_tfd_independent = use_tfd_independent
-
-    def __call__(self, inputs: tf.Tensor) -> tfd.Distribution:
-        zero = tf.constant(0, dtype=inputs.dtype)
-        mean = self._mean_layer(inputs)
-
-        if self._fixed_scale:
-            scale = tf.ones_like(mean) * self._init_scale
-        else:
-            scale = tf.nn.softplus(self._scale_layer(inputs))
-            scale *= self._init_scale / tf.nn.softplus(zero)
-            scale += self._min_scale
-
-        # Maybe transform the mean.
-        if self._tanh_mean:
-            mean = tf.tanh(mean)
-
-        if self._use_tfd_independent:
-            dist = tfd.Independent(tfd.Normal(loc=mean, scale=scale))
-        else:
-            dist = tfd.MultivariateNormalDiag(loc=mean, scale_diag=scale)
-
-        return dist
-
-
 class MADDPGCQLBCSystem(MADDPGSystem):
 
     """MA Deep Recurrent Q-Networs with CQL System"""
@@ -119,7 +56,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         random_exploration_timesteps: int = 0,
         num_ood_actions: int = 10,  # CQL
         cql_weight: float = 5.0,  # CQL
-        cql_sigma: float = 0.2,  # CQL
+        cql_sigma: float = 0.3,  # CQL
     ):
         super().__init__(
             environment=environment,
@@ -138,7 +75,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         self._cql_weight = cql_weight
         self._cql_sigma = cql_sigma
 
-        self.coef = 0.00001
+        self.coef = 0.01
 
         self.joint_action = joint_action
 
@@ -445,7 +382,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
             (joint_target_actions - joint_replay_action) ** 2, axis=-1
         )  # sum across action dim
         squared_distance = tf.reduce_sum(squared_distance, axis=0)  # Sum across time dim
-        priority = tf.exp(-squared_distance * self.coef * tf.cast(train_step, "float32"))
+        priority = tf.exp(-squared_distance * self.coef)
 
         # Update target networks
         online_variables = (
