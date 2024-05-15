@@ -31,6 +31,7 @@ flags.DEFINE_string("system", "maddpg+cql+bc", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
+flags.DEFINE_float("priority_exponent", 0.6, "Number of training steps.")
 
 flags.DEFINE_string("joint_action", "buffer", "Type of joint action to send to critic.")
 flags.DEFINE_integer("mean", 2000, "Mean.")
@@ -50,16 +51,16 @@ def main(_):
 
     # buffer = FlashbaxReplayBuffer(sequence_length=20, sample_period=1)
 
-    buffer = PrioritisedFlashbaxReplayBuffer(batch_size=256, sequence_length=20, sample_period=1, seed=FLAGS.seed)
+    buffer = PrioritisedFlashbaxReplayBuffer(batch_size=32, sequence_length=20, sample_period=10, seed=FLAGS.seed, priority_exponent=FLAGS.priority_exponent)
 
     download_and_unzip_vault(FLAGS.env, FLAGS.scenario)
 
     is_vault_loaded = buffer.populate_from_vault(
-        # FLAGS.env,
-        # FLAGS.scenario,
-        # FLAGS.dataset,
-        "2halfcheetah_mean_std_exp",
-        f"{FLAGS.mean}_{FLAGS.std}",
+        FLAGS.env,
+        FLAGS.scenario,
+        FLAGS.dataset,
+        # "2halfcheetah_mean_std_exp",
+        # f"{FLAGS.mean}_{FLAGS.std}",
     )
     if not is_vault_loaded:
         print("Vault not found. Exiting.")

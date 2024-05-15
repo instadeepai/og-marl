@@ -194,15 +194,15 @@ class PrioritisedFlashbaxReplayBuffer:
 
     def populate_from_vault(
         self,
-        # env_name,
-        # scenario_name,
-        vault_name="tmp",
+        env_name,
+        scenario_name,
+        # vault_name="tmp",
         dataset_name="tmp",
         rel_dir: str = "vaults",
     ) -> bool:
         self._vault_buffer_state = Vault(
-            # vault_name=f"{env_name}/{scenario_name}.vlt",
-            vault_name=vault_name,
+            vault_name=f"{env_name}/{scenario_name}.vlt",
+            # vault_name=vault_name,
             vault_uid=dataset_name,
             rel_dir=rel_dir,
         ).read(percentiles=(0, 100))

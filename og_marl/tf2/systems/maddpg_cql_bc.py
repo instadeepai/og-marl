@@ -378,11 +378,13 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         A = replay_actions.shape[-1]
         joint_replay_action = tf.reshape(replay_actions, (T, B, N * A))
         joint_target_actions = tf.reshape(target_actions, (T, B, N * A))
-        squared_distance = tf.reduce_sum(
+        squared_distance = tf.reduce_mean(
             (joint_target_actions - joint_replay_action) ** 2, axis=-1
-        )  # sum across action dim
-        squared_distance = tf.reduce_sum(squared_distance, axis=0)  # Sum across time dim
-        priority = tf.exp(-squared_distance * self.coef)
+        )  # mean across action dim
+        mean_squared_distance = tf.reduce_mean(squared_distance, axis=0)  # mean across time dim
+        clipped_mean_squared_distance = tf.clip_by_value(mean_squared_distance, 0.01, 5)
+
+        priority = 1 / clipped_mean_squared_distance
 
         # Update target networks
         online_variables = (
@@ -408,9 +410,11 @@ class MADDPGCQLBCSystem(MADDPGSystem):
             "Policy Loss": policy_loss,
             # "BC Loss": bc_loss,
             "Max Priority": tf.reduce_max(priority),
-            "Priorities": tf.reduce_mean(priority),
-            # "mean bc action": tf.reduce_mean(bc_joint_action),
-            # "std bc action": tf.math.reduce_std(bc_joint_action),
+            "Mean Priority": tf.reduce_mean(priority),
+            "Min Priority": tf.reduce_min(priority),
+            "action squared distance": tf.reduce_mean(squared_distance),
+            "mean squared distance": tf.math.reduce_mean(mean_squared_distance),
+            "clipped mean squared distance": tf.math.reduce_mean(clipped_mean_squared_distance)
         }
 
         return logs, priority
