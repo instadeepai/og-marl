@@ -36,6 +36,7 @@ from og_marl.tf2.utils import (
 tfd = tfp.distributions
 snt_init = snt.initializers
 
+
 class MADDPGCQLBCSystem(MADDPGSystem):
 
     """MA Deep Recurrent Q-Networs with CQL System"""
@@ -374,7 +375,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         # variables = (*self._bc_network.trainable_variables,)
         # gradients = tape.gradient(bc_loss, variables)
         # self._bc_optimizer.apply(gradients, variables)
-    
+
         A = replay_actions.shape[-1]
         joint_replay_action = tf.reshape(replay_actions, (T, B, N * A))
         joint_target_actions = tf.reshape(target_actions, (T, B, N * A))
@@ -414,7 +415,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
             "Min Priority": tf.reduce_min(priority),
             "action squared distance": tf.reduce_mean(squared_distance),
             "mean squared distance": tf.math.reduce_mean(mean_squared_distance),
-            "clipped mean squared distance": tf.math.reduce_mean(clipped_mean_squared_distance)
+            "clipped mean squared distance": tf.math.reduce_mean(clipped_mean_squared_distance),
         }
 
         return logs, priority

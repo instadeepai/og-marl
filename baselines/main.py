@@ -51,7 +51,13 @@ def main(_):
 
     # buffer = FlashbaxReplayBuffer(sequence_length=20, sample_period=1)
 
-    buffer = PrioritisedFlashbaxReplayBuffer(batch_size=32, sequence_length=20, sample_period=10, seed=FLAGS.seed, priority_exponent=FLAGS.priority_exponent)
+    buffer = PrioritisedFlashbaxReplayBuffer(
+        batch_size=32,
+        sequence_length=20,
+        sample_period=10,
+        seed=FLAGS.seed,
+        priority_exponent=FLAGS.priority_exponent,
+    )
 
     download_and_unzip_vault(FLAGS.env, FLAGS.scenario)
 

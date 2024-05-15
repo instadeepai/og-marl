@@ -227,7 +227,7 @@ class BaseMARLSystem:
                 "Time to Sample": time_to_sample,
                 "Time for Train Step": time_train_step,
                 "Train Steps Per Second": train_steps_per_second,
-                "Priority Update Time": time_priority
+                "Priority Update Time": time_priority,
             }
 
             self._logger.write(logs)

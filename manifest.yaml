@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: python baselines/main.py
+  command: wandb agent off-the-grid-marl-team/og-marl-baselines/i2e5eklv
 
   types:
     Worker:
