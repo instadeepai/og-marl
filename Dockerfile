@@ -33,6 +33,7 @@ RUN echo "Installing requirements..."
 RUN pip install --quiet --upgrade pip setuptools wheel &&  \
     pip install -e . && \
     pip install flashbax==0.1.2
+RUN pip install -U "jax[cuda12]"
 
 # ENV SC2PATH /home/app/StarCraftII
 # RUN ./install_environments/smacv1.sh

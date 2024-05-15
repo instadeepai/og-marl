@@ -36,7 +36,6 @@ setup(
         "absl-py",
         "gymnasium",
         "requests",
-        "jax[cuda12]",
         "matplotlib",
         "seaborn",
         # "flashbax==0.1.2", # install post
