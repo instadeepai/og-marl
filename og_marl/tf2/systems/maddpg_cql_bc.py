@@ -117,7 +117,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         bc_learning_rate: float = 1e-3,
         add_agent_id_to_obs: bool = False,
         random_exploration_timesteps: int = 0,
-        num_ood_actions: int = 20,  # CQL
+        num_ood_actions: int = 10,  # CQL
         cql_weight: float = 5.0,  # CQL
         cql_sigma: float = 0.2,  # CQL
     ):
@@ -137,6 +137,8 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         self._num_ood_actions = num_ood_actions
         self._cql_weight = cql_weight
         self._cql_sigma = cql_sigma
+
+        self.coef = 0.001
 
         self.joint_action = joint_action
 
@@ -443,7 +445,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
             (joint_target_actions - joint_replay_action) ** 2, axis=-1
         )  # sum across action dim
         squared_distance = tf.reduce_sum(squared_distance, axis=0)  # Sum across time dim
-        priority = tf.exp(-squared_distance)
+        priority = tf.exp(-squared_distance * self.coef)
 
         # Update target networks
         online_variables = (
