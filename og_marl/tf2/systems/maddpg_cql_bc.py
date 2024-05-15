@@ -138,7 +138,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         self._cql_weight = cql_weight
         self._cql_sigma = cql_sigma
 
-        self.coef = 0.001
+        self.coef = 0.00001
 
         self.joint_action = joint_action
 
@@ -445,7 +445,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
             (joint_target_actions - joint_replay_action) ** 2, axis=-1
         )  # sum across action dim
         squared_distance = tf.reduce_sum(squared_distance, axis=0)  # Sum across time dim
-        priority = tf.exp(-squared_distance * self.coef)
+        priority = tf.exp(-squared_distance * self.coef * tf.cast(train_step, "float32"))
 
         # Update target networks
         online_variables = (
