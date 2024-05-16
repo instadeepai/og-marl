@@ -151,7 +151,10 @@ class PrioritisedFlashbaxReplayBuffer:
         )
         self._buffer_sample_fn = jax.jit(self._replay_buffer.sample)
         self._buffer_add_fn = jax.jit(self._replay_buffer.add)
-        self._buffer_set_priorities_fn = jax.jit(self._replay_buffer.set_priorities)
+        self._buffer_set_priorities_fn = jax.jit(
+            self._replay_buffer.set_priorities,
+            donate_argnums=0,
+        )
 
         self._buffer_state: PrioritisedTrajectoryBufferState = None
         self._rng_key = jax.random.PRNGKey(seed)
@@ -235,7 +238,10 @@ class PrioritisedFlashbaxReplayBuffer:
 
         self._buffer_sample_fn = jax.jit(self._replay_buffer.sample)
         self._buffer_add_fn = jax.jit(self._replay_buffer.add)
-        self._buffer_set_priorities_fn = jax.jit(self._replay_buffer.set_priorities)
+        self._buffer_set_priorities_fn = jax.jit(
+            self._replay_buffer.set_priorities,
+            donate_argnums=0,
+        )
 
         self._buffer_state = self._buffer_add_fn(
             temp_buffer_state, self._vault_buffer_state.experience
