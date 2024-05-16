@@ -211,6 +211,7 @@ class BaseMARLSystem:
 
             start_time = time.time()
             train_logs = self.train_step(batch.experience, trainer_step_ctr)
+                
 
             if isinstance(train_logs, tuple):
                 train_logs, new_priorities =  train_logs

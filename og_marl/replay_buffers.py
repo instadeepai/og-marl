@@ -147,6 +147,7 @@ class PrioritisedFlashbaxReplayBuffer:
             min_length_time_axis=1,
             max_size=max_size,
             priority_exponent=self._priority_exponent,
+            device="gpu"
         )
         self._buffer_sample_fn = jax.jit(self._replay_buffer.sample)
         self._buffer_add_fn = jax.jit(self._replay_buffer.add)
@@ -220,6 +221,7 @@ class PrioritisedFlashbaxReplayBuffer:
             min_length_time_axis=1,
             max_size=self._vault_buffer_state.experience["truncations"].shape[1] + 1,
             priority_exponent=self._priority_exponent,
+            device="gpu"
         )
         temp_buffer_state = self._replay_buffer.init(example_timestep)
         # del temp_buffer_state

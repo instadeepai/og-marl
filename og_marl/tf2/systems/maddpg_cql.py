@@ -50,7 +50,7 @@ class MADDPGCQLSystem(MADDPGSystem):
         random_exploration_timesteps: int = 0,
         num_ood_actions: int = 10,  # CQL
         cql_weight: float = 5.0,  # CQL
-        cql_sigma: float = 0.2,  # CQL
+        cql_sigma: float = 0.3,  # CQL
     ):
         super().__init__(
             environment=environment,
