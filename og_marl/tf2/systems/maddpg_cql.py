@@ -45,7 +45,7 @@ class MADDPGCQLSystem(MADDPGSystem):
         discount: float = 0.99,
         target_update_rate: float = 0.005,
         critic_learning_rate: float = 1e-3,
-        policy_learning_rate: float = 1e-3,
+        policy_learning_rate: float = 3e-4,
         add_agent_id_to_obs: bool = False,
         random_exploration_timesteps: int = 0,
         num_ood_actions: int = 10,  # CQL
@@ -72,7 +72,7 @@ class MADDPGCQLSystem(MADDPGSystem):
         self.joint_action = joint_action
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
-    def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
+    def _tf_train_step(self, experience: Dict[str, Any], trainer_step_ctr) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N,A)

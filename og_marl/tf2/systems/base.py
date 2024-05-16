@@ -210,12 +210,18 @@ class BaseMARLSystem:
             time_to_sample = end_time - start_time
 
             start_time = time.time()
-            train_logs, new_priorities = self.train_step(batch.experience, trainer_step_ctr)
+            train_logs = self.train_step(batch.experience, trainer_step_ctr)
+
+            if isinstance(train_logs, tuple):
+                train_logs, new_priorities =  train_logs
+            else:
+                new_priorities = None
             end_time = time.time()
             time_train_step = end_time - start_time
 
             start_time = time.time()
-            replay_buffer.update_priorities(batch.indices, new_priorities)
+            if new_priorities is not None:
+                replay_buffer.update_priorities(batch.indices, new_priorities)
             end_time = time.time()
             time_priority = end_time - start_time
 

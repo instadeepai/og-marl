@@ -85,7 +85,7 @@ class FlashbaxReplayBuffer:
     def sample(self) -> Experience:
         self._rng_key, sample_key = jax.random.split(self._rng_key, 2)
         batch = self._buffer_sample_fn(self._buffer_state, sample_key)
-        return batch.experience  # type: ignore
+        return batch  # type: ignore
 
     def populate_from_vault(
         self,

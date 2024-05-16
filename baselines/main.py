@@ -16,7 +16,7 @@ from absl import app, flags
 from og_marl.environments import get_environment
 from og_marl.loggers import WandbLogger
 from og_marl.offline_dataset import download_and_unzip_vault
-from og_marl.replay_buffers import PrioritisedFlashbaxReplayBuffer
+from og_marl.replay_buffers import FlashbaxReplayBuffer, PrioritisedFlashbaxReplayBuffer
 from og_marl.tf2.networks import CNNEmbeddingNetwork
 from og_marl.tf2.systems import get_system
 from og_marl.tf2.utils import set_growing_gpu_memory
@@ -46,15 +46,16 @@ def main(_):
 
     env = get_environment(FLAGS.env, FLAGS.scenario)
 
-    # buffer = FlashbaxReplayBuffer(sequence_length=20, sample_period=1)
-
-    buffer = PrioritisedFlashbaxReplayBuffer(
-        batch_size=FLAGS.batch_size,
-        sequence_length=20,
-        sample_period=10,
-        seed=FLAGS.seed,
-        priority_exponent=FLAGS.priority_exponent,
-    )
+    if FLAGS.system == "maddpg+cql+bc":
+        buffer = PrioritisedFlashbaxReplayBuffer(
+            batch_size=FLAGS.batch_size,
+            sequence_length=20,
+            sample_period=10,
+            seed=FLAGS.seed,
+            priority_exponent=FLAGS.priority_exponent,
+        )
+    else:
+        buffer = FlashbaxReplayBuffer(sequence_length=20, sample_period=10, batch_size=FLAGS.batch_size, seed=FLAGS.seed)
 
     download_and_unzip_vault(FLAGS.env, FLAGS.scenario)
 
