@@ -388,7 +388,11 @@ class MADDPGCQLBCSystem(MADDPGSystem):
             "Mean Priority": tf.reduce_mean(priority),
             "Min Priority": tf.reduce_min(priority),
             "mean action distance": tf.reduce_mean(distance),
+            "max action distance": tf.reduce_max(distance),
+            "min action distance": tf.reduce_min(distance),
             "mean sequence distance": tf.reduce_mean(sequence_distance),
+            "max sequence distance": tf.reduce_max(sequence_distance),
+            "min sequence distance": tf.reduce_min(sequence_distance),
             "mean clipped distance": tf.math.reduce_mean(clipped_sequence_distance),
         }
 
