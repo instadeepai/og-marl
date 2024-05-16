@@ -39,7 +39,7 @@ snt_init = snt.initializers
 
 class MADDPGCQLBCSystem(MADDPGSystem):
 
-    """MA Deep Recurrent Q-Networs with CQL System"""
+    """MA Deep Recurrent Q-Network with CQL System"""
 
     def __init__(
         self,
@@ -52,7 +52,6 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         target_update_rate: float = 0.005,
         critic_learning_rate: float = 1e-3,
         policy_learning_rate: float = 3e-4,
-        bc_learning_rate: float = 1e-3,
         add_agent_id_to_obs: bool = False,
         random_exploration_timesteps: int = 0,
         num_ood_actions: int = 10,  # CQL
@@ -76,29 +75,8 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         self._cql_weight = cql_weight
         self._cql_sigma = cql_sigma
 
-        self.coef = 0.01
+        self.joint_action = joint_action # How we construct the joint_action ("buffer", "online", "target")
 
-        self.joint_action = joint_action
-
-        self._bc_burn_in = 1
-
-        # bc network
-        self._bc_network = snt.Sequential(
-            [
-                snt.Linear(linear_layer_dim),
-                tf.nn.relu,
-                snt.Linear(recurrent_layer_dim),
-                tf.nn.relu,
-                snt.Linear(self._environment._num_actions * len(self._environment.possible_agents)),
-                # MultivariateNormalDiagHead(
-                #     num_dimensions=self._environment._num_actions * len(self._environment.possible_agents),
-                #     fixed_scale=False,
-                #     tanh_mean=False,
-                # )
-            ]
-        )  # shared network for all agents
-
-        self._bc_optimizer = snt.optimizers.RMSProp(learning_rate=bc_learning_rate)
 
     def train_step(self, experience, trainer_step_ctr) -> Dict[str, Numeric]:
         trainer_step_ctr = tf.convert_to_tensor(trainer_step_ctr)
@@ -314,7 +292,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
             )
             online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
 
-            if self.joint_action == "buffer":
+            if self.joint_action == "buffer": # Normal MADDPG
                 qs_1 = self._critic_network_1(env_states, online_actions, replay_actions)
                 qs_2 = self._critic_network_2(env_states, online_actions, replay_actions)
             elif self.joint_action == "online":
@@ -334,30 +312,6 @@ class MADDPGCQLBCSystem(MADDPGSystem):
 
             policy_loss = -tf.reduce_mean(qs) + 1e-3 * tf.reduce_mean(online_actions**2)
 
-            ### BC Training
-            # A = replay_actions.shape[-1]
-            # O = observations.shape[-1]
-            # joint_replay_action = tf.reshape(replay_actions, (T, B, N * A))
-            # joint_observation = tf.reshape(observations, (T, B, N * O))
-
-            # target_actions = tf.reshape(target_actions, (T, B, N * A))
-
-            # bc_joint_action = self._bc_network(joint_observation)
-
-            # squared_distance = tf.reduce_sum(
-            #     (bc_joint_action - joint_replay_action) ** 2, axis=-1
-            # )  # sum across action dim
-            # squared_distance = tf.reduce_sum(squared_distance, axis=0)  # Sum across time dim
-
-            # # priority = 1 / (1 + tf.exp(squared_distance))
-            # zeta = 1
-            # priority = tf.exp(-zeta * squared_distance)
-
-            # if train_step < self._bc_burn_in:
-            #     priority = tf.ones_like(priority)
-
-            # bc_loss = tf.reduce_mean(0.5 * (bc_joint_action - target_actions) ** 2)
-
         # Train critics
         variables = (
             *self._critic_network_1.trainable_variables,
@@ -370,22 +324,6 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         variables = (*self._policy_network.trainable_variables,)
         gradients = tape.gradient(policy_loss, variables)
         self._policy_optimizer.apply(gradients, variables)
-
-        # Train BC network
-        # variables = (*self._bc_network.trainable_variables,)
-        # gradients = tape.gradient(bc_loss, variables)
-        # self._bc_optimizer.apply(gradients, variables)
-
-        A = replay_actions.shape[-1]
-        joint_replay_action = tf.reshape(replay_actions, (T, B, N * A))
-        joint_target_actions = tf.reshape(target_actions, (T, B, N * A))
-        squared_distance = tf.reduce_mean(
-            (joint_target_actions - joint_replay_action) ** 2, axis=-1
-        )  # mean across action dim
-        mean_squared_distance = tf.reduce_mean(squared_distance, axis=0)  # mean across time dim
-        clipped_mean_squared_distance = tf.clip_by_value(mean_squared_distance, 0.01, 5)
-
-        priority = 1 / clipped_mean_squared_distance
 
         # Update target networks
         online_variables = (
@@ -405,6 +343,42 @@ class MADDPGCQLBCSystem(MADDPGSystem):
 
         del tape
 
+        ### Compute new replay priorities
+        A = replay_actions.shape[-1]
+        joint_replay_action = tf.reshape(replay_actions, (T, B, N * A))
+
+        ## Choose target joint action
+        # joint_target_actions = tf.reshape(target_actions, (T, B, N * A)) # try online actions
+
+        # Maybe recommpute actions after updating networks
+        online_actions = unroll_rnn(
+            self._policy_network,
+            merge_batch_and_agent_dim_of_time_major_sequence(observations),
+            merge_batch_and_agent_dim_of_time_major_sequence(resets),
+        )
+        online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
+
+        joint_target_actions = tf.reshape(online_actions, (T, B, N * A))
+
+        ## Compute distance
+        # distance = tf.reduce_mean(
+        #     (joint_target_actions - joint_replay_action) ** 2, axis=-1 # try Chebyshev Distance, Euclidean Distance, Manhattan Distance
+        # )  # mean across action dim
+
+        # Chebyshev
+        distance = tf.reduce_max(
+            tf.abs(joint_target_actions - joint_replay_action), axis=-1
+        )
+
+        ## Aggregate across time
+        sequence_distance = tf.reduce_sum(distance, axis=0)  # try max, sum, mean or other
+
+        ## Clipping
+        clipped_sequence_distance = tf.clip_by_value(sequence_distance, 0.1 * 20, 2.1 * 20) # make the min distance a hyper param, and max depends on the distance metric used and aggregation across time
+
+        ## Priority is 1/distance
+        priority = 1 / clipped_sequence_distance
+
         logs = {
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),
             "Mean Critic Loss": (critic_loss),
@@ -413,9 +387,9 @@ class MADDPGCQLBCSystem(MADDPGSystem):
             "Max Priority": tf.reduce_max(priority),
             "Mean Priority": tf.reduce_mean(priority),
             "Min Priority": tf.reduce_min(priority),
-            "action squared distance": tf.reduce_mean(squared_distance),
-            "mean squared distance": tf.math.reduce_mean(mean_squared_distance),
-            "clipped mean squared distance": tf.math.reduce_mean(clipped_mean_squared_distance),
+            "mean action distance": tf.reduce_mean(distance),
+            "mean sequence distance": tf.reduce_mean(sequence_distance),
+            "mean clipped distance": tf.math.reduce_mean(clipped_sequence_distance),
         }
 
         return logs, priority

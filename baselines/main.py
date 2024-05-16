@@ -26,16 +26,13 @@ set_growing_gpu_memory()
 FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "mamujoco", "Environment name.")
 flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
-flags.DEFINE_string("dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
+flags.DEFINE_string("dataset", "Poor", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
 flags.DEFINE_string("system", "maddpg+cql+bc", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
 flags.DEFINE_float("priority_exponent", 0.6, "Number of training steps.")
-
 flags.DEFINE_string("joint_action", "buffer", "Type of joint action to send to critic.")
-flags.DEFINE_integer("mean", 2000, "Mean.")
-flags.DEFINE_integer("std", 300, "std.")
 
 
 def main(_):
@@ -52,7 +49,7 @@ def main(_):
     # buffer = FlashbaxReplayBuffer(sequence_length=20, sample_period=1)
 
     buffer = PrioritisedFlashbaxReplayBuffer(
-        batch_size=32,
+        batch_size=FLAGS.batch_size,
         sequence_length=20,
         sample_period=10,
         seed=FLAGS.seed,
@@ -65,8 +62,6 @@ def main(_):
         FLAGS.env,
         FLAGS.scenario,
         FLAGS.dataset,
-        # "2halfcheetah_mean_std_exp",
-        # f"{FLAGS.mean}_{FLAGS.std}",
     )
     if not is_vault_loaded:
         print("Vault not found. Exiting.")
