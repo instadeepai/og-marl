@@ -17,9 +17,9 @@ spec:
 
   types:
     Worker:
-      count: 7
+      count: 1
 
-      resources: 
+      resources:
         # 10-15 cpus for single process
         cpus: 3
         # mandatory (must be >= 2): RAM ratio wanted (in GB)
@@ -30,4 +30,4 @@ spec:
             count: 1
             # mandatory (if gpus amount is > 0): gpu type wanted
             type: gpu
-            product: Quadro-RTX-4000 # NVIDIA-A100-SXM4-80GB-MIG-3g.40gb | Quadro-RTX-4000 | Tesla-V100-SXM3-32GB
+            product: Tesla-V100-SXM3-32GB # NVIDIA-A100-SXM4-80GB-MIG-3g.40gb | Quadro-RTX-4000 | Tesla-V100-SXM3-32GB
