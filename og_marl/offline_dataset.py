@@ -95,7 +95,10 @@ def download_and_unzip_vault(
     zip_file_path = f"{dataset_base_dir}/tmp/tmp_dataset.zip"
 
     # extraction_path = f"{dataset_base_dir}/2halfcheetah_mean_std_exp"
-    extraction_path = f"{dataset_base_dir}/{env_name}"
+    if scenario_name=="2ant":
+        extraction_path = f"{dataset_base_dir}/{env_name}"
+    else:
+        extraction_path = f"{dataset_base_dir}/{env_name}/{scenario_name}.vlt"
 
     response = requests.get(dataset_download_url, stream=True)
     total_length = response.headers.get("content-length")
