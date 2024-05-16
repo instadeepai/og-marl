@@ -81,7 +81,13 @@ def download_and_unzip_vault(
     #     print("Vault '2halfcheetah_mean_std_exp' already exists.")
     #     return
 
-    dataset_download_url = VAULT_INFO[env_name][scenario_name]["url"] #"https://s3.kao.instadeep.io/offline-marl-dataset/vaults/mean_std_exp.zip"  # VAULT_INFO[env_name][scenario_name]["url"]
+    dataset_download_url = VAULT_INFO[
+        env_name
+    ][
+        scenario_name
+    ][
+        "url"
+    ]  # "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/mean_std_exp.zip"  # VAULT_INFO[env_name][scenario_name]["url"]
 
     os.makedirs(f"{dataset_base_dir}/tmp/", exist_ok=True)
     os.makedirs(f"{dataset_base_dir}/{env_name}/", exist_ok=True)
