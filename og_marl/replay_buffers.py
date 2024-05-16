@@ -186,6 +186,11 @@ class PrioritisedFlashbaxReplayBuffer:
         )  # add batch & time dims
         self._buffer_state = self._buffer_add_fn(self._buffer_state, timestep)
 
+    def sample_uniformly(self):
+        self._rng_key, sample_key = jax.random.split(self._rng_key, 2)
+        batch = self._uniform_buffer_sample_fn(self._buffer_state, sample_key)
+        return batch
+
     def sample(self) -> Experience:
         self._rng_key, sample_key = jax.random.split(self._rng_key, 2)
         batch = self._buffer_sample_fn(self._buffer_state, sample_key)
@@ -246,5 +251,16 @@ class PrioritisedFlashbaxReplayBuffer:
         self._buffer_state = self._buffer_add_fn(
             temp_buffer_state, self._vault_buffer_state.experience
         )
+
+        self._uniform_replay_buffer = fbx.make_trajectory_buffer(
+            add_batch_size=1,
+            sample_batch_size=1024, # TODO: make variable
+            sample_sequence_length=20,
+            period=10,
+            min_length_time_axis=1,
+            max_size=self._vault_buffer_state.experience["truncations"].shape[1] + 1,
+        )
+
+        self._uniform_buffer_sample_fn = jax.jit(self._replay_buffer.sample)
 
         return True
