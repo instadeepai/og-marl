@@ -19,7 +19,7 @@ spec:
     Worker:
       count: 1
 
-      resources:
+      resources: 
         # 10-15 cpus for single process
         cpus: 3
         # mandatory (must be >= 2): RAM ratio wanted (in GB)
