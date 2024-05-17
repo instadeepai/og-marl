@@ -137,7 +137,7 @@ class BaseMARLSystem:
 
                     # Train step
                     start_time = time.time()
-                    train_logs = self.train_step(experience)
+                    train_logs = self.train_step(experience.experience)
                     end_time = time.time()
                     time_train_step = end_time - start_time
 

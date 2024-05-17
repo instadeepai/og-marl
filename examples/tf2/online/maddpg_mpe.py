@@ -22,13 +22,8 @@ from og_marl.tf2.systems.maddpg import MADDPGSystem
 
 env = MPE()
 
-# env = PadObsandActs(env)
+logger = WandbLogger(entity="off-the-grid-marl-team", project="og-marl-baselines") 
 
-# env = Dtype(env, "float32")
-
-logger = TerminalLogger() #WandbLogger()
-
-# system = IDDPGSystem(env, logger)
 system = MADDPGSystem(env, logger)
 
 rb = FlashbaxReplayBuffer(sequence_length=20, max_size=50_000)

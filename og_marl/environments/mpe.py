@@ -28,7 +28,7 @@ class MPE(PettingZooBase):
 
     def __init__(self):
         self._environment = simple_spread_v3.parallel_env(N=3, local_ratio=0.0, max_cycles=25, continuous_actions=True)
-        self.environment_label = "pettingzoo/pistonball"
+        self.environment_label = "pettingzoo/simple_spread_v3"
 
         self._agents = self._environment.possible_agents
 
@@ -59,6 +59,10 @@ class MPE(PettingZooBase):
     
     def step(self, actions: Dict[str, np.ndarray]):
         """Steps in env."""
+        # Rescale the actions from MADDPG's -1:1 scaling
+        for agent_id in actions.keys():
+            actions[agent_id] = (actions[agent_id]+1)/2
+
         # Step the environment
         observations, rewards, terminals, truncations, _ = self._environment.step(actions)
 
