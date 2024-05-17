@@ -63,5 +63,10 @@ def get_environment(env_name: str, scenario: str) -> BaseEnvironment:  # noqa: C
         from og_marl.environments.jumanji_rware import JumanjiRware
 
         return JumanjiRware(scenario)
+    
+    elif env_name == "mpe":
+        from og_marl.environments.mpe import MPE
+
+        return MPE()
     else:
         raise ValueError("Environment not recognised.")

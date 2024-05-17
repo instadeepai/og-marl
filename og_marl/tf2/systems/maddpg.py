@@ -160,6 +160,7 @@ class MADDPGSystem(BaseMARLSystem):
         self._target_critic_network_1 = copy.deepcopy(self._critic_network_1)
         self._target_critic_network_2 = copy.deepcopy(self._critic_network_1)
         self._target_update_rate = target_update_rate
+        self._train_step_ctr = 0
 
         # Optimizers
         self._critic_optimizer = snt.optimizers.RMSProp(learning_rate=critic_learning_rate)
@@ -229,8 +230,9 @@ class MADDPGSystem(BaseMARLSystem):
 
         return actions, next_rnn_states
 
-    def train_step(self, experience: Experience, train_step_ctr) -> Dict[str, Numeric]:
-        logs = self._tf_train_step(experience, tf.convert_to_tensor(train_step_ctr))
+    def train_step(self, experience: Experience) -> Dict[str, Numeric]:
+        self._train_step_ctr += 1
+        logs = self._tf_train_step(experience, tf.convert_to_tensor(self.train_step_ctr))
         return logs  # type: ignore
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
