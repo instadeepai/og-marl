@@ -232,11 +232,15 @@ class MADDPGSystem(BaseMARLSystem):
 
     def train_step(self, experience: Experience) -> Dict[str, Numeric]:
         self._train_step_ctr += 1
-        logs = self._tf_train_step(experience, tf.convert_to_tensor(self.train_step_ctr))
+        logs = self._tf_train_step(experience, tf.convert_to_tensor(self._train_step_ctr))
         return logs  # type: ignore
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, experience: Dict[str, Any], train_step_ctr) -> Dict[str, Numeric]:
+
+        # NOTE (Louise): TEMPORARY change to make maddpg work with MPE. IDK why there is double-nested experience here.
+        experience = experience.experience
+
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N,A)
