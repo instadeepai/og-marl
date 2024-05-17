@@ -360,24 +360,18 @@ class MADDPGCQLBCSystem(MADDPGSystem):
 
         joint_target_actions = tf.reshape(online_actions, (T, B, N * A))
 
-        ## Compute distance
-        # distance = tf.reduce_mean(
-        #     (joint_target_actions - joint_replay_action) ** 2, axis=-1 # try Chebyshev Distance, Euclidean Distance, Manhattan Distance
-        # )  # mean across action dim
+        # Cosine similarity
+        numerator = tf.multiply(joint_target_actions,joint_replay_action)
+        numerator = tf.reduce_sum(numerator,axis=-1)
+        denominator_1 = tf.norm(joint_target_actions,2,axis=-1)
+        denominator_2 = tf.norm(joint_replay_action,2,axis=-1)
+        denominator = tf.math.multiply(denominator_1,denominator_2)
+        similarity = tf.math.abs(tf.math.divide(numerator,denominator))
 
-        # Chebyshev
-        distance = tf.reduce_max(
-            tf.abs(joint_target_actions - joint_replay_action), axis=-1
-        )
+        priority = -tf.math.sqrt(-similarity+1)+1
 
         ## Aggregate across time
-        sequence_distance = tf.reduce_sum(distance, axis=0)  # try max, sum, mean or other
-
-        ## Clipping
-        clipped_sequence_distance = tf.clip_by_value(sequence_distance, 0.1 * 20, 2.1 * 20) # make the min distance a hyper param, and max depends on the distance metric used and aggregation across time
-
-        ## Priority is 1/distance
-        priority = 1 / clipped_sequence_distance
+        priority = tf.reduce_mean(priority, axis=0)  # try max, sum, mean or other
 
         logs = {
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),
@@ -387,13 +381,6 @@ class MADDPGCQLBCSystem(MADDPGSystem):
             "Max Priority": tf.reduce_max(priority),
             "Mean Priority": tf.reduce_mean(priority),
             "Min Priority": tf.reduce_min(priority),
-            "mean action distance": tf.reduce_mean(distance),
-            "max action distance": tf.reduce_max(distance),
-            "min action distance": tf.reduce_min(distance),
-            "mean sequence distance": tf.reduce_mean(sequence_distance),
-            "max sequence distance": tf.reduce_max(sequence_distance),
-            "min sequence distance": tf.reduce_min(sequence_distance),
-            "mean clipped distance": tf.math.reduce_mean(clipped_sequence_distance),
         }
 
         return logs, priority
