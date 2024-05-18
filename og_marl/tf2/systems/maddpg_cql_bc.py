@@ -382,7 +382,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
 
         ## Priority is 1/distance
         # priority = 1 / clipped_sequence_distance
-        priority = tf.exp(-(self.coef * sequence_distance)**2)
+        priority = tf.exp(-(self.coef * (min(1/300000 * train_step, 1)) * sequence_distance)**2)
 
         logs = {
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),
