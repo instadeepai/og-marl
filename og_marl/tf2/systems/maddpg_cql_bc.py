@@ -75,8 +75,9 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         self._cql_weight = cql_weight
         self._cql_sigma = cql_sigma
 
-        self.joint_action = joint_action # How we construct the joint_action ("buffer", "online", "target")
-
+        self.joint_action = (
+            joint_action  # How we construct the joint_action ("buffer", "online", "target")
+        )
 
     def train_step(self, experience, trainer_step_ctr) -> Dict[str, Numeric]:
         trainer_step_ctr = tf.convert_to_tensor(trainer_step_ctr)
@@ -292,7 +293,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
             )
             online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
 
-            if self.joint_action == "buffer": # Normal MADDPG
+            if self.joint_action == "buffer":  # Normal MADDPG
                 qs_1 = self._critic_network_1(env_states, online_actions, replay_actions)
                 qs_2 = self._critic_network_2(env_states, online_actions, replay_actions)
             elif self.joint_action == "online":
@@ -366,18 +367,19 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         # )  # mean across action dim
 
         # Chebyshev
-        distance = tf.reduce_sum(
-            tf.abs(joint_target_actions - joint_replay_action), axis=-1
-        )
+        distance = tf.reduce_sum(tf.abs(joint_target_actions - joint_replay_action), axis=-1)
 
         ## Aggregate across time
         sequence_distance = tf.reduce_sum(distance, axis=0)  # try max, sum, mean or other
 
         ## Clipping
-        clipped_sequence_distance = tf.clip_by_value(sequence_distance, 0.001 * 20, 4.1 * 20) # make the min distance a hyper param, and max depends on the distance metric used and aggregation across time
+        # clipped_sequence_distance = tf.clip_by_value(
+        #     sequence_distance, 0.001 * 20, 4.1 * 20
+        # )  # make the min distance a hyper param, and max depends on the distance metric used and aggregation across time
 
         ## Priority is 1/distance
-        priority = 1 / clipped_sequence_distance
+        # priority = 1 / clipped_sequence_distance
+        priority = tf.exp(-sequence_distance**2)
 
         logs = {
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),
@@ -393,7 +395,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
             "mean sequence distance": tf.reduce_mean(sequence_distance),
             "max sequence distance": tf.reduce_max(sequence_distance),
             "min sequence distance": tf.reduce_min(sequence_distance),
-            "mean clipped distance": tf.math.reduce_mean(clipped_sequence_distance),
+            # "mean clipped distance": tf.math.reduce_mean(clipped_sequence_distance),
         }
 
         return logs, priority
