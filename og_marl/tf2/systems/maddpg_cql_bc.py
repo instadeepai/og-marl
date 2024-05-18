@@ -51,12 +51,12 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         discount: float = 0.99,
         target_update_rate: float = 0.005,
         critic_learning_rate: float = 1e-3,
-        policy_learning_rate: float = 1e-3,
+        policy_learning_rate: float = 3e-4,
         add_agent_id_to_obs: bool = False,
         random_exploration_timesteps: int = 0,
         num_ood_actions: int = 10,  # CQL
         cql_weight: float = 5.0,  # CQL
-        cql_sigma: float = 0.2,  # CQL
+        cql_sigma: float = 0.3,  # CQL
     ):
         super().__init__(
             environment=environment,
@@ -351,14 +351,14 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         # joint_target_actions = tf.reshape(target_actions, (T, B, N * A)) # try online actions
 
         # Maybe recommpute actions after updating networks
-        online_actions = unroll_rnn(
-            self._policy_network,
+        target_actions = unroll_rnn(
+            self._target_policy_network,
             merge_batch_and_agent_dim_of_time_major_sequence(observations),
             merge_batch_and_agent_dim_of_time_major_sequence(resets),
         )
-        online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
+        target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
-        joint_target_actions = tf.reshape(online_actions, (T, B, N * A))
+        joint_target_actions = tf.reshape(target_actions, (T, B, N * A))
 
         ## Compute distance
         # distance = tf.reduce_mean(
@@ -366,7 +366,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         # )  # mean across action dim
 
         # Chebyshev
-        distance = tf.reduce_max(
+        distance = tf.reduce_sum(
             tf.abs(joint_target_actions - joint_replay_action), axis=-1
         )
 
@@ -374,7 +374,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         sequence_distance = tf.reduce_sum(distance, axis=0)  # try max, sum, mean or other
 
         ## Clipping
-        clipped_sequence_distance = tf.clip_by_value(sequence_distance, 0.1 * 20, 2.1 * 20) # make the min distance a hyper param, and max depends on the distance metric used and aggregation across time
+        clipped_sequence_distance = tf.clip_by_value(sequence_distance, 0.001 * 20, 4.1 * 20) # make the min distance a hyper param, and max depends on the distance metric used and aggregation across time
 
         ## Priority is 1/distance
         priority = 1 / clipped_sequence_distance
