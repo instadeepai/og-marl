@@ -46,6 +46,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         environment: BaseEnvironment,
         logger: BaseLogger,
         joint_action: str,
+        coef: float,
         linear_layer_dim: int = 64,
         recurrent_layer_dim: int = 64,
         discount: float = 0.99,
@@ -78,6 +79,8 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         self.joint_action = (
             joint_action  # How we construct the joint_action ("buffer", "online", "target")
         )
+
+        self.coef = coef
 
     def train_step(self, experience, trainer_step_ctr) -> Dict[str, Numeric]:
         trainer_step_ctr = tf.convert_to_tensor(trainer_step_ctr)
@@ -367,10 +370,10 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         # )  # mean across action dim
 
         # Chebyshev
-        distance = tf.reduce_sum(tf.abs(joint_target_actions - joint_replay_action), axis=-1)
+        distance = tf.reduce_mean(tf.abs(joint_target_actions - joint_replay_action), axis=-1)
 
         ## Aggregate across time
-        sequence_distance = tf.reduce_sum(distance, axis=0)  # try max, sum, mean or other
+        sequence_distance = tf.reduce_mean(distance, axis=0)  # try max, sum, mean or other
 
         ## Clipping
         # clipped_sequence_distance = tf.clip_by_value(
@@ -379,7 +382,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
 
         ## Priority is 1/distance
         # priority = 1 / clipped_sequence_distance
-        priority = tf.exp(-sequence_distance**2)
+        priority = tf.exp(-(self.coef * sequence_distance)**2)
 
         logs = {
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),

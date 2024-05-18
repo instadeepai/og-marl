@@ -31,7 +31,8 @@ flags.DEFINE_string("system", "maddpg+cql+bc", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
-flags.DEFINE_float("priority_exponent", 0.0, "Number of training steps.")
+flags.DEFINE_float("priority_exponent", 0.6, "Number of training steps.")
+flags.DEFINE_float("coef", 1.0, "Coef")
 flags.DEFINE_string("joint_action", "buffer", "Type of joint action to send to critic.")
 
 
@@ -82,14 +83,14 @@ def main(_):
     #     save_to_wandb=True,
     # )
 
-    system_kwargs = {"add_agent_id_to_obs": True, "joint_action": "buffer"}
+    system_kwargs = {"add_agent_id_to_obs": True, "joint_action": "buffer", "coef": FLAGS.coef}
     if FLAGS.scenario == "pursuit":
         system_kwargs["observation_embedding_network"] = CNNEmbeddingNetwork()
 
     system = get_system(FLAGS.system, env, logger, **system_kwargs)
 
     system.train_offline(
-        buffer, max_trainer_steps=FLAGS.trainer_steps, json_writer=json_writer, evaluate_every=5000
+        buffer, max_trainer_steps=FLAGS.trainer_steps, json_writer=json_writer, evaluate_every=2000
     )
 
 
