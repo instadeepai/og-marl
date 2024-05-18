@@ -26,12 +26,12 @@ set_growing_gpu_memory()
 FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "mamujoco", "Environment name.")
 flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
-flags.DEFINE_string("dataset", "omar_medium_replay", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
+flags.DEFINE_string("dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
 flags.DEFINE_string("system", "maddpg+cql+bc", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
-flags.DEFINE_float("priority_exponent", 0.0, "Number of training steps.")
+flags.DEFINE_float("priority_exponent", 0.9, "Number of training steps.")
 flags.DEFINE_string("joint_action", "buffer", "Type of joint action to send to critic.")
 
 

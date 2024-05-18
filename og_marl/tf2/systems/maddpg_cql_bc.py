@@ -77,13 +77,103 @@ class MADDPGCQLBCSystem(MADDPGSystem):
 
         self.joint_action = joint_action # How we construct the joint_action ("buffer", "online", "target")
 
+    def priorities_step(self, experience) -> Dict[str, Numeric]:
+        logs = self._tf_priorities_step(experience)
+        return logs
+    
+    @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
+    def _tf_priorities_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
+        # Unpack the batch
+        observations = experience["observations"]  # (B,T,N,O)
+        actions = experience["actions"]  # (B,T,N,A)
+        env_states = experience["infos"]["state"]  # (B,T,S)
+        rewards = experience["rewards"]  # (B,T,N)
+        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
+        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
+
+        # When to reset the RNN hidden state
+        resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
+
+        # Get dims
+        B, T, N = actions.shape[:3]
+
+        # Maybe add agent ids to observation
+        if self._add_agent_id_to_obs:
+            observations = batch_concat_agent_id_to_obs(observations)
+
+        # Make time-major
+        observations = switch_two_leading_dims(observations)
+        replay_actions = switch_two_leading_dims(actions)
+        rewards = switch_two_leading_dims(rewards)
+        terminals = switch_two_leading_dims(terminals)
+        env_states = switch_two_leading_dims(env_states)
+        resets = switch_two_leading_dims(resets)
+
+        # Unroll target policy
+        target_actions = unroll_rnn(
+            self._target_policy_network,
+            merge_batch_and_agent_dim_of_time_major_sequence(observations),
+            merge_batch_and_agent_dim_of_time_major_sequence(resets),
+        )
+        target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
+
+        ### Compute new replay priorities
+        A = replay_actions.shape[-1]
+        joint_replay_action = tf.reshape(replay_actions, (T, B, N * A))
+
+        # Maybe recommpute actions after updating networks
+        # online_actions = unroll_rnn(
+        #     self._policy_network,
+        #     merge_batch_and_agent_dim_of_time_major_sequence(observations),
+        #     merge_batch_and_agent_dim_of_time_major_sequence(resets),
+        # )
+        # online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
+
+        joint_target_actions = tf.reshape(target_actions, (T, B, N * A))
+
+        ## Compute distance
+        # distance = tf.reduce_mean(
+        #     (joint_target_actions - joint_replay_action) ** 2, axis=-1 # try Chebyshev Distance, Euclidean Distance, Manhattan Distance
+        # )  # mean across action dim
+
+        # Chebyshev
+        distance = tf.reduce_max(
+            tf.abs(joint_target_actions - joint_replay_action), axis=-1
+        )
+        
+        # Gaussian
+        # distance = tf.exp(-tf.reduce_sum((joint_target_actions - joint_replay_action) ** 2, axis=-1))
+
+        ## Aggregate across time
+        sequence_distance = tf.reduce_sum(distance, axis=0)  # try max, sum, mean or other
+
+        ## Clipping
+        clipped_sequence_distance = tf.clip_by_value(sequence_distance, 0.1 * 20, 2.1 * 20) # make the min distance a hyper param, and max depends on the distance metric used and aggregation across time
+
+        ## Priority is 1/distance
+        priority = 1 / clipped_sequence_distance
+
+        logs = {
+            "Max Priority": tf.reduce_max(priority),
+            "Mean Priority": tf.reduce_mean(priority),
+            "Min Priority": tf.reduce_min(priority),
+            "mean action distance": tf.reduce_mean(distance),
+            "max action distance": tf.reduce_max(distance),
+            "min action distance": tf.reduce_min(distance),
+            "mean sequence distance": tf.reduce_mean(sequence_distance),
+            "max sequence distance": tf.reduce_max(sequence_distance),
+            "min sequence distance": tf.reduce_min(sequence_distance),
+            "mean clipped distance": tf.math.reduce_mean(clipped_sequence_distance),
+        }
+        return logs, priority
+
 
     def train_step(self, experience, trainer_step_ctr) -> Dict[str, Numeric]:
         trainer_step_ctr = tf.convert_to_tensor(trainer_step_ctr)
 
-        logs, new_priorities = self._tf_train_step(experience, trainer_step_ctr)
+        logs = self._tf_train_step(experience, trainer_step_ctr)
 
-        return logs, new_priorities  # type: ignore
+        return logs #, new_priorities  # type: ignore
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, experience: Dict[str, Any], train_step) -> Dict[str, Numeric]:
@@ -343,57 +433,11 @@ class MADDPGCQLBCSystem(MADDPGSystem):
 
         del tape
 
-        ### Compute new replay priorities
-        A = replay_actions.shape[-1]
-        joint_replay_action = tf.reshape(replay_actions, (T, B, N * A))
-
-        ## Choose target joint action
-        # joint_target_actions = tf.reshape(target_actions, (T, B, N * A)) # try online actions
-
-        # Maybe recommpute actions after updating networks
-        online_actions = unroll_rnn(
-            self._policy_network,
-            merge_batch_and_agent_dim_of_time_major_sequence(observations),
-            merge_batch_and_agent_dim_of_time_major_sequence(resets),
-        )
-        online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
-
-        joint_target_actions = tf.reshape(online_actions, (T, B, N * A))
-
-        ## Compute distance
-        # distance = tf.reduce_mean(
-        #     (joint_target_actions - joint_replay_action) ** 2, axis=-1 # try Chebyshev Distance, Euclidean Distance, Manhattan Distance
-        # )  # mean across action dim
-
-        # Chebyshev
-        distance = tf.reduce_max(
-            tf.abs(joint_target_actions - joint_replay_action), axis=-1
-        )
-
-        ## Aggregate across time
-        sequence_distance = tf.reduce_sum(distance, axis=0)  # try max, sum, mean or other
-
-        ## Clipping
-        clipped_sequence_distance = tf.clip_by_value(sequence_distance, 0.1 * 20, 2.1 * 20) # make the min distance a hyper param, and max depends on the distance metric used and aggregation across time
-
-        ## Priority is 1/distance
-        priority = 1 / clipped_sequence_distance
-
         logs = {
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),
             "Mean Critic Loss": (critic_loss),
             "Policy Loss": policy_loss,
             # "BC Loss": bc_loss,
-            "Max Priority": tf.reduce_max(priority),
-            "Mean Priority": tf.reduce_mean(priority),
-            "Min Priority": tf.reduce_min(priority),
-            "mean action distance": tf.reduce_mean(distance),
-            "max action distance": tf.reduce_max(distance),
-            "min action distance": tf.reduce_min(distance),
-            "mean sequence distance": tf.reduce_mean(sequence_distance),
-            "max sequence distance": tf.reduce_max(sequence_distance),
-            "min sequence distance": tf.reduce_min(sequence_distance),
-            "mean clipped distance": tf.math.reduce_mean(clipped_sequence_distance),
         }
 
-        return logs, priority
+        return logs #, priority

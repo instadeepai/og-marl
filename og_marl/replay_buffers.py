@@ -121,6 +121,7 @@ class PrioritisedFlashbaxReplayBuffer:
         sequence_length: int,
         max_size: int = 50_000,
         batch_size: int = 32,
+        big_batch_size: int = 1024,
         sample_period: int = 1,
         seed: int = 42,
         priority_exponent=0.6,
@@ -128,6 +129,7 @@ class PrioritisedFlashbaxReplayBuffer:
         self._sequence_length = sequence_length
         self._max_size = max_size
         self._batch_size = batch_size
+        self._big_batch_size = big_batch_size
         self._priority_exponent = priority_exponent
         # Flashbax buffer
         self._vault_replay_buffer = fbx.make_trajectory_buffer(
@@ -156,6 +158,22 @@ class PrioritisedFlashbaxReplayBuffer:
             donate_argnums=0,
         )
 
+        self._replay_buffer_flat = fbx.make_prioritised_trajectory_buffer(
+            add_batch_size=1,
+            sample_batch_size=self._big_batch_size,  # todo
+            sample_sequence_length=sequence_length,
+            period=sample_period,
+            min_length_time_axis=1,
+            max_size=max_size,
+            priority_exponent=0.0,
+            device="gpu",
+        )
+        self._buffer_sample_fn_flat = jax.jit(self._replay_buffer_flat.sample)
+        self._buffer_add_fn_flat = jax.jit(self._replay_buffer_flat.add)
+        self._buffer_set_priorities_fn_flat = jax.jit(
+            self._replay_buffer_flat.set_priorities,
+            donate_argnums=0,
+        )
         self._buffer_state: PrioritisedTrajectoryBufferState = None
         self._rng_key = jax.random.PRNGKey(seed)
 
@@ -195,6 +213,11 @@ class PrioritisedFlashbaxReplayBuffer:
         self._rng_key, sample_key = jax.random.split(self._rng_key, 2)
         batch = self._buffer_sample_fn(self._buffer_state, sample_key)
         return batch  # type: ignore
+
+    def sample_flat(self) -> Experience:
+        self._rng_key, sample_key = jax.random.split(self._rng_key, 2)
+        batch = self._buffer_sample_fn_flat(self._buffer_state, sample_key)
+        return batch
 
     def update_priorities(self, indices, priorities):
         self._buffer_state = self._buffer_set_priorities_fn(
@@ -262,5 +285,22 @@ class PrioritisedFlashbaxReplayBuffer:
         )
 
         self._uniform_buffer_sample_fn = jax.jit(self._replay_buffer.sample)
+        
+        self._replay_buffer_flat = fbx.make_prioritised_trajectory_buffer(
+            add_batch_size=1,
+            sample_batch_size=self._big_batch_size,
+            sample_sequence_length=self._sequence_length,
+            period=1,
+            min_length_time_axis=1,
+            max_size=self._vault_buffer_state.experience["truncations"].shape[1] + 1,
+            priority_exponent=0.0,
+            device="gpu",
+        )
+        self._buffer_sample_fn_flat = jax.jit(self._replay_buffer_flat.sample)
+        self._buffer_add_fn_flat = jax.jit(self._replay_buffer_flat.add)
+        self._buffer_set_priorities_fn_flat = jax.jit(
+            self._replay_buffer_flat.set_priorities,
+            donate_argnums=0,
+        )
 
         return True

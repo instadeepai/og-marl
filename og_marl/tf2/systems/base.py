@@ -205,24 +205,19 @@ class BaseMARLSystem:
                     )
 
             start_time = time.time()
-            batch = replay_buffer.sample()
+            data_batch = replay_buffer.sample()
             end_time = time.time()
             time_to_sample = end_time - start_time
 
             start_time = time.time()
-            train_logs = self.train_step(batch.experience, trainer_step_ctr)
-                
-
-            if isinstance(train_logs, tuple):
-                train_logs, new_priorities =  train_logs
-            else:
-                new_priorities = None
+            train_logs = self.train_step(data_batch.experience, trainer_step_ctr)
             end_time = time.time()
             time_train_step = end_time - start_time
 
             start_time = time.time()
-            if new_priorities is not None:
-                replay_buffer.update_priorities(batch.indices, new_priorities)
+            distance_batch = replay_buffer.sample_flat()
+            distance_logs, new_priorities = self.priorities_step(distance_batch.experience)
+            replay_buffer.update_priorities(distance_batch.indices, new_priorities)
             end_time = time.time()
             time_priority = end_time - start_time
 
@@ -230,6 +225,7 @@ class BaseMARLSystem:
 
             logs = {
                 **train_logs,
+                **distance_logs,
                 "Trainer Steps": trainer_step_ctr,
                 "Time to Sample": time_to_sample,
                 "Time for Train Step": time_train_step,
@@ -267,4 +263,7 @@ class BaseMARLSystem:
         raise NotImplementedError
 
     def train_step(self, batch: Experience) -> Dict[str, Numeric]:
+        raise NotImplementedError
+
+    def priorities_step(self, batch: Experience) -> Dict[str, Numeric]:
         raise NotImplementedError
