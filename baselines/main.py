@@ -32,7 +32,7 @@ flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
 flags.DEFINE_float("priority_exponent", 0.6, "Number of training steps.")
-flags.DEFINE_float("coef", 1.0, "Coef")
+flags.DEFINE_float("coef", 2.0, "Coef")
 flags.DEFINE_string("joint_action", "buffer", "Type of joint action to send to critic.")
 
 
@@ -90,7 +90,7 @@ def main(_):
     system = get_system(FLAGS.system, env, logger, **system_kwargs)
 
     system.train_offline(
-        buffer, max_trainer_steps=FLAGS.trainer_steps, json_writer=json_writer, evaluate_every=2000
+        buffer, max_trainer_steps=FLAGS.trainer_steps, json_writer=json_writer, evaluate_every=5000
     )
 
 
