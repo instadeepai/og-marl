@@ -51,12 +51,12 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         discount: float = 0.99,
         target_update_rate: float = 0.005,
         critic_learning_rate: float = 1e-3,
-        policy_learning_rate: float = 1e-3,
+        policy_learning_rate: float = 3e-4,
         add_agent_id_to_obs: bool = False,
         random_exploration_timesteps: int = 0,
         num_ood_actions: int = 10,  # CQL
         cql_weight: float = 5.0,  # CQL
-        cql_sigma: float = 0.2,  # CQL
+        cql_sigma: float = 0.3,  # CQL
     ):
         super().__init__(
             environment=environment,
@@ -137,21 +137,15 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         # )  # mean across action dim
 
         # Chebyshev
-        distance = tf.reduce_max(
+        distance = tf.reduce_mean(
             tf.abs(joint_target_actions - joint_replay_action), axis=-1
         )
-        
-        # Gaussian
-        # distance = tf.exp(-tf.reduce_sum((joint_target_actions - joint_replay_action) ** 2, axis=-1))
 
-        ## Aggregate across time
-        sequence_distance = tf.reduce_sum(distance, axis=0)  # try max, sum, mean or other
-
-        ## Clipping
-        clipped_sequence_distance = tf.clip_by_value(sequence_distance, 0.1 * 20, 2.1 * 20) # make the min distance a hyper param, and max depends on the distance metric used and aggregation across time
+        # Aggregate across time
+        sequence_distance = tf.reduce_mean(distance, axis=0)  # try max, sum, mean or other
 
         ## Priority is 1/distance
-        priority = 1 / clipped_sequence_distance
+        priority = tf.exp(-(1.2*sequence_distance)**2)
 
         logs = {
             "Max Priority": tf.reduce_max(priority),
@@ -163,8 +157,8 @@ class MADDPGCQLBCSystem(MADDPGSystem):
             "mean sequence distance": tf.reduce_mean(sequence_distance),
             "max sequence distance": tf.reduce_max(sequence_distance),
             "min sequence distance": tf.reduce_min(sequence_distance),
-            "mean clipped distance": tf.math.reduce_mean(clipped_sequence_distance),
         }
+
         return logs, priority
 
 

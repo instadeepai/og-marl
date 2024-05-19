@@ -30,8 +30,9 @@ flags.DEFINE_string("dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' 
 flags.DEFINE_string("system", "maddpg+cql+bc", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
+flags.DEFINE_integer("big_batch_size", 10000, "Big batch size.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
-flags.DEFINE_float("priority_exponent", 0.9, "Number of training steps.")
+flags.DEFINE_float("priority_exponent", 0.99, "Number of training steps.")
 flags.DEFINE_string("joint_action", "buffer", "Type of joint action to send to critic.")
 
 
@@ -53,6 +54,7 @@ def main(_):
             sample_period=10,
             seed=FLAGS.seed,
             priority_exponent=FLAGS.priority_exponent,
+            big_batch_size=FLAGS.big_batch_size
         )
     else:
         buffer = FlashbaxReplayBuffer(sequence_length=20, sample_period=10, batch_size=FLAGS.batch_size, seed=FLAGS.seed)

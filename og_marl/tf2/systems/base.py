@@ -214,14 +214,18 @@ class BaseMARLSystem:
             end_time = time.time()
             time_train_step = end_time - start_time
 
-            start_time = time.time()
-            distance_batch = replay_buffer.sample_flat()
-            distance_logs, new_priorities = self.priorities_step(distance_batch.experience)
-            replay_buffer.update_priorities(distance_batch.indices, new_priorities)
-            end_time = time.time()
-            time_priority = end_time - start_time
+            if trainer_step_ctr % 10 == 0:
+                start_time = time.time()
+                distance_batch = replay_buffer.sample_flat()
+                distance_logs, new_priorities = self.priorities_step(distance_batch.experience)
+                replay_buffer.update_priorities(distance_batch.indices, new_priorities)
+                end_time = time.time()
+                time_priority = end_time - start_time
+                distance_logs["Priority Update Time"] = time_priority
+            else: 
+                distance_logs = {}
 
-            train_steps_per_second = 1 / (time_train_step + time_to_sample + time_priority)
+            train_steps_per_second = 1 / (time_train_step + time_to_sample)
 
             logs = {
                 **train_logs,
@@ -230,7 +234,6 @@ class BaseMARLSystem:
                 "Time to Sample": time_to_sample,
                 "Time for Train Step": time_train_step,
                 "Train Steps Per Second": train_steps_per_second,
-                "Priority Update Time": time_priority,
             }
 
             self._logger.write(logs)
