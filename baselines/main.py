@@ -26,12 +26,15 @@ set_growing_gpu_memory()
 FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "mamujoco", "Environment name.")
 flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
-flags.DEFINE_string("dataset", "omar_medium_replay", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
+flags.DEFINE_string(
+    "dataset", "omar_medium_replay", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' "
+)
 flags.DEFINE_string("system", "maddpg+cql+bc", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
-flags.DEFINE_float("priority_exponent", 0.6, "Number of training steps.")
+flags.DEFINE_float("priority_exponent", 0.99, "Number of training steps.")
+flags.DEFINE_float("clip_min", 0.01, "Number of training steps.")
 flags.DEFINE_float("coef", 2.0, "Coef")
 flags.DEFINE_string("joint_action", "buffer", "Type of joint action to send to critic.")
 
@@ -56,7 +59,9 @@ def main(_):
             priority_exponent=FLAGS.priority_exponent,
         )
     else:
-        buffer = FlashbaxReplayBuffer(sequence_length=20, sample_period=10, batch_size=FLAGS.batch_size, seed=FLAGS.seed)
+        buffer = FlashbaxReplayBuffer(
+            sequence_length=20, sample_period=10, batch_size=FLAGS.batch_size, seed=FLAGS.seed
+        )
 
     download_and_unzip_vault(FLAGS.env, FLAGS.scenario)
 
@@ -83,7 +88,12 @@ def main(_):
     #     save_to_wandb=True,
     # )
 
-    system_kwargs = {"add_agent_id_to_obs": True, "joint_action": "buffer", "coef": FLAGS.coef}
+    system_kwargs = {
+        "add_agent_id_to_obs": True,
+        "joint_action": "buffer",
+        "coef": FLAGS.coef,
+        "clip_min": FLAGS.clip_min,
+    }
     if FLAGS.scenario == "pursuit":
         system_kwargs["observation_embedding_network"] = CNNEmbeddingNetwork()
 

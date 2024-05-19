@@ -52,12 +52,13 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         discount: float = 0.99,
         target_update_rate: float = 0.005,
         critic_learning_rate: float = 1e-3,
-        policy_learning_rate: float = 3e-4,
+        policy_learning_rate: float = 1e-3,
         add_agent_id_to_obs: bool = False,
         random_exploration_timesteps: int = 0,
         num_ood_actions: int = 10,  # CQL
         cql_weight: float = 5.0,  # CQL
-        cql_sigma: float = 0.3,  # CQL
+        cql_sigma: float = 0.2,  # CQL
+        clip_min: float = 0.01,
     ):
         super().__init__(
             environment=environment,
@@ -81,6 +82,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         )
 
         self.coef = coef
+        self.clip_min = clip_min
 
     def train_step(self, experience, trainer_step_ctr) -> Dict[str, Numeric]:
         trainer_step_ctr = tf.convert_to_tensor(trainer_step_ctr)
@@ -355,13 +357,6 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         # joint_target_actions = tf.reshape(target_actions, (T, B, N * A)) # try online actions
 
         # Maybe recommpute actions after updating networks
-        target_actions = unroll_rnn(
-            self._target_policy_network,
-            merge_batch_and_agent_dim_of_time_major_sequence(observations),
-            merge_batch_and_agent_dim_of_time_major_sequence(resets),
-        )
-        target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
-
         joint_target_actions = tf.reshape(target_actions, (T, B, N * A))
 
         ## Compute distance
@@ -370,21 +365,21 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         # )  # mean across action dim
 
         # Chebyshev
-        distance = tf.reduce_mean(tf.abs(joint_target_actions - joint_replay_action), axis=-1)
+        distance = tf.reduce_sum(tf.abs(joint_target_actions - joint_replay_action), axis=-1)
 
         ## Aggregate across time
-        sequence_distance = tf.reduce_mean(distance, axis=0)  # try max, sum, mean or other
+        sequence_distance = tf.reduce_sum(distance, axis=0)  # try max, sum, mean or other
 
         ## Clipping
-        # clipped_sequence_distance = tf.clip_by_value(
-        #     sequence_distance, 0.001 * 20, 4.1 * 20
-        # )  # make the min distance a hyper param, and max depends on the distance metric used and aggregation across time
+        clipped_sequence_distance = tf.clip_by_value(
+            sequence_distance, self.clip_min * 8 * 20, 8 * 2 * 20
+        )  # make the min distance a hyper param, and max depends on the distance metric used and aggregation across time
 
         ## Priority is 1/distance
-        # priority = 1 / clipped_sequence_distance
-        priority = tf.exp(
-            -((self.coef * (tf.minimum(1 / 300000 * tf.cast(train_step, "float32"), 1.0)) * sequence_distance) ** 2)
-        )
+        priority = 1 / clipped_sequence_distance
+        # priority = tf.exp(
+        #     -((self.coef * (tf.minimum(1 / 300000 * tf.cast(train_step, "float32"), 1.0)) * sequence_distance) ** 2)
+        # )
 
         logs = {
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),
