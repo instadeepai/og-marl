@@ -75,12 +75,14 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         self._cql_weight = cql_weight
         self._cql_sigma = cql_sigma
 
-        self.joint_action = joint_action # How we construct the joint_action ("buffer", "online", "target")
+        self.joint_action = (
+            joint_action  # How we construct the joint_action ("buffer", "online", "target")
+        )
 
     def priorities_step(self, experience) -> Dict[str, Numeric]:
         logs = self._tf_priorities_step(experience)
         return logs
-    
+
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_priorities_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
@@ -137,15 +139,13 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         # )  # mean across action dim
 
         # Chebyshev
-        distance = tf.reduce_mean(
-            tf.abs(joint_target_actions - joint_replay_action), axis=-1
-        )
+        distance = tf.reduce_mean(tf.abs(joint_target_actions - joint_replay_action), axis=-1)
 
         # Aggregate across time
         sequence_distance = tf.reduce_mean(distance, axis=0)  # try max, sum, mean or other
 
         ## Priority is 1/distance
-        priority = tf.exp(-(1.2*sequence_distance)**2)
+        priority = tf.exp(-((2.0 * sequence_distance) ** 2))
 
         logs = {
             "Max Priority": tf.reduce_max(priority),
@@ -161,13 +161,12 @@ class MADDPGCQLBCSystem(MADDPGSystem):
 
         return logs, priority
 
-
     def train_step(self, experience, trainer_step_ctr) -> Dict[str, Numeric]:
         trainer_step_ctr = tf.convert_to_tensor(trainer_step_ctr)
 
         logs = self._tf_train_step(experience, trainer_step_ctr)
 
-        return logs #, new_priorities  # type: ignore
+        return logs  # , new_priorities  # type: ignore
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, experience: Dict[str, Any], train_step) -> Dict[str, Numeric]:
@@ -376,7 +375,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
             )
             online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
 
-            if self.joint_action == "buffer": # Normal MADDPG
+            if self.joint_action == "buffer":  # Normal MADDPG
                 qs_1 = self._critic_network_1(env_states, online_actions, replay_actions)
                 qs_2 = self._critic_network_2(env_states, online_actions, replay_actions)
             elif self.joint_action == "online":
@@ -434,4 +433,4 @@ class MADDPGCQLBCSystem(MADDPGSystem):
             # "BC Loss": bc_loss,
         }
 
-        return logs #, priority
+        return logs  # , priority

@@ -222,7 +222,7 @@ class BaseMARLSystem:
                 end_time = time.time()
                 time_priority = end_time - start_time
                 distance_logs["Priority Update Time"] = time_priority
-            else: 
+            else:
                 distance_logs = {}
 
             train_steps_per_second = 1 / (time_train_step + time_to_sample)
