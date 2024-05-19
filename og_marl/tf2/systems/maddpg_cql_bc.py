@@ -145,7 +145,7 @@ class MADDPGCQLBCSystem(MADDPGSystem):
         sequence_distance = tf.reduce_mean(distance, axis=0)  # try max, sum, mean or other
 
         ## Priority is 1/distance
-        priority = tf.exp(-((2.0 * sequence_distance) ** 2))
+        priority = tf.exp(-((1.2 * sequence_distance) ** 2))
 
         logs = {
             "Max Priority": tf.reduce_max(priority),
