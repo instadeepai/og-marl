@@ -35,11 +35,13 @@ flags.DEFINE_string("env", "mamujoco", "Environment name.")
 flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
 flags.DEFINE_string("dataset", "Good", "Dataset type.")
 flags.DEFINE_string("system", "maddpg", "System name.")
-flags.DEFINE_string("joint_action", "online", "")
+flags.DEFINE_string("joint_action", "buffer", "")
 flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
-flags.DEFINE_float("priority_exponent", 0.6, "Priority exponent")
+flags.DEFINE_float("priority_exponent", 0.99, "Priority exponent")
+flags.DEFINE_float("gaussian_steepness", 2, "")
 flags.DEFINE_integer("prioritised_batch_size", 256, "")
 flags.DEFINE_integer("uniform_batch_size", 1024, "")
+flags.DEFINE_integer("update_priorities_every", 1, "")
 flags.DEFINE_integer("seed", 42, "Seed.")
 
 class TransitionBuffer:
@@ -52,7 +54,7 @@ class TransitionBuffer:
         rel_dir: str = "vaults",
         prioritised_batch_size=256,
         uniform_batch_size=1024,
-        priority_exponent=0.6,
+        priority_exponent=0.99,
         seed=42
     ):
         self._rng_key = jax.random.PRNGKey(seed)
@@ -193,9 +195,11 @@ class FFMADDPG:
         target_update_rate=0.05,
         critic_learning_rate=1e-3,
         policy_learning_rate=1e-3,
+        update_priorities_every=None,
         joint_action="buffer",
         bc_reg=False,
-        cql_reg=False
+        cql_reg=False,
+        gaussian_steepness=1
     ):
         self.env = env
         self.buffer = buffer
@@ -236,6 +240,8 @@ class FFMADDPG:
         self.cql_reg = cql_reg
         self.joint_action = joint_action
         self.discount = 0.99
+        self.update_priorities_every = update_priorities_every
+        self.gaussian_steepness = gaussian_steepness
 
     @tf.function(jit_compile=True)
     def select_actions(self, observations):
@@ -252,9 +258,37 @@ class FFMADDPG:
             actions[agent] = self.policy_network(agent_observation)[0] # unbatch
 
         return actions
+    
+    @tf.function(jit_compile=True)
+    def compute_new_priorities(self, experience):
+        observations = experience.first["observations"]  # (B,N,O)
+        actions = experience.first["actions"]  # (B,N,A)
+
+        N,A = actions.shape[-2:]
+
+        observations = batch_concat_agent_id_to_obs(observations)
+
+        target_actions = self.target_policy_network(observations)
+
+        distance = tf.reduce_mean(tf.reduce_mean(tf.abs(actions - target_actions), axis=-1), axis=-1) # L1
+
+        priority = tf.exp(-(self.gaussian_steepness * distance)**2)
+
+        logs = {
+            "Max Priority": tf.reduce_max(priority),
+            "Mean Priority": tf.reduce_mean(priority),
+            "Min Priority": tf.reduce_min(priority),
+            "STD Priority": tf.math.reduce_std(priority),
+            "Mean action distance": tf.reduce_mean(distance),
+            "Max action distance": tf.reduce_max(distance),
+            "Min action distance": tf.reduce_min(distance),
+            "STD action distance": tf.math.reduce_std(distance)
+        }
+
+        return logs, priority
 
     @tf.function(jit_compile=True)
-    def _tf_train_step(self, experience):
+    def train_step(self, experience):
         # Unpack the batch
         observations = experience.first["observations"]  # (B,N,O)
         next_observations = experience.second["observations"] # (B,N,O)
@@ -314,12 +348,10 @@ class FFMADDPG:
                 # BC Reg #
                 ##########
 
-                bc_lambda = (2.0/tf.reduce_mean(tf.abs(tf.stop_gradient(policy_qs))))
+                bc_lambda = (4.0/tf.reduce_mean(tf.abs(tf.stop_gradient(policy_qs))))
                 policy_loss =  tf.reduce_mean((actions - online_actions)**2) - bc_lambda * tf.reduce_mean(policy_qs) # + 1e-3 * tf.reduce_mean(online_actions**2)
             else:
                 policy_loss = -tf.reduce_mean(policy_qs)
-
-
 
             ###############
             # Critic Loss #
@@ -446,27 +478,27 @@ def train_offline(env, system, buffer, logger, max_trainer_steps=1e6, evaluate_e
             time_to_sample = end_time - start_time
 
             start_time = time.time()
-            train_logs = system._tf_train_step(data_batch.experience)
+            train_logs = system.train_step(data_batch.experience)
             end_time = time.time()
             time_train_step = end_time - start_time
 
             # TODO
-            # if trainer_step_ctr % 1 == 0:
-            #     start_time = time.time()
-            #     distance_batch = buffer.uniform_sample()
-            #     distance_logs, new_priorities = system.priorities_step(distance_batch.experience)
-            #     replay_buffer.update_priorities(distance_batch.indices, new_priorities)
-            #     end_time = time.time()
-            #     time_priority = end_time - start_time
-            #     distance_logs["Priority Update Time"] = time_priority
-            # else:
-            #     distance_logs = {}
+            if system.update_priorities_every is not None and trainer_step_ctr % system.update_priorities_every == 0:
+                start_time = time.time()
+                distance_batch = buffer.uniform_sample()
+                distance_logs, new_priorities = system.compute_new_priorities(distance_batch.experience)
+                buffer.update_priorities(distance_batch.indices, new_priorities)
+                end_time = time.time()
+                time_priority = end_time - start_time
+                distance_logs["Priority Update Time"] = time_priority
+            else:
+                distance_logs = {}
 
             train_steps_per_second = 1 / (time_train_step + time_to_sample)
 
             logs = {
                 **train_logs,
-                # **distance_logs,
+                **distance_logs,
                 "Trainer Steps": trainer_step_ctr,
                 "Time to Sample": time_to_sample,
                 "Time for Train Step": time_train_step,
@@ -502,7 +534,10 @@ def main(_):
 
     system_kwargs = {
         "bc_reg": True,
-        "joint_action": FLAGS.joint_action
+        "joint_action": FLAGS.joint_action,
+        "update_priorities_every":FLAGS.update_priorities_every if FLAGS.update_priorities_every > 0 else None,
+        "gaussian_steepness": FLAGS.gaussian_steepness
+
     }
 
     system = FFMADDPG(env, buffer, logger, **system_kwargs)
