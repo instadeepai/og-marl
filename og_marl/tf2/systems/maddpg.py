@@ -361,6 +361,4 @@ class MADDPGSystem(BaseMARLSystem):
         target_variables: Sequence[Variable],
     ) -> None:
         """Update the target networks."""
-        tau = self._target_update_rate
-        for src, dest in zip(online_variables, target_variables):
-            dest.assign(dest * (1.0 - tau) + src * tau)
+
