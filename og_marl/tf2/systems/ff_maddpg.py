@@ -32,7 +32,7 @@ set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "mamujoco", "Environment name.")
-flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
+flags.DEFINE_string("scenario", "2ant", "Environment scenario name.")
 flags.DEFINE_string("dataset", "Good", "Dataset type.")
 flags.DEFINE_string("system", "maddpg", "System name.")
 flags.DEFINE_string("joint_action", "buffer", "")
@@ -40,7 +40,7 @@ flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_float("priority_exponent", 0.99, "Priority exponent")
 flags.DEFINE_float("gaussian_steepness", 2, "")
 flags.DEFINE_integer("prioritised_batch_size", 256, "")
-flags.DEFINE_integer("uniform_batch_size", 1024, "")
+flags.DEFINE_integer("uniform_batch_size", 10024, "")
 flags.DEFINE_integer("update_priorities_every", 1, "")
 flags.DEFINE_integer("seed", 42, "Seed.")
 
@@ -348,7 +348,7 @@ class FFMADDPG:
                 # BC Reg #
                 ##########
 
-                bc_lambda = (4.0/tf.reduce_mean(tf.abs(tf.stop_gradient(policy_qs))))
+                bc_lambda = (2.0 / tf.reduce_mean(tf.abs(tf.stop_gradient(policy_qs))))
                 policy_loss =  tf.reduce_mean((actions - online_actions)**2) - bc_lambda * tf.reduce_mean(policy_qs) # + 1e-3 * tf.reduce_mean(online_actions**2)
             else:
                 policy_loss = -tf.reduce_mean(policy_qs)
@@ -483,7 +483,7 @@ def train_offline(env, system, buffer, logger, max_trainer_steps=1e6, evaluate_e
             time_train_step = end_time - start_time
 
             # TODO
-            if system.update_priorities_every is not None and trainer_step_ctr % system.update_priorities_every == 0:
+            if system.update_priorities_every is not None and trainer_step_ctr % system.update_priorities_every == 0 and trainer_step_ctr>10_000:
                 start_time = time.time()
                 distance_batch = buffer.uniform_sample()
                 distance_logs, new_priorities = system.compute_new_priorities(distance_batch.experience)
