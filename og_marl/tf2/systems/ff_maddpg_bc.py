@@ -557,7 +557,6 @@ def main(_):
 
     system_kwargs = {
         "bc_reg": True,
-        "joint_action": "buffer",
         "update_priorities_every": FLAGS.update_priorities_every
         if FLAGS.system == "maddpg+bc+per" else None,
         "gaussian_steepness": FLAGS.gaussian_steepness,
