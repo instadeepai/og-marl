@@ -335,27 +335,21 @@ class FFMADDPG:
             ###############
             # Policy Loss #
             ###############
+            
+            # Online policy
+            online_actions = self.policy_network(observations)
 
-            if train_step % 2 == 0:
+            # Evaluate action
+            policy_qs_1 = self.critic_network_1(env_states, online_actions, actions)
+            policy_qs_2 = self.critic_network_2(env_states, online_actions, actions)
+            policy_qs = tf.minimum(policy_qs_1, policy_qs_2)
 
-                # Online policy
-                online_actions = self.policy_network(observations)
-
-                # Evaluate action
-                policy_qs_1 = self.critic_network_1(env_states, online_actions, actions)
-                policy_qs_2 = self.critic_network_2(env_states, online_actions, actions)
-                policy_qs = tf.minimum(policy_qs_1, policy_qs_2)
-
-                if self.bc_reg:
-                    ##########
-                    # BC Reg #
-                    ##########
-                    bc_lambda = self.bc_alpha / tf.reduce_mean(tf.abs(tf.stop_gradient(policy_qs)))
-                    policy_loss = tf.reduce_mean((actions - online_actions) ** 2) - bc_lambda * tf.reduce_mean(policy_qs)  # + 1e-3 * tf.reduce_mean(online_actions**2)
-                else:
-                    policy_loss = -tf.reduce_mean(policy_qs)
-            else:
-                policy_loss = 0.0
+            if self.bc_reg:
+                ##########
+                # BC Reg #
+                ##########
+                bc_lambda = self.bc_alpha / tf.reduce_mean(tf.abs(tf.stop_gradient(policy_qs)))
+                policy_loss = tf.reduce_mean((actions - online_actions) ** 2) - bc_lambda * tf.reduce_mean(policy_qs)  # + 1e-3 * tf.reduce_mean(online_actions**2)
 
             ###############
             # Critic Loss #
