@@ -41,7 +41,7 @@ flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_float("priority_exponent", 0.99, "Priority exponent")
 flags.DEFINE_float("gaussian_steepness", 3.5, "")
 flags.DEFINE_float("bc_alpha", 2.5, "")
-flags.DEFINE_integer("prioritised_batch_size", 256, "")
+flags.DEFINE_integer("prioritised_batch_size", 1024, "")
 flags.DEFINE_integer("uniform_batch_size", 100000, "")
 flags.DEFINE_integer("update_priorities_every", 10, "")
 flags.DEFINE_integer("seed", 42, "Seed.")
@@ -195,7 +195,7 @@ class FFMADDPG:
         logger,
         target_update_rate=0.005,
         critic_learning_rate=1e-3,
-        policy_learning_rate=1e-3,
+        policy_learning_rate=3e-4,
         bc_alpha=2.5,
         update_priorities_every=None,
         joint_action="buffer",
@@ -234,8 +234,8 @@ class FFMADDPG:
         self.target_update_rate = target_update_rate
 
         # Optimizers
-        self.critic_optimizer = snt.optimizers.Adam(learning_rate=critic_learning_rate)
-        self.policy_optimizer = snt.optimizers.Adam(learning_rate=policy_learning_rate)
+        self.critic_optimizer = snt.optimizers.RMSProp(learning_rate=critic_learning_rate)
+        self.policy_optimizer = snt.optimizers.RMSProp(learning_rate=policy_learning_rate)
 
         # Offline Regularisers
         self.bc_reg = bc_reg
@@ -246,7 +246,7 @@ class FFMADDPG:
         self.priority_on_ramp = 150_000
         self.gaussian_steepness = gaussian_steepness
         self.bc_alpha = bc_alpha
-        self.num_ood_actions = 10
+        self.num_ood_actions = 20
         self.cql_sigma = 0.3
         self.cql_weight = 5
 
@@ -310,7 +310,7 @@ class FFMADDPG:
         env_states = experience.first["infos"]["state"]  # (B,S)
         next_env_states = experience.second["infos"]["state"]  # (B,S)
         rewards = experience.first["rewards"]  # (B,N)
-        terminals = tf.cast(experience.second["terminals"], "float32")  # (B,N)
+        terminals = tf.cast(experience.first["terminals"], "float32")  # (B,N)
 
         # Get dims
         B, N, A = actions.shape[:3]
@@ -322,9 +322,10 @@ class FFMADDPG:
 
         # Target policy
         determ_target_actions = self.target_policy_network(next_observations)
-        noise = tf.clip_by_value(tf.random.normal(determ_target_actions.shape, 0, 0.2), -0.5, 0.5)
-        target_actions = determ_target_actions + noise
-        target_actions = tf.clip_by_value(target_actions, -1, 1)
+        # noise = tf.clip_by_value(tf.random.normal(determ_target_actions.shape, 0, 0.2), -0.5, 0.5)
+        # target_actions = determ_target_actions + noise
+        # target_actions = tf.clip_by_value(target_actions, -1, 1)
+        target_actions = determ_target_actions
 
         # Target critics
         target_qs_1 = self.target_critic_network_1(next_env_states, target_actions, target_actions)
@@ -346,14 +347,14 @@ class FFMADDPG:
             # Unroll online policy
             online_actions = self.policy_network(observations)
 
-            if train_step % 2 == 0:
+            if train_step % 1 == 0:
 
                 if self.joint_action == "buffer":  # Normal MADDPG
                     other_agent_actions = actions
-                elif self.joint_action == "online":
-                    other_agent_actions = tf.stop_gradient(online_actions)
-                else:
-                    raise ValueError("Not valid joint actions.")
+                # elif self.joint_action == "online":
+                #     other_agent_actions = tf.stop_gradient(online_actions)
+                # else:
+                #     raise ValueError("Not valid joint actions.")
 
                 # Evaluate action
                 policy_qs_1 = self.critic_network_1(env_states, online_actions, other_agent_actions)
@@ -389,8 +390,6 @@ class FFMADDPG:
             critic_loss_1 = tf.reduce_mean(0.5 * (targets - qs_1) ** 2)
             critic_loss_2 = tf.reduce_mean(0.5 * (targets - qs_2) ** 2)
 
-            critic_loss = (critic_loss_1 + critic_loss_2) / 2.0
-
             ###########
             # CQL Reg #
             ###########
@@ -409,7 +408,7 @@ class FFMADDPG:
                 )  # next to batch dim
 
                 # Add noise to online and target actions
-                noise = tf.clip_by_value(tf.random.normal(repeat_actions.shape, 0, self.cql_sigma), -0.5, 0.5)
+                noise = tf.random.normal(repeat_actions.shape, 0, self.cql_sigma)
                 repeat_actions = repeat_actions + noise
                 repeat_next_actions = repeat_next_actions + noise
                 repeat_actions = tf.clip_by_value(repeat_actions, -1, 1)
@@ -438,10 +437,12 @@ class FFMADDPG:
                     self.critic_network_2(repeat_env_states, random_ood_actions, random_ood_actions) - random_ood_action_log_pi
                 )
 
-                # Actions near true actions
+                # Actions near online actions
+                mu=0.0
                 ood_actions_prob = (1 / (self.cql_sigma * tf.math.sqrt(2 * np.pi))) * tf.exp(
-                    -((noise) ** 2) / (2 * self.cql_sigma**2) # prob of sampling noise from gaussian mu=0, std=0.2
+                    -((noise - mu) ** 2) / (2 * self.cql_sigma**2)
                 )
+
                 ood_actions_log_prob = tf.math.log(
                     tf.reduce_prod(ood_actions_prob, axis=-1, keepdims=True)
                 )
@@ -504,6 +505,9 @@ class FFMADDPG:
                 critic_loss_2 += self.cql_weight * cql_loss_2
             else:
                 cql_loss_1, cql_loss_2 = 0.0, 0.0
+
+            # Combine critic losses
+            critic_loss = (critic_loss_1 + critic_loss_2) / 2.0
 
         # Update critics
         variables = (
@@ -686,13 +690,13 @@ def main(_):
     logger = WandbLogger(entity="off-the-grid-marl-team", project="ff-maddpg")
 
     system_kwargs = {
-        "bc_reg": True,
+        "bc_reg": False,
         "joint_action": FLAGS.joint_action,
         "update_priorities_every": FLAGS.update_priorities_every
         if FLAGS.system == "maddpg+bc+per" else None,
         "gaussian_steepness": FLAGS.gaussian_steepness,
         "bc_alpha": FLAGS.bc_alpha,
-        "cql_reg": False
+        "cql_reg": True
     }
 
     system = FFMADDPG(env, buffer, logger, **system_kwargs)

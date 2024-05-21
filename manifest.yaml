@@ -16,14 +16,14 @@ spec:
   command: wandb agent off-the-grid-marl-team/ff-maddpg/9l8gjqga
   types:
     Worker:
-      count: 4
+      count: 2
 
       resources:
         # 10-15 cpus for single process
         cpus: 3
         # mandatory (must be >= 2): RAM ratio wanted (in GB)
         # memory = cpus * ramRatio
-        ramRatio: 4
+        ramRatio: 3
         accelerators: 
           gpu:
             count: 1
