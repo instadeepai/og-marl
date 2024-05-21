@@ -35,11 +35,11 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "mamujoco", "Environment name.")
 flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
 flags.DEFINE_string("dataset", "Good", "Dataset type.")
-flags.DEFINE_string("system", "maddpg", "System name.")
+flags.DEFINE_string("system", "maddpg+bc+per", "System name.")
 flags.DEFINE_string("joint_action", "buffer", "")
 flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_float("priority_exponent", 0.99, "Priority exponent")
-flags.DEFINE_float("gaussian_steepness", 3, "")
+flags.DEFINE_float("gaussian_steepness", 3.5, "")
 flags.DEFINE_float("bc_alpha", 2.5, "")
 flags.DEFINE_integer("prioritised_batch_size", 256, "")
 flags.DEFINE_integer("uniform_batch_size", 100000, "")
@@ -261,7 +261,7 @@ class FFMADDPG:
         return actions
 
     @tf.function(jit_compile=True)
-    def compute_new_priorities(self, experience):
+    def compute_new_priorities(self, experience, trainer_step):
         observations = experience.first["observations"]  # (B,N,O)
         actions = experience.first["actions"]  # (B,N,A)
 
@@ -278,9 +278,10 @@ class FFMADDPG:
             tf.reduce_mean(tf.abs(actions - target_actions), axis=-1), axis=-1
         )  # L1
 
-        priority = tf.exp(-((self.gaussian_steepness * distance) ** 2))
+        priority_on_ramp = tf.minimum(1.0, trainer_step * (1/50_000))
+        priority = tf.exp(-((self.gaussian_steepness * priority_on_ramp * distance) ** 2))
 
-        priority = tf.clip_by_value(priority, 0.1, 1.)
+        priority = tf.clip_by_value(priority, 0.01, 1.)
 
         logs = {
             "Max Priority": tf.reduce_max(priority),
@@ -291,6 +292,7 @@ class FFMADDPG:
             "Max action distance": tf.reduce_max(distance),
             "Min action distance": tf.reduce_min(distance),
             "STD action distance": tf.math.reduce_std(distance),
+            "priority on ramp": priority_on_ramp
         }
 
         return logs, priority
@@ -487,6 +489,10 @@ def train_offline(
         end_time = time.time()
         time_to_sample = end_time - start_time
 
+        # Log sampled Priorities
+        indices = data_batch.indices
+        old_priorities = sum_tree.get(buffer._buffer_state.priority_state, indices)
+
         start_time = time.time()
         train_logs = system.train_step(data_batch.experience, tf.convert_to_tensor(trainer_step_ctr))
         end_time = time.time()
@@ -496,7 +502,7 @@ def train_offline(
         if (
             system.update_priorities_every is not None
             and trainer_step_ctr % system.update_priorities_every == 0
-            and trainer_step_ctr >= 0
+            and trainer_step_ctr >= 1000
         ):
 
             # Plot Priorities  
@@ -510,7 +516,7 @@ def train_offline(
 
             start_time = time.time()
             distance_batch = buffer.uniform_sample()
-            distance_logs, new_priorities = system.compute_new_priorities(distance_batch.experience)
+            distance_logs, new_priorities = system.compute_new_priorities(distance_batch.experience, tf.convert_to_tensor(trainer_step_ctr, "float32"))
             buffer.update_priorities(distance_batch.indices, new_priorities)
             end_time = time.time()
             time_priority = end_time - start_time
@@ -527,6 +533,10 @@ def train_offline(
             "Time to Sample": time_to_sample,
             "Time for Train Step": time_train_step,
             "Train Steps Per Second": train_steps_per_second,
+            "Mean Sampled Priorities": np.mean(old_priorities),
+            "Max Sampled Priorities": np.max(old_priorities),
+            "Min Sampled Priorities": np.min(old_priorities),
+            "STD Sampled Priorities": np.std(old_priorities),
         }
 
         logger.write(logs)
