@@ -15,13 +15,14 @@ from absl import app, flags
 import copy
 import time
 
-
 import jax
 import flashbax as fbx
+from flashbax.buffers import sum_tree
 from flashbax.vault import Vault
 import tensorflow as tf
 import sonnet as snt
 import numpy as np
+import matplotlib.pyplot as plt
 
 from og_marl.environments import get_environment
 from og_marl.loggers import WandbLogger
@@ -32,17 +33,17 @@ set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "mamujoco", "Environment name.")
-flags.DEFINE_string("scenario", "2ant", "Environment scenario name.")
+flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
 flags.DEFINE_string("dataset", "Good", "Dataset type.")
 flags.DEFINE_string("system", "maddpg", "System name.")
-flags.DEFINE_string("joint_action", "online", "")
+flags.DEFINE_string("joint_action", "buffer", "")
 flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_float("priority_exponent", 0.99, "Priority exponent")
-flags.DEFINE_float("gaussian_steepness", 2, "")
+flags.DEFINE_float("gaussian_steepness", 3, "")
 flags.DEFINE_float("bc_alpha", 2.5, "")
 flags.DEFINE_integer("prioritised_batch_size", 256, "")
-flags.DEFINE_integer("uniform_batch_size", 10024, "")
-flags.DEFINE_integer("update_priorities_every", 0, "")
+flags.DEFINE_integer("uniform_batch_size", 100000, "")
+flags.DEFINE_integer("update_priorities_every", 10, "")
 flags.DEFINE_integer("seed", 42, "Seed.")
 
 
@@ -269,12 +270,17 @@ class FFMADDPG:
         observations = batch_concat_agent_id_to_obs(observations)
 
         target_actions = self.target_policy_network(observations)
+        noise = tf.clip_by_value(tf.random.normal(target_actions.shape, 0, 0.2), -0.5, 0.5)
+        target_actions = target_actions + noise
+        target_actions = tf.clip_by_value(target_actions, -1, 1)
 
         distance = tf.reduce_mean(
             tf.reduce_mean(tf.abs(actions - target_actions), axis=-1), axis=-1
         )  # L1
 
         priority = tf.exp(-((self.gaussian_steepness * distance) ** 2))
+
+        priority = tf.clip_by_value(priority, 0.1, 1.)
 
         logs = {
             "Max Priority": tf.reduce_max(priority),
@@ -467,7 +473,7 @@ def evaluate(env, system, num_eval_episodes: int = 8):
 
 
 def train_offline(
-    env, system, buffer, logger, max_trainer_steps=1e6, evaluate_every=5000, num_eval_episodes=8
+    env, system, buffer, logger, max_trainer_steps=1e6, evaluate_every=5000, num_eval_episodes=4
 ):
     trainer_step_ctr = 0
     while trainer_step_ctr < max_trainer_steps:
@@ -490,8 +496,18 @@ def train_offline(
         if (
             system.update_priorities_every is not None
             and trainer_step_ctr % system.update_priorities_every == 0
-            and trainer_step_ctr > 10_000
+            and trainer_step_ctr >= 0
         ):
+
+            # Plot Priorities  
+            # if trainer_step_ctr % 500 == 0:
+            #     indices = jax.numpy.arange(buffer._buffer_state.current_index)
+            #     old_priorities = sum_tree.get(buffer._buffer_state.priority_state, indices)
+
+            #     plt.bar(indices[-256:], old_priorities[-256:])
+            #     plt.savefig("priorities.png")
+            #     plt.clf()
+
             start_time = time.time()
             distance_batch = buffer.uniform_sample()
             distance_logs, new_priorities = system.compute_new_priorities(distance_batch.experience)
@@ -542,8 +558,7 @@ def main(_):
         "bc_reg": True,
         "joint_action": FLAGS.joint_action,
         "update_priorities_every": FLAGS.update_priorities_every
-        if FLAGS.update_priorities_every > 0
-        else None,
+        if FLAGS.system == "maddpg+bc+per" else None,
         "gaussian_steepness": FLAGS.gaussian_steepness,
         "bc_alpha": FLAGS.bc_alpha
     }
