@@ -32,7 +32,6 @@ flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
 flags.DEFINE_float("priority_exponent", 0.99, "Number of training steps.")
 flags.DEFINE_float("gaussian_steepness", 4, "")
-flags.DEFINE_string("joint_action", "buffer", "Type of joint action to send to critic.")
 
 
 def main(_):
