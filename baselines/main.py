@@ -17,7 +17,6 @@ from og_marl.environments import get_environment
 from og_marl.loggers import WandbLogger
 from og_marl.offline_dataset import download_and_unzip_vault
 from og_marl.replay_buffers import FlashbaxReplayBuffer, PrioritisedFlashbaxReplayBuffer
-from og_marl.tf2.networks import CNNEmbeddingNetwork
 from og_marl.tf2.systems import get_system
 from og_marl.tf2.utils import set_growing_gpu_memory
 
@@ -27,12 +26,12 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "mamujoco", "Environment name.")
 flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
 flags.DEFINE_string("dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
-flags.DEFINE_string("system", "maddpg+cql+bc", "System name.")
+flags.DEFINE_string("system", "maddpg+cql+per", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
-flags.DEFINE_integer("big_batch_size", 10000, "Big batch size.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
 flags.DEFINE_float("priority_exponent", 0.99, "Number of training steps.")
+flags.DEFINE_float("gaussian_steepness", 4, "")
 flags.DEFINE_string("joint_action", "buffer", "Type of joint action to send to critic.")
 
 
@@ -47,14 +46,13 @@ def main(_):
 
     env = get_environment(FLAGS.env, FLAGS.scenario)
 
-    if FLAGS.system == "maddpg+cql+bc":
+    if FLAGS.system == "maddpg+cql+per":
         buffer = PrioritisedFlashbaxReplayBuffer(
             batch_size=FLAGS.batch_size,
             sequence_length=20,
             sample_period=10,
             seed=FLAGS.seed,
             priority_exponent=FLAGS.priority_exponent,
-            big_batch_size=FLAGS.big_batch_size,
         )
     else:
         buffer = FlashbaxReplayBuffer(
@@ -73,27 +71,15 @@ def main(_):
         return
 
     logger = WandbLogger(
-        entity="off-the-grid-marl-team", project="og-marl-baselines", config=config
+        entity="off-the-grid-marl-team", project="rec_maddpg", config=config
     )
 
-    json_writer = None  # JsonWriter(
-    #     "logs",
-    #     f"{FLAGS.system}",
-    #     f"{FLAGS.scenario}_{FLAGS.dataset}",
-    #     FLAGS.env,
-    #     FLAGS.seed,
-    #     file_name=f"{FLAGS.scenario}_{FLAGS.dataset}_{FLAGS.seed}.json",
-    #     save_to_wandb=True,
-    # )
-
-    system_kwargs = {"add_agent_id_to_obs": True, "joint_action": "buffer"}
-    if FLAGS.scenario == "pursuit":
-        system_kwargs["observation_embedding_network"] = CNNEmbeddingNetwork()
+    system_kwargs = {"add_agent_id_to_obs": True, "gaussian_steepness": FLAGS.gaussian_steepness}
 
     system = get_system(FLAGS.system, env, logger, **system_kwargs)
 
     system.train_offline(
-        buffer, max_trainer_steps=FLAGS.trainer_steps, json_writer=json_writer, evaluate_every=5000
+        buffer, max_trainer_steps=FLAGS.trainer_steps, evaluate_every=5000
     )
 
 
