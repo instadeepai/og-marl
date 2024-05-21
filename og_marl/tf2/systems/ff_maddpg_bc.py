@@ -128,10 +128,10 @@ class StateAndJointActionCritic(snt.Module):
 
         self._critic_network = snt.Sequential(
             [
-                snt.Linear(256),
-                tf.keras.layers.ReLU(),
-                snt.Linear(256),
-                tf.keras.layers.ReLU(),
+                snt.Linear(128),
+                tf.nn.relu,
+                snt.Linear(128),
+                tf.nn.relu,
                 snt.Linear(1),
             ]
         )
@@ -194,13 +194,11 @@ class FFMADDPG:
         buffer,
         logger,
         target_update_rate=0.005,
-        critic_learning_rate=3e-3,
+        critic_learning_rate=3e-4,
         policy_learning_rate=3e-4,
         bc_alpha=2.5,
         update_priorities_every=None,
-        joint_action="buffer",
         bc_reg=False,
-        cql_reg=False,
         gaussian_steepness=1,
     ):
         self.env = env
@@ -210,9 +208,9 @@ class FFMADDPG:
         # Policy network
         self.policy_network = snt.Sequential(
             [
-                snt.Linear(256),
+                snt.Linear(128),
                 tf.nn.relu,
-                snt.Linear(256),
+                snt.Linear(128),
                 tf.nn.relu,
                 snt.Linear(self.env._num_actions),
                 tf.nn.tanh,
@@ -239,16 +237,11 @@ class FFMADDPG:
 
         # Offline Regularisers
         self.bc_reg = bc_reg
-        self.cql_reg = cql_reg
-        self.joint_action = joint_action
         self.discount = 0.99
         self.update_priorities_every = update_priorities_every
         self.priority_on_ramp = 150_000
         self.gaussian_steepness = gaussian_steepness
         self.bc_alpha = bc_alpha
-        self.num_ood_actions = 10
-        self.cql_sigma = 0.2
-        self.cql_weight = 5
 
     @tf.function(jit_compile=True)
     def select_actions(self, observations):
@@ -285,7 +278,7 @@ class FFMADDPG:
         priority_on_ramp = tf.minimum(1.0, trainer_step * (1/self.priority_on_ramp))
         priority = tf.exp(-((self.gaussian_steepness * priority_on_ramp * distance) ** 2))
 
-        priority = tf.clip_by_value(priority, 0.01, 1.)
+        priority = tf.clip_by_value(priority, 0.001, 1.)
 
         logs = {
             "Max Priority": tf.reduce_max(priority),
@@ -343,21 +336,14 @@ class FFMADDPG:
             # Policy Loss #
             ###############
 
-            # Unroll online policy
-            online_actions = self.policy_network(observations)
-
             if train_step % 2 == 0:
 
-                if self.joint_action == "buffer":  # Normal MADDPG
-                    other_agent_actions = actions
-                # elif self.joint_action == "online":
-                #     other_agent_actions = tf.stop_gradient(online_actions)
-                # else:
-                #     raise ValueError("Not valid joint actions.")
+                # Online policy
+                online_actions = self.policy_network(observations)
 
                 # Evaluate action
-                policy_qs_1 = self.critic_network_1(env_states, online_actions, other_agent_actions)
-                policy_qs_2 = self.critic_network_2(env_states, online_actions, other_agent_actions)
+                policy_qs_1 = self.critic_network_1(env_states, online_actions, actions)
+                policy_qs_2 = self.critic_network_2(env_states, online_actions, actions)
                 policy_qs = tf.minimum(policy_qs_1, policy_qs_2)
 
                 if self.bc_reg:
@@ -388,122 +374,6 @@ class FFMADDPG:
             # Squared TD-error
             critic_loss_1 = tf.reduce_mean(0.5 * (targets - qs_1) ** 2)
             critic_loss_2 = tf.reduce_mean(0.5 * (targets - qs_2) ** 2)
-
-            ###########
-            # CQL Reg #
-            ###########
-
-            if self.cql_reg:
-
-                # Repeat all tensors num_ood_actions times and add  next to batch dim
-                repeat_actions = tf.stack(
-                    [online_actions] * self.num_ood_actions, axis=1
-                )  # next to batch dim
-                repeat_next_actions = tf.stack(
-                    [determ_target_actions] * self.num_ood_actions, axis=1
-                )  # next to batch dim
-                repeat_env_states = tf.stack(
-                    [env_states] * self.num_ood_actions, axis=1
-                )  # next to batch dim
-
-                # Add noise to online and target actions
-                noise = tf.random.normal(repeat_actions.shape, 0, self.cql_sigma)
-                repeat_actions = repeat_actions + noise
-                repeat_next_actions = repeat_next_actions + noise
-                repeat_actions = tf.clip_by_value(repeat_actions, -1, 1)
-                repeat_next_actions = tf.clip_by_value(repeat_next_actions, -1, 1)                
-
-                # Random Actions
-                random_ood_actions = tf.random.uniform(
-                    shape=repeat_actions.shape,
-                    minval=-1.0,
-                    maxval=1.0,
-                    dtype=repeat_actions.dtype,
-                )
-                random_ood_action_log_pi = tf.math.log(0.5 ** (random_ood_actions.shape[-1]))
-
-                # Merge cql dim into batch dim
-                noise = tf.reshape(noise, (-1, *noise.shape[2:]))
-                repeat_actions = tf.reshape(repeat_next_actions, (-1, *repeat_actions.shape[2:]))
-                repeat_next_actions = tf.reshape(repeat_next_actions, (-1, *repeat_next_actions.shape[2:]))
-                repeat_env_states = tf.reshape(repeat_env_states, (-1, *repeat_env_states.shape[2:]))
-                random_ood_actions = tf.reshape(random_ood_actions, (-1, *random_ood_actions.shape[2:]))
-
-                ood_qs_1 = (
-                    self.critic_network_1(repeat_env_states, random_ood_actions, random_ood_actions) - random_ood_action_log_pi
-                )
-                ood_qs_2 = (
-                    self.critic_network_2(repeat_env_states, random_ood_actions, random_ood_actions) - random_ood_action_log_pi
-                )
-
-                # Actions near online actions
-                mu=0.0
-                ood_actions_prob = (1 / (self.cql_sigma * tf.math.sqrt(2 * np.pi))) * tf.exp(
-                    -((noise - mu) ** 2) / (2 * self.cql_sigma**2)
-                )
-
-                ood_actions_log_prob = tf.math.log(
-                    tf.reduce_prod(ood_actions_prob, axis=-1, keepdims=True)
-                )
-
-                current_ood_qs_1 = (
-                    self.critic_network_1(
-                        repeat_env_states,
-                        repeat_actions,
-                        repeat_actions,
-                    )
-                    - ood_actions_log_prob
-                )
-                current_ood_qs_2 = (
-                    self.critic_network_2(
-                        repeat_env_states,
-                        repeat_actions,
-                        repeat_actions,
-                    )
-                    - ood_actions_log_prob
-                )
-
-                next_current_ood_qs_1 = (
-                    self.critic_network_1(
-                        repeat_env_states,
-                        repeat_next_actions,
-                        repeat_next_actions,
-                    )
-                    - ood_actions_log_prob
-                )
-                next_current_ood_qs_2 = (
-                    self.critic_network_2(
-                        repeat_env_states,
-                        repeat_next_actions,
-                        repeat_next_actions,
-                    )
-                    - ood_actions_log_prob
-                )
-
-                # Expand cql dim again
-                ood_qs_1 = tf.reshape(ood_qs_1, (B, self.num_ood_actions, N))
-                ood_qs_2 = tf.reshape(ood_qs_2, (B, self.num_ood_actions, N))
-                current_ood_qs_1 = tf.reshape(current_ood_qs_1, (B, self.num_ood_actions, N))
-                current_ood_qs_2 = tf.reshape(current_ood_qs_2, (B, self.num_ood_actions, N))
-                next_current_ood_qs_1 = tf.reshape(next_current_ood_qs_1, (B, self.num_ood_actions, N))
-                next_current_ood_qs_2 = tf.reshape(next_current_ood_qs_2, (B, self.num_ood_actions, N))
-
-
-                # Concat along cql dim
-                all_ood_qs_1 = tf.concat((ood_qs_1, current_ood_qs_1, next_current_ood_qs_1), axis=1)
-                all_ood_qs_2 = tf.concat((ood_qs_2, current_ood_qs_2, next_current_ood_qs_2), axis=1)
-
-                cql_loss_1 = tf.reduce_mean(
-                    tf.reduce_logsumexp(all_ood_qs_1, axis=1, keepdims=False)
-                ) - tf.reduce_mean(qs_1)
-                cql_loss_2 = tf.reduce_mean(
-                    tf.reduce_logsumexp(all_ood_qs_2, axis=1, keepdims=False)
-                ) - tf.reduce_mean(qs_2)
-
-                critic_loss_1 += self.cql_weight * cql_loss_1
-                critic_loss_2 += self.cql_weight * cql_loss_2
-            else:
-                cql_loss_1, cql_loss_2 = 0.0, 0.0
 
             # Combine critic losses
             critic_loss = (critic_loss_1 + critic_loss_2) / 2.0
@@ -543,8 +413,6 @@ class FFMADDPG:
         logs = {
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),
             "Mean Critic Loss": critic_loss,
-            "Mean CQL Loss": (cql_loss_1 + cql_loss_2)/ 2,
-            "Policy Loss": policy_loss,
             "Mean Sample Distance": tf.reduce_mean(distance),
             "Min Sample Distance": tf.reduce_min(distance),
             "Max Sample Distance": tf.reduce_max(distance),
@@ -579,7 +447,7 @@ def batch_concat_agent_id_to_obs(obs):
     return obs
 
 
-def evaluate(env, system, num_eval_episodes: int = 8):
+def evaluate(env, system, num_eval_episodes = 4):
     """Method to evaluate the system online (i.e. in the environment)."""
     episode_returns = []
     for _ in range(num_eval_episodes):
@@ -622,7 +490,6 @@ def train_offline(
         end_time = time.time()
         time_train_step = end_time - start_time
 
-        # TODO
         if (
             system.update_priorities_every is not None
             and trainer_step_ctr % system.update_priorities_every == 0
@@ -689,13 +556,12 @@ def main(_):
     logger = WandbLogger(entity="off-the-grid-marl-team", project="ff-maddpg")
 
     system_kwargs = {
-        "bc_reg": False,
-        "joint_action": FLAGS.joint_action,
+        "bc_reg": True,
+        "joint_action": "buffer",
         "update_priorities_every": FLAGS.update_priorities_every
         if FLAGS.system == "maddpg+bc+per" else None,
         "gaussian_steepness": FLAGS.gaussian_steepness,
         "bc_alpha": FLAGS.bc_alpha,
-        "cql_reg": True
     }
 
     system = FFMADDPG(env, buffer, logger, **system_kwargs)
