@@ -39,9 +39,9 @@ flags.DEFINE_string("system", "maddpg+bc", "System name.")
 flags.DEFINE_string("joint_action", "buffer", "")
 flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_float("priority_exponent", 0.99, "Priority exponent")
-flags.DEFINE_float("gaussian_steepness", 3.5, "")
+flags.DEFINE_float("gaussian_steepness", 4., "")
 flags.DEFINE_float("bc_alpha", 2.5, "")
-flags.DEFINE_integer("prioritised_batch_size", 1024, "")
+flags.DEFINE_integer("prioritised_batch_size", 256, "")
 flags.DEFINE_integer("uniform_batch_size", 100000, "")
 flags.DEFINE_integer("update_priorities_every", 10, "")
 flags.DEFINE_integer("seed", 42, "Seed.")
@@ -176,7 +176,7 @@ class StateAndJointActionCritic(snt.Module):
         all_joint_actions = []
         for i in range(N):  # type: ignore
             one_hot = tf.expand_dims(
-                tf.cast(tf.stack([tf.stack([tf.one_hot(i, N)] * B, axis=0)], axis=0), "bool"),  # type: ignore
+                tf.cast(tf.stack(tf.stack([tf.one_hot(i, N)] * B, axis=0), axis=0), "bool"),  # type: ignore
                 axis=-1,
             )
             joint_action = tf.where(one_hot, agent_actions, other_actions)
@@ -194,7 +194,7 @@ class FFMADDPG:
         buffer,
         logger,
         target_update_rate=0.005,
-        critic_learning_rate=1e-3,
+        critic_learning_rate=3e-3,
         policy_learning_rate=3e-4,
         bc_alpha=2.5,
         update_priorities_every=None,
@@ -234,8 +234,8 @@ class FFMADDPG:
         self.target_update_rate = target_update_rate
 
         # Optimizers
-        self.critic_optimizer = snt.optimizers.RMSProp(learning_rate=critic_learning_rate)
-        self.policy_optimizer = snt.optimizers.RMSProp(learning_rate=policy_learning_rate)
+        self.critic_optimizer = snt.optimizers.Adam(learning_rate=critic_learning_rate)
+        self.policy_optimizer = snt.optimizers.Adam(learning_rate=policy_learning_rate)
 
         # Offline Regularisers
         self.bc_reg = bc_reg
@@ -246,8 +246,8 @@ class FFMADDPG:
         self.priority_on_ramp = 150_000
         self.gaussian_steepness = gaussian_steepness
         self.bc_alpha = bc_alpha
-        self.num_ood_actions = 20
-        self.cql_sigma = 0.3
+        self.num_ood_actions = 10
+        self.cql_sigma = 0.2
         self.cql_weight = 5
 
     @tf.function(jit_compile=True)
@@ -322,10 +322,9 @@ class FFMADDPG:
 
         # Target policy
         determ_target_actions = self.target_policy_network(next_observations)
-        # noise = tf.clip_by_value(tf.random.normal(determ_target_actions.shape, 0, 0.2), -0.5, 0.5)
-        # target_actions = determ_target_actions + noise
-        # target_actions = tf.clip_by_value(target_actions, -1, 1)
-        target_actions = determ_target_actions
+        noise = tf.clip_by_value(tf.random.normal(determ_target_actions.shape, 0, 0.2), -0.5, 0.5)
+        target_actions = determ_target_actions + noise
+        target_actions = tf.clip_by_value(target_actions, -1, 1)
 
         # Target critics
         target_qs_1 = self.target_critic_network_1(next_env_states, target_actions, target_actions)
@@ -347,7 +346,7 @@ class FFMADDPG:
             # Unroll online policy
             online_actions = self.policy_network(observations)
 
-            if train_step % 1 == 0:
+            if train_step % 2 == 0:
 
                 if self.joint_action == "buffer":  # Normal MADDPG
                     other_agent_actions = actions
@@ -545,7 +544,7 @@ class FFMADDPG:
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),
             "Mean Critic Loss": critic_loss,
             "Mean CQL Loss": (cql_loss_1 + cql_loss_2)/ 2,
-            # "Policy Loss": policy_loss,
+            "Policy Loss": policy_loss,
             "Mean Sample Distance": tf.reduce_mean(distance),
             "Min Sample Distance": tf.reduce_min(distance),
             "Max Sample Distance": tf.reduce_max(distance),
