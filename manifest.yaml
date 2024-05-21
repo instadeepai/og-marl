@@ -16,17 +16,17 @@ spec:
   command: wandb agent off-the-grid-marl-team/rec_maddpg/j4uf3wwm
   types:
     Worker:
-      count: 2
+      count: 1
 
       resources:
         # 10-15 cpus for single process
-        cpus: 3
+        cpus: 2
         # mandatory (must be >= 2): RAM ratio wanted (in GB)
         # memory = cpus * ramRatio
-        ramRatio: 3
+        ramRatio: 5
         accelerators: 
           gpu:
             count: 1
             # mandatory (if gpus amount is > 0): gpu type wanted
             type: gpu
-            product: NVIDIA-A100-SXM4-40GB # NVIDIA-A100-SXM4-80GB-MIG-3g.40gb | Quadro-RTX-4000 | Tesla-V100-SXM3-32GB
+            product: Quadro-RTX-4000 # NVIDIA-A100-SXM4-80GB-MIG-3g.40gb | Quadro-RTX-4000 | Tesla-V100-SXM3-32GB
