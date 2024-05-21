@@ -13,10 +13,10 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: wandb agent off-the-grid-marl-team/ff-maddpg/kq4drneh
+  command: wandb agent off-the-grid-marl-team/rec_maddpg/j4uf3wwm
   types:
     Worker:
-      count: 3
+      count: 2
 
       resources:
         # 10-15 cpus for single process
@@ -29,4 +29,4 @@ spec:
             count: 1
             # mandatory (if gpus amount is > 0): gpu type wanted
             type: gpu
-            product: NVIDIA-A100-SXM4-80GB-MIG-3g.40gb # NVIDIA-A100-SXM4-80GB-MIG-3g.40gb | Quadro-RTX-4000 | Tesla-V100-SXM3-32GB
+            product: NVIDIA-A100-SXM4-40GB # NVIDIA-A100-SXM4-80GB-MIG-3g.40gb | Quadro-RTX-4000 | Tesla-V100-SXM3-32GB
