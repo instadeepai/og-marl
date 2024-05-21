@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: wandb agent off-the-grid-marl-team/ff-maddpg/9l8gjqga
+  command: python og_marl/tf2/systems/ff_maddpg.py
   types:
     Worker:
       count: 2
