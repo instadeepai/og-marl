@@ -10,7 +10,7 @@ from marl_eval.utils.data_processing_utils import create_matrices_for_rliable, d
 METRICS_TO_NORMALIZE = ["episode_return"]
 
 # Read in and process data
-with open("2halfcheetah_chebshev_results.json", "r") as f:
+with open("2halfcheetah_results.json", "r") as f:
     raw_data = json.load(f)
 
 processed_data = data_process_pipeline(raw_data=raw_data, metrics_to_normalize=METRICS_TO_NORMALIZE)
@@ -27,7 +27,7 @@ fig = performance_profiles(
     metric_name="episode_return",
     metrics_to_normalize=METRICS_TO_NORMALIZE,
 )
-fig.figure.savefig("performance_profile.png", bbox_inches="tight")
+fig.figure.savefig("performance_profile.pdf", bbox_inches="tight")
 
 fig, _, _ = sample_efficiency_curves(
     sample_effeciency_matrix,
@@ -36,7 +36,7 @@ fig, _, _ = sample_efficiency_curves(
     xlabel="Training Steps",
 )
 
-fig.figure.savefig("sample_efficiency.png", bbox_inches="tight")
+fig.figure.savefig("sample_efficiency.pdf", bbox_inches="tight")
 
 
 fig, _, _ = aggregate_scores(
@@ -45,4 +45,4 @@ fig, _, _ = aggregate_scores(
     metrics_to_normalize=METRICS_TO_NORMALIZE,
 )
 
-fig.figure.savefig("aggregate_scores.png", bbox_inches="tight")
+fig.figure.savefig("aggregate_scores.pdf", bbox_inches="tight")
