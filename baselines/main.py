@@ -19,6 +19,7 @@ from og_marl.offline_dataset import download_and_unzip_vault
 from og_marl.replay_buffers import FlashbaxReplayBuffer, PrioritisedFlashbaxReplayBuffer
 from og_marl.tf2.systems import get_system
 from og_marl.tf2.utils import set_growing_gpu_memory
+from og_marl.tf2.systems.rec_maddpg_cql import MADDPGCQLSystem
 
 set_growing_gpu_memory()
 
@@ -26,7 +27,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "mamujoco", "Environment name.")
 flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
 flags.DEFINE_string("dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
-flags.DEFINE_string("system", "maddpg+cql+per", "System name.")
+flags.DEFINE_string("system", "maddpg+cql", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
@@ -75,7 +76,7 @@ def main(_):
 
     system_kwargs = {"add_agent_id_to_obs": True, "gaussian_steepness": FLAGS.gaussian_steepness}
 
-    system = get_system(FLAGS.system, env, logger, **system_kwargs)
+    system = MADDPGCQLSystem(env, logger, **system_kwargs)
 
     system.train_offline(
         buffer, max_trainer_steps=FLAGS.trainer_steps, evaluate_every=5000
