@@ -32,10 +32,10 @@ from og_marl.tf2.utils import set_growing_gpu_memory
 set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("env", "mamujoco", "Environment name.")
-flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
-flags.DEFINE_string("dataset", "GoodMedium", "Dataset type.")
-flags.DEFINE_string("system", "maddpg+bc", "System name.")
+flags.DEFINE_string("env", "mpe", "Environment name.")
+flags.DEFINE_string("scenario", "simple_spread", "Environment scenario name.")
+flags.DEFINE_string("dataset", "expert", "Dataset type.")
+flags.DEFINE_string("system", "maddpg+bc+per", "System name.")
 flags.DEFINE_string("joint_action", "buffer", "")
 flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_float("priority_exponent", 0.99, "Priority exponent")
@@ -278,7 +278,7 @@ class FFMADDPG:
         priority_on_ramp = tf.minimum(1.0, trainer_step * (1/self.priority_on_ramp))
         priority = tf.exp(-((self.gaussian_steepness * priority_on_ramp * distance) ** 2))
 
-        priority = tf.clip_by_value(priority, 0.005, 1.)
+        priority = tf.clip_by_value(priority, 0.01, 1.)
 
         logs = {
             "Max Priority": tf.reduce_max(priority),
