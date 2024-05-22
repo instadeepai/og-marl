@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: python og_marl/tf2/systems/ff_maddpg_bc.py
+  command: wandb agent off-the-grid-marl-team/ff-maddpg/thyquo3k
   types:
     Worker:
       count: 1
@@ -29,4 +29,4 @@ spec:
             count: 1
             # mandatory (if gpus amount is > 0): gpu type wanted
             type: gpu
-            product: Quadro-RTX-4000 # NVIDIA-A100-SXM4-80GB-MIG-3g.40gb | Quadro-RTX-4000 | Tesla-V100-SXM3-32GB
+            product: Tesla-V100-SXM3-32GB # NVIDIA-A100-SXM4-80GB-MIG-3g.40gb | Quadro-RTX-4000 | Tesla-V100-SXM3-32GB
