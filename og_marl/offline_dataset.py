@@ -65,6 +65,9 @@ VAULT_INFO = {
     "pettingzoo": {
         "pursuit": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/pursuit.zip"}
     },
+    "mpe": {
+        "simple_spread": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/simple_spread.zip"}
+    },
 }
 
 
@@ -95,10 +98,10 @@ def download_and_unzip_vault(
     zip_file_path = f"{dataset_base_dir}/tmp/tmp_dataset.zip"
 
     # extraction_path = f"{dataset_base_dir}/2halfcheetah_mean_std_exp"
-    if scenario_name=="2ant":
-        extraction_path = f"{dataset_base_dir}/{env_name}"
-    else:
+    if scenario_name=="2halfcheetah":
         extraction_path = f"{dataset_base_dir}/{env_name}/{scenario_name}.vlt"
+    else:
+        extraction_path = f"{dataset_base_dir}/{env_name}"
 
     response = requests.get(dataset_download_url, stream=True)
     total_length = response.headers.get("content-length")
