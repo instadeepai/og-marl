@@ -590,7 +590,7 @@ class MADDPGCQLSystem:
         ## Priority
         priority_on_ramp = tf.minimum(1.0, train_steps * (1/self.priority_on_ramp))
         priority = tf.exp(-((self.gaussian_steepness * priority_on_ramp * sequence_distance) ** 2))
-        priority = tf.clip_by_value(priority, 0.0001, 1.)
+        priority = tf.clip_by_value(priority, 0.001, 1.)
 
         logs = {
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),
