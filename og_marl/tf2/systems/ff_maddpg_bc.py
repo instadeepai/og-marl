@@ -22,7 +22,6 @@ from flashbax.vault import Vault
 import tensorflow as tf
 import sonnet as snt
 import numpy as np
-import matplotlib.pyplot as plt
 
 from og_marl.environments import get_environment
 from og_marl.loggers import WandbLogger
@@ -39,10 +38,10 @@ flags.DEFINE_string("system", "maddpg+bc", "System name.")
 flags.DEFINE_string("joint_action", "buffer", "")
 flags.DEFINE_float("trainer_steps", 1e5, "Number of training steps.")
 flags.DEFINE_float("priority_exponent", 0.99, "Priority exponent")
-flags.DEFINE_float("gaussian_steepness", 3., "")
-flags.DEFINE_float("bc_alpha", 1/100, "")
+flags.DEFINE_float("gaussian_steepness", 3.0, "")
+flags.DEFINE_float("bc_alpha", 1 / 100, "")
 flags.DEFINE_integer("prioritised_batch_size", 256, "")
-flags.DEFINE_integer("uniform_batch_size", 40000, "") # 97_500
+flags.DEFINE_integer("uniform_batch_size", 40000, "")  # 97_500
 flags.DEFINE_integer("update_priorities_every", 10, "")
 flags.DEFINE_integer("seed", 42, "Seed.")
 
@@ -275,10 +274,10 @@ class FFMADDPG:
             tf.reduce_mean(tf.abs(actions - target_actions), axis=-1), axis=-1
         )  # L1
 
-        priority_on_ramp = tf.minimum(1.0, trainer_step * (1/self.priority_on_ramp))
+        priority_on_ramp = tf.minimum(1.0, trainer_step * (1 / self.priority_on_ramp))
         priority = tf.exp(-((self.gaussian_steepness * priority_on_ramp * distance) ** 2))
 
-        priority = tf.clip_by_value(priority, 0.001, 1.)
+        priority = tf.clip_by_value(priority, 0.001, 1.0)
 
         logs = {
             "Max Priority": tf.reduce_max(priority),
@@ -289,7 +288,7 @@ class FFMADDPG:
             "Max action distance": tf.reduce_max(distance),
             "Min action distance": tf.reduce_min(distance),
             "STD action distance": tf.math.reduce_std(distance),
-            "priority on ramp": priority_on_ramp
+            "priority on ramp": priority_on_ramp,
         }
 
         return logs, priority
@@ -349,8 +348,12 @@ class FFMADDPG:
                 ##########
                 # BC Reg #
                 ##########
-                bc_lambda = self.bc_alpha #/ tf.reduce_mean(tf.abs(tf.stop_gradient(policy_qs)))
-                policy_loss = tf.reduce_mean((actions - online_actions) ** 2) - bc_lambda * tf.reduce_mean(policy_qs)  # + 1e-3 * tf.reduce_mean(online_actions**2)
+                bc_lambda = self.bc_alpha  # / tf.reduce_mean(tf.abs(tf.stop_gradient(policy_qs)))
+                policy_loss = tf.reduce_mean(
+                    (actions - online_actions) ** 2
+                ) - bc_lambda * tf.reduce_mean(
+                    policy_qs
+                )  # + 1e-3 * tf.reduce_mean(online_actions**2)
 
             ###############
             # Critic Loss #
@@ -403,7 +406,9 @@ class FFMADDPG:
 
         del tape
 
-        distance = tf.reduce_mean(tf.reduce_mean(tf.abs(online_actions - actions), axis=-1), axis=-1)
+        distance = tf.reduce_mean(
+            tf.reduce_mean(tf.abs(online_actions - actions), axis=-1), axis=-1
+        )
 
         logs = {
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),
@@ -412,7 +417,7 @@ class FFMADDPG:
             "Min Sample Distance": tf.reduce_min(distance),
             "Max Sample Distance": tf.reduce_max(distance),
             "STD Sample Distance": tf.math.reduce_std(distance),
-            "STD Action": tf.math.reduce_std(online_actions)
+            "STD Action": tf.math.reduce_std(online_actions),
         }
 
         return logs
@@ -443,7 +448,7 @@ def batch_concat_agent_id_to_obs(obs):
     return obs
 
 
-def evaluate(env, system, num_eval_episodes = 4):
+def evaluate(env, system, num_eval_episodes=4):
     """Method to evaluate the system online (i.e. in the environment)."""
     episode_returns = []
     for _ in range(num_eval_episodes):
@@ -482,7 +487,9 @@ def train_offline(
         old_priorities = sum_tree.get(buffer._buffer_state.priority_state, indices)
 
         start_time = time.time()
-        train_logs = system.train_step(data_batch.experience, tf.convert_to_tensor(trainer_step_ctr))
+        train_logs = system.train_step(
+            data_batch.experience, tf.convert_to_tensor(trainer_step_ctr)
+        )
         end_time = time.time()
         time_train_step = end_time - start_time
 
@@ -491,8 +498,7 @@ def train_offline(
             and trainer_step_ctr % system.update_priorities_every == 0
             and trainer_step_ctr >= 1
         ):
-
-            # Plot Priorities  
+            # Plot Priorities
             # if trainer_step_ctr % 500 == 0:
             #     indices = jax.numpy.arange(buffer._buffer_state.current_index)
             #     old_priorities = sum_tree.get(buffer._buffer_state.priority_state, indices)
@@ -503,7 +509,9 @@ def train_offline(
 
             start_time = time.time()
             distance_batch = buffer.uniform_sample()
-            distance_logs, new_priorities = system.compute_new_priorities(distance_batch.experience, tf.convert_to_tensor(trainer_step_ctr, "float32"))
+            distance_logs, new_priorities = system.compute_new_priorities(
+                distance_batch.experience, tf.convert_to_tensor(trainer_step_ctr, "float32")
+            )
             buffer.update_priorities(distance_batch.indices, new_priorities)
             end_time = time.time()
             time_priority = end_time - start_time
@@ -554,7 +562,8 @@ def main(_):
     system_kwargs = {
         "bc_reg": True,
         "update_priorities_every": FLAGS.update_priorities_every
-        if FLAGS.system == "maddpg+bc+per" else None,
+        if FLAGS.system == "maddpg+bc+per"
+        else None,
         "gaussian_steepness": FLAGS.gaussian_steepness,
         "bc_alpha": FLAGS.bc_alpha,
     }
