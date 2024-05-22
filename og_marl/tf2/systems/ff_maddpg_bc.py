@@ -42,8 +42,8 @@ flags.DEFINE_float("priority_exponent", 0.99, "Priority exponent")
 flags.DEFINE_float("gaussian_steepness", 4., "")
 flags.DEFINE_float("bc_alpha", 2.5, "")
 flags.DEFINE_integer("prioritised_batch_size", 256, "")
-flags.DEFINE_integer("uniform_batch_size", 100000, "")
-flags.DEFINE_integer("update_priorities_every", 10, "")
+flags.DEFINE_integer("uniform_batch_size", 1024, "")
+flags.DEFINE_integer("update_priorities_every", 2, "")
 flags.DEFINE_integer("seed", 42, "Seed.")
 
 
@@ -239,7 +239,7 @@ class FFMADDPG:
         self.bc_reg = bc_reg
         self.discount = 0.99
         self.update_priorities_every = update_priorities_every
-        self.priority_on_ramp = 150_000
+        self.priority_on_ramp = 200_000
         self.gaussian_steepness = gaussian_steepness
         self.bc_alpha = bc_alpha
 
@@ -278,7 +278,7 @@ class FFMADDPG:
         priority_on_ramp = tf.minimum(1.0, trainer_step * (1/self.priority_on_ramp))
         priority = tf.exp(-((self.gaussian_steepness * priority_on_ramp * distance) ** 2))
 
-        priority = tf.clip_by_value(priority, 0.01, 1.)
+        priority = tf.clip_by_value(priority, 0.03, 1.)
 
         logs = {
             "Max Priority": tf.reduce_max(priority),
