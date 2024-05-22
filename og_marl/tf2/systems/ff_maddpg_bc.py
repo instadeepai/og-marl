@@ -33,16 +33,16 @@ set_growing_gpu_memory()
 FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "mpe", "Environment name.")
 flags.DEFINE_string("scenario", "simple_spread", "Environment scenario name.")
-flags.DEFINE_string("dataset", "medium-replay", "Dataset type.")
-flags.DEFINE_string("system", "maddpg+bc", "System name.")
+flags.DEFINE_string("dataset", "expert", "Dataset type.")
+flags.DEFINE_string("system", "maddpg+bc+per", "System name.")
 flags.DEFINE_string("joint_action", "buffer", "")
 flags.DEFINE_float("trainer_steps", 1e5, "Number of training steps.")
 flags.DEFINE_float("priority_exponent", 0.99, "Priority exponent")
 flags.DEFINE_float("gaussian_steepness", 3.0, "")
-flags.DEFINE_float("bc_alpha", 1 / 100, "")
+flags.DEFINE_float("bc_alpha", 3, "")
 flags.DEFINE_integer("prioritised_batch_size", 256, "")
-flags.DEFINE_integer("uniform_batch_size", 40000, "")  # 97_500
-flags.DEFINE_integer("update_priorities_every", 10, "")
+flags.DEFINE_integer("uniform_batch_size", 20000, "")  # 97_500
+flags.DEFINE_integer("update_priorities_every", 1, "")
 flags.DEFINE_integer("seed", 42, "Seed.")
 
 
@@ -238,7 +238,7 @@ class FFMADDPG:
         self.bc_reg = bc_reg
         self.discount = 0.99
         self.update_priorities_every = update_priorities_every
-        self.priority_on_ramp = 10_000
+        self.priority_on_ramp = 5_000
         self.gaussian_steepness = gaussian_steepness
         self.bc_alpha = bc_alpha
 
@@ -277,7 +277,7 @@ class FFMADDPG:
         priority_on_ramp = tf.minimum(1.0, trainer_step * (1 / self.priority_on_ramp))
         priority = tf.exp(-((self.gaussian_steepness * priority_on_ramp * distance) ** 2))
 
-        priority = tf.clip_by_value(priority, 0.001, 1.0)
+        priority = tf.clip_by_value(priority, 0.01, 1.0)
 
         logs = {
             "Max Priority": tf.reduce_max(priority),
@@ -348,12 +348,12 @@ class FFMADDPG:
                 ##########
                 # BC Reg #
                 ##########
-                bc_lambda = self.bc_alpha  # / tf.reduce_mean(tf.abs(tf.stop_gradient(policy_qs)))
+                bc_lambda = self.bc_alpha  / tf.reduce_mean(tf.abs(tf.stop_gradient(policy_qs)))
                 policy_loss = tf.reduce_mean(
                     (actions - online_actions) ** 2
                 ) - bc_lambda * tf.reduce_mean(
                     policy_qs
-                )  # + 1e-3 * tf.reduce_mean(online_actions**2)
+                )  + 1e-3 * tf.reduce_mean(online_actions**2)
 
             ###############
             # Critic Loss #
