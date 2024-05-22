@@ -239,7 +239,7 @@ class FFMADDPG:
         self.bc_reg = bc_reg
         self.discount = 0.99
         self.update_priorities_every = update_priorities_every
-        self.priority_on_ramp = 200_000
+        self.priority_on_ramp = 150_000
         self.gaussian_steepness = gaussian_steepness
         self.bc_alpha = bc_alpha
 
@@ -267,9 +267,9 @@ class FFMADDPG:
         observations = batch_concat_agent_id_to_obs(observations)
 
         target_actions = self.target_policy_network(observations)
-        noise = tf.clip_by_value(tf.random.normal(target_actions.shape, 0, 0.2), -0.5, 0.5)
-        target_actions = target_actions + noise
-        target_actions = tf.clip_by_value(target_actions, -1, 1)
+        # noise = tf.clip_by_value(tf.random.normal(target_actions.shape, 0, 0.2), -0.5, 0.5)
+        # target_actions = target_actions + noise
+        # target_actions = tf.clip_by_value(target_actions, -1, 1)
 
         distance = tf.reduce_mean(
             tf.reduce_mean(tf.abs(actions - target_actions), axis=-1), axis=-1
@@ -278,7 +278,7 @@ class FFMADDPG:
         priority_on_ramp = tf.minimum(1.0, trainer_step * (1/self.priority_on_ramp))
         priority = tf.exp(-((self.gaussian_steepness * priority_on_ramp * distance) ** 2))
 
-        priority = tf.clip_by_value(priority, 0.03, 1.)
+        priority = tf.clip_by_value(priority, 0.005, 1.)
 
         logs = {
             "Max Priority": tf.reduce_max(priority),
