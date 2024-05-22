@@ -35,6 +35,9 @@ RUN pip install --quiet --upgrade pip setuptools wheel &&  \
     pip install flashbax==0.1.2
 RUN pip install -U "jax[cuda12]"
 
+COPY ./environments ./environments
+RUN pip install ./environments/multiagent-particle-envs
+
 # ENV SC2PATH /home/app/StarCraftII
 # RUN ./install_environments/smacv1.sh
 # RUN ./install_environments/smacv2.sh

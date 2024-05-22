@@ -34,15 +34,15 @@ set_growing_gpu_memory()
 FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "mpe", "Environment name.")
 flags.DEFINE_string("scenario", "simple_spread", "Environment scenario name.")
-flags.DEFINE_string("dataset", "expert", "Dataset type.")
-flags.DEFINE_string("system", "maddpg+bc+per", "System name.")
+flags.DEFINE_string("dataset", "medium-replay", "Dataset type.")
+flags.DEFINE_string("system", "maddpg+bc", "System name.")
 flags.DEFINE_string("joint_action", "buffer", "")
-flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
+flags.DEFINE_float("trainer_steps", 1e5, "Number of training steps.")
 flags.DEFINE_float("priority_exponent", 0.99, "Priority exponent")
-flags.DEFINE_float("gaussian_steepness", 4., "")
-flags.DEFINE_float("bc_alpha", 2.5, "")
+flags.DEFINE_float("gaussian_steepness", 3., "")
+flags.DEFINE_float("bc_alpha", 1/100, "")
 flags.DEFINE_integer("prioritised_batch_size", 256, "")
-flags.DEFINE_integer("uniform_batch_size", 100_000, "")
+flags.DEFINE_integer("uniform_batch_size", 40000, "") # 97_500
 flags.DEFINE_integer("update_priorities_every", 10, "")
 flags.DEFINE_integer("seed", 42, "Seed.")
 
@@ -128,9 +128,9 @@ class StateAndJointActionCritic(snt.Module):
 
         self._critic_network = snt.Sequential(
             [
-                snt.Linear(128),
+                snt.Linear(32),
                 tf.nn.relu,
-                snt.Linear(128),
+                snt.Linear(32),
                 tf.nn.relu,
                 snt.Linear(1),
             ]
@@ -193,9 +193,9 @@ class FFMADDPG:
         env,
         buffer,
         logger,
-        target_update_rate=0.005,
-        critic_learning_rate=3e-4,
-        policy_learning_rate=3e-4,
+        target_update_rate=0.05,
+        critic_learning_rate=1e-3,
+        policy_learning_rate=1e-3,
         bc_alpha=2.5,
         update_priorities_every=None,
         bc_reg=False,
@@ -208,9 +208,9 @@ class FFMADDPG:
         # Policy network
         self.policy_network = snt.Sequential(
             [
-                snt.Linear(128),
+                snt.Linear(32),
                 tf.nn.relu,
-                snt.Linear(128),
+                snt.Linear(32),
                 tf.nn.relu,
                 snt.Linear(self.env._num_actions),
                 tf.nn.tanh,
@@ -239,7 +239,7 @@ class FFMADDPG:
         self.bc_reg = bc_reg
         self.discount = 0.99
         self.update_priorities_every = update_priorities_every
-        self.priority_on_ramp = 150_000
+        self.priority_on_ramp = 10_000
         self.gaussian_steepness = gaussian_steepness
         self.bc_alpha = bc_alpha
 
@@ -278,7 +278,7 @@ class FFMADDPG:
         priority_on_ramp = tf.minimum(1.0, trainer_step * (1/self.priority_on_ramp))
         priority = tf.exp(-((self.gaussian_steepness * priority_on_ramp * distance) ** 2))
 
-        priority = tf.clip_by_value(priority, 0.01, 1.)
+        priority = tf.clip_by_value(priority, 0.001, 1.)
 
         logs = {
             "Max Priority": tf.reduce_max(priority),
@@ -315,9 +315,10 @@ class FFMADDPG:
 
         # Target policy
         determ_target_actions = self.target_policy_network(next_observations)
-        noise = tf.clip_by_value(tf.random.normal(determ_target_actions.shape, 0, 0.2), -0.5, 0.5)
-        target_actions = determ_target_actions + noise
-        target_actions = tf.clip_by_value(target_actions, -1, 1)
+        # noise = tf.clip_by_value(tf.random.normal(determ_target_actions.shape, 0, 0.2), -0.5, 0.5)
+        # target_actions = determ_target_actions + noise
+        # target_actions = tf.clip_by_value(target_actions, -1, 1)
+        target_actions = determ_target_actions
 
         # Target critics
         target_qs_1 = self.target_critic_network_1(next_env_states, target_actions, target_actions)
@@ -348,7 +349,7 @@ class FFMADDPG:
                 ##########
                 # BC Reg #
                 ##########
-                bc_lambda = self.bc_alpha / tf.reduce_mean(tf.abs(tf.stop_gradient(policy_qs)))
+                bc_lambda = self.bc_alpha #/ tf.reduce_mean(tf.abs(tf.stop_gradient(policy_qs)))
                 policy_loss = tf.reduce_mean((actions - online_actions) ** 2) - bc_lambda * tf.reduce_mean(policy_qs)  # + 1e-3 * tf.reduce_mean(online_actions**2)
 
             ###############
@@ -411,6 +412,7 @@ class FFMADDPG:
             "Min Sample Distance": tf.reduce_min(distance),
             "Max Sample Distance": tf.reduce_max(distance),
             "STD Sample Distance": tf.math.reduce_std(distance),
+            "STD Action": tf.math.reduce_std(online_actions)
         }
 
         return logs
@@ -487,7 +489,7 @@ def train_offline(
         if (
             system.update_priorities_every is not None
             and trainer_step_ctr % system.update_priorities_every == 0
-            and trainer_step_ctr >= 1000
+            and trainer_step_ctr >= 1
         ):
 
             # Plot Priorities  
@@ -560,7 +562,7 @@ def main(_):
     system = FFMADDPG(env, buffer, logger, **system_kwargs)
 
     train_offline(
-        env, system, buffer, logger, max_trainer_steps=FLAGS.trainer_steps, evaluate_every=5000
+        env, system, buffer, logger, max_trainer_steps=FLAGS.trainer_steps, evaluate_every=1000
     )
 
 

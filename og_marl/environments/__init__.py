@@ -23,6 +23,10 @@ def get_environment(env_name: str, scenario: str) -> BaseEnvironment:  # noqa: C
         from og_marl.environments.smacv1 import SMACv1
 
         return SMACv1(scenario)
+    elif env_name == "mpe":
+        from og_marl.environments.mpe_omar import MPE
+
+        return MPE()
     elif env_name == "smac_v2":
         from og_marl.environments.smacv2 import SMACv2
 
