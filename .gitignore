@@ -12,6 +12,7 @@ logs
 development
 __MACOSX
 3.9
+dmlr_results
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
