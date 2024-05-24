@@ -14,7 +14,6 @@
 from typing import Any, Dict
 
 import numpy as np
-from gymnasium.spaces import Box
 from multiagent_mujoco.mujoco_multi import MujocoMulti
 
 from og_marl.environments.base import BaseEnvironment, ResetReturn, StepReturn
@@ -22,17 +21,11 @@ from og_marl.environments.base import BaseEnvironment, ResetReturn, StepReturn
 
 def get_mamujoco_args(scenario: str) -> Dict[str, Any]:
     env_args = {
-        "agent_obsk": 1,
+        # "agent_obsk": 1,
         "episode_limit": 1000,
-        "global_categories": "qvel,qpos",
+        # "global_categories": "qvel,qpos",
     }
-    if scenario.lower() == "4ant":
-        env_args["scenario"] = "Ant-v2"
-        env_args["agent_conf"] = "4x2"
-    elif scenario.lower() == "2ant":
-        env_args["scenario"] = "Ant-v2"
-        env_args["agent_conf"] = "2x4"
-    elif scenario.lower() == "2halfcheetah":
+    if scenario.lower() == "2halfcheetah":
         env_args["scenario"] = "HalfCheetah-v2"
         env_args["agent_conf"] = "2x3"
     else:
@@ -50,23 +43,6 @@ class MAMuJoCo(BaseEnvironment):
 
         self.possible_agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
         self._num_actions = self._environment.n_actions
-
-        self.observation_spaces = {
-            agent: Box(float(), 1, (self._environment.obs_size,), "float32")
-            for i, agent in enumerate(self.possible_agents)
-        }
-
-        self.action_spaces = {
-            agent: self._environment.action_space[i] for i, agent in enumerate(self.possible_agents)
-        }
-
-        self.info_spec = {
-            "state": self._environment.get_state(),
-            "legals": {
-                agent: np.zeros(self.action_spaces[agent].shape, "int64")
-                for agent in self.possible_agents
-            },
-        }
 
         self.max_episode_length = 1000
 
@@ -101,6 +77,7 @@ class MAMuJoCo(BaseEnvironment):
             agent: observations[i].astype("float32") for i, agent in enumerate(self.possible_agents)
         }
 
+        info = {}
         info["state"] = self._environment.get_state()
 
         return observations, rewards, terminals, trunctations, info  # type: ignore
