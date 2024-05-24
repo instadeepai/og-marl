@@ -47,6 +47,7 @@ RUN pip install -U "jax[cuda12]"
 # RUN ./install_environments/smacv2.sh
 
 # MAMuJoCo
+ENV PYTHONPATH=/home/app/og-marl/environments
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco200_linux/bin:/usr/lib/nvidia
 ENV SUPPRESS_GR_PROMPT 1
 RUN ./install_environments/mamujoco_old.sh
