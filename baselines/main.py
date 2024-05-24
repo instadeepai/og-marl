@@ -14,7 +14,7 @@
 from absl import app, flags
 
 from og_marl.environments import get_environment
-from og_marl.loggers import JsonWriter, WandbLogger
+from og_marl.loggers import WandbLogger
 from og_marl.offline_dataset import download_and_unzip_vault
 from og_marl.replay_buffers import FlashbaxReplayBuffer
 from og_marl.tf2.networks import CNNEmbeddingNetwork
@@ -63,7 +63,13 @@ def main(_):
 
     system = get_system(FLAGS.system, env, logger, **system_kwargs)
 
-    system.train_offline(buffer, max_trainer_steps=FLAGS.trainer_steps, json_writer=json_writer)
+    system.train_offline(
+        buffer,
+        max_trainer_steps=FLAGS.trainer_steps,
+        json_writer=json_writer,
+        evaluate_every=5000,
+        num_eval_episodes=16,
+    )
 
 
 if __name__ == "__main__":
