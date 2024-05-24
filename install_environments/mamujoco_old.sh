@@ -11,4 +11,4 @@ mkdir -p $MUJOCOPATH \
     && rm mujoco.zip
 
 # Install MAMujoco
-export PYTHONPATH=environments/multiagent_mujoco
+export PYTHONPATH=environments

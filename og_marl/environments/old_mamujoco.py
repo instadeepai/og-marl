@@ -21,7 +21,7 @@ from og_marl.environments.base import BaseEnvironment, ResetReturn, StepReturn
 
 def get_mamujoco_args(scenario: str) -> Dict[str, Any]:
     env_args = {
-        # "agent_obsk": 1,
+        "agent_obsk": 0,
         "episode_limit": 1000,
         # "global_categories": "qvel,qpos",
     }
