@@ -16,8 +16,8 @@ spec:
   command: wandb agent off-the-grid-marl-team/benchmarking/twndl9d0
   types:
     Worker:
-      count: 4
-
+      count: 1
+ 
       resources:
         # 10-15 cpus for single process
         cpus: 3
