@@ -33,9 +33,9 @@ COPY ./baselines ./baselines
 
 RUN echo "Installing requirements..."
 RUN pip install --quiet --upgrade pip setuptools wheel &&  \
-    pip install -e . && \
-    pip install flashbax==0.1.2
+    pip install -e .
 RUN pip install -U "jax[cuda12]"
+RUN pip install flashbax
 
 # MPE
 # COPY ./environments ./environments
@@ -49,7 +49,7 @@ RUN pip install -U "jax[cuda12]"
 # MAMuJoCo
 ENV PYTHONPATH=/home/app/og-marl/environments
 RUN pip install -r ./install_environments/requirements/mamujoco.txt
-Run pip install mujoco-py==2.0.2.5
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco200_linux/bin:/usr/lib/nvidia
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco200/bin:/usr/lib/nvidia
 ENV SUPPRESS_GR_PROMPT 1
 RUN ./install_environments/mamujoco_old.sh
+RUN pip install mujoco-py==2.0.2.5

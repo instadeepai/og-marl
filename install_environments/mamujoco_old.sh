@@ -8,7 +8,11 @@ export MUJOCOPATH=/root/.mujoco
 mkdir -p $MUJOCOPATH \
     && wget https://www.roboti.us/download/mujoco200_linux.zip -O mujoco.zip \
     && unzip -d $MUJOCOPATH mujoco.zip \
-    && rm mujoco.zip
+    && rm mujoco.zip \
+    && mv ${MUJOCOPATH}/mujoco200_linux ${MUJOCOPATH}/mujoco200 \
+    && wget https://www.roboti.us/file/mjkey.txt -O mjkey.txt \
+    && mv mjkey.txt $MUJOCOPATH
+
 
 # Install MAMujoco
 export PYTHONPATH=environments
