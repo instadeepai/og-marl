@@ -1,7 +1,6 @@
 from typing import Any, Dict
 
 import numpy as np
-from gymnasium.spaces import Box
 from multiagent.environment import MultiAgentEnv
 import multiagent.scenarios as scenarios
 
@@ -32,7 +31,9 @@ class MPE(BaseEnvironment):
     def reset(self) -> ResetReturn:
         obs = self._environment.reset()
 
-        observations = {agent: obs[i].astype("float32") for i, agent in enumerate(self.possible_agents)}
+        observations = {
+            agent: obs[i].astype("float32") for i, agent in enumerate(self.possible_agents)
+        }
 
         self.t = 0
 
@@ -51,7 +52,8 @@ class MPE(BaseEnvironment):
         rewards = {agent: reward[i] for i, agent in enumerate(self.possible_agents)}
 
         observations = {
-            agent: next_observation[i].astype("float32") for i, agent in enumerate(self.possible_agents)
+            agent: next_observation[i].astype("float32")
+            for i, agent in enumerate(self.possible_agents)
         }
 
         if self.t == 25:
