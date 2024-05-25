@@ -69,11 +69,11 @@ class IDRQNCQLSystem(IDRQNSystem):
     def _tf_train_step(self, train_step: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
-        actions = experience["actions"]  # (B,T,N)
+        actions = tf.cast(experience["actions"], "int32")  # (B,T,N)
         rewards = experience["rewards"]  # (B,T,N)
         truncations = experience["truncations"]  # (B,T,N)
-        terminals = experience["terminals"]  # (B,T,N)
-        legal_actions = experience["infos"]["legals"]  # (B,T,N,A)
+        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
+        legal_actions = tf.cast(experience["infos"]["legals"], "float32")  # (B,T,N,A)
 
         # When to reset the RNN hidden state
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'

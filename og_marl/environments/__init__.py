@@ -35,6 +35,10 @@ def get_environment(env_name: str, scenario: str) -> BaseEnvironment:  # noqa: C
         from og_marl.environments.pursuit import Pursuit
 
         return Pursuit()
+    elif env_name == "mpe":
+        from og_marl.environments.mpe import MPE
+
+        return MPE(scenario)
     elif scenario == "coop_pong":
         from og_marl.environments.coop_pong import CooperativePong
 
