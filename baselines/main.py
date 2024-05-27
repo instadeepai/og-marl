@@ -24,12 +24,12 @@ from og_marl.tf2.utils import set_growing_gpu_memory
 set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("env", "smac_v1", "Environment name.")
-flags.DEFINE_string("scenario", "5m_vs_6m", "Environment scenario name.")
+flags.DEFINE_string("env", "mamujoco", "Environment name.")
+flags.DEFINE_string("scenario", "2ant", "Environment scenario name.")
 flags.DEFINE_string(
-    "dataset", "medium_replay", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' "
+    "dataset", "expert", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' "
 )
-flags.DEFINE_string("system", "idrqn+cql", "System name.")
+flags.DEFINE_string("system", "maddpg+cql", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 5e5, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
@@ -51,8 +51,7 @@ def main(_):
     download_and_unzip_vault(FLAGS.env, FLAGS.scenario)
 
     is_vault_loaded = buffer.populate_from_vault(
-        FLAGS.env, FLAGS.scenario, "medium_replay"
-    )  # FLAGS.dataset)
+        FLAGS.env, FLAGS.scenario, FLAGS.dataset)
     if not is_vault_loaded:
         print("Vault not found. Exiting.")
         return

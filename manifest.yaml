@@ -13,12 +13,12 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: wandb agent off-the-grid-marl-team/benchmarking/g06h23mh
+  command: python baselines/main.py
   types:
     Worker:
-      count: 5
+      count: 1
 
-      resources: 
+      resources:
         # 10-15 cpus for single process
         cpus: 5
         # mandatory (must be >= 2): RAM ratio wanted (in GB)

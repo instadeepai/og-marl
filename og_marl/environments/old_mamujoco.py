@@ -21,13 +21,16 @@ from og_marl.environments.base import BaseEnvironment, ResetReturn, StepReturn
 
 def get_mamujoco_args(scenario: str) -> Dict[str, Any]:
     env_args = {
-        "agent_obsk": 0,
+        "agent_obsk": None,
         "episode_limit": 1000,
         # "global_categories": "qvel,qpos",
     }
     if scenario.lower() == "2halfcheetah":
         env_args["scenario"] = "HalfCheetah-v2"
         env_args["agent_conf"] = "2x3"
+    elif scenario.lower() == "2ant":
+        env_args["scenario"] = "Ant-v2"
+        env_args["agent_conf"] = "2x4"
     else:
         raise ValueError("Not a valid mamujoco scenario")
     return env_args

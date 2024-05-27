@@ -70,7 +70,7 @@ class IDDPGCQLSystem(IDDPGSystem):
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N,A)
-        env_states = experience["infos"]["state"]  # (B,T,S)
+        env_states = experience["infos"]["states"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
         truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
         terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)

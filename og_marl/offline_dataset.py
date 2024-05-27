@@ -52,7 +52,8 @@ VAULT_INFO = {
         },
     },
     "mamujoco": {
-        "2ant": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2ant.zip"},
+        # "2ant": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2ant.zip"},
+        "2ant": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/2ant.zip"},
         "2halfcheetah": {
             "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2halfcheetah.zip"
         },
