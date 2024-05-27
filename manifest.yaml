@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: python baselines/main.py
+  command: wandb agent off-the-grid-marl-team/benchmarking/gtfo5dcz
   types:
     Worker:
       count: 1
