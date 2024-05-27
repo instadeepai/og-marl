@@ -16,11 +16,11 @@ spec:
   command: wandb agent off-the-grid-marl-team/benchmarking/gtfo5dcz
   types:
     Worker:
-      count: 1
+      count: 5
 
       resources:
         # 10-15 cpus for single process
-        cpus: 5
+        cpus: 3
         # mandatory (must be >= 2): RAM ratio wanted (in GB)
         # memory = cpus * ramRatio
         ramRatio: 3
