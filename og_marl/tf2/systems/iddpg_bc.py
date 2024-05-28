@@ -15,7 +15,6 @@
 """Implementation of TD3"""
 from typing import Any, Dict
 
-import numpy as np
 import tensorflow as tf
 from chex import Numeric
 
@@ -70,7 +69,7 @@ class IDDPGBCSystem(IDDPGSystem):
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N,A)
-        env_states = experience["infos"]["states"]  # (B,T,S)
+        env_states = experience["infos"]["state"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
         truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
         terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
@@ -144,9 +143,9 @@ class IDDPGBCSystem(IDDPGSystem):
             qs_2 = self._critic_network_2(env_states, online_actions)
             qs = tf.minimum(qs_1, qs_2)
 
-            policy_loss = - 2.5 * tf.reduce_mean(qs) / tf.reduce_mean(tf.abs(tf.stop_gradient(qs))) + tf.reduce_mean(
-                tf.square(online_actions - replay_actions)
-            )
+            policy_loss = -2.5 * tf.reduce_mean(qs) / tf.reduce_mean(
+                tf.abs(tf.stop_gradient(qs))
+            ) + tf.reduce_mean(tf.square(online_actions - replay_actions))
 
         # Train critics
         variables = (
