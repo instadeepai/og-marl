@@ -89,26 +89,22 @@ class FlashbaxReplayBuffer:
     def populate_from_vault(
         self, env_name: str, scenario_name: str, dataset_name: str, rel_dir: str = "vaults"
     ) -> bool:
-        try:
-            self._buffer_state = Vault(
-                vault_name=f"{env_name}/{scenario_name}.vlt",
-                vault_uid=dataset_name,
-                rel_dir=rel_dir,
-            ).read()
+        self._buffer_state = Vault(
+            vault_name=f"{env_name}/{scenario_name}.vlt",
+            vault_uid=dataset_name,
+            rel_dir=rel_dir,
+        ).read()
 
-            # Recreate the buffer and associated pure functions
-            self._replay_buffer = fbx.make_trajectory_buffer(
-                add_batch_size=1,
-                sample_batch_size=self._batch_size,
-                sample_sequence_length=self._sequence_length,
-                period=1,
-                min_length_time_axis=1,
-                max_size=self._sequence_length,
-            )
-            self._buffer_sample_fn = jax.jit(self._replay_buffer.sample)
-            self._buffer_add_fn = jax.jit(self._replay_buffer.add)
+        # Recreate the buffer and associated pure functions
+        self._replay_buffer = fbx.make_trajectory_buffer(
+            add_batch_size=1,
+            sample_batch_size=self._batch_size,
+            sample_sequence_length=self._sequence_length,
+            period=1,
+            min_length_time_axis=1,
+            max_size=self._sequence_length,
+        )
+        self._buffer_sample_fn = jax.jit(self._replay_buffer.sample)
+        self._buffer_add_fn = jax.jit(self._replay_buffer.add)
 
-            return True
-
-        except ValueError:
-            return False
+        return True
