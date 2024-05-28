@@ -47,8 +47,8 @@ class MADDPGCQLSystem(MADDPGSystem):
         policy_learning_rate: float = 3e-4,
         add_agent_id_to_obs: bool = False,
         random_exploration_timesteps: int = 0,
-        num_ood_actions: int = 20,  # CQL
-        cql_weight: float = 5.0,  # CQL
+        num_ood_actions: int = 10,  # CQL
+        cql_weight: float = 2.0,  # CQL
         cql_sigma: float = 0.2,  # CQL
     ):
         super().__init__(
