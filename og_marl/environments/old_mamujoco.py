@@ -31,6 +31,9 @@ def get_mamujoco_args(scenario: str) -> Dict[str, Any]:
     elif scenario.lower() == "2ant":
         env_args["scenario"] = "Ant-v2"
         env_args["agent_conf"] = "2x4"
+    elif scenario.lower() == "3hopper":
+        env_args["scenario"] = "Hopper-v2"
+        env_args["agent_conf"] = "3x1"
     else:
         raise ValueError("Not a valid mamujoco scenario")
     return env_args
