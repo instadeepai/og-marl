@@ -23,7 +23,6 @@ from og_marl.environments.base import BaseEnvironment
 from og_marl.loggers import BaseLogger
 from og_marl.tf2.systems.maddpg import MADDPGSystem
 from og_marl.tf2.utils import (
-    batch_concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
     merge_batch_and_agent_dim_of_time_major_sequence,
     switch_two_leading_dims,
