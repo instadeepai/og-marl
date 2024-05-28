@@ -88,7 +88,7 @@ def concat_agent_id_to_obs(obs: Tensor, agent_id: int, N: int) -> Tensor:
     if not is_vector_obs and len(obs.shape) == 2:  # if no channel dim
         obs = tf.expand_dims(obs, axis=-1)
 
-    obs: Tensor = tf.concat([obs, agent_id], axis=-1)
+    obs: Tensor = tf.concat([agent_id, obs], axis=-1)
 
     return obs
 

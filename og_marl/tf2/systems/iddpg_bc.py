@@ -82,8 +82,8 @@ class IDDPGBCSystem(IDDPGSystem):
         B, T, N = actions.shape[:3]
 
         # Maybe add agent ids to observation
-        # if self._add_agent_id_to_obs:
-        #     observations = batch_concat_agent_id_to_obs(observations)
+        if self._add_agent_id_to_obs:
+            observations = batch_concat_agent_id_to_obs(observations)
 
         # Make time-major
         observations = switch_two_leading_dims(observations)
