@@ -111,7 +111,7 @@ class MADDPGCQLSystem(MADDPGSystem):
         target_qs = tf.minimum(target_qs_1, target_qs_2)
 
         # Compute Bellman targets
-        targets = rewards[:-1] + self._discount * (1 - terminals[:-1]) * tf.squeeze(
+        targets = rewards[1:] + self._discount * (1 - terminals[1:]) * tf.squeeze(
             target_qs[1:], axis=-1
         )
 
@@ -278,7 +278,7 @@ class MADDPGCQLSystem(MADDPGSystem):
             qs_2 = self._critic_network_2(env_states, online_actions, replay_actions)
             qs = tf.minimum(qs_1, qs_2)
 
-            policy_loss = -tf.reduce_mean(qs) + 1e-3 * tf.reduce_mean(online_actions**2) 
+            policy_loss = -tf.reduce_mean(qs) + 1e-3 * tf.reduce_mean(online_actions**2)
 
         # Train critics
         variables = (
