@@ -22,7 +22,6 @@ from og_marl.environments.base import BaseEnvironment
 from og_marl.loggers import BaseLogger
 from og_marl.tf2.systems.iddpg import IDDPGSystem
 from og_marl.tf2.utils import (
-    batch_concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
     merge_batch_and_agent_dim_of_time_major_sequence,
     switch_two_leading_dims,
@@ -143,7 +142,7 @@ class IDDPGBCSystem(IDDPGSystem):
             qs_2 = self._critic_network_2(env_states, online_actions)
             qs = tf.minimum(qs_1, qs_2)
 
-            policy_loss = -2.5 * tf.reduce_mean(qs) / tf.reduce_mean(
+            policy_loss = - 5.0 * tf.reduce_mean(qs) / tf.reduce_mean(
                 tf.abs(tf.stop_gradient(qs))
             ) + tf.reduce_mean(tf.square(online_actions - replay_actions))
 
