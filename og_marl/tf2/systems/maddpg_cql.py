@@ -47,7 +47,7 @@ class MADDPGCQLSystem(MADDPGSystem):
         add_agent_id_to_obs: bool = False,
         random_exploration_timesteps: int = 0,
         num_ood_actions: int = 10,  # CQL
-        cql_weight: float = 1.0,  # CQL
+        cql_weight: float = 0.1,  # CQL
         cql_sigma: float = 0.2,  # CQL
     ):
         super().__init__(
@@ -278,7 +278,7 @@ class MADDPGCQLSystem(MADDPGSystem):
             qs_2 = self._critic_network_2(env_states, online_actions, replay_actions)
             qs = tf.minimum(qs_1, qs_2)
 
-            policy_loss = -tf.reduce_mean(qs) + 1e-3 * tf.reduce_mean(online_actions**2)
+            policy_loss = -tf.reduce_mean(qs) + 1e-3 * tf.reduce_mean(online_actions**2) 
 
         # Train critics
         variables = (
