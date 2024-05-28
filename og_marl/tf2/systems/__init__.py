@@ -61,6 +61,10 @@ def get_system(  # noqa: C901
         from og_marl.tf2.systems.maddpg_cql import MADDPGCQLSystem
 
         return MADDPGCQLSystem(environment, logger, **kwargs)
+    elif system_name == "iddpg+bc":
+        from og_marl.tf2.systems.iddpg_bc import IDDPGBCSystem
+
+        return IDDPGBCSystem(environment, logger, **kwargs)
     elif system_name == "dbc":
         from og_marl.tf2.systems.bc import DicreteActionBehaviourCloning
 

@@ -47,7 +47,7 @@ class MADDPGCQLSystem(MADDPGSystem):
         add_agent_id_to_obs: bool = False,
         random_exploration_timesteps: int = 0,
         num_ood_actions: int = 10,  # CQL
-        cql_weight: float = 0.1,  # CQL
+        cql_weight: float = 2,  # CQL
         cql_sigma: float = 0.2,  # CQL
     ):
         super().__init__(
