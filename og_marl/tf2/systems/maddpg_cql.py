@@ -38,8 +38,8 @@ class MADDPGCQLSystem(MADDPGSystem):
         self,
         environment: BaseEnvironment,
         logger: BaseLogger,
-        linear_layer_dim: int = 64,
-        recurrent_layer_dim: int = 64,
+        linear_layer_dim: int = 128,
+        recurrent_layer_dim: int = 128,
         discount: float = 0.99,
         target_update_rate: float = 0.005,
         critic_learning_rate: float = 3e-4,
@@ -47,8 +47,8 @@ class MADDPGCQLSystem(MADDPGSystem):
         add_agent_id_to_obs: bool = False,
         random_exploration_timesteps: int = 0,
         num_ood_actions: int = 10,  # CQL
-        cql_weight: float = 2,  # CQL
-        cql_sigma: float = 0.2,  # CQL
+        cql_weight: float = 1,  # CQL
+        cql_sigma: float = 0.1,  # CQL
     ):
         super().__init__(
             environment=environment,
@@ -72,7 +72,7 @@ class MADDPGCQLSystem(MADDPGSystem):
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N,A)
-        env_states = experience["infos"]["states"]  # (B,T,S)
+        env_states = experience["infos"]["state"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
         truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
         terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
@@ -286,11 +286,13 @@ class MADDPGCQLSystem(MADDPGSystem):
             *self._critic_network_2.trainable_variables,
         )
         gradients = tape.gradient(critic_loss, variables)
+        gradients, _ = tf.clip_by_global_norm(gradients, 5.0)
         self._critic_optimizer.apply(gradients, variables)
 
         # Train policy
         variables = (*self._policy_network.trainable_variables,)
         gradients = tape.gradient(policy_loss, variables)
+        gradients, _ = tf.clip_by_global_norm(gradients, 5.0)
         self._policy_optimizer.apply(gradients, variables)
 
         # Update target networks

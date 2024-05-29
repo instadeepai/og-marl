@@ -142,7 +142,7 @@ class IDDPGBCSystem(IDDPGSystem):
             qs_2 = self._critic_network_2(env_states, online_actions)
             qs = tf.minimum(qs_1, qs_2)
 
-            policy_loss = - 5.0 * tf.reduce_mean(qs) / tf.reduce_mean(
+            policy_loss = -5.0 * tf.reduce_mean(qs) / tf.reduce_mean(
                 tf.abs(tf.stop_gradient(qs))
             ) + tf.reduce_mean(tf.square(online_actions - replay_actions))
 
