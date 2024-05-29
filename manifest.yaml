@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: wandb agent off-the-grid-marl-team/benchmarking/s7krl5s6
+  command: wandb agent off-the-grid-marl-team/benchmarking/14apmgjl
   types:
     Worker:
       count: 6
