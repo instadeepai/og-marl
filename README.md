@@ -71,6 +71,8 @@ We provide a simple demonstrative notebook of how to use OG-MARL's dataset API h
 
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/instadeepai/og-marl/blob/main/examples/dataset_api_demo.ipynb)
 
+> ⚠️ If you are having issues with downloading our datasets, it may because you are downloading from a region far from where we are hosting the datasets. As an alternative, please try this [Google Drive link](https://drive.google.com/drive/folders/1lw-e5VwIdCtmsGWgQG902yZRArU69TrH?usp=sharing) instead.
+
 ## Datasets 🎥
 
 We have generated datasets on a diverse set of popular MARL environments. A list of currently supported environments is included in the table below. It is well known from the single-agent offline RL literature that the quality of experience in offline datasets can play a large role in the final performance of offline RL algorithms. Therefore in OG-MARL, for each environment and scenario, we include a range of dataset distributions including `Good`, `Medium`, `Poor` and `Replay` datasets in order to benchmark offline MARL algorithms on a range of different dataset qualities. For more information on why we chose to include each environment and its task properties, please read our accompanying [paper](https://arxiv.org/abs/2302.00521).
