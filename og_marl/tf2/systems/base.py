@@ -78,13 +78,13 @@ class BaseMARLSystem:
                 )
 
                 self._eval_step_counter += 1
-                
+
                 episode_return += np.mean(list(rewards.values()), dtype="float")
                 done = all(terminals.values()) or all(truncations.values())
             episode_returns.append(episode_return)
         logs = {"evaluator/episode_return": np.mean(episode_returns)}
 
-        if "battles_won"  in self._environment.get_stats():
+        if "battles_won" in self._environment.get_stats():
             battles_won = self._environment.get_stats()["battles_won"] - initial_battles_won
             win_rate = battles_won / num_eval_episodes
             logs["evaluator/win_rate"] = win_rate
