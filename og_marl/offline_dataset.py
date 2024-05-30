@@ -40,9 +40,9 @@ VAULT_INFO = {
         #     "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2c_vs_64zg.zip"
         # },
         "2s3z": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/cfcql/2s3z.zip"},
-        "3s_vs_5z": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/cfcql/8m.zip"},
+        "3s_vs_5z": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/cfcql/3s_vs_5z.zip"},
         "5m_vs_6m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/cfcql/5m_vs_6m.zip"},
-        "6h_vs_8z": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/cfcql/2s3z.zip"},
+        "6h_vs_8z": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/cfcql/6h_vs_8z.zip"},
     },
     "smac_v2": {
         "terran_5_vs_5": {
