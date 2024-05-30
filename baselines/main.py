@@ -24,10 +24,10 @@ from og_marl.tf2.utils import set_growing_gpu_memory
 set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("env", "mamujoco", "Environment name.")
-flags.DEFINE_string("scenario", "3hopper", "Environment scenario name.")
-flags.DEFINE_string("dataset", "expert", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
-flags.DEFINE_string("system", "maddpg+cql", "System name.")
+flags.DEFINE_string("env", "smac_v1", "Environment name.")
+flags.DEFINE_string("scenario", "3m", "Environment scenario name.")
+flags.DEFINE_string("dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
+flags.DEFINE_string("system", "idrqn+cql", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 5e5, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
@@ -68,7 +68,7 @@ def main(_):
         max_trainer_steps=FLAGS.trainer_steps,
         json_writer=json_writer,
         evaluate_every=5000,
-        num_eval_episodes=1,
+        num_eval_episodes=16,
     )
 
 
