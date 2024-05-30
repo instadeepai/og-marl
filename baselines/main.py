@@ -44,7 +44,7 @@ def main(_):
 
     env = get_environment(FLAGS.env, FLAGS.scenario)
 
-    buffer = FlashbaxReplayBuffer(sequence_length=20, sample_period=1)
+    buffer = FlashbaxReplayBuffer(sequence_length=20, sample_period=1, seed=FLAGS.seed)
 
     download_and_unzip_vault(FLAGS.env, FLAGS.scenario)
 
