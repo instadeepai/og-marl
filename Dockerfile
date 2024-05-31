@@ -47,7 +47,7 @@ RUN ./install_environments/smacv1.sh
 # RUN ./install_environments/smacv2.sh
 
 # MAMuJoCo
-# ENV PYTHONPATH=/home/app/og-marl/environments
+ENV PYTHONPATH=/home/app/og-marl/environments
 # RUN pip install -r ./install_environments/requirements/mamujoco.txt
 # ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco200/bin:/usr/lib/nvidia
 # ENV SUPPRESS_GR_PROMPT 1
