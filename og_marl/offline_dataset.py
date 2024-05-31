@@ -28,19 +28,19 @@ from git import Optional
 
 
 VAULT_INFO = {
+    # "smac_v1": {
+    #     "3m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3m.zip"},
+    #     "8m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/8m.zip"},
+    #     "5m_vs_6m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/5m_vs_6m.zip"},
+    #     "2s3z": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2s3z.zip"},
+    #     "3s5z_vs_3s6z": {
+    #         "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3s5z_vs_3s6z.zip"
+    #     },
+    #     "2c_vs_64zg": {
+    #         "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2c_vs_64zg.zip"
+    #     },
+    # },
     "smac_v1": {
-        "3m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3m.zip"},
-        "8m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/8m.zip"},
-        "5m_vs_6m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/5m_vs_6m.zip"},
-        "2s3z": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2s3z.zip"},
-        "3s5z_vs_3s6z": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3s5z_vs_3s6z.zip"
-        },
-        "2c_vs_64zg": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2c_vs_64zg.zip"
-        },
-    },
-    "smac_v1_omiga": {
         "5m_vs_6m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/5m_vs_6m.zip"},
         "6h_vs_8z": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/6h_vs_8z.zip"},
         "2c_vs_64zg": {

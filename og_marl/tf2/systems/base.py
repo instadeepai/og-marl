@@ -38,6 +38,7 @@ class BaseMARLSystem:
         self._add_agent_id_to_obs = add_agent_id_to_obs
 
         self._env_step_ctr = 0.0
+        self._eval_step_counter = 0.0
 
     def get_stats(self) -> Dict[str, Numeric]:
         return {}
@@ -45,6 +46,13 @@ class BaseMARLSystem:
     def evaluate(self, num_eval_episodes: int = 4) -> Dict[str, Numeric]:
         """Method to evaluate the system online (i.e. in the environment)."""
         episode_returns = []
+
+        # This will break mamujoco, get better way to compute win rate
+        if self._eval_step_counter == 0:
+            initial_battles_won = 0
+        else:
+            initial_battles_won = self._environment.get_stats()["battles_won"]
+
         for _ in range(num_eval_episodes):
             self.reset()
             observations_ = self._environment.reset()
@@ -68,10 +76,18 @@ class BaseMARLSystem:
                 observations, rewards, terminals, truncations, infos = self._environment.step(
                     actions
                 )
+
+                self._eval_step_counter += 1
+
                 episode_return += np.mean(list(rewards.values()), dtype="float")
                 done = all(terminals.values()) or all(truncations.values())
             episode_returns.append(episode_return)
         logs = {"evaluator/episode_return": np.mean(episode_returns)}
+
+        if "battles_won" in self._environment.get_stats():
+            battles_won = self._environment.get_stats()["battles_won"] - initial_battles_won
+            win_rate = battles_won / num_eval_episodes
+            logs["evaluator/win_rate"] = win_rate
         return logs
 
     def train_online(
