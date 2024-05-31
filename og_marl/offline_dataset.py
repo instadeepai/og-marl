@@ -40,6 +40,14 @@ VAULT_INFO = {
             "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2c_vs_64zg.zip"
         },
     },
+    "smac_v1_omiga": {
+        "5m_vs_6m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/5m_vs_6m.zip"},
+        "6h_vs_8z": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/6h_vs_8z.zip"},
+        "2c_vs_64zg": {
+            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/2c_vs_64zg.zip"
+        },
+        "corridor": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/corridor.zip"},
+    },
     "smac_v2": {
         "terran_5_vs_5": {
             "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/terran_5_vs_5.zip"
@@ -143,7 +151,7 @@ def calculate_returns(
     # We want all the time data, but just from one agent
     experience_one_agent = jax.tree_map(lambda x: x[0, :, 0, ...], experience)
     rewards = experience_one_agent[reward_key]
-    terminals = experience_one_agent[terminal_key]
+    terminals = jnp.array(experience[terminal_key].all(axis=-1).squeeze(), dtype=jnp.float32)
 
     def sum_rewards(terminals: Array, rewards: Array) -> Array:
         def scan_fn(carry: Array, inputs: Array) -> Array:
