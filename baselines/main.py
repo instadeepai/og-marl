@@ -25,8 +25,10 @@ set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "smac_v1", "Environment name.")
-flags.DEFINE_string("scenario", "6h_vs_8z", "Environment scenario name.")
-flags.DEFINE_string("dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
+flags.DEFINE_string("scenario", "5m_vs_6m", "Environment scenario name.")
+flags.DEFINE_string(
+    "dataset", "medium-replay", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' "
+)
 flags.DEFINE_string("system", "idrqn+cql", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 5e5, "Number of training steps.")
@@ -48,7 +50,9 @@ def main(_):
 
     download_and_unzip_vault(FLAGS.env, FLAGS.scenario)
 
-    is_vault_loaded = buffer.populate_from_vault(FLAGS.env, FLAGS.scenario, FLAGS.dataset)
+    dataset = FLAGS.dataset.replace("-", "_")
+
+    is_vault_loaded = buffer.populate_from_vault(FLAGS.env, FLAGS.scenario, dataset)
     if not is_vault_loaded:
         print("Vault not found. Exiting.")
         return
