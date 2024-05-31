@@ -19,11 +19,11 @@ from og_marl.environments.base import BaseEnvironment
 
 
 def get_environment(env_name: str, scenario: str) -> BaseEnvironment:  # noqa: C901
-    if env_name == "smac_v1":
-        from og_marl.environments.smacv1 import SMACv1
+    # if env_name == "smac_v1":
+    #     from og_marl.environments.smacv1 import SMACv1
 
-        return SMACv1(scenario)
-    if env_name == "smac_v1_omiga":
+    #     return SMACv1(scenario)
+    if env_name == "smac_v1":
         from og_marl.environments.smacv1_omiga import SMACv1
 
         return SMACv1(scenario)
