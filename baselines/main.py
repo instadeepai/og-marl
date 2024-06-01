@@ -62,8 +62,14 @@ def main(_):
     json_writer = None
 
     system_kwargs = {"add_agent_id_to_obs": True}
-    if FLAGS.scenario == "pursuit":
-        system_kwargs["observation_embedding_network"] = CNNEmbeddingNetwork()
+
+    if FLAGS.system == "maddpg+cql":
+        if FLAGS.scenario == "2ant":
+            system_kwargs["cql_sigma"] = 0.1
+        elif FLAGS.scenario == "3hopper":
+            system_kwargs["cql_sigma"] = 0.2
+        elif FLAGS.scenario == "6halfcheetah":
+            system_kwargs["cql_sigma"] = 0.3
 
     system = get_system(FLAGS.system, env, logger, **system_kwargs)
 
