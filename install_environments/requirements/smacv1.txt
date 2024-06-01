@@ -1,2 +1,2 @@
-# git+https://github.com/oxwhirl/smac.git
+git+https://github.com/oxwhirl/smac.git
 gym
