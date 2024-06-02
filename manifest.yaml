@@ -16,7 +16,7 @@ spec:
   command: wandb agent off-the-grid-marl-team/benchmarking/p0pkuq19 #wandb agent off-the-grid-marl-team/benchmarking/l7klmj2j
   types:
     Worker:
-      count: 9
+      count: 1
 
       resources:
         # 10-15 cpus for single process
