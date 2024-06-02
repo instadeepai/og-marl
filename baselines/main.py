@@ -49,7 +49,7 @@ def main(_):
 
     download_and_unzip_vault(FLAGS.env, FLAGS.scenario)
 
-    dataset = FLAGS.dataset.replace("-", "_")
+    dataset = FLAGS.dataset
 
     is_vault_loaded = buffer.populate_from_vault(FLAGS.env, FLAGS.scenario, dataset)
     if not is_vault_loaded:
