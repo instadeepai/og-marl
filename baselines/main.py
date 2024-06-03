@@ -27,7 +27,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "smac_v1", "Environment name.")
 flags.DEFINE_string("scenario", "5m_vs_6m", "Environment scenario name.")
 flags.DEFINE_string(
-    "dataset", "medium-replay", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' "
+    "dataset", "expert", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' "
 )
 flags.DEFINE_string("system", "idrqn+cql", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
