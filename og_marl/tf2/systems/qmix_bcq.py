@@ -41,7 +41,7 @@ class QMIXBCQSystem(QMIXSystem):
         self,
         environment: BaseEnvironment,
         logger: BaseLogger,
-        bc_threshold: float = 0.4,  # BCQ parameter
+        bc_threshold: float = 0.2,  # BCQ parameter
         linear_layer_dim: int = 64,
         recurrent_layer_dim: int = 64,
         mixer_embed_dim: int = 32,
@@ -88,7 +88,7 @@ class QMIXBCQSystem(QMIXSystem):
     def _tf_train_step(self, train_step: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
-        actions = experience["actions"]  # (B,T,N)
+        actions = tf.cast(experience["actions"], "int32")  # (B,T,N)
         env_states = experience["infos"]["state"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
         truncations = experience["truncations"]  # (B,T,N)

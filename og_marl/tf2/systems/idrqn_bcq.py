@@ -82,7 +82,7 @@ class IDRQNBCQSystem(IDRQNSystem):
     def _tf_train_step(self, train_step: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
-        actions = experience["actions"]  # (B,T,N)
+        actions = tf.cast(experience["actions"], "int32")  # (B,T,N)
         rewards = experience["rewards"]  # (B,T,N)
         truncations = experience["truncations"]  # (B,T,N)
         terminals = experience["terminals"]  # (B,T,N)

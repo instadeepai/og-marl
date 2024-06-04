@@ -132,7 +132,7 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the relevant quantities
         observations = experience["observations"]
-        actions = experience["actions"]
+        actions = tf.cast(experience["actions"], "int32")
         truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
         terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
 
