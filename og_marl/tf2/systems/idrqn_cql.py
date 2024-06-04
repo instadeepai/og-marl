@@ -40,7 +40,7 @@ class IDRQNCQLSystem(IDRQNSystem):
         environment: BaseEnvironment,
         logger: BaseLogger,
         num_ood_actions: int = 10,
-        cql_weight: float = 1.0,
+        cql_weight: float = 2.0,
         linear_layer_dim: int = 128,
         recurrent_layer_dim: int = 128,
         discount: float = 0.99,
