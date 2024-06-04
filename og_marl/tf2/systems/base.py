@@ -48,10 +48,7 @@ class BaseMARLSystem:
         episode_returns = []
 
         # This will break mamujoco, get better way to compute win rate
-        if self._eval_step_counter == 0:
-            initial_battles_won = 0
-        else:
-            initial_battles_won = self._environment.get_stats()["battles_won"]
+        initial_battles_won = 0
 
         for _ in range(num_eval_episodes):
             self.reset()
@@ -84,10 +81,6 @@ class BaseMARLSystem:
             episode_returns.append(episode_return)
         logs = {"evaluator/episode_return": np.mean(episode_returns)}
 
-        if "battles_won" in self._environment.get_stats():
-            battles_won = self._environment.get_stats()["battles_won"] - initial_battles_won
-            win_rate = battles_won / num_eval_episodes
-            logs["evaluator/win_rate"] = win_rate
         return logs
 
     def train_online(

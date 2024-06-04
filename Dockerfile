@@ -42,14 +42,13 @@ RUN pip install flashbax
 # RUN pip install ./environments/multiagent-particle-envs
 
 # SMAC
-ENV SC2PATH /home/app/StarCraftII
-RUN ./install_environments/smacv1.sh
+# ENV SC2PATH /home/app/StarCraftII
+# RUN ./install_environments/smacv1.sh
 # RUN ./install_environments/smacv2.sh
 
 # MAMuJoCo
 # ENV PYTHONPATH=/home/app/og-marl/environments
-# RUN pip install -r ./install_environments/requirements/mamujoco.txt
-# ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco200/bin:/usr/lib/nvidia
-# ENV SUPPRESS_GR_PROMPT 1
-# RUN ./install_environments/mamujoco_old.sh
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
+ENV SUPPRESS_GR_PROMPT 1
+RUN ./install_environments/mamujoco.sh
 # RUN pip install mujoco-py==2.0.2.5

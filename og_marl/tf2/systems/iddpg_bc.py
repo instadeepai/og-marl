@@ -22,6 +22,7 @@ from og_marl.environments.base import BaseEnvironment
 from og_marl.loggers import BaseLogger
 from og_marl.tf2.systems.iddpg import IDDPGSystem
 from og_marl.tf2.utils import (
+    batch_concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
     merge_batch_and_agent_dim_of_time_major_sequence,
     switch_two_leading_dims,
@@ -34,8 +35,8 @@ class IDDPGBCSystem(IDDPGSystem):
         self,
         environment: BaseEnvironment,
         logger: BaseLogger,
-        linear_layer_dim: int = 64,
-        recurrent_layer_dim: int = 64,
+        linear_layer_dim: int = 128,
+        recurrent_layer_dim: int = 128,
         discount: float = 0.99,
         target_update_rate: float = 0.005,
         critic_learning_rate: float = 1e-3,
@@ -80,8 +81,8 @@ class IDDPGBCSystem(IDDPGSystem):
         B, T, N = actions.shape[:3]
 
         # Maybe add agent ids to observation
-        # if self._add_agent_id_to_obs:
-        #     observations = batch_concat_agent_id_to_obs(observations)
+        if self._add_agent_id_to_obs:
+            observations = batch_concat_agent_id_to_obs(observations)
 
         # Make time-major
         observations = switch_two_leading_dims(observations)

@@ -24,10 +24,10 @@ from og_marl.tf2.utils import set_growing_gpu_memory
 set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("env", "smac_v1", "Environment name.")
-flags.DEFINE_string("scenario", "2s3z", "Environment scenario name.")
-flags.DEFINE_string("dataset", "medium", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
-flags.DEFINE_string("system", "dbc", "System name.")
+flags.DEFINE_string("env", "mpe", "Environment name.")
+flags.DEFINE_string("scenario", "simple_world", "Environment scenario name.")
+flags.DEFINE_string("dataset", "expert", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
+flags.DEFINE_string("system", "iddpg+bc", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 5e5, "Number of training steps.")
 flags.DEFINE_integer("batch_size", 64, "Number of training steps.")
@@ -62,6 +62,11 @@ def main(_):
     system_kwargs = {"add_agent_id_to_obs": True}
     if FLAGS.scenario == "pursuit":
         system_kwargs["observation_embedding_network"] = CNNEmbeddingNetwork()
+
+    if FLAGS.scenario in ["4ant", "2ant"]:
+        system_kwargs["cql_sigma"] = 0.1
+    else:
+        system_kwargs["cql_sigma"] = 0.3
 
     system = get_system(FLAGS.system, env, logger, **system_kwargs)
 
