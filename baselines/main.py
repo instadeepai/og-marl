@@ -25,7 +25,7 @@ set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "mpe", "Environment name.")
-flags.DEFINE_string("scenario", "simple_world", "Environment scenario name.")
+flags.DEFINE_string("scenario", "simple_spread", "Environment scenario name.")
 flags.DEFINE_string("dataset", "expert", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
 flags.DEFINE_string("system", "iddpg+bc", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
@@ -44,7 +44,7 @@ def main(_):
 
     env = get_environment(FLAGS.env, FLAGS.scenario)
 
-    buffer = FlashbaxReplayBuffer(sequence_length=20, sample_period=1, seed=FLAGS.seed)
+    buffer = FlashbaxReplayBuffer(sequence_length=5, sample_period=1, seed=FLAGS.seed)
 
     download_and_unzip_vault(FLAGS.env, FLAGS.scenario)
 
@@ -74,8 +74,8 @@ def main(_):
         buffer,
         max_trainer_steps=FLAGS.trainer_steps,
         json_writer=json_writer,
-        evaluate_every=5000,
-        num_eval_episodes=32,
+        evaluate_every=2500,
+        num_eval_episodes=16,
     )
 
 

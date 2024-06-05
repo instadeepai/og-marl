@@ -211,7 +211,6 @@ class MADDPGSystem(BaseMARLSystem):
                     agent_observation, i, len(self._environment.possible_agents)
                 )
             agent_observation = tf.expand_dims(agent_observation, axis=0)  # add batch dimension
-            agent_observation = (agent_observation - tf.reduce_mean(agent_observation) )/ tf.math.reduce_std(agent_observation)
             action, next_rnn_states[agent] = self._policy_network(
                 agent_observation, rnn_states[agent]
             )
