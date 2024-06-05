@@ -39,16 +39,16 @@ class MADDPGCQLSystem(MADDPGSystem):
         self,
         environment: BaseEnvironment,
         logger: BaseLogger,
-        linear_layer_dim: int = 128,
-        recurrent_layer_dim: int = 128,
+        linear_layer_dim: int = 64,
+        recurrent_layer_dim: int = 64,
         discount: float = 0.99,
         target_update_rate: float = 0.005,
-        critic_learning_rate: float = 3e-4,
-        policy_learning_rate: float = 3e-5,
+        critic_learning_rate: float = 1e-3,
+        policy_learning_rate: float = 3e-4,
         add_agent_id_to_obs: bool = False,
         random_exploration_timesteps: int = 0,
         num_ood_actions: int = 10,  # CQL
-        cql_weight: float = 1,  # CQL
+        cql_weight: float = 5,  # CQL
         cql_sigma: float = 0.2,  # CQL
     ):
         super().__init__(
