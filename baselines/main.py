@@ -75,7 +75,7 @@ def main(_):
         max_trainer_steps=FLAGS.trainer_steps,
         json_writer=json_writer,
         evaluate_every=2500,
-        num_eval_episodes=5,
+        num_eval_episodes=4,
     )
 
 
