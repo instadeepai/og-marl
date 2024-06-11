@@ -10,46 +10,84 @@ RUN apt-get update -y && \
     add-apt-repository -y ppa:deadsnakes/ppa && \
     apt-get install -y python3.9 python3.9-dev python3-pip python3.9-venv python3-dev python3-opencv swig ffmpeg git unzip wget libosmesa6-dev libgl1-mesa-glx libglfw3 patchelf && \
     update-alternatives --install /usr/bin/python python /usr/bin/python3.9 10 && \
-    python -m venv og-marl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Setup virtual env and path
-ENV VIRTUAL_ENV /og-marl
-ENV PATH /og-marl/bin:$PATH
+# Install mini conda
+# Install Miniconda
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
+    /bin/bash ~/miniconda.sh -b -p ~/miniconda3 && \
+    rm ~/miniconda.sh
 
-# Location of og-marl folder
-ARG folder=/home/app/og-marl
+# Set up the environment
+ENV PATH /root/miniconda3/bin:$PATH
+
+# # Update conda and install basic packages
+RUN conda update -n base -c defaults conda
+
+# Create two conda environments
+RUN conda create -n baselines210 python=3.10 -y && \
+    conda create -n baselines200 python=3.10 -y
+
+# Activate environments and set environment variables
+ENV PIP200 /root/miniconda3/envs/baselines200/bin/pip
+ENV PIP210 /root/miniconda3/envs/baselines210/bin/pip
+
+# Location of baselines folder
+ARG folder=/home/app/baselines
 
 # Set working directory
 WORKDIR ${folder}
 
 # Copy all code needed to install dependencies
-COPY ./install_environments ./install_environments
-COPY ./og_marl ./og_marl
+COPY ./environment_wrappers ./environment_wrappers
 COPY ./environments ./environments
-COPY setup.py .
-COPY ./baselines ./baselines
+COPY ./install_environments ./install_environments
+COPY ./systems ./systems
+COPY ./utils ./utils
+COPY all_experiments.py .
+COPY main.py .
+COPY requirements.txt .
 
+##########################
+# Create first conda env #
+##########################
+# Dependencies
 RUN echo "Installing requirements..."
-RUN pip install --quiet --upgrade pip setuptools wheel &&  \
-    pip install -e .
-RUN pip install -U "jax[cuda12]"
-RUN pip install flashbax
+RUN $PIP210 install --quiet --upgrade pip setuptools wheel
+RUN $PIP210 install -r requirements.txt
 
 # MPE
-# COPY ./environments ./environments
-# RUN pip install ./environments/multiagent-particle-envs
+RUN $PIP210 install ./environments/multiagent_particle_envs
 
 # SMAC
 ENV SC2PATH /home/app/StarCraftII
-RUN ./install_environments/smacv1.sh
-# RUN ./install_environments/smacv2.sh
+RUN ./install_environments/starcraft2.sh
+RUN $PIP210 install -r ./install_environments/requirements/smacv1.txt
 
-# MAMuJoCo
-ENV PYTHONPATH=/home/app/og-marl/environments
-# RUN pip install -r ./install_environments/requirements/mamujoco.txt
-# ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco200/bin:/usr/lib/nvidia
-# ENV SUPPRESS_GR_PROMPT 1
-# RUN ./install_environments/mamujoco_old.sh
-# RUN pip install mujoco-py==2.0.2.5
+# MuJoCo
+RUN ./install_environments/mujoco210.sh
+
+# MAMuJoCo Requirements
+RUN $PIP210 install -r ./install_environments/requirements/mamujoco.txt
+
+# MAMuJoCo 210
+RUN $PIP210 install git+https://github.com/schroederdewitt/multiagent_mujoco
+ENV SUPPRESS_GR_PROMPT 1
+
+###########################
+# Create second conda env #
+###########################
+# Dependencies
+RUN echo "Installing requirements..."
+RUN $PIP200 install --quiet --upgrade pip setuptools wheel &&  \
+    $PIP200 install -r requirements.txt
+
+# MuJoCo
+RUN ./install_environments/mujoco200.sh
+
+# MAMuJoCo Requirements
+RUN $PIP200 install -r ./install_environments/requirements/mamujoco.txt
+RUN rm -r /root/miniconda3/envs/baselines200/lib/libstdc++.so.6
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco200/bin
+RUN $PIP200 install mujoco-py==2.0.2.5
