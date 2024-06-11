@@ -47,7 +47,7 @@ EXPERIMENT_CONFIGS = {
     }
 }
 
-the_env = "smac_v1_omiga"
+the_env = "smac_v1_cfcql"
 
 if __name__ == "__main__":
     for seed in SEEDS:
