@@ -27,6 +27,8 @@ def main(_):
         "seed": FLAGS.seed
     }
 
+    print(config)
+
     # Logger
     logger = WandbLogger(project="offline-marl-baselines", config=config)
 
@@ -49,8 +51,6 @@ def main(_):
 
     if FLAGS.env.split("_")[-1] == "omiga" and FLAGS.env.split("_")[0] == "mamujoco":
         system_kwargs["is_omiga"] = True
-
-    print(system_kwargs)
 
     system = get_system(FLAGS.system, env, logger, **system_kwargs)
 

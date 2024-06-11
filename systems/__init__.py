@@ -11,7 +11,7 @@ def get_system(  # noqa: C901
     logger: BaseLogger,
     **kwargs: Any,
 ) -> BaseMARLSystem:
-    if system_name == "idrqn+cql":
+    if system_name == "iql+cql":
         from .idrqn_cql import IDRQNCQLSystem
 
         return IDRQNCQLSystem(environment, logger, **kwargs)
