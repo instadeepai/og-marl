@@ -47,7 +47,7 @@ EXPERIMENT_CONFIGS = {
     }
 }
 
-the_env = "mpe_omar"
+the_env = "mamujoco_omiga"
 
 if __name__ == "__main__":
     for seed in SEEDS:
