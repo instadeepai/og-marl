@@ -88,6 +88,6 @@ RUN ./install_environments/mujoco200.sh
 
 # MAMuJoCo Requirements
 RUN $PIP200 install -r ./install_environments/requirements/mamujoco.txt
-# RUN rm -r /root/miniconda3/envs/baselines200/lib/libstdc++.so.6
+RUN rm -r /root/miniconda3/envs/baselines200/lib/libstdc++.so.6
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco200/bin
 RUN $PIP200 install mujoco-py==2.0.2.5
