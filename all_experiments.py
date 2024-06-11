@@ -47,9 +47,13 @@ EXPERIMENT_CONFIGS = {
     }
 }
 
+the_env = "smac_v1"
+
 if __name__ == "__main__":
     for seed in SEEDS:
         for env, config in EXPERIMENT_CONFIGS.items():
+            if env != the_env:
+                continue
             for scenario in config["scenarios"]:
                 for dataset in config["datasets"]:
                     for system in config["systems"]:
@@ -61,4 +65,4 @@ if __name__ == "__main__":
                             os.environ["LD_LIBRARY_PATH"] = "$LD_LIBRARY_PATH:~/.mujoco/mujoco210/bin:/usr/lib/nvidia"
                             python = "~/miniconda3/envs/baselines210/bin/python"
                         
-                        os.system(f"{python} main.py --env={env} --scenario={scenario} --dataset={dataset} --system={system} --trainer_steps={trainer_steps}")
+                        os.system(f"{python} main.py --env={env} --scenario={scenario} --dataset={dataset} --system={system} --trainer_steps={trainer_steps} --seed={seed}")
