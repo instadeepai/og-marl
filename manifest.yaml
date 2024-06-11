@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: python all_baselines.py
+  command: python all_experiments.py
   types:
     Worker:
       count: 1
