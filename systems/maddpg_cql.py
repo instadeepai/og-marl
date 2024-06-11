@@ -5,6 +5,7 @@ import tensorflow as tf
 from tensorflow import Tensor
 from chex import Numeric
 import sonnet as snt
+import copy
 
 from systems.iddpg import IDDPGSystem
 from environment_wrappers.base import BaseEnvironment
@@ -123,6 +124,17 @@ class MADDPGCQLSystem(IDDPGSystem):
             add_agent_id_to_obs_in_trainer=add_agent_id_to_obs_in_trainer,
             add_agent_id_to_obs_in_action_selection=add_agent_id_to_obs_in_action_selection,
         )
+
+        # Critic network
+        self._critic_network_1 = StateAndJointActionCritic(
+            len(self._environment.possible_agents), self._environment._num_actions
+        )  # shared network for all agents
+        self._critic_network_2 = copy.deepcopy(self._critic_network_1)
+
+        # Target critic network
+        self._target_critic_network_1 = copy.deepcopy(self._critic_network_1)
+        self._target_critic_network_2 = copy.deepcopy(self._critic_network_1)
+        self._target_update_rate = target_update_rate
 
         self._num_ood_actions = num_ood_actions
         self._cql_weight = cql_weight

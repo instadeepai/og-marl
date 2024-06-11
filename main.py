@@ -12,7 +12,7 @@ set_growing_gpu_memory()
 FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "mamujoco_omar", "Environment name.")
 flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
-flags.DEFINE_string("dataset", "expert", "Dataset type.")
+flags.DEFINE_string("dataset", "Expert", "Dataset type.")
 flags.DEFINE_string("system", "iddpg+bc", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 5e5, "Number of training steps.")
@@ -21,7 +21,7 @@ flags.DEFINE_float("trainer_steps", 5e5, "Number of training steps.")
 def main(_):
     config = {
         "env": FLAGS.env,
-        "scenaro": FLAGS.scenario,
+        "scenario": FLAGS.scenario,
         "dataset": FLAGS.dataset,
         "system": FLAGS.system,
         "seed": FLAGS.seed

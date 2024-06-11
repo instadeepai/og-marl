@@ -16,7 +16,7 @@ EXPERIMENT_CONFIGS = {
         "trainer_steps": 100000
     },
     "smac_v1_cfcql": {
-        "scenarios": ["corridor", "5m_vs_6m", "2c_vs_64zg", "6h_vs_8z"],
+        "scenarios": ["2s3z", "5m_vs_6m", "3s_vs_5z", "6h_vs_8z"],
         "datasets": ["Expert", "Mixed", "Medium", "Medium-Replay"],
         "systems": ["bc", "iql+cql"],
         "trainer_steps": 100000
@@ -47,7 +47,7 @@ EXPERIMENT_CONFIGS = {
     }
 }
 
-the_env = "smac_v1_omiga"
+the_env = "mamujoco"
 
 if __name__ == "__main__":
     for seed in SEEDS:
@@ -59,10 +59,10 @@ if __name__ == "__main__":
                     for system in config["systems"]:
                         trainer_steps = 100 # config["trainer_steps"]
                         if scenario.split("_")[0] == "mamujoco" and len(scenario.split("_")[0]) > 1:
-                            os.environ["LD_LIBRARY_PATH"] = "$LD_LIBRARY_PATH:/root/.mujoco/mujoco200/bin:/usr/lib/nvidia"
+                            os.environ["LD_LIBRARY_PATH"] = "$LD_LIBRARY_PATH:/root/.mujoco/mujoco200/bin:/usr/lib/nvidia:/root/miniconda3/envs/baselines200/lib"
                             python = "/root/miniconda3/envs/baselines200/bin/python"
                         else:
-                            os.environ["LD_LIBRARY_PATH"] = "$LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia"
+                            os.environ["LD_LIBRARY_PATH"] = "$LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia:/root/miniconda3/envs/baselines210/lib"
                             python = "/root/miniconda3/envs/baselines210/bin/python"
                         
                         os.system(f"{python} main.py --env={env} --scenario={scenario} --dataset={dataset} --system={system} --trainer_steps={trainer_steps} --seed={seed}")
