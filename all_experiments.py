@@ -47,7 +47,7 @@ EXPERIMENT_CONFIGS = {
     }
 }
 
-the_env = "smac_v1_cfcql"
+the_env = "mamujoco"
 
 if __name__ == "__main__":
     for seed in SEEDS:
