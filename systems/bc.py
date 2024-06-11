@@ -49,7 +49,7 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
                 snt.Linear(self._environment._num_actions),
             ]
         )  # shared network for all agents
-        observation_embedding_network = IdentityNetwork()
+        self._policy_embedding_network = IdentityNetwork()
 
         self._optimizer = snt.optimizers.RMSProp(learning_rate=learning_rate)
 
