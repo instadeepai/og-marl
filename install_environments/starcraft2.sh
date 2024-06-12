@@ -10,7 +10,7 @@ mv StarCraftII $SC2PATH
 rm -rf SC2.4.10.zip
 
 echo 'Adding SMAC maps.'
-MAP_DIR="$SC2PATH/Maps/"
+export MAP_DIR="$SC2PATH/StarCraftII/Maps/"
 echo 'MAP_DIR is set to '$MAP_DIR
 mkdir -p $MAP_DIR
 
