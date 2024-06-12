@@ -62,16 +62,16 @@ RUN pip install -r ./install_environments/requirements/smacv1.txt
 # Start of MuJoCo 210 #
 #######################
 
-# MuJoCo
-RUN ./install_environments/mujoco210.sh
+# # MuJoCo
+# RUN ./install_environments/mujoco210.sh
 
-# MAMuJoCo Requirements
-RUN pip install -r ./install_environments/requirements/mamujoco.txt
+# # MAMuJoCo Requirements
+# RUN pip install -r ./install_environments/requirements/mamujoco.txt
 
-# MAMuJoCo 210
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
-RUN pip install git+https://github.com/schroederdewitt/multiagent_mujoco
-ENV SUPPRESS_GR_PROMPT 1
+# # MAMuJoCo 210
+# ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
+# RUN pip install git+https://github.com/schroederdewitt/multiagent_mujoco
+# ENV SUPPRESS_GR_PROMPT 1
 
 #####################
 # End of MuJoCo 210 #
@@ -84,18 +84,18 @@ ENV SUPPRESS_GR_PROMPT 1
 # Start of MuJoCo 200 #
 #######################
 
-# # Dependencies
-# RUN echo "Installing requirements..."
-# RUN pip install --quiet --upgrade pip setuptools wheel &&  \
-#     pip install -r requirements.txt
+# Dependencies
+RUN echo "Installing requirements..."
+RUN pip install --quiet --upgrade pip setuptools wheel &&  \
+    pip install -r requirements.txt
 
-# # MuJoCo
-# RUN ./install_environments/mujoco200.sh
+# MuJoCo
+RUN ./install_environments/mujoco200.sh
 
-# # MAMuJoCo Requirements
-# RUN pip install -r ./install_environments/requirements/mamujoco.txt
-# ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco200/bin:/usr/lib/nvidia
-# RUN pip install mujoco-py==2.0.2.5
+# MAMuJoCo Requirements
+RUN pip install -r ./install_environments/requirements/mamujoco.txt
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco200/bin:/usr/lib/nvidia
+RUN pip install mujoco-py==2.0.2.5
 
 #####################
 # End of MuJoCo 200 #
