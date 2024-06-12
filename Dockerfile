@@ -51,7 +51,7 @@ RUN pip install -r requirements.txt
 RUN pip install ./environments/multiagent_particle_envs
 
 # SMAC
-ENV SC2PATH /home/app/StarCraftII
+ENV SC2PATH /root/StarCraftII
 RUN ./install_environments/starcraft2.sh
 RUN pip install -r ./install_environments/requirements/smacv1.txt
 
