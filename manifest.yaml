@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: python all_experiments.py --env=mamujoco_omiga
+  command: python all_experiments.py --env=mpe_omar
   types:
     Worker:
       count: 1
