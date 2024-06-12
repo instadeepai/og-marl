@@ -6,7 +6,7 @@ from utils.utils import set_growing_gpu_memory
 set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("env", "mamujoco_omiga", "Environment name.")
+flags.DEFINE_string("env", "mamujoco_omar", "Environment name.")
 flags.DEFINE_integer("num_seeds", 10, "Number of seeds to use.")
 
 EXPERIMENT_CONFIGS = {
