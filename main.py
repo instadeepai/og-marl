@@ -30,7 +30,7 @@ def main(_):
     print(config)
 
     # Logger
-    logger = WandbLogger(project="offline-marl-baselines", config=config)
+    logger = WandbLogger(project="offline_marl_baselines", config=config)
 
     # Make environment for evaluation
     env = get_environment(FLAGS.env, FLAGS.scenario)
