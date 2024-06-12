@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: python all_experiments.py --env=mpe_omar --num_seeds=1
+  command: python all_experiments.py --env=smac_v1 --num_seeds=1
   types:
     Worker:
       count: 1
