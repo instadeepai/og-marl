@@ -18,7 +18,7 @@ class MAMuJoCo(BaseEnvironment):
         self._num_actions = self._environment.n_actions
         self.max_episode_length = 1000
 
-    def _get_mamujoco_args(scenario: str) -> Dict[str, Any]:
+    def _get_mamujoco_args(self, scenario: str) -> Dict[str, Any]:
         env_args = {
             "agent_obsk": 1,
             "episode_limit": 1000,

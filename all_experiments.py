@@ -1,6 +1,13 @@
 import os
+from absl import app, flags
 
-SEEDS = [0,1,2,3,4,5,6,7,8,9]
+from utils.utils import set_growing_gpu_memory
+
+set_growing_gpu_memory()
+
+FLAGS = flags.FLAGS
+flags.DEFINE_string("env", "mamujoco_omar", "Environment name.")
+flags.DEFINE_integer("num_seeds", 10, "Number of seeds to use.")
 
 EXPERIMENT_CONFIGS = {
     "smac_v1": { # From OG-MARL
@@ -47,22 +54,20 @@ EXPERIMENT_CONFIGS = {
     }
 }
 
-the_env = "mamujoco"
+def main(_):
 
-if __name__ == "__main__":
+    SEEDS = list(range(FLAGS.num_seeds))
+
     for seed in SEEDS:
         for env, config in EXPERIMENT_CONFIGS.items():
-            if env != the_env:
+            if FLAGS.env != env:
                 continue
             for scenario in config["scenarios"]:
                 for dataset in config["datasets"]:
                     for system in config["systems"]:
                         trainer_steps = 100 # config["trainer_steps"]
-                        if scenario.split("_")[0] == "mamujoco" and len(scenario.split("_")[0]) > 1:
-                            os.environ["LD_LIBRARY_PATH"] = "/root/.mujoco/mujoco200/bin:/usr/lib/nvidia:/root/miniconda3/envs/baselines200/lib"
-                            python = "/root/miniconda3/envs/baselines200/bin/python"
-                        else:
-                            os.environ["LD_LIBRARY_PATH"] = "/root/.mujoco/mujoco210/bin:/usr/lib/nvidia:/root/miniconda3/envs/baselines210/lib"
-                            python = "/root/miniconda3/envs/baselines210/bin/python"
-                        
-                        os.system(f"{python} main.py --env={env} --scenario={scenario} --dataset={dataset} --system={system} --trainer_steps={trainer_steps} --seed={seed}")
+                        os.system(f"python main.py --env={env} --scenario={scenario} --dataset={dataset} --system={system} --trainer_steps={trainer_steps} --seed={seed}")
+
+
+if __name__ == "__main__":
+    app.run(main)
