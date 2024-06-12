@@ -6,7 +6,7 @@ from utils.utils import set_growing_gpu_memory
 set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("env", "mamujoco_omar", "Environment name.")
+flags.DEFINE_string("env", "mamujoco", "Environment name.")
 flags.DEFINE_integer("num_seeds", 10, "Number of seeds to use.")
 
 EXPERIMENT_CONFIGS = {
@@ -65,7 +65,7 @@ def main(_):
             for scenario in config["scenarios"]:
                 for dataset in config["datasets"]:
                     for system in config["systems"]:
-                        trainer_steps = 100 # config["trainer_steps"]
+                        trainer_steps = 10000 # config["trainer_steps"]
                         os.system(f"python main.py --env={env} --scenario={scenario} --dataset={dataset} --system={system} --trainer_steps={trainer_steps} --seed={seed}")
 
 
