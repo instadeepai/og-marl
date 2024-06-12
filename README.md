@@ -49,3 +49,31 @@ you will need to install a newer version of MuJoCo. Installing two versions of M
 Error: `lib/libstdc++.so.6: version 'GLIBCXX_3.4.30' not found (required by /usr/lib/x86_64-linux-gnu/libLLVM-15.so.1)`
 
 Solution: `rm -r ~/miniconda3/envs/baselines200/lib/libstdc++.so.6`
+
+# Visualising Vaults
+
+```py
+from utils.offline_dataset import download_and_unzip_vault, analyse_vault
+
+# Dataset from OG-MARL
+download_and_unzip_vault("smac_v1", "5m_vs_6m")
+analyse_vault("smac_v1/5m_vs_6m.vlt", visualise=True)
+```
+<img width="723" alt="image" src="https://github.com/instadeepai/og-marl/assets/37700709/175e7b0c-af02-4fc9-a5f9-47f2103bf956">
+
+
+```py
+# Vault converted from OMIGA dataset
+download_and_unzip_vault("smac_v1_omiga", "5m_vs_6m")
+analyse_vault("smac_v1_omiga/5m_vs_6m.vlt", visualise=True)
+```
+<img width="732" alt="image" src="https://github.com/instadeepai/og-marl/assets/37700709/fa04627a-810f-487a-ac7e-5fb406a98861">
+
+
+```py
+# Vault converted from CFCQL dataset
+download_and_unzip_vault("smac_v1_cfcql", "5m_vs_6m")
+analyse_vault("smac_v1_cfcql/5m_vs_6m.vlt", visualise=True)
+```
+<img width="723" alt="image" src="https://github.com/instadeepai/og-marl/assets/37700709/3d04d4ac-1bb9-4175-b8d3-ac7c6b8e3f06">
+

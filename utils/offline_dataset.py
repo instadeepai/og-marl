@@ -11,7 +11,6 @@ import seaborn as sns
 from chex import Array
 from flashbax.vault import Vault
 
-
 VAULT_INFO = {
     "smac_v1": {
         "3m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3m.zip"},
@@ -135,7 +134,7 @@ def calculate_returns(
     # We want all the time data, but just from one agent
     experience_one_agent = jax.tree_map(lambda x: x[0, :, 0, ...], experience)
     rewards = experience_one_agent[reward_key]
-    terminals = experience_one_agent[terminal_key]
+    terminals = jnp.array(experience['terminals'].all(axis=-1).squeeze(), dtype=jnp.float32)
 
     def sum_rewards(terminals: Array, rewards: Array) -> Array:
         def scan_fn(carry: Array, inputs: Array) -> Array:
