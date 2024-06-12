@@ -65,7 +65,7 @@ def main(_):
             for scenario in config["scenarios"]:
                 for dataset in config["datasets"]:
                     for system in config["systems"]:
-                        os.system(f"python main.py --env={env} --scenario={scenario} --dataset={dataset} --system={system} --trainer_steps={config["trainer_steps"]} --seed={seed}")
+                        os.system(f"python main.py --env={env} --scenario={scenario} --dataset={dataset} --system={system} --trainer_steps={config['trainer_steps']} --seed={seed}")
 
 
 if __name__ == "__main__":
