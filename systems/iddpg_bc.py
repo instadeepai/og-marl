@@ -20,18 +20,16 @@ class IDDPGBCSystem(IDDPGSystem):
         self,
         environment: BaseEnvironment,
         logger: BaseLogger,
-        linear_layer_dim: int = 128,
-        recurrent_layer_dim: int = 128,
+        linear_layer_dim: int = 64,
+        recurrent_layer_dim: int = 64,
         discount: float = 0.99,
         target_update_rate: float = 0.005,
         critic_learning_rate: float = 1e-3,
-        policy_learning_rate: float = 1e-3,
+        policy_learning_rate: float = 3e-4,
         add_agent_id_to_obs_in_trainer: bool = True,
         add_agent_id_to_obs_in_action_selection: bool = True,
         is_omiga = False, # for omiga datasets
-        num_ood_actions: int = 10,  # CQL
-        cql_weight: float = 5.0,  # CQL
-        cql_sigma: float = 0.2,  # CQL
+        bc_weight: int = 2.5,  # BC
     ):
         super().__init__(
             environment=environment,
@@ -47,9 +45,7 @@ class IDDPGBCSystem(IDDPGSystem):
             is_omiga=is_omiga
         )
 
-        self._num_ood_actions = num_ood_actions
-        self._cql_weight = cql_weight
-        self._cql_sigma = cql_sigma
+        self._bc_weight = bc_weight
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
@@ -130,7 +126,7 @@ class IDDPGBCSystem(IDDPGSystem):
             qs_2 = self._critic_network_2(env_states, online_actions)
             qs = tf.minimum(qs_1, qs_2)
 
-            policy_loss = -5.0 * tf.reduce_mean(qs) / tf.reduce_mean(
+            policy_loss = -self._bc_weight * tf.reduce_mean(qs) / tf.reduce_mean(
                 tf.abs(tf.stop_gradient(qs))
             ) + tf.reduce_mean(tf.square(online_actions - replay_actions))
 

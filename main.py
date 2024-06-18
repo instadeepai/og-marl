@@ -10,12 +10,12 @@ from utils.utils import set_growing_gpu_memory
 set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("env", "mamujoco_omar", "Environment name.")
-flags.DEFINE_string("scenario", "2halfcheetah", "Environment scenario name.")
+flags.DEFINE_string("env", "mamujoco_omiga", "Environment name.")
+flags.DEFINE_string("scenario", "2ant", "Environment scenario name.")
 flags.DEFINE_string("dataset", "Expert", "Dataset type.")
-flags.DEFINE_string("system", "iddpg+bc", "System name.")
+flags.DEFINE_string("system", "maddpg+cql", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
-flags.DEFINE_float("trainer_steps", 5e5, "Number of training steps.")
+flags.DEFINE_float("trainer_steps", 1e5, "Number of training steps.")
 
 
 def main(_):
@@ -44,13 +44,23 @@ def main(_):
     # Load offline data into replay buffer
     buffer.populate_from_vault(FLAGS.env, FLAGS.scenario, FLAGS.dataset)
 
+    # Handle agent-IDs in OMIGA dataset
     system_kwargs = {
         "add_agent_id_to_obs_in_trainer": not (FLAGS.env.split("_")[-1] == "omiga" and FLAGS.env.split("_")[0] == "mamujoco"),
         "add_agent_id_to_obs_in_action_selection": True,
     }
 
-    if FLAGS.env.split("_")[-1] == "omiga" and FLAGS.env.split("_")[0] == "mamujoco":
-        system_kwargs["is_omiga"] = True
+    if FLAGS.env.split("_")[0] == "mamujoco":
+        if FLAGS.env.split("_")[-1] == "omiga":
+            system_kwargs["is_omiga"] = True # Handle normalised observations in OMIGA dataset
+        if FLAGS.system == "maddpg+cql":
+            if FLAGS.scenario in ["2halfcheetah", "6halfcheetah"]:
+                system_kwargs["cql_sigma"] = 0.3
+            elif FLAGS.scenario in ["2ant", "4ant"]:
+                system_kwargs["cql_sigma"] = 0.1
+            else:
+                system_kwargs["cql_sigma"] = 0.2
+
 
     system = get_system(FLAGS.system, env, logger, **system_kwargs)
 
