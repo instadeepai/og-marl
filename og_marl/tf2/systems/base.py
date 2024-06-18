@@ -128,7 +128,7 @@ class BaseMARLSystem:
 
                 if (
                     self._env_step_ctr > 100 and self._env_step_ctr % train_period == 0
-                ):  # TODO burn in period
+                ):  # TODO burn in period should be a variable
                     # Sample replay buffer
                     start_time = time.time()
                     experience = replay_buffer.sample()
