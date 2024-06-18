@@ -44,7 +44,7 @@ class QMIXCQLSystem(QMIXSystem):
         environment: BaseEnvironment,
         logger: BaseLogger,
         num_ood_actions: int = 10,
-        cql_weight: float = 5.0,
+        cql_weight: float = 3.0,
         linear_layer_dim: int = 64,
         recurrent_layer_dim: int = 64,
         mixer_embed_dim: int = 32,
@@ -188,8 +188,8 @@ class QMIXCQLSystem(QMIXSystem):
             #### end ####
             #############
 
-            # Mask out zero-padded timesteps
-            loss = td_loss + cql_loss
+            # Add cql_loss to loss
+            loss = td_loss + self._cql_weight * cql_loss
 
         # Get trainable variables
         variables = (

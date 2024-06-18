@@ -112,9 +112,6 @@ class IDRQNSystem(BaseMARLSystem):
         legal_actions: Dict[str, np.ndarray],
         explore: bool = True,
     ) -> Dict[str, np.ndarray]:
-        if explore:
-            self._env_step_ctr += 1.0
-
         env_step_ctr, observations, legal_actions = tree.map_structure(
             tf.convert_to_tensor, (self._env_step_ctr, observations, legal_actions)
         )
