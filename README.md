@@ -65,7 +65,7 @@ Run a baseline. In this example we will run MAICQ.
 
 `python baselines/main.py --env=smac_v1 --scenario=3m --dataset=Good --system=maicq`
 
-## Dataset API
+## Dataset API 🔌
 
 We provide a simple demonstrative notebook of how to use OG-MARL's dataset API here:
 
@@ -96,10 +96,8 @@ We have generated datasets on a diverse set of popular MARL environments. A list
 
 <br/>
 
-## Dataset Backends 🔌
-We are in the process of migrating our datasets from TF Records to Flashbax Vaults. Flashbax Vaults have the advantage of being significantly more flexible than the TF Record Datasets.
+### Environments and Scenarios in OG-MARL 🗺️
 
-### Flashbax Vaults ⚡
 | Environment | Scenario | Agents | Act | Obs | Reward | Types | Repo |
 |-----|----|----|-----|-----|----|----|-----|
 | 🔫SMAC v1 | 3m <br/> 8m <br/> 2s3z <br/> 5m_vs_6m <br/> 27m_vs_30m <br/> 3s5z_vs_3s6z <br/> 2c_vs_64zg| 3 <br/> 8 <br/> 5 <br/> 5 <br/> 27 <br/> 8 <br/> 2 | Discrete  | Vector   |  Dense | Homog <br/> Homog <br/> Heterog <br/> Homog <br/> Homog <br/> Heterog <br/> Homog |[source](https://github.com/oxwhirl/smac) |
@@ -108,37 +106,20 @@ We are in the process of migrating our datasets from TF Records to Flashbax Vaul
 | 🐜MAMuJoCo | 2-HalfCheetah <br/> 2-Ant <br/> 4-Ant | 2 <br/> 2 <br/> 4 | Cont. | Vector | Dense | Heterog <br/> Homog <br/> Homog | [source](https://github.com/schroederdewitt/multiagent_mujoco) |
 | 🐻PettingZoo | Pursuit  <br/> Co-op Pong | 8 <br/> 2 | Discrete <br/> Discrete  | Pixels <br/> Pixels | Dense | Homog <br/> Heterog | [source](https://pettingzoo.farama.org/) |
 
-### Legacy Datasets (still to be migrated to Vault) 👴
-| Environment | Scenario | Agents | Act | Obs | Reward | Types | Repo |
-|-----|----|----|-----|-----|----|----|-----|
-| 🐻PettingZoo | PistonBall <br/> KAZ| 15 <br/> 2|  Cont. <br/> Discrete | Pixels <br/> Vector | Dense | Homog <br/> Heterog| [source](https://pettingzoo.farama.org/) |
-| 🏙️CityLearn | 2022_all_phases | 17 | Cont. | Vector | Dense | Homog | [source](https://github.com/intelligent-environments-lab/CityLearn) |
-| 🔌Voltage Control | case33_3min_final | 6 | Cont. | Vector | Dense | Homog | [source](https://github.com/Future-Power-Networks/MAPDN) |
-| 🔴MPE | simple_adversary | 3 | Discrete. | Vector | Dense | Competitive | [source](https://pettingzoo.farama.org/environments/mpe/simple_adversary/) |
+### Datasets from Prior Works 🥇
+We recently converted several datasets from prior works to Vaults and benchmarked our baseline algorithms on them. For more information, see our [technical report](https://arxiv.org/abs/2406.09068) on ArXiv. All of the code for re-running the experiments is available on the following branch of this repository: 
 
-### Dataset and Vault Locations
-For OG-MARL's systems, we require the following dataset file structure:
+> [https://github.com/instadeepai/og-marl/tree/baselines-code](https://github.com/instadeepai/og-marl/tree/baselines-code).
 
-```
-examples/
-    |_> ...
-og_marl/
-    |_> ...
-vaults/
-    |_> smac_v1/
-        |_> 3m.vlt/
-        |   |_> Good/
-        |   |_> Medium/
-        |   |_> Poor/
-        |_> ...
-    |_> smac_v2/
-        |_> terran_5_vs_5.vlt/
-        |   |_> Good/
-        |   |_> Medium/
-        |   |_> Poor/
-        |_> ...
-...
-```
+We include the following datasets from prior works.
+
+| Paper | Environment | Scenario | Source |
+|-----|----|----|-----|
+| [Pan et al. (2022)](https://proceedings.mlr.press/v162/pan22a/pan22a.pdf) | 🐜MAMuJoCo | 2x3 HalfCheetah | [source](https://github.com/ling-pan/OMAR) |
+| [Pan et al. (2022)](https://proceedings.mlr.press/v162/pan22a/pan22a.pdf) | 🔴MPE | simple_spread | [source](https://github.com/ling-pan/OMAR) |
+| [Shao et al. (2023)](https://openreview.net/forum?id=62zmO4mv8X) | 🔫SMAC v1 | 5m_vs_6m <br/> 2s3z <br/> 3s_vs_5z <br/> 6h_vs_8z | [source](https://github.com/thu-rllab/CFCQL) |
+| [Wang et al. (2023)](https://papers.nips.cc/paper_files/paper/2023/hash/a46c84276e3a4249ab7dbf3e069baf7f-Abstract-Conference.html) | 🔫SMAC v1 | 5m_vs_6m <br/> 6h_vs_8z <br/> 2c_vs_64zg <br/> corridor| [source](https://github.com/ZhengYinan-AIR/OMIGA) |
+| [Wang et al. (2023)](https://papers.nips.cc/paper_files/paper/2023/hash/a46c84276e3a4249ab7dbf3e069baf7f-Abstract-Conference.html) | 🐜MAMuJoCo | 6x1 HalfCheetah <br/> 3x1 Hopper <br/> 2x4 Ant| [source](https://github.com/ZhengYinan-AIR/OMIGA) |
 
 ## See Also 🔎
 
