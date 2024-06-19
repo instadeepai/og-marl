@@ -25,32 +25,14 @@ ARG folder=/home/app/og-marl
 WORKDIR ${folder}
 
 # Copy all code needed to install dependencies
-COPY ./install_environments ./install_environments
-COPY ./og_marl ./og_marl
-COPY setup.py .
+COPY . .
 
 RUN echo "Installing requirements..."
 RUN pip install --quiet --upgrade pip setuptools wheel &&  \
-    pip install -e . && \
-    pip install flashbax==0.1.2
-RUN pip install -U "jax[cuda12]"
-
-COPY ./environments ./environments
-RUN pip install ./environments/multiagent-particle-envs
-
-# ENV SC2PATH /home/app/StarCraftII
-# RUN ./install_environments/smacv1.sh
-# RUN ./install_environments/smacv2.sh
+    pip install -r requirements1.txt && \
+    pip install -r requirements2.txt
 
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
 ENV SUPPRESS_GR_PROMPT 1
-RUN ./install_environments/mamujoco.sh
-
-# RUN ./install_environments/pettingzoo.sh
-
-# RUN ./install_environments/flatland.sh
-
-# Copy all code
-COPY ./examples ./examples
-COPY ./baselines ./baselines
-COPY ./run_mamujoco.sh ./run_mamujoco.sh
+RUN ./install_mamujoco.sh
+RUN pip install -r mamujoco_requirements.txt
