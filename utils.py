@@ -50,19 +50,27 @@ class WandbLogger:
     def close(self) -> None:
         wandb.finish()
 
-def download_and_unzip_vault(dataset_base_dir: str = "./vaults") -> None:
-    if check_directory_exists_and_not_empty(f"{dataset_base_dir}/mamujoco/2halfcheetah.vlt"):
+def download_and_unzip_vault(scenario, dataset_base_dir: str = "./vaults") -> None:
+    if check_directory_exists_and_not_empty(f"{dataset_base_dir}/mamujoco/{scenario}.vlt"):
         print(f"Vault already exists.")
         return
 
-    dataset_download_url = "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2halfcheetah2.zip"
+    dataset_download_urls = {
+        "2halfcheetah": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2halfcheetah2.zip",
+        "3hopper": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/3hopper.zip"
+    }
+
+    dataset_download_url = dataset_download_urls[scenario]
 
     os.makedirs(f"{dataset_base_dir}/tmp/", exist_ok=True)
     os.makedirs(f"{dataset_base_dir}/mamujoco/", exist_ok=True)
 
     zip_file_path = f"{dataset_base_dir}/tmp/tmp_dataset.zip"
 
-    extraction_path = f"{dataset_base_dir}/mamujoco/2halfcheetah.vlt"
+    if scenario == "2halfcheetah":
+        extraction_path = f"{dataset_base_dir}/mamujoco/{scenario}.vlt"
+    else:
+        extraction_path = f"{dataset_base_dir}/mamujoco/"
 
     response = requests.get(dataset_download_url, stream=True)
     total_length = response.headers.get("content-length")
@@ -147,7 +155,7 @@ def expand_batch_and_agent_dim_of_time_major_sequence(x: Tensor, B: int, N: int)
     return x
 
 
-def concat_agent_id_to_obs(obs: Tensor, agent_id: int, N: int) -> Tensor:
+def concat_agent_id_to_obs(obs: Tensor, agent_id: int, N: int, at_back=False) -> Tensor:
     is_vector_obs = len(obs.shape) == 1
 
     if is_vector_obs:
@@ -159,7 +167,10 @@ def concat_agent_id_to_obs(obs: Tensor, agent_id: int, N: int) -> Tensor:
     if not is_vector_obs and len(obs.shape) == 2:  # if no channel dim
         obs = tf.expand_dims(obs, axis=-1)
 
-    obs: Tensor = tf.concat([agent_id, obs], axis=-1)
+    if at_back:
+        obs: Tensor = tf.concat([obs, agent_id], axis=-1)
+    else:    
+        obs: Tensor = tf.concat([agent_id, obs], axis=-1)
 
     return obs
 

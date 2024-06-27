@@ -1,11 +1,20 @@
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 import numpy as np
 
-from environments.multiagent_mujoco.mujoco_multi import MujocoMulti
-from environment_wrappers.base import BaseEnvironment, ResetReturn, StepReturn
+from omiga_envs.multiagent_mujoco.mujoco_multi import MujocoMulti
 
-class MAMuJoCo(BaseEnvironment):
+Observations = Dict[str, np.ndarray]
+NextObservations = Observations
+Rewards = Dict[str, np.ndarray]
+Terminals = Dict[str, np.ndarray]
+Truncations = Dict[str, np.ndarray]
+Info = Dict[str, Any]
+
+ResetReturn = Tuple[Observations, Info]
+StepReturn = Tuple[NextObservations, Rewards, Terminals, Truncations, Info]
+
+class OmigaMAMuJoCo:
 
     def __init__(self, scenario: str):
         env_args = self._get_mamujoco_args(scenario)

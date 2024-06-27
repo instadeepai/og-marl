@@ -119,8 +119,9 @@ class MADDPGCQLSystem:
         add_agent_id_to_obs: bool = False,
         random_exploration_timesteps: int = 0,
         num_ood_actions: int = 10,  # CQL
-        cql_weight: float = 5.0,  # CQL
-        cql_sigma: float = 0.3,  # CQL
+        cql_weight: float = 3.0,  # CQL
+        cql_sigma: float = 0.2,  # CQL
+        is_omiga: bool = False # is an omiga dataset
     ):
         self._environment = environment
         self._agents = environment.possible_agents
@@ -180,6 +181,9 @@ class MADDPGCQLSystem:
         self._num_ood_actions = num_ood_actions
         self._cql_weight = cql_weight
         self._cql_sigma = cql_sigma
+
+        # Is an OMIGA dataset
+        self._is_omiga = is_omiga
 
     def train_offline(
         self,
@@ -270,8 +274,10 @@ class MADDPGCQLSystem:
             agent_observation = observations[agent]
             if self._add_agent_id_to_obs:
                 agent_observation = concat_agent_id_to_obs(
-                    agent_observation, i, len(self._environment.possible_agents)
+                    agent_observation, i, len(self._environment.possible_agents), at_back=self._is_omiga
                 )
+                if self._is_omiga:
+                    agent_observation = (agent_observation - tf.reduce_mean(agent_observation)) / tf.math.reduce_std(agent_observation)
             agent_observation = tf.expand_dims(agent_observation, axis=0)  # add batch dimension
             action, next_rnn_states[agent] = self._policy_network(
                 agent_observation, rnn_states[agent]
@@ -333,7 +339,7 @@ class MADDPGCQLSystem:
         B, T, N = actions.shape[:3]
 
         # Maybe add agent ids to observation
-        if self._add_agent_id_to_obs:
+        if self._add_agent_id_to_obs and not self._is_omiga:
             observations = batch_concat_agent_id_to_obs(observations)
 
         # Make time-major

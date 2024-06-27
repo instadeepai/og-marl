@@ -74,11 +74,12 @@ class FlashbaxReplayBuffer:
 
     def populate_from_vault(
         self,
+        scenario,
         dataset_name="tmp",
         rel_dir: str = "vaults",
     ) -> bool:
         self._buffer_state = Vault(
-            vault_name=f"mamujoco/2halfcheetah.vlt",
+            vault_name=f"mamujoco/{scenario}.vlt",
             vault_uid=dataset_name,
             rel_dir=rel_dir,
         ).read()
@@ -207,11 +208,12 @@ class PrioritisedFlashbaxReplayBuffer:
 
     def populate_from_vault(
         self,
+        scenario,
         dataset_name="tmp",
         rel_dir: str = "vaults",
     ) -> bool:
         self._vault_buffer_state = Vault(
-            vault_name=f"mamujoco/2halfcheetah.vlt",
+            vault_name=f"mamujoco/{scenario}.vlt",
             # vault_name=vault_name,
             vault_uid=dataset_name,
             rel_dir=rel_dir,
