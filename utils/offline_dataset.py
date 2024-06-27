@@ -54,7 +54,9 @@ VAULT_INFO = {
         "2halfcheetah": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omar/2halfcheetah.zip"},
     },
     "mpe_omar": {
-        "simple_spread": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omar/simple_spread.zip"}
+        "simple_spread": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omar/simple_spread.zip"},
+        "simple_tag": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omar/simple_tag.zip"},
+        "simple_world": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omar/simple_world.zip"},
     }
 }
 
