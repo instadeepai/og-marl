@@ -14,6 +14,7 @@
 """Base wrapper for Jumanji environments."""
 from typing import Any, Dict
 
+import copy
 import jax
 import jax.numpy as jnp
 import jumanji
@@ -122,4 +123,4 @@ class JumanjiRware(BaseEnvironment):
     def render(self) -> Any:
         frame = self._state
 
-        return frame
+        return copy.deepcopy(frame)
