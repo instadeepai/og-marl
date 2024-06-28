@@ -90,7 +90,7 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
             lambda x: x[0].numpy(), actions
         )  # convert to numpy and squeeze batch dim
 
-    @tf.function()
+    @tf.function(jit_compile=True)
     def _tf_select_actions(
         self,
         observations: Dict[str, tf.Tensor],
@@ -105,7 +105,9 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
                 agent_observation = concat_agent_id_to_obs(
                     agent_observation, i, len(self._environment.possible_agents)
                 )
-            agent_observation = tf.expand_dims(agent_observation, axis=0)  # add batch dimension
+            agent_observation = tf.cast(
+                tf.expand_dims(agent_observation, axis=0), "float32"
+            )  # add batch dimension
             embedding = self._policy_embedding_network(agent_observation)
             logits, next_rnn_states[agent] = self._policy_network(embedding, rnn_states[agent])
 
@@ -131,7 +133,7 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
     @tf.function(jit_compile=True)
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the relevant quantities
-        observations = experience["observations"]
+        observations = tf.cast(experience["observations"], "float32")
         actions = experience["actions"]
         truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
         terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)

@@ -39,6 +39,14 @@ task_configs = {
         "sensor_range": 1,
         "request_queue_size": 2,
     },
+    "small-4ag-easy": {
+        "column_height": 8,
+        "shelf_rows": 2,
+        "shelf_columns": 3,
+        "num_agents": 4,
+        "sensor_range": 1,
+        "request_queue_size": 8,
+    },
 }
 
 
@@ -62,12 +70,13 @@ class JumanjiRware(BaseEnvironment):
         self._key = jax.random.PRNGKey(seed)
 
         self._env_step = jax.jit(self._environment.step, donate_argnums=0)
+        self._env_reset = jax.jit(self._environment.reset)
 
     def reset(self) -> ResetReturn:
         """Resets the env."""
         # Reset the environment
         self._key, sub_key = jax.random.split(self._key)
-        self._state, timestep = self._environment.reset(sub_key)
+        self._state, timestep = self._env_reset(sub_key)
 
         observations = {
             agent: np.asarray(timestep.observation.agents_view[i], dtype=np.float32)
