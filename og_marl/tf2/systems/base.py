@@ -45,8 +45,9 @@ class BaseMARLSystem:
     def evaluate(self, num_eval_episodes: int = 4) -> Dict[str, Numeric]:
         """Method to evaluate the system online (i.e. in the environment)."""
         episode_returns = []
+        all_frames = []
         for _ in range(num_eval_episodes):
-            frames = []
+            ep_frames = []
             self.reset()
             observations_ = self._environment.reset()
 
@@ -59,7 +60,7 @@ class BaseMARLSystem:
             done = False
             episode_return = 0.0
             while not done:
-                frames.append(self._environment.render())
+                ep_frames.append(self._environment.render())
 
                 if "legals" in infos:
                     legal_actions = infos["legals"]
@@ -74,8 +75,9 @@ class BaseMARLSystem:
                 episode_return += np.mean(list(rewards.values()), dtype="float")
                 done = all(terminals.values()) or all(truncations.values())
             episode_returns.append(episode_return)
+            all_frames.append(ep_frames)
         logs = {"evaluator/episode_return": np.mean(episode_returns)}
-        return logs, frames
+        return logs, all_frames
 
     def train_online(
         self,
