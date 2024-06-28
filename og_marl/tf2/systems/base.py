@@ -46,6 +46,7 @@ class BaseMARLSystem:
         """Method to evaluate the system online (i.e. in the environment)."""
         episode_returns = []
         for _ in range(num_eval_episodes):
+            frames = []
             self.reset()
             observations_ = self._environment.reset()
 
@@ -58,6 +59,8 @@ class BaseMARLSystem:
             done = False
             episode_return = 0.0
             while not done:
+                frames.append(self._environment.render())
+
                 if "legals" in infos:
                     legal_actions = infos["legals"]
                 else:
@@ -72,7 +75,7 @@ class BaseMARLSystem:
                 done = all(terminals.values()) or all(truncations.values())
             episode_returns.append(episode_return)
         logs = {"evaluator/episode_return": np.mean(episode_returns)}
-        return logs
+        return logs, frames
 
     def train_online(
         self,
@@ -192,7 +195,7 @@ class BaseMARLSystem:
         while trainer_step_ctr < max_trainer_steps:
             if evaluate_every is not None and trainer_step_ctr % evaluate_every == 0:
                 print("EVALUATION")
-                eval_logs = self.evaluate(num_eval_episodes)
+                eval_logs, render_frames = self.evaluate(num_eval_episodes)
                 self._logger.write(
                     eval_logs | {"Trainer Steps (eval)": trainer_step_ctr}, force=True
                 )
@@ -229,7 +232,7 @@ class BaseMARLSystem:
             trainer_step_ctr += 1
 
         print("FINAL EVALUATION")
-        eval_logs = self.evaluate(10 * num_eval_episodes)
+        eval_logs, render_frames = self.evaluate(10 * num_eval_episodes)
         self._logger.write(eval_logs | {"Trainer Steps (eval)": trainer_step_ctr}, force=True)
         if json_writer is not None:
             eval_logs = {f"absolute/{key.split('/')[1]}": value for key, value in eval_logs.items()}
@@ -240,6 +243,8 @@ class BaseMARLSystem:
                 trainer_step_ctr // evaluate_every,
             )
             json_writer.close()
+
+        return render_frames
 
     def reset(self) -> None:
         """Called at the start of each new episode."""

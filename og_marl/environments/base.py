@@ -53,6 +53,10 @@ class BaseEnvironment:
         """
         return {}
 
+    def render(self):
+        """Return frame for rendering"""
+        return np.zeros((10, 10, 3), "float32")
+
     def __getattr__(self, name: str) -> Any:
         """Expose any other attributes of the underlying environment.
 

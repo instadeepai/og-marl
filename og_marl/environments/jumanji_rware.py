@@ -117,3 +117,9 @@ class JumanjiRware(BaseEnvironment):
         info = {"legals": legals}
 
         return observations, rewards, terminals, truncations, info
+
+
+def render(self) -> Any:
+    frame = self._state
+
+    return frame
