@@ -119,7 +119,7 @@ class JumanjiRware(BaseEnvironment):
         return observations, rewards, terminals, truncations, info
 
 
-def render(self) -> Any:
-    frame = self._state
+    def render(self) -> Any:
+        frame = self._state
 
-    return frame
+        return frame
