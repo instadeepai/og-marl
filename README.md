@@ -40,7 +40,7 @@ Offline MARL holds great promise for real-world applications by utilising static
 
 OG-MARL forms part of the [InstaDeep](https://www.instadeep.com/) MARL [ecosystem](#see-also-🔎), developed jointly with the open-source
 community. To join us in these efforts, reach out, raise issues or just
-🌟 to stay up to date with the latest developments!
+🌟 to stay up to date with the latest developments! 📢 You can contribute to the conversation around OG-MARL in the [Discussion tab](https://github.com/instadeepai/og-marl/discussions). Please don't hesitate to leave a comment. We will be happy to reply. 
 
 ## Quickstart 🏎️
 Clone this repository.
