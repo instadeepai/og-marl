@@ -1,5 +1,5 @@
 """Implementation of MADDPG+CQL"""
-from typing import Any, Dict
+from typing import Dict
 import copy
 import time
 
@@ -24,6 +24,7 @@ from utils import (
 
 tfd = tfp.distributions
 snt_init = snt.initializers
+
 
 class StateAndJointActionCritic(snt.Module):
     def __init__(self, num_agents: int, num_actions: int):
@@ -88,7 +89,9 @@ def make_joint_action(agent_actions, other_actions):
     all_joint_actions = []
     for i in range(N):  # type: ignore
         one_hot = tf.expand_dims(
-            tf.cast(tf.stack([tf.stack([tf.one_hot(i, N)] * B, axis=0)] * T, axis=0), "bool"),  # type: ignore
+            tf.cast(
+                tf.stack([tf.stack([tf.one_hot(i, N)] * B, axis=0)] * T, axis=0), "bool"
+            ),  # type: ignore
             axis=-1,
         )
         joint_action = tf.where(one_hot, agent_actions, other_actions)
@@ -107,7 +110,7 @@ class MADDPGCQLSystem:
         self,
         environment,
         logger,
-        priority_on_ramp = 150000,
+        priority_on_ramp=150000,
         gaussian_steepness=2,
         min_priority=0.001,
         linear_layer_dim: int = 64,
@@ -121,7 +124,7 @@ class MADDPGCQLSystem:
         num_ood_actions: int = 10,  # CQL
         cql_weight: float = 3.0,  # CQL
         cql_sigma: float = 0.2,  # CQL
-        is_omiga: bool = False # is an omiga dataset
+        is_omiga: bool = False,  # is an omiga dataset
     ):
         self._environment = environment
         self._agents = environment.possible_agents
@@ -160,11 +163,17 @@ class MADDPGCQLSystem:
         self._target_update_rate = target_update_rate
 
         # Optimizers
-        self._critic_optimizer = snt.optimizers.RMSProp(learning_rate=critic_learning_rate)
-        self._policy_optimizer = snt.optimizers.RMSProp(learning_rate=policy_learning_rate)
+        self._critic_optimizer = snt.optimizers.RMSProp(
+            learning_rate=critic_learning_rate
+        )
+        self._policy_optimizer = snt.optimizers.RMSProp(
+            learning_rate=policy_learning_rate
+        )
 
         # Exploration
-        self._random_exploration_timesteps = tf.Variable(tf.constant(random_exploration_timesteps))
+        self._random_exploration_timesteps = tf.Variable(
+            tf.constant(random_exploration_timesteps)
+        )
 
         # Reset the recurrent neural network
         self._rnn_states = {
@@ -212,7 +221,9 @@ class MADDPGCQLSystem:
             time_to_sample = end_time - start_time
 
             start_time = time.time()
-            train_logs, priority = self.train_step(data_batch.experience, trainer_step_ctr)
+            train_logs, priority = self.train_step(
+                data_batch.experience, trainer_step_ctr
+            )
             end_time = time.time()
             time_train_step = end_time - start_time
 
@@ -225,7 +236,9 @@ class MADDPGCQLSystem:
             else:
                 time_priority = 0
 
-            train_steps_per_second = 1 / (time_train_step + time_to_sample + time_priority)
+            train_steps_per_second = 1 / (
+                time_train_step + time_to_sample + time_priority
+            )
 
             logs = {
                 **train_logs,
@@ -240,8 +253,10 @@ class MADDPGCQLSystem:
             trainer_step_ctr += 1
 
         print("FINAL EVALUATION")
-        eval_logs = self.evaluate(num_eval_episodes)
-        self._logger.write(eval_logs | {"Trainer Steps (eval)": trainer_step_ctr}, force=True)
+        eval_logs = self.evaluate(num_eval_episodes * 10)
+        self._logger.write(
+            eval_logs | {"Trainer Steps (eval)": trainer_step_ctr}, force=True
+        )
 
     def reset(self) -> None:
         """Called at the start of a new episode."""
@@ -256,7 +271,9 @@ class MADDPGCQLSystem:
         self,
         observations: Dict[str, np.ndarray],
     ) -> Dict[str, np.ndarray]:
-        actions, next_rnn_states = self._tf_select_actions(observations, self._rnn_states)
+        actions, next_rnn_states = self._tf_select_actions(
+            observations, self._rnn_states
+        )
         self._rnn_states = next_rnn_states
         return tree.map_structure(  # type: ignore
             lambda x: x[0].numpy(), actions
@@ -274,11 +291,18 @@ class MADDPGCQLSystem:
             agent_observation = observations[agent]
             if self._add_agent_id_to_obs:
                 agent_observation = concat_agent_id_to_obs(
-                    agent_observation, i, len(self._environment.possible_agents), at_back=self._is_omiga
+                    agent_observation,
+                    i,
+                    len(self._environment.possible_agents),
+                    at_back=self._is_omiga,
                 )
                 if self._is_omiga:
-                    agent_observation = (agent_observation - tf.reduce_mean(agent_observation)) / tf.math.reduce_std(agent_observation)
-            agent_observation = tf.expand_dims(agent_observation, axis=0)  # add batch dimension
+                    agent_observation = (
+                        agent_observation - tf.reduce_mean(agent_observation)
+                    ) / tf.math.reduce_std(agent_observation)
+            agent_observation = tf.expand_dims(
+                agent_observation, axis=0
+            )  # add batch dimension
             action, next_rnn_states[agent] = self._policy_network(
                 agent_observation, rnn_states[agent]
             )
@@ -306,9 +330,13 @@ class MADDPGCQLSystem:
             while not done:
                 actions = self.select_actions(observations)
 
-                observations, rewards, terminals, truncations, infos = self._environment.step(
-                    actions
-                )
+                (
+                    observations,
+                    rewards,
+                    terminals,
+                    truncations,
+                    infos,
+                ) = self._environment.step(actions)
                 episode_return += np.mean(list(rewards.values()), dtype="float")
                 done = all(terminals.values()) or all(truncations.values())
             episode_returns.append(episode_return)
@@ -356,11 +384,17 @@ class MADDPGCQLSystem:
             merge_batch_and_agent_dim_of_time_major_sequence(observations),
             merge_batch_and_agent_dim_of_time_major_sequence(resets),
         )
-        target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
+        target_actions = expand_batch_and_agent_dim_of_time_major_sequence(
+            target_actions, B, N
+        )
 
         # Target critics
-        target_qs_1 = self._target_critic_network_1(env_states, target_actions, target_actions)
-        target_qs_2 = self._target_critic_network_2(env_states, target_actions, target_actions)
+        target_qs_1 = self._target_critic_network_1(
+            env_states, target_actions, target_actions
+        )
+        target_qs_2 = self._target_critic_network_2(
+            env_states, target_actions, target_actions
+        )
 
         # Take minimum between two target critics
         target_qs = tf.minimum(target_qs_1, target_qs_2)
@@ -395,7 +429,9 @@ class MADDPGCQLSystem:
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
                 merge_batch_and_agent_dim_of_time_major_sequence(resets),
             )
-            online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
+            online_actions = expand_batch_and_agent_dim_of_time_major_sequence(
+                online_actions, B, N
+            )
 
             # Repeat all tensors num_ood_actions times andadd  next to batch dim
             repeat_observations = tf.stack(
@@ -412,7 +448,9 @@ class MADDPGCQLSystem:
             repeat_observations = tf.reshape(
                 repeat_observations, (T, -1, *repeat_observations.shape[3:])
             )
-            repeat_env_states = tf.reshape(repeat_env_states, (T, -1, *repeat_env_states.shape[3:]))
+            repeat_env_states = tf.reshape(
+                repeat_env_states, (T, -1, *repeat_env_states.shape[3:])
+            )
             repeat_online_actions = tf.reshape(
                 repeat_online_actions, (T, -1, *repeat_online_actions.shape[3:])
             )
@@ -424,18 +462,20 @@ class MADDPGCQLSystem:
                 maxval=1.0,
                 dtype=repeat_online_actions.dtype,
             )
-            random_ood_action_log_pi = tf.math.log(0.5 ** (random_ood_actions.shape[-1]))
+            random_ood_action_log_pi = tf.math.log(
+                0.5 ** (random_ood_actions.shape[-1])
+            )
 
             ood_qs_1 = (
-                self._critic_network_1(repeat_env_states, random_ood_actions, random_ood_actions)[
-                    :-1
-                ]
+                self._critic_network_1(
+                    repeat_env_states, random_ood_actions, random_ood_actions
+                )[:-1]
                 - random_ood_action_log_pi
             )
             ood_qs_2 = (
-                self._critic_network_2(repeat_env_states, random_ood_actions, random_ood_actions)[
-                    :-1
-                ]
+                self._critic_network_2(
+                    repeat_env_states, random_ood_actions, random_ood_actions
+                )[:-1]
                 - random_ood_action_log_pi
             )
 
@@ -448,11 +488,13 @@ class MADDPGCQLSystem:
                 stddev=std,
                 dtype=repeat_online_actions.dtype,
             )
-            current_ood_actions = tf.clip_by_value(repeat_online_actions + action_noise, -1.0, 1.0)
-
-            ood_actions_prob = (1 / (self._cql_sigma * tf.math.sqrt(2 * np.pi))) * tf.exp(
-                -((action_noise - mu) ** 2) / (2 * self._cql_sigma**2)
+            current_ood_actions = tf.clip_by_value(
+                repeat_online_actions + action_noise, -1.0, 1.0
             )
+
+            ood_actions_prob = (
+                1 / (self._cql_sigma * tf.math.sqrt(2 * np.pi))
+            ) * tf.exp(-((action_noise - mu) ** 2) / (2 * self._cql_sigma**2))
             ood_actions_log_prob = tf.math.log(
                 tf.reduce_prod(ood_actions_prob, axis=-1, keepdims=True)
             )
@@ -494,8 +536,12 @@ class MADDPGCQLSystem:
             # Reshape
             ood_qs_1 = tf.reshape(ood_qs_1, (T - 1, B, self._num_ood_actions, N))
             ood_qs_2 = tf.reshape(ood_qs_2, (T - 1, B, self._num_ood_actions, N))
-            current_ood_qs_1 = tf.reshape(current_ood_qs_1, (T - 1, B, self._num_ood_actions, N))
-            current_ood_qs_2 = tf.reshape(current_ood_qs_2, (T - 1, B, self._num_ood_actions, N))
+            current_ood_qs_1 = tf.reshape(
+                current_ood_qs_1, (T - 1, B, self._num_ood_actions, N)
+            )
+            current_ood_qs_2 = tf.reshape(
+                current_ood_qs_2, (T - 1, B, self._num_ood_actions, N)
+            )
             next_current_ood_qs_1 = tf.reshape(
                 next_current_ood_qs_1, (T - 1, B, self._num_ood_actions, N)
             )
@@ -503,8 +549,12 @@ class MADDPGCQLSystem:
                 next_current_ood_qs_2, (T - 1, B, self._num_ood_actions, N)
             )
 
-            all_ood_qs_1 = tf.concat((ood_qs_1, current_ood_qs_1, next_current_ood_qs_1), axis=2)
-            all_ood_qs_2 = tf.concat((ood_qs_2, current_ood_qs_2, next_current_ood_qs_2), axis=2)
+            all_ood_qs_1 = tf.concat(
+                (ood_qs_1, current_ood_qs_1, next_current_ood_qs_1), axis=2
+            )
+            all_ood_qs_2 = tf.concat(
+                (ood_qs_2, current_ood_qs_2, next_current_ood_qs_2), axis=2
+            )
 
             cql_loss_1 = tf.reduce_mean(
                 tf.reduce_logsumexp(all_ood_qs_1, axis=2, keepdims=False)
@@ -527,7 +577,9 @@ class MADDPGCQLSystem:
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
                 merge_batch_and_agent_dim_of_time_major_sequence(resets),
             )
-            online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
+            online_actions = expand_batch_and_agent_dim_of_time_major_sequence(
+                online_actions, B, N
+            )
 
             qs_1 = self._critic_network_1(env_states, online_actions, replay_actions)
             qs_2 = self._critic_network_2(env_states, online_actions, replay_actions)
@@ -562,7 +614,9 @@ class MADDPGCQLSystem:
         )
 
         for src, dest in zip(online_variables, target_variables):
-            dest.assign(dest * (1.0 - self._target_update_rate) + src * self._target_update_rate)
+            dest.assign(
+                dest * (1.0 - self._target_update_rate) + src * self._target_update_rate
+            )
 
         del tape
 
@@ -574,15 +628,19 @@ class MADDPGCQLSystem:
         joint_target_actions = tf.reshape(target_actions, (T, B, N * A))
 
         ## Compute distance
-        distance = tf.reduce_mean(tf.abs(joint_target_actions - joint_replay_action), axis=-1)
+        distance = tf.reduce_mean(
+            tf.abs(joint_target_actions - joint_replay_action), axis=-1
+        )
 
         # Aggregate across time
         sequence_distance = tf.reduce_mean(distance, axis=0)
 
         ## Priority
-        priority_on_ramp = tf.minimum(1.0, train_steps * (1/self.priority_on_ramp))
-        priority = tf.exp(-((self.gaussian_steepness * priority_on_ramp * sequence_distance) ** 2))
-        priority = tf.clip_by_value(priority, self.min_priority, 1.)
+        priority_on_ramp = tf.minimum(1.0, train_steps * (1 / self.priority_on_ramp))
+        priority = tf.exp(
+            -((self.gaussian_steepness * priority_on_ramp * sequence_distance) ** 2)
+        )
+        priority = tf.clip_by_value(priority, self.min_priority, 1.0)
 
         logs = {
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),

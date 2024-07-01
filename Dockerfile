@@ -44,7 +44,7 @@ RUN pip install --quiet --upgrade pip setuptools wheel &&  \
 #######################
 
 # MuJoCo
-RUN install_mujoco200.sh
+RUN ./install_mujoco200.sh
 
 # MAMuJoCo Requirements
 RUN pip install -r mamujoco_requirements.txt

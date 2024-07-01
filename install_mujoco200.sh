@@ -12,8 +12,3 @@ mkdir -p $MUJOCOPATH \
     && mv ${MUJOCOPATH}/mujoco200_linux ${MUJOCOPATH}/mujoco200 \
     && wget https://www.roboti.us/file/mjkey.txt -O mjkey.txt \
     && mv mjkey.txt $MUJOCOPATH
-
-# IMPORTANT!!!!
-# You will need to set these environment variables
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu/:$MUJOCOPATH/mujoco200/bin:/usr/lib/nvidia
-export LD_PRELOAD=$LD_PRELOAD:/usr/lib/x86_64-linux-gnu/libGLEW.so
