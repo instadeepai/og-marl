@@ -1,3 +1,4 @@
+lockfile
 Cython==0.29.28
 glfw>=2.5.1
 gym==0.10.8 # 0.12.1 to fix rendering
