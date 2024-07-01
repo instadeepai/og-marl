@@ -1,5 +1,4 @@
 Cython==0.29.28
-git+https://github.com/schroederdewitt/multiagent_mujoco
 glfw>=2.5.1
 gym==0.10.8 # 0.12.1 to fix rendering
 Jinja2>=3.0.3
