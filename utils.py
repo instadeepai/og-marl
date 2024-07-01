@@ -10,6 +10,7 @@ import wandb
 import tensorflow as tf
 from tensorflow import Module, Tensor
 
+
 def set_growing_gpu_memory() -> None:
     """Solve gpu mem issues."""
     os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
@@ -17,6 +18,7 @@ def set_growing_gpu_memory() -> None:
     if physical_devices:
         for device in physical_devices:
             tf.config.experimental.set_memory_growth(device, True)
+
 
 class WandbLogger:
     def __init__(
@@ -28,7 +30,9 @@ class WandbLogger:
         entity: Optional[str] = None,
         log_every: int = 2,  # seconds
     ):
-        wandb.init(project=project, notes=notes, tags=tags, entity=entity, config=config)
+        wandb.init(
+            project=project, notes=notes, tags=tags, entity=entity, config=config
+        )
 
         self._log_every = log_every
         self._ctr = 0
@@ -50,16 +54,19 @@ class WandbLogger:
     def close(self) -> None:
         wandb.finish()
 
+
 def download_and_unzip_vault(scenario, dataset_base_dir: str = "./vaults") -> None:
-    if check_directory_exists_and_not_empty(f"{dataset_base_dir}/mamujoco/{scenario}.vlt"):
-        print(f"Vault already exists.")
+    if check_directory_exists_and_not_empty(
+        f"{dataset_base_dir}/mamujoco/{scenario}.vlt"
+    ):
+        print("Vault already exists.")
         return
 
     dataset_download_urls = {
         "2halfcheetah": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2halfcheetah2.zip",
         "2ant": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/2ant.zip",
         "6halfcheetah": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/6halfcheetah.zip",
-        "3hopper": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/3hopper.zip"
+        "3hopper": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/3hopper.zip",
     }
 
     dataset_download_url = dataset_download_urls[scenario]
@@ -102,18 +109,25 @@ def check_directory_exists_and_not_empty(path: str) -> bool:
     # Check if the directory exists
     if os.path.exists(path) and os.path.isdir(path):
         # Check if the directory is not empty
-        if not os.listdir(path):  # This will return an empty list if the directory is empty
+        if not os.listdir(
+            path
+        ):  # This will return an empty list if the directory is empty
             return False  # Directory exists but is empty
         else:
             return True  # Directory exists and is not empty
     else:
         return False  # Directory does not exist
-    
-def gather(values: Tensor, indices: Tensor, axis: int = -1, keepdims: bool = False) -> Tensor:
+
+
+def gather(
+    values: Tensor, indices: Tensor, axis: int = -1, keepdims: bool = False
+) -> Tensor:
     one_hot_indices = tf.one_hot(indices, depth=values.shape[axis])
     if len(values.shape) > 4:  # we have extra dim for distributional q-learning
         one_hot_indices = tf.expand_dims(one_hot_indices, axis=-1)
-    gathered_values = tf.reduce_sum(values * one_hot_indices, axis=axis, keepdims=keepdims)
+    gathered_values = tf.reduce_sum(
+        values * one_hot_indices, axis=axis, keepdims=keepdims
+    )
     return gathered_values
 
 
@@ -149,7 +163,9 @@ def expand_time_batch_and_agent_dim_of_time_major_sequence(
     return x
 
 
-def expand_batch_and_agent_dim_of_time_major_sequence(x: Tensor, B: int, N: int) -> Tensor:
+def expand_batch_and_agent_dim_of_time_major_sequence(
+    x: Tensor, B: int, N: int
+) -> Tensor:
     T, NB = x.shape[:2]  # assume time major
     assert NB == B * N
     trailing_dims = x.shape[2:]
@@ -171,7 +187,7 @@ def concat_agent_id_to_obs(obs: Tensor, agent_id: int, N: int, at_back=False) ->
 
     if at_back:
         obs: Tensor = tf.concat([obs, agent_id], axis=-1)
-    else:    
+    else:
         obs: Tensor = tf.concat([agent_id, obs], axis=-1)
 
     return obs

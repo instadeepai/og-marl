@@ -43,11 +43,6 @@ RUN pip install --quiet --upgrade pip setuptools wheel &&  \
 # Start of MuJoCo 200 #
 #######################
 
-# Dependencies
-RUN echo "Installing requirements..."
-RUN pip install --quiet --upgrade pip setuptools wheel &&  \
-    pip install -r requirements.txt 
-
 # MuJoCo
 RUN install_mujoco200.sh
 
