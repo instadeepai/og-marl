@@ -64,11 +64,19 @@ def main(_):
 
     logger = WandbLogger(entity="claude_formanek", project="pjap", config=config)
 
+    if FLAGS.scenario == "2ant":
+        cql_sigma = 0.1
+    elif FLAGS.scenario == "3hopper":
+        cql_sigma = 0.2
+    else:
+        cql_sigma = 0.3
+
     system_kwargs = {
         "add_agent_id_to_obs": True,
         "gaussian_steepness": FLAGS.gaussian_steepness,
         "min_priority": FLAGS.min_priority,
         "is_omiga": FLAGS.scenario in ["3hopper", "2ant", "6halfcheetah"],
+        "cql_sigma": cql_sigma
     }
 
     system = MADDPGCQLSystem(env, logger, **system_kwargs)

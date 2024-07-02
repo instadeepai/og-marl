@@ -33,9 +33,9 @@ class StateAndJointActionCritic(snt.Module):
 
         self._critic_network = snt.Sequential(
             [
-                snt.Linear(256),
+                snt.Linear(128),
                 tf.keras.layers.ReLU(),
-                snt.Linear(256),
+                snt.Linear(128),
                 tf.keras.layers.ReLU(),
                 snt.Linear(1),
             ]

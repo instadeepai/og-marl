@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: python main.py --scenario=2ant
+  command: wandb agent off-the-grid-marl-team/pjap/rgznhfa6
   types:
     Worker:
       count: 1
