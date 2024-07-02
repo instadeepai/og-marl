@@ -64,9 +64,9 @@ def download_and_unzip_vault(scenario, dataset_base_dir: str = "./vaults") -> No
 
     dataset_download_urls = {
         "2halfcheetah": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2halfcheetah2.zip",
-        "2ant": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/2ant.zip",
-        "6halfcheetah": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/6halfcheetah.zip",
-        "3hopper": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/3hopper.zip",
+        "2ant": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/mamujoco/2ant.zip",
+        "6halfcheetah": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/mamujoco/6halfcheetah.zip",
+        "3hopper": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/mamujoco/3hopper.zip",
     }
 
     dataset_download_url = dataset_download_urls[scenario]
