@@ -40,7 +40,9 @@ Offline MARL holds great promise for real-world applications by utilising static
 
 OG-MARL forms part of the [InstaDeep](https://www.instadeep.com/) MARL [ecosystem](#see-also-🔎), developed jointly with the open-source
 community. To join us in these efforts, reach out, raise issues or just
-🌟 to stay up to date with the latest developments! 📢 You can contribute to the conversation around OG-MARL in the [Discussion tab](https://github.com/instadeepai/og-marl/discussions). Please don't hesitate to leave a comment. We will be happy to reply. 
+🌟 to stay up to date with the latest developments! 📢 You can contribute to the conversation around OG-MARL in the [Discussion tab](https://github.com/instadeepai/og-marl/discussions). Please don't hesitate to leave a comment. We will be happy to reply.
+
+> 📢 We recently moved our datasets to Hugging Face. This means that previous download links for the datasets may no longer work. Datasets can now be downloaded directly from [Hugging Face](https://huggingface.co/datasets/InstaDeepAI/og-marl).
 
 ## Quickstart 🏎️
 Clone this repository.
@@ -106,8 +108,14 @@ We have generated datasets on a diverse set of popular MARL environments. A list
 | 🐜MAMuJoCo | 2x3 HalfCheetah <br/> 2x4 Ant <br/> 4x2 Ant | 2 <br/> 2 <br/> 4 | Cont. | Vector | Dense | Heterog <br/> Homog <br/> Homog | [source](https://github.com/schroederdewitt/multiagent_mujoco) |
 | 🐻PettingZoo | Pursuit  <br/> Co-op Pong | 8 <br/> 2 | Discrete <br/> Discrete  | Pixels <br/> Pixels | Dense | Homog <br/> Heterog | [source](https://pettingzoo.farama.org/) |
 
+Our datasets are now hosted on Hugging Face to further improve accessibility for the community. A few datasets have yet to be uploaded, but will be very soon.
+
+> [https://huggingface.co/datasets/InstaDeepAI/og-marl](https://huggingface.co/datasets/InstaDeepAI/og-marl)
+
+<img src="docs/assets/hugging_face.png" alt="Hugging Face logo" width="25%"/>
+
 ### Datasets from Prior Works 🥇
-We recently converted several datasets from prior works to Vaults and benchmarked our baseline algorithms on them. For more information, see our [technical report](https://arxiv.org/abs/2406.09068) on ArXiv. All of the code for re-running the experiments is available on the following branch of this repository: 
+We recently converted several datasets from prior works to Vaults and benchmarked our baseline algorithms on them. For more information, see our [technical report](https://arxiv.org/abs/2406.09068) on ArXiv. All of the code for re-running the experiments is available on the following branch of this repository:
 
 > [https://github.com/instadeepai/og-marl/tree/baselines-code](https://github.com/instadeepai/og-marl/tree/baselines-code).
 

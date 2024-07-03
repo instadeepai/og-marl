@@ -29,41 +29,34 @@ from git import Optional
 
 VAULT_INFO = {
     "smac_v1": {
-        "3m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3m.zip"},
-        "8m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/8m.zip"},
-        "5m_vs_6m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/5m_vs_6m.zip"},
-        "2s3z": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2s3z.zip"},
-        "3s5z_vs_3s6z": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3s5z_vs_3s6z.zip"
+        "3m": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/3m.zip"
         },
-        "2c_vs_64zg": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2c_vs_64zg.zip"
+        "8m": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/8m.zip"
+        },
+        "5m_vs_6m": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/5m_vs_6m.zip"
+        },
+        "2s3z": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/2s3z.zip"
+        },
+        "3s5z_vs_3s6z": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/3s5z_vs_3s6z.zip"
         },
     },
     "smac_v2": {
         "terran_5_vs_5": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/terran_5_vs_5.zip"
-        },
-        "terran_10_vs_10": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/terran_10_vs_10.zip"
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v2/terran_5_vs_5.zip"
         },
         "zerg_5_vs_5": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/zerg_5_vs_5.zip"
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v2/zerg_5_vs_5.zip"
         },
     },
     "mamujoco": {
-        "2ant": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2ant.zip"},
         "2halfcheetah": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2halfcheetah.zip"
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/mamujoco/2halfcheetah.zip"
         },
-        "4ant": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/4ant.zip"},
-    },
-    "flatland": {
-        "3trains": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3trains.zip"},
-        "5trains": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/5trains.zip"},
-    },
-    "pettingzoo": {
-        "pursuit": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/pursuit.zip"}
     },
 }
 
