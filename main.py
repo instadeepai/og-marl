@@ -7,7 +7,7 @@ from maddpg_cql import MADDPGCQLSystem
 set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("dataset", "Expert", "Use either 'Good' or 'GoodMedium'")
+flags.DEFINE_string("dataset", "Medium-Expert", "Use either 'Good' or 'GoodMedium'")
 flags.DEFINE_string("scenario", "3hopper", "Use either '3hopper' or '2halfcheetah'")
 flags.DEFINE_string(
     "system", "maddpg+cql+pjap", "Use either 'maddpg+cql' or 'maddpg+cql+pjap'"
@@ -15,10 +15,10 @@ flags.DEFINE_string(
 flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_float(
     "gaussian_steepness",
-    4.0,
+    1.0,
     "Parameter to control relationship between distance and priority.",
 )
-flags.DEFINE_float("min_priority", 0.0001, "Minimum priority.")
+flags.DEFINE_float("min_priority", 0.001, "Minimum priority.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 
 
@@ -76,7 +76,7 @@ def main(_):
         "gaussian_steepness": FLAGS.gaussian_steepness,
         "min_priority": FLAGS.min_priority,
         "is_omiga": FLAGS.scenario in ["3hopper", "2ant", "6halfcheetah"],
-        "cql_sigma": cql_sigma
+        "cql_sigma": cql_sigma,
     }
 
     system = MADDPGCQLSystem(env, logger, **system_kwargs)

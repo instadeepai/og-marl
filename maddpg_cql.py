@@ -110,7 +110,7 @@ class MADDPGCQLSystem:
         self,
         environment,
         logger,
-        priority_on_ramp=150000,
+        priority_on_ramp=10_000,
         gaussian_steepness=2,
         min_priority=0.001,
         linear_layer_dim: int = 64,
@@ -354,7 +354,7 @@ class MADDPGCQLSystem:
     def _tf_train_step(self, experience, train_steps):
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
-        actions = experience["actions"]  # (B,T,N,A)
+        actions = tf.clip_by_value(experience["actions"], -1, 1)  # (B,T,N,A)
         env_states = experience["infos"]["state"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
         truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
@@ -635,12 +635,16 @@ class MADDPGCQLSystem:
         # Aggregate across time
         sequence_distance = tf.reduce_mean(distance, axis=0)
 
+        sequence_distance = tf.maximum(self.min_priority, sequence_distance)
+
         ## Priority
         priority_on_ramp = tf.minimum(1.0, train_steps * (1 / self.priority_on_ramp))
-        priority = tf.exp(
-            -((self.gaussian_steepness * priority_on_ramp * sequence_distance) ** 2)
-        )
-        priority = tf.clip_by_value(priority, self.min_priority, 1.0)
+        # priority = tf.exp(
+        #     -((self.gaussian_steepness * priority_on_ramp * sequence_distance) ** 2)
+        # )
+        # priority = tf.clip_by_value(priority, self.min_priority, 1.0)
+
+        priority = 1 / (sequence_distance * self.gaussian_steepness)
 
         logs = {
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),
