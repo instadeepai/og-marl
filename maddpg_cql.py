@@ -642,7 +642,7 @@ class MADDPGCQLSystem:
         priority = tf.exp(
             -((self.gaussian_steepness * priority_on_ramp * sequence_distance) ** 2)
         )
-        # priority = tf.clip_by_value(priority, self.min_priority, 1.0)
+        priority = tf.clip_by_value(priority, self.min_priority, 1.0)
 
         # priority = 1 / (sequence_distance * self.gaussian_steepness)
 
