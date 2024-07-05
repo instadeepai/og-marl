@@ -110,7 +110,7 @@ class MADDPGCQLSystem:
         self,
         environment,
         logger,
-        priority_on_ramp=10_000,
+        priority_on_ramp=None,
         gaussian_steepness=4,
         min_priority=0.001,
         linear_layer_dim: int = 64,
@@ -221,7 +221,7 @@ class MADDPGCQLSystem:
             time_to_sample = end_time - start_time
 
             start_time = time.time()
-            train_logs, priority = self.train_step(
+            train_logs = self.train_step(
                 data_batch.experience, trainer_step_ctr
             )
             end_time = time.time()
@@ -229,12 +229,22 @@ class MADDPGCQLSystem:
 
             if isinstance(replay_buffer, PrioritisedFlashbaxReplayBuffer):
                 start_time = time.time()
-                replay_buffer.update_priorities(data_batch.indices, priority)
+                uniform_data = replay_buffer.sample_flat()
+                priority = self.compute_new_priorities(tree.map_structure(tf.convert_to_tensor, uniform_data.experience))
+                replay_buffer.update_priorities(uniform_data.indices, priority)
                 end_time = time.time()
                 time_priority = end_time - start_time
                 train_logs["Priority Update Time"] = time_priority
+
+                priority_logs = {
+                    "dataset_mean_priority": np.mean(uniform_data.priorities),
+                    "dataset_min_priority": np.min(uniform_data.priorities),
+                    "dataset_max_priority": np.max(uniform_data.priorities), 
+                    "dataset_std_priority": np.std(uniform_data.priorities)
+                }
             else:
                 time_priority = 0
+                priority_logs = {}
 
             train_steps_per_second = 1 / (
                 time_train_step + time_to_sample + time_priority
@@ -242,6 +252,7 @@ class MADDPGCQLSystem:
 
             logs = {
                 **train_logs,
+                **priority_logs,
                 "Trainer Steps": trainer_step_ctr,
                 "Time to Sample": time_to_sample,
                 "Time for Train Step": time_train_step,
@@ -346,9 +357,9 @@ class MADDPGCQLSystem:
     def train_step(self, experience, trainer_step_ctr) -> Dict[str, Numeric]:
         trainer_step_ctr = tf.convert_to_tensor(trainer_step_ctr, "float32")
 
-        logs, new_priorities = self._tf_train_step(experience, trainer_step_ctr)
+        logs = self._tf_train_step(experience, trainer_step_ctr)
 
-        return logs, new_priorities
+        return logs
 
     @tf.function(jit_compile=True)
     def _tf_train_step(self, experience, train_steps):
@@ -635,24 +646,10 @@ class MADDPGCQLSystem:
         # Aggregate across time
         sequence_distance = tf.reduce_mean(distance, axis=0)
 
-        sequence_distance = tf.maximum(self.min_priority, sequence_distance)
-
-        ## Priority
-        priority_on_ramp = tf.minimum(1.0, train_steps * (1 / self.priority_on_ramp))
-        priority = tf.exp(
-            -((self.gaussian_steepness * priority_on_ramp * sequence_distance) ** 2)
-        )
-        priority = tf.clip_by_value(priority, self.min_priority, 1.0)
-
-        # priority = 1 / (sequence_distance * self.gaussian_steepness)
-
         logs = {
             "Mean Q-values": tf.reduce_mean((qs_1 + qs_2) / 2),
             "Mean Critic Loss": (critic_loss),
             "Policy Loss": policy_loss,
-            "Max Priority": tf.reduce_max(priority),
-            "Mean Priority": tf.reduce_mean(priority),
-            "Min Priority": tf.reduce_min(priority),
             "mean action distance": tf.reduce_mean(distance),
             "max action distance": tf.reduce_max(distance),
             "min action distance": tf.reduce_min(distance),
@@ -661,4 +658,65 @@ class MADDPGCQLSystem:
             "min sequence distance": tf.reduce_min(sequence_distance),
         }
 
-        return logs, priority
+        return logs
+
+    @tf.function(jit_compile=True)
+    def compute_new_priorities(self, experience):
+        # Unpack the batch
+        observations = experience["observations"]  # (B,T,N,O)
+        actions = tf.clip_by_value(experience["actions"], -1, 1)  # (B,T,N,A)
+        env_states = experience["infos"]["state"]  # (B,T,S)
+        rewards = experience["rewards"]  # (B,T,N)
+        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
+        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
+
+        # When to reset the RNN hidden state
+        resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
+
+        # Get dims
+        B, T, N = actions.shape[:3]
+
+        # Maybe add agent ids to observation
+        if self._add_agent_id_to_obs and not self._is_omiga:
+            observations = batch_concat_agent_id_to_obs(observations)
+
+        # Make time-major
+        observations = switch_two_leading_dims(observations)
+        replay_actions = switch_two_leading_dims(actions)
+        rewards = switch_two_leading_dims(rewards)
+        terminals = switch_two_leading_dims(terminals)
+        env_states = switch_two_leading_dims(env_states)
+        resets = switch_two_leading_dims(resets)
+
+        # Unroll target policy
+        target_actions = unroll_rnn(
+            self._target_policy_network,
+            merge_batch_and_agent_dim_of_time_major_sequence(observations),
+            merge_batch_and_agent_dim_of_time_major_sequence(resets),
+        )
+        target_actions = expand_batch_and_agent_dim_of_time_major_sequence(
+            target_actions, B, N
+        )
+
+        # Compute new replay priorities
+        A = replay_actions.shape[-1]
+        joint_replay_action = tf.reshape(replay_actions, (T, B, N * A))
+
+        # Target joint action
+        joint_target_actions = tf.reshape(target_actions, (T, B, N * A))
+
+        ## Compute distance
+        distance = tf.reduce_mean(
+            tf.abs(joint_target_actions - joint_replay_action), axis=-1
+        )
+
+        # Aggregate across time
+        sequence_distance = tf.reduce_mean(distance, axis=0)
+
+        ## Priority
+        priority = tf.exp(
+            -((self.gaussian_steepness * sequence_distance) ** 2)
+        )
+        priority = tf.clip_by_value(priority, self.min_priority, 1.0)
+
+        return priority

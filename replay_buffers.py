@@ -10,6 +10,7 @@ from chex import Array
 from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 from flashbax.buffers.prioritised_trajectory_buffer import PrioritisedTrajectoryBufferState
 from flashbax.vault import Vault
+from flashbax.buffers import sum_tree
 
 Experience = Dict[str, Array]
 
@@ -106,13 +107,14 @@ class PrioritisedFlashbaxReplayBuffer:
         big_batch_size: int = 1024,
         sample_period: int = 1,
         seed: int = 42,
-        priority_exponent=0.6,
+        priority_exponent=1.0,
     ):
         self._sequence_length = sequence_length
         self._max_size = max_size
         self._batch_size = batch_size
         self._big_batch_size = big_batch_size
         self._priority_exponent = priority_exponent
+
         # Flashbax buffer
         self._vault_replay_buffer = fbx.make_trajectory_buffer(
             add_batch_size=1,
@@ -186,11 +188,6 @@ class PrioritisedFlashbaxReplayBuffer:
         )  # add batch & time dims
         self._buffer_state = self._buffer_add_fn(self._buffer_state, timestep)
 
-    def sample_uniformly(self):
-        self._rng_key, sample_key = jax.random.split(self._rng_key, 2)
-        batch = self._uniform_buffer_sample_fn(self._buffer_state, sample_key)
-        return batch
-
     def sample(self) -> Experience:
         self._rng_key, sample_key = jax.random.split(self._rng_key, 2)
         batch = self._buffer_sample_fn(self._buffer_state, sample_key)
@@ -205,6 +202,9 @@ class PrioritisedFlashbaxReplayBuffer:
         self._buffer_state = self._buffer_set_priorities_fn(
             self._buffer_state, indices, priorities.numpy()
         )
+
+    def get_all_priorities(self):
+        return sum_tree.get(self._buffer_state.priority_state, jnp.arange(self._buffer_state.current_index))
 
     def populate_from_vault(
         self,
