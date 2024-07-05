@@ -13,10 +13,10 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: wandb agent off-the-grid-marl-team/pjap/aaokit28
+  command: wandb agent off-the-grid-marl-team/pjap/s56hni4j
   types:
     Worker:
-      count: 15
+      count: 19
 
       resources:
         # 10-15 cpus for single process
