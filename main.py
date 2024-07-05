@@ -15,7 +15,7 @@ flags.DEFINE_string(
 flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_float(
     "gaussian_steepness",
-    1.0,
+    4.0,
     "Parameter to control relationship between distance and priority.",
 )
 flags.DEFINE_float("min_priority", 0.001, "Minimum priority.")

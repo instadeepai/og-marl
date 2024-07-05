@@ -111,7 +111,7 @@ class MADDPGCQLSystem:
         environment,
         logger,
         priority_on_ramp=10_000,
-        gaussian_steepness=2,
+        gaussian_steepness=4,
         min_priority=0.001,
         linear_layer_dim: int = 64,
         recurrent_layer_dim: int = 64,
