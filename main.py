@@ -15,11 +15,32 @@ flags.DEFINE_string(
 flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
 flags.DEFINE_float(
     "gaussian_steepness",
-    20.0,
+    2.0,
     "Parameter to control relationship between distance and priority.",
 )
 flags.DEFINE_float("min_priority", 0.01, "Minimum priority.")
 flags.DEFINE_integer("seed", 42, "Seed.")
+
+STEEPNESS_CONFIG = {
+    "2ant": {
+        "Medium-Replay": 1.2,
+        "Medium": 0.5,
+        "Medium-Expert": 8,
+        "Expert": 8
+    },
+    "6halfcheetah": {
+        "Medium-Replay": 2,
+        "Medium": 2,
+        "Medium-Expert": 2,
+        "Expert": 2
+    },
+    "3hopper": {
+        "Medium-Replay": 2,
+        "Medium": 4,
+        "Medium-Expert": 6,
+        "Expert": 0.8
+    },
+}
 
 
 def main(_):
@@ -64,6 +85,7 @@ def main(_):
 
     logger = WandbLogger(entity="claude_formanek", project="pjap", config=config)
 
+    # From baselines paper
     if FLAGS.scenario == "2ant":
         cql_sigma = 0.1
     elif FLAGS.scenario == "3hopper":
@@ -73,7 +95,7 @@ def main(_):
 
     system_kwargs = {
         "add_agent_id_to_obs": True,
-        "gaussian_steepness": FLAGS.gaussian_steepness,
+        "gaussian_steepness": STEEPNESS_CONFIG[FLAGS.scenario][FLAGS.dataset],
         "min_priority": FLAGS.min_priority,
         "is_omiga": FLAGS.scenario in ["3hopper", "2ant", "6halfcheetah"],
         "cql_sigma": cql_sigma,
