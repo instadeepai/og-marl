@@ -38,7 +38,7 @@ STEEPNESS_CONFIG = {
         "Medium-Replay": 2,
         "Medium": 4,
         "Medium-Expert": 6,
-        "Expert": 0.8
+        "Expert": 6
     },
 }
 
