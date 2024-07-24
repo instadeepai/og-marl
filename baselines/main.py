@@ -15,7 +15,7 @@ from absl import app, flags
 
 from og_marl.environments import get_environment
 from og_marl.loggers import JsonWriter, WandbLogger
-from og_marl.offline_dataset import download_and_unzip_vault
+from og_marl.vault_analysis.offline_dataset import download_and_unzip_vault
 from og_marl.replay_buffers import FlashbaxReplayBuffer
 from og_marl.tf2.networks import CNNEmbeddingNetwork
 from og_marl.tf2.systems import get_system

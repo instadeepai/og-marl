@@ -13,7 +13,7 @@
 # limitations under the License.
 from absl import app, flags
 
-from og_marl.offline_dataset import download_and_unzip_vault
+from og_marl.vault_analysis.offline_dataset import download_and_unzip_vault
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "smac_v1", "Environment name.")
@@ -22,7 +22,7 @@ flags.DEFINE_string("scenario", "3m", "Environment scenario name.")
 
 def main(_):
     # Download vault
-    download_and_unzip_vault(FLAGS.env_name, FLAGS.scenario_name)
+    download_and_unzip_vault(FLAGS.env, FLAGS.scenario)
 
     # NEXT STEPS: See `examples/dataset_api_demo.ipynb`
 
