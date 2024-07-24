@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implementation of QMIX+BCQ"""
+"""Implementation of IDRQN+BCQ"""
 from typing import Any, Dict, Optional
 
 import sonnet as snt
