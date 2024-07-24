@@ -22,8 +22,8 @@ from flashbax.vault import Vault
 import copy
 import flashbax
 from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
-from og_marl.vault_analysis.offline_dataset import analyse_vault
-from og_marl.vault_analysis.offline_dataset import check_directory_exists_and_not_empty
+from og_marl.vault_analysis.analyse_vault import analyse_vault
+from og_marl.vault_analysis.analyse_vault import check_directory_exists_and_not_empty
 
 from typing import Dict, List
 from chex import Array
@@ -110,35 +110,50 @@ def stitch_vault_from_sampled_episodes_(
      
     return timesteps_written
 
-def subsample_smaller_vault(rel_dir: str,vault_name: str, vault_uid: str, target_number_of_transitions: int = 500000):
 
-    vlt = Vault(rel_dir=rel_dir, vault_name=vault_name+'.vlt', vault_uid=vault_uid)
+def subsample_smaller_vault(vaults_dir: str,env_name:str,vault_name: str, vault_uids: list = [], target_number_of_transitions: int = 500000):
 
-    # read in data
-    all_data = vlt.read()
-    offline_data = all_data.experience
+    # check that the vault to be subsampled exists
+    if ~check_directory_exists_and_not_empty(f"{vaults_dir}/{env_name}/{vault_name}.vlt"):
+        print(f"Vault '{vaults_dir}/{env_name}/{vault_name}' does not exist and cannot be subsampled.")
+        return
+    
+    # if uids aren't specified, use all uids for subsampling
+    if len(vault_uids)==0:
+        vault_uids = sorted(
+            next(os.walk(os.path.join(vaults_dir, env_name, vault_name)))[1],
+            reverse=True,
+        )
 
-    # get per-episode length, start and end indexes in the vault data
-    len_start_end = get_length_start_end(offline_data)
-
-    # get a number of transitions from randomly sampled episodes within one episode length of the target num of transitions
-    len_start_end_sample = select_episodes_uniformly_up_to_n_transitions(len_start_end,target_number_of_transitions)
 
     # access the correctly sampled episodes from the original vault and write it to a new destination vault
     new_vault_name = vault_name + "_" + str(target_number_of_transitions)+'.vlt'
-    timesteps_written = stitch_vault_from_sampled_episodes_(offline_data, len_start_end_sample, new_vault_name, vault_uid, rel_dir, target_number_of_transitions)
 
-    path = rel_dir+vault_name+".vlt/"+vault_uid+"/timesteps.pickle"
-    print(path)
+    # check that the subsampled vault does not already exist
+    if check_directory_exists_and_not_empty(f"{vaults_dir}/{env_name}/{new_vault_name}.vlt"):
+        print(f"Vault '{vaults_dir}/{env_name}/{new_vault_name}' already exists. To subsample from scratch, please remove the current subsampled vault from its directory.")
+        return
+    
+    
+    for vault_uid in vault_uids: 
+        vlt = Vault(rel_dir=vaults_dir, vault_name=vault_name+'.vlt', vault_uid=vault_uid)
 
-    with open(rel_dir+new_vault_name+"/"+vault_uid+"/timesteps.pickle","wb") as f:
-        pickle.dump(timesteps_written,f)
+        # read in data
+        all_data = vlt.read()
+        offline_data = all_data.experience
+
+        # get per-episode length, start and end indexes in the vault data
+        len_start_end = get_length_start_end(offline_data)
+
+        # get a number of transitions from randomly sampled episodes within one episode length of the target num of transitions
+        len_start_end_sample = select_episodes_uniformly_up_to_n_transitions(len_start_end,target_number_of_transitions)
+
+        timesteps_written = stitch_vault_from_sampled_episodes_(offline_data, len_start_end_sample, new_vault_name, vault_uid, f"{vaults_dir}/{env_name}", target_number_of_transitions)
+
+        path = vaults_dir+vault_name+".vlt/"+vault_uid+"/timesteps.pickle"
+        print(path)
+
+        with open(vaults_dir+new_vault_name+"/"+vault_uid+"/timesteps.pickle","wb") as f:
+            pickle.dump(timesteps_written,f)
 
     return new_vault_name
-
-def find_all_datasets_in_vault(rel_dir,vault_name):
-    vault_uids = sorted(
-        next(os.walk(os.path.join(rel_dir, vault_name)))[1],
-        reverse=True,
-    )
-    return vault_uids
