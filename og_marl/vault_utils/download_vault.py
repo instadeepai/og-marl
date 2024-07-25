@@ -70,7 +70,7 @@ VAULT_INFO = {
     },
 }
 
-def print_dataset_options():
+def print_download_options():
     pprint.pprint(VAULT_INFO, depth=3)
     return
 
@@ -85,7 +85,7 @@ def download_and_unzip_vault(
     # to prevent downloading the vault twice into the same folder
     if check_directory_exists_and_not_empty(f"{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}.vlt"):
         print(f"Vault '{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}' already exists.")
-        return
+        return f"{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}.vlt"
 
     # access url from what we have if not provided
     if len(dataset_download_url)==0:
@@ -104,7 +104,6 @@ def download_and_unzip_vault(
     os.makedirs(f"{dataset_base_dir}/{dataset_source}/{env_name}/", exist_ok=True)
 
     zip_file_path = f"{dataset_base_dir}/tmp/tmp_dataset.zip"
-
     extraction_path = f"{dataset_base_dir}/{dataset_source}/{env_name}"
 
     with open(zip_file_path, "wb") as file:
@@ -127,6 +126,8 @@ def download_and_unzip_vault(
     # Optionally, delete the zip file after extraction
     os.remove(zip_file_path)
 
+    return f"{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}.vlt"
+
 
 def check_directory_exists_and_not_empty(path: str) -> bool:
     # Check if the directory exists
@@ -138,3 +139,10 @@ def check_directory_exists_and_not_empty(path: str) -> bool:
             return True  # Directory exists and is not empty
     else:
         return False  # Directory does not exist
+
+def get_available_uids(rel_vault_path):
+    vault_uids = sorted(
+            next(os.walk(rel_vault_path))[1],
+            reverse=True,
+        )
+    return vault_uids
