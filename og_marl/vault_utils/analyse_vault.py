@@ -23,6 +23,7 @@ from chex import Array
 from flashbax.vault import Vault
 from git import Optional
 import numpy as np
+from og_marl.download_vault import get_available_uids
 
 
 def calculate_returns(
@@ -118,10 +119,8 @@ def analyse_vault(
     Returns:
         Dict[str, Array]: Dictionary of {uid: episode_returns}
     """
-    vault_uids = sorted(
-        next(os.walk(os.path.join(rel_dir, vault_name)))[1],
-        reverse=True,
-    )
+    vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
+    
     all_uid_returns: Dict[str, Array] = {}  # Dictionary to store returns for each UID
 
     for uid in vault_uids:
