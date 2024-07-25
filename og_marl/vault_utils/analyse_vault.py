@@ -13,14 +13,11 @@
 # limitations under the License.
 
 import os
-import sys
-import zipfile
 from typing import Dict, List
 
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-import requests  # type: ignore
 import seaborn as sns
 from chex import Array
 from flashbax.vault import Vault
@@ -49,7 +46,7 @@ def calculate_returns(
     # We want all the time data, but just from one agent
     experience_one_agent = jax.tree_map(lambda x: x[0, :, 0, ...], experience)
     rewards = experience_one_agent[reward_key]
-    terminals = jnp.array(experience["terminals"][0].all(axis=-1).squeeze(), dtype=jnp.float32)
+    terminals = jnp.array(experience[terminal_key][0].all(axis=-1).squeeze(), dtype=jnp.float32)
 
     def sum_rewards(terminals: Array, rewards: Array) -> Array:
         def scan_fn(carry: Array, inputs: Array) -> Array:

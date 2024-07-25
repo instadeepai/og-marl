@@ -16,6 +16,7 @@ import os
 import sys
 import zipfile
 from typing import Dict, List
+import pprint
 
 import jax
 import jax.numpy as jnp
@@ -28,44 +29,70 @@ from git import Optional
 
 
 VAULT_INFO = {
-    "smac_v1": {
-        "3m": {
-            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/3m.zip"
+    "og_marl": {
+        "smac_v1": {
+            "3m": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/3m.zip"
+            },
+            "8m": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/8m.zip"
+            },
+            "5m_vs_6m": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/5m_vs_6m.zip"
+            },
+            "2s3z": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/2s3z.zip"
+            },
+            "3s5z_vs_3s6z": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/3s5z_vs_3s6z.zip"
+            },
         },
-        "8m": {
-            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/8m.zip"
+        "smac_v2": {
+            "terran_5_vs_5": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v2/terran_5_vs_5.zip"
+            },
+            "zerg_5_vs_5": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v2/zerg_5_vs_5.zip"
+            },
         },
-        "5m_vs_6m": {
-            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/5m_vs_6m.zip"
-        },
-        "2s3z": {
-            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/2s3z.zip"
-        },
-        "3s5z_vs_3s6z": {
-            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/3s5z_vs_3s6z.zip"
+        "mamujoco": {
+            "2halfcheetah": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/mamujoco/2halfcheetah.zip"
+            },
         },
     },
-    "smac_v2": {
-        "terran_5_vs_5": {
-            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v2/terran_5_vs_5.zip"
-        },
-        "zerg_5_vs_5": {
-            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v2/zerg_5_vs_5.zip"
-        },
-    },
-    "mamujoco": {
-        "2halfcheetah": {
-            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/mamujoco/2halfcheetah.zip"
+    "cfcql": {
+        "smac_v1": {
+            "6h_vs_8z": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/cfcql/smac_v1/6h_vs_8z.zip"
+            },
+            "3s_vs_5z": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/cfcql/smac_v1/3s_vs_5z.zip"
+            },
+            "5m_vs_6m": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/cfcql/smac_v1/5m_vs_6m.zip"
+            },
+            "2s3z": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/cfcql/smac_v1/2s3z.zip"
+            },
         },
     },
 }
 
+def print_dataset_options():
+    pprint.pprint(VAULT_INFO, depth=2)
+    return
 
 def download_and_unzip_vault(
+    dataset_source: str,
     env_name: str,
     scenario_name: str,
     dataset_base_dir: str = "./vaults",
 ) -> None:
+    
+    
+    
+
     if check_directory_exists_and_not_empty(f"{dataset_base_dir}/{env_name}/{scenario_name}.vlt"):
         print(f"Vault '{dataset_base_dir}/{env_name}/{scenario_name}' already exists.")
         return

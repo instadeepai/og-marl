@@ -22,8 +22,8 @@ from flashbax.vault import Vault
 import copy
 import flashbax
 from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
-from og_marl.vault_analysis.analyse_vault import analyse_vault
-from og_marl.vault_analysis.analyse_vault import check_directory_exists_and_not_empty
+from og_marl.vault_utils.analyse_vault import analyse_vault
+from og_marl.vault_utils.download_vault import check_directory_exists_and_not_empty
 
 from typing import Dict, List
 from chex import Array
@@ -125,11 +125,10 @@ def subsample_smaller_vault(vaults_dir: str,env_name:str,vault_name: str, vault_
             reverse=True,
         )
 
-
-    # access the correctly sampled episodes from the original vault and write it to a new destination vault
+    # name of subsampled vault (at task level)
     new_vault_name = vault_name + "_" + str(target_number_of_transitions)+'.vlt'
 
-    # check that the subsampled vault does not already exist
+    # check that a subsampled vault by the same name does not already exist
     if check_directory_exists_and_not_empty(f"{vaults_dir}/{env_name}/{new_vault_name}.vlt"):
         print(f"Vault '{vaults_dir}/{env_name}/{new_vault_name}' already exists. To subsample from scratch, please remove the current subsampled vault from its directory.")
         return
