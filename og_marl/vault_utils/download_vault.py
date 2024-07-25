@@ -82,25 +82,30 @@ def download_and_unzip_vault(
     dataset_download_url: str = '',
 ) -> None:
     
+    # to prevent downloading the vault twice into the same folder
     if check_directory_exists_and_not_empty(f"{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}.vlt"):
         print(f"Vault '{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}' already exists.")
         return
 
+    # access url from what we have if not provided
     if len(dataset_download_url)==0:
         dataset_download_url = VAULT_INFO[dataset_source][env_name][scenario_name]["url"]
 
+    # check that the URL works
+    try:
+        response = requests.get(dataset_download_url, stream=True)
+    except:
+        print("Dataset from "+str(dataset_download_url)+" could not be downloaded. Try entering a different URL, or removing the part which auto-downloads.")
+        return
+    total_length = response.headers.get("content-length")
+
+    # make storage dirs
     os.makedirs(f"{dataset_base_dir}/tmp/", exist_ok=True)
     os.makedirs(f"{dataset_base_dir}/{dataset_source}/{env_name}/", exist_ok=True)
 
     zip_file_path = f"{dataset_base_dir}/tmp/tmp_dataset.zip"
 
     extraction_path = f"{dataset_base_dir}/{dataset_source}/{env_name}"
-
-    try:
-        response = requests.get(dataset_download_url, stream=True)
-    except:
-        "Dataset from "+str(dataset_download_url)+" could not be downloaded. Try entering a different URL, or removing the part which auto-downloads."
-    total_length = response.headers.get("content-length")
 
     with open(zip_file_path, "wb") as file:
         if total_length is None:  # no content length header
