@@ -53,7 +53,7 @@ class BaseEnvironment:
         """
         return {}
 
-    def render(self):
+    def render(self) -> Any:
         """Return frame for rendering"""
         return np.zeros((10, 10, 3), "float32")
 

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import time
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple, List
 
 import numpy as np
 from chex import Numeric
@@ -42,7 +42,7 @@ class BaseMARLSystem:
     def get_stats(self) -> Dict[str, Numeric]:
         return {}
 
-    def evaluate(self, num_eval_episodes: int = 4) -> Dict[str, Numeric]:
+    def evaluate(self, num_eval_episodes: int = 4) -> Tuple[Dict[str, Numeric], list]:
         """Method to evaluate the system online (i.e. in the environment)."""
         episode_returns = []
         all_frames = []
@@ -187,7 +187,7 @@ class BaseMARLSystem:
         evaluate_every: int = 1000,
         num_eval_episodes: int = 4,
         json_writer: Optional[JsonWriter] = None,
-    ) -> None:
+    ) -> List:
         """Method to train the system offline.
 
         WARNING: make sure evaluate_every % log_every == 0 and log_every < evaluate_every,
