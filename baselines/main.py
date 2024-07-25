@@ -15,7 +15,7 @@ from absl import app, flags
 
 from og_marl.environments import get_environment
 from og_marl.loggers import JsonWriter, WandbLogger
-from og_marl.vault_analysis.offline_dataset import download_and_unzip_vault
+from og_marl.vault_utils.download_vault import download_and_unzip_vault
 from og_marl.replay_buffers import FlashbaxReplayBuffer
 from og_marl.tf2.networks import CNNEmbeddingNetwork
 from og_marl.tf2.systems import get_system
@@ -24,6 +24,7 @@ from og_marl.tf2.utils import set_growing_gpu_memory
 set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
+flags.DEFINE_string("dataset_source", "og_marl", "Dataset source.")
 flags.DEFINE_string("env", "pettingzoo", "Environment name.")
 flags.DEFINE_string("scenario", "pursuit", "Environment scenario name.")
 flags.DEFINE_string("dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
