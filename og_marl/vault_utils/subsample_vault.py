@@ -23,7 +23,7 @@ import copy
 import flashbax
 from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 from og_marl.vault_utils.analyse_vault import analyse_vault
-from og_marl.vault_utils.download_vault import check_directory_exists_and_not_empty
+from og_marl.vault_utils.download_vault import check_directory_exists_and_not_empty, get_available_uids
 
 from typing import Dict, List
 from chex import Array
@@ -111,31 +111,28 @@ def stitch_vault_from_sampled_episodes_(
     return timesteps_written
 
 
-def subsample_smaller_vault(vaults_dir: str,env_name:str,vault_name: str, vault_uids: list = [], target_number_of_transitions: int = 500000):
+def subsample_smaller_vault(vaults_dir: str, vault_name: str, vault_uids: list = [], target_number_of_transitions: int = 500000):
 
     # check that the vault to be subsampled exists
-    if ~check_directory_exists_and_not_empty(f"{vaults_dir}/{env_name}/{vault_name}.vlt"):
-        print(f"Vault '{vaults_dir}/{env_name}/{vault_name}' does not exist and cannot be subsampled.")
+    if not check_directory_exists_and_not_empty(f"./{vaults_dir}/{vault_name}"):
+        print(f"Vault './{vaults_dir}/{vault_name}' does not exist and cannot be subsampled.")
         return
     
     # if uids aren't specified, use all uids for subsampling
     if len(vault_uids)==0:
-        vault_uids = sorted(
-            next(os.walk(os.path.join(vaults_dir, env_name, vault_name)))[1],
-            reverse=True,
-        )
+        vault_uids = get_available_uids(f"./{vaults_dir}/{vault_name}")
 
     # name of subsampled vault (at task level)
-    new_vault_name = vault_name + "_" + str(target_number_of_transitions)+'.vlt'
+    new_vault_name = vault_name.strip('.vlt') + "_" + str(target_number_of_transitions)+'.vlt'
 
     # check that a subsampled vault by the same name does not already exist
-    if check_directory_exists_and_not_empty(f"{vaults_dir}/{env_name}/{new_vault_name}.vlt"):
-        print(f"Vault '{vaults_dir}/{env_name}/{new_vault_name}' already exists. To subsample from scratch, please remove the current subsampled vault from its directory.")
+    if check_directory_exists_and_not_empty(f"./{vaults_dir}/{new_vault_name}"):
+        print(f"Vault '{vaults_dir}/{new_vault_name.strip('.vlt')}' already exists. To subsample from scratch, please remove the current subsampled vault from its directory.")
         return
     
     
     for vault_uid in vault_uids: 
-        vlt = Vault(rel_dir=vaults_dir, vault_name=vault_name+'.vlt', vault_uid=vault_uid)
+        vlt = Vault(rel_dir=vaults_dir, vault_name=vault_name, vault_uid=vault_uid)
 
         # read in data
         all_data = vlt.read()
@@ -147,12 +144,10 @@ def subsample_smaller_vault(vaults_dir: str,env_name:str,vault_name: str, vault_
         # get a number of transitions from randomly sampled episodes within one episode length of the target num of transitions
         len_start_end_sample = select_episodes_uniformly_up_to_n_transitions(len_start_end,target_number_of_transitions)
 
-        timesteps_written = stitch_vault_from_sampled_episodes_(offline_data, len_start_end_sample, new_vault_name, vault_uid, f"{vaults_dir}/{env_name}", target_number_of_transitions)
+        timesteps_written = stitch_vault_from_sampled_episodes_(offline_data, len_start_end_sample, new_vault_name, vault_uid, vaults_dir, target_number_of_transitions)
 
-        path = vaults_dir+vault_name+".vlt/"+vault_uid+"/timesteps.pickle"
-        print(path)
-
-        with open(vaults_dir+new_vault_name+"/"+vault_uid+"/timesteps.pickle","wb") as f:
+        # save the number of timesteps actually written
+        with open(f"{vaults_dir}/{new_vault_name}/{vault_uid}/timesteps.pickle","wb") as f:
             pickle.dump(timesteps_written,f)
 
     return new_vault_name
