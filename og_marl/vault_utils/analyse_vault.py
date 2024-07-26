@@ -23,7 +23,7 @@ from chex import Array
 from flashbax.vault import Vault
 from git import Optional
 import numpy as np
-from og_marl.download_vault import get_available_uids
+from og_marl.vault_utils.download_vault import get_available_uids
 
 
 def calculate_returns(

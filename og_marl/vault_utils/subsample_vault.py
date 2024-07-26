@@ -110,6 +110,57 @@ def stitch_vault_from_sampled_episodes_(
      
     return timesteps_written
 
+# non-tested
+def stitch_vault_from_sampled_episodes_(vlts, return_start_end_sample, vault_name, vault_uid):
+
+    all_data = vlts[0].read()
+    offline_data = all_data.experience
+
+    dest_buffer = fbx.make_trajectory_buffer(
+        # Sampling parameters
+        sample_batch_size=1,
+        sample_sequence_length=1,
+        period=1,
+        # Not important in this example, as we are not adding to the buffer
+        max_length_time_axis=500_000,
+        min_length_time_axis=100,
+        add_batch_size=1,
+    )
+
+    dummy_experience = jax.tree_map(lambda x: x[0, 0, ...], all_data.experience)
+    del offline_data
+    del all_data
+
+    dest_state = dest_buffer.init(dummy_experience)
+    buffer_add = jax.jit(dest_buffer.add, donate_argnums=0)
+    dest_vault = flashbax.vault.Vault(
+        experience_structure=dest_state.experience,
+        vault_name=vault_name,
+        vault_uid=vault_uid,
+    )
+
+    for vault_id, vlt in enumerate(vlts):
+        samples_frm_this_vault = return_start_end_sample[np.where(return_start_end_sample[:,-1]==vault_id)]
+        starts = samples_frm_this_vault[:,1]
+        ends = samples_frm_this_vault[:,2]
+
+        all_data = vlt.read()
+        offline_data = all_data.experience
+
+        for start,end in zip(starts,ends):
+            sample_experience = jax.tree_util.tree_map(lambda x: x[:,int(start):int(end+2),...],offline_data)
+            dest_state = buffer_add(dest_state, sample_experience)
+        
+        timesteps_written = dest_vault.write(dest_state)
+
+        print(timesteps_written)
+        del offline_data
+        del all_data     
+    return 
+        
+
+
+
 
 def subsample_smaller_vault(vaults_dir: str, vault_name: str, vault_uids: list = [], target_number_of_transitions: int = 500000):
 
