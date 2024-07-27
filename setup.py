@@ -28,9 +28,9 @@ setup(
     install_requires=[
         "numpy",
         "dm_tree",
-        "tensorflow",
-        "tensorflow_io",
-        "tensorflow-probability",
+        "tensorflow[and-cuda]==2.15.1.*",
+        "tensorflow_io"
+        "tensorflow-probability[tf]==0.23.0"
         "dm_sonnet",
         "wandb",
         "absl-py",
