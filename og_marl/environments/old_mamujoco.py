@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import numpy as np
 from gymnasium.spaces import Box
@@ -44,9 +44,9 @@ class MAMuJoCo(BaseEnvironment):
 
     """Environment wrapper Multi-Agent MuJoCo."""
 
-    def __init__(self, scenario: str):
+    def __init__(self, scenario: str, seed: Optional[int] = 42):
         env_args = get_mamujoco_args(scenario)
-        self._environment = MujocoMulti(env_args=env_args)
+        self._environment = MujocoMulti(env_args=env_args, seed=seed)
 
         self.possible_agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
         self._num_actions = self._environment.n_actions

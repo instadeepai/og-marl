@@ -1,5 +1,7 @@
 wandb
 datasets
+outputs
+omiga_envs
 .experience
 launch.json
 .vscode

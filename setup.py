@@ -39,6 +39,7 @@ setup(
         "jax",
         "matplotlib",
         "seaborn",
+        "hydra-core"
         # "flashbax==0.1.2", # install post
     ],
     extras_require={

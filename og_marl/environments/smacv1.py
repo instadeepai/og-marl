@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Wrapper for SMAC."""
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from gymnasium.spaces import Box, Discrete
@@ -29,40 +29,25 @@ class SMACv1(BaseEnvironment):
     def __init__(
         self,
         map_name: str,
+        seed: Optional[int] = None,
     ):
-        self._environment = StarCraft2Env(map_name=map_name)
-        self.possible_agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
+        self._environment = StarCraft2Env(map_name=map_name, seed=seed)
 
-        self._num_agents = len(self.possible_agents)
-        self._num_actions = self._environment.n_actions
-        self._obs_dim = self._environment.get_obs_size()
-
-        self.action_spaces = {agent: Discrete(self._num_actions) for agent in self.possible_agents}
-        self.observation_spaces = {
-            agent: Box(-np.inf, np.inf, (self._obs_dim,)) for agent in self.possible_agents
-        }
-
-        self.info_spec = {
-            "state": np.zeros((self._environment.get_state_size(),), "float32"),
-            "legals": {
-                agent: np.zeros((self._num_actions,), "int64") for agent in self.possible_agents
-            },
-        }
-
-        self.max_episode_length = self._environment.episode_limit
+        self.agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
+        self.num_agents = len(self.agents)
+        self.num_actions = self._environment.n_actions
 
     def reset(self) -> ResetReturn:
         """Resets the env."""
         # Reset the environment
         self._environment.reset()
-        self._done = False
 
         # Get observation from env
         observations = self._environment.get_obs()
-        observations = {agent: observations[i] for i, agent in enumerate(self.possible_agents)}
+        observations = {agent: observations[i] for i, agent in enumerate(self.agents)}
 
         legal_actions = self._get_legal_actions()
-        legals = {agent: legal_actions[i] for i, agent in enumerate(self.possible_agents)}
+        legals = {agent: legal_actions[i] for i, agent in enumerate(self.agents)}
 
         env_state = self._environment.get_state().astype("float32")
 
@@ -74,7 +59,7 @@ class SMACv1(BaseEnvironment):
         """Step in env."""
         # Convert dict of actions to list for SMAC
         smac_actions = []
-        for agent in self.possible_agents:
+        for agent in self.agents:
             smac_actions.append(actions[agent])
 
         # Step the SMAC environment
@@ -82,18 +67,18 @@ class SMACv1(BaseEnvironment):
 
         # Get the next observations
         observations = self._environment.get_obs()
-        observations = {agent: observations[i] for i, agent in enumerate(self.possible_agents)}
+        observations = {agent: observations[i] for i, agent in enumerate(self.agents)}
 
         legal_actions = self._get_legal_actions()
-        legals = {agent: legal_actions[i] for i, agent in enumerate(self.possible_agents)}
+        legals = {agent: legal_actions[i] for i, agent in enumerate(self.agents)}
 
         env_state = self._environment.get_state().astype("float32")
 
         # Convert team reward to agent-wise rewards
-        rewards = {agent: np.array(reward, "float32") for agent in self.possible_agents}
+        rewards = {agent: np.array(reward, "float32") for agent in self.agents}
 
-        terminals = {agent: np.array(done) for agent in self.possible_agents}
-        truncations = {agent: np.array(False) for agent in self.possible_agents}
+        terminals = np.array(done)
+        truncations = np.array(False)
 
         info = {"legals": legals, "state": env_state}
 
@@ -102,12 +87,8 @@ class SMACv1(BaseEnvironment):
     def _get_legal_actions(self) -> List[np.ndarray]:
         """Get legal actions from the environment."""
         legal_actions = []
-        for i, _ in enumerate(self.possible_agents):
+        for i, _ in enumerate(self.agents):
             legal_actions.append(
                 np.array(self._environment.get_avail_agent_actions(i), dtype="float32")
             )
         return legal_actions
-
-    def get_stats(self) -> Any:
-        """Return extra stats to be logged."""
-        return self._environment.get_stats()

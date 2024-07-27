@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Implementation of independent Q-learning (DRQN style)"""
 import copy
 from typing import Any, Dict, Sequence, Tuple, Optional
@@ -24,9 +23,11 @@ import tree
 from chex import Numeric
 from tensorflow import Tensor, Variable
 
+from og_marl.environments import get_environment
 from og_marl.environments.base import BaseEnvironment
-from og_marl.loggers import BaseLogger
-from og_marl.replay_buffers import Experience
+from og_marl.loggers import BaseLogger, WandbLogger
+from og_marl.offline_dataset import download_and_unzip_vault
+from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
 from og_marl.tf2.systems.base import BaseMARLSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
@@ -53,8 +54,8 @@ class IDRQNSystem(BaseMARLSystem):
         discount: float = 0.99,
         target_update_period: int = 200,
         learning_rate: float = 3e-4,
-        eps_min: float = 0.05,
-        eps_decay_timesteps: int = 50_000,
+        eps_min: float = 0.0, # for online training only
+        eps_decay_timesteps: int = 0, # for online training only
         add_agent_id_to_obs: bool = False,
         observation_embedding_network: Optional[snt.Module] = None,
     ):

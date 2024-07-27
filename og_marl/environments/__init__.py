@@ -13,16 +13,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 from og_marl.environments.base import BaseEnvironment
 
 
-def get_environment(env_name: str, scenario: str) -> BaseEnvironment:  # noqa: C901
+def get_environment(env_name: str, scenario: str, seed : int = 42) -> BaseEnvironment:  # noqa: C901
     if env_name == "smac_v1":
         from og_marl.environments.smacv1 import SMACv1
 
-        return SMACv1(scenario)
+        return SMACv1(scenario, seed=seed)
     elif env_name == "smac_v2":
         from og_marl.environments.smacv2 import SMACv2
 
@@ -30,7 +28,7 @@ def get_environment(env_name: str, scenario: str) -> BaseEnvironment:  # noqa: C
     elif env_name == "mamujoco":
         from og_marl.environments.old_mamujoco import MAMuJoCo
 
-        return MAMuJoCo(scenario)
+        return MAMuJoCo(scenario, seed=seed)
     elif scenario == "pursuit":
         from og_marl.environments.pursuit import Pursuit
 
