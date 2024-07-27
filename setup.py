@@ -29,8 +29,8 @@ setup(
         "numpy",
         "dm_tree",
         "tensorflow[and-cuda]==2.15.1.*",
-        "tensorflow_io"
-        "tensorflow-probability[tf]==0.23.0"
+        "tensorflow_io",
+        "tensorflow-probability[tf]==0.23.0",
         "dm_sonnet",
         "wandb",
         "absl-py",
