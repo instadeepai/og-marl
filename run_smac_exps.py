@@ -12,8 +12,8 @@ SCRIPT = "og_marl/tf2/systems/idrqn_cql.py"
 EXPERIMENT_CONFIGS = ["idrqn_cql/smac_v1/5m_vs_6m/Medium_CFCQL.yaml"] #, "idrqn_cql/smac_v1/5m_vs_6m/Medium_OG_MARL.yaml"]
 WANDB_PROJECT = "smac-v1-benchmark"
 
-# SCENARIOS = ["3s5z_vs_3s6z", "8m"]
-SCENARIOS = ["3m", "2s3z", "5m_vs_6m"]
+SCENARIOS = ["3s5z_vs_3s6z", "8m"]
+# SCENARIOS = ["3m", "2s3z", "5m_vs_6m"]
 
 DATASETS = ["Good", "Medium", "Poor"]
 
