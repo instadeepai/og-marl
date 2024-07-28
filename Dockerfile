@@ -37,7 +37,7 @@ RUN pip install --quiet --upgrade pip setuptools wheel &&  \
 
 ENV SC2PATH /home/app/StarCraftII
 RUN ./install_environments/smacv1.sh
-# RUN ./install_environments/smacv2.sh
+RUN ./install_environments/smacv2.sh
 
 # ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
 # ENV SUPPRESS_GR_PROMPT 1
