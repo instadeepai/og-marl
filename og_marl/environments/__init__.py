@@ -24,7 +24,7 @@ def get_environment(env_name: str, scenario: str, seed : int = 42) -> BaseEnviro
     elif env_name == "smac_v2":
         from og_marl.environments.smacv2 import SMACv2
 
-        return SMACv2(scenario)
+        return SMACv2(scenario, seed=seed)
     elif env_name == "mamujoco":
         from og_marl.environments.old_mamujoco import MAMuJoCo
 

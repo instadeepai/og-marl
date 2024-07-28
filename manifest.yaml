@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: python run_smac_exps.py
+  command: python run_smac_v2_exps.py
   types:
     Worker:
       count: 1
