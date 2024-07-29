@@ -3,7 +3,7 @@ scenario: 2halfcheetah
 dataset: Lemon
 wandb_project: og-marl-maddpg-cql
 seed: 42
-training_steps: 2e5
+training_steps: 5e5
 sequence_length: 20
 sample_period: 1
 
@@ -15,5 +15,5 @@ target_update_rate: 0.005
 critic_learning_rate: 1e-3
 policy_learning_rate: 3e-4
 num_ood_actions: 10
-cql_weight: 2.0
+cql_weight: 5.0
 cql_sigma: 0.3

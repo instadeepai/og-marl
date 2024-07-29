@@ -40,6 +40,7 @@ from og_marl.tf2.utils import (
     unroll_rnn,
 )
 
+
 class StateAndJointActionCritic(snt.Module):
     def __init__(self, num_agents: int, num_actions: int):
         self.N = num_agents
@@ -127,15 +128,12 @@ class MADDPGCQLSystem(BaseOfflineSystem):
         target_update_rate: float = 0.005,
         critic_learning_rate: float = 1e-3,
         policy_learning_rate: float = 3e-4,
-        add_agent_id_to_obs: bool = False,
+        add_agent_id_to_obs: bool = True,
         num_ood_actions: int = 10,  # CQL
         cql_weight: float = 3.0,  # CQL
         cql_sigma: float = 0.2,  # CQL
     ):
-        super().__init__(
-            environment=environment,
-            logger=logger
-        )
+        super().__init__(environment=environment, logger=logger)
 
         self.add_agent_id_to_obs = add_agent_id_to_obs
         self.discount = discount
@@ -171,9 +169,8 @@ class MADDPGCQLSystem(BaseOfflineSystem):
         self.policy_optimizer = snt.optimizers.Adam(learning_rate=policy_learning_rate)
 
         # Reset the recurrent neural network
-        self._rnn_states = {
-            agent: self.policy_network.initial_state(1)
-            for agent in self.environment.agents
+        self.rnn_states = {
+            agent: self.policy_network.initial_state(1) for agent in self.environment.agents
         }
 
         # CQL
@@ -184,9 +181,8 @@ class MADDPGCQLSystem(BaseOfflineSystem):
     def reset(self) -> None:
         """Called at the start of a new episode."""
         # Reset the recurrent neural network
-        self._rnn_states = {
-            agent: self.policy_network.initial_state(1)
-            for agent in self.environment.agents
+        self.rnn_states = {
+            agent: self.policy_network.initial_state(1) for agent in self.environment.agents
         }
         return
 
@@ -195,12 +191,12 @@ class MADDPGCQLSystem(BaseOfflineSystem):
         observations: Dict[str, np.ndarray],
         legal_actions: Optional[Dict[str, np.ndarray]] = None,
     ) -> Dict[str, np.ndarray]:
-        actions, next_rnn_states = self._tf_select_actions(observations, self._rnn_states)
-        self._rnn_states = next_rnn_states
+        actions, next_rnn_states = self._tf_select_actions(observations, self.rnn_states)
+        self.rnn_states = next_rnn_states
         return tree.map_structure(  # type: ignore
             lambda x: x[0].numpy(), actions
         )  # convert to numpy and squeeze batch dim
-    
+
     @tf.function(jit_compile=True)
     def _tf_select_actions(
         self,
@@ -233,7 +229,7 @@ class MADDPGCQLSystem(BaseOfflineSystem):
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
-        actions = tf.clip_by_value(experience["actions"], -1.0, 1.0)  # (B,T,N,A) clip for omiga datasets
+        actions = experience["actions"]  # (B,T,N,A) clip for omiga datasets
         env_states = experience["infos"]["state"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
         truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
@@ -448,11 +444,13 @@ class MADDPGCQLSystem(BaseOfflineSystem):
             *self.critic_network_2.trainable_variables,
         )
         gradients = tape.gradient(critic_loss, variables)
+        gradients, _ = tf.clip_by_global_norm(gradients, 5.0)
         self.critic_optimizer.apply(gradients, variables)
 
         # Train policy
         variables = (*self.policy_network.trainable_variables,)
         gradients = tape.gradient(policy_loss, variables)
+        gradients, _ = tf.clip_by_global_norm(gradients, 5.0)
         self.policy_optimizer.apply(gradients, variables)
 
         # Update target networks
@@ -479,16 +477,14 @@ class MADDPGCQLSystem(BaseOfflineSystem):
             "critic_loss": critic_loss,
             "cql_loss": (cql_loss_1 + cql_loss_2) / 2.0,
             "policy_loss": policy_loss,
-            "mean_chosen_q_values": tf.reduce_mean((policy_qs_1 + policy_qs_2) / 2)
+            "mean_chosen_q_values": tf.reduce_mean((policy_qs_1 + policy_qs_2) / 2),
         }
 
         return logs
-    
 
 
 @hydra.main(version_base=None, config_path="configs", config_name="maddpg_cql")
-def run_experiment(cfg : DictConfig) -> None:
-
+def run_experiment(cfg: DictConfig) -> None:
     cfg = cfg["task"]
     with open_dict(cfg):
         env_name = cfg.pop("env")
@@ -502,7 +498,9 @@ def run_experiment(cfg : DictConfig) -> None:
 
     env = get_environment(env_name, scenario, seed=seed)
 
-    buffer = FlashbaxReplayBuffer(sequence_length=sequence_length, sample_period=sample_period, seed=seed)
+    buffer = FlashbaxReplayBuffer(
+        sequence_length=sequence_length, sample_period=sample_period, seed=seed
+    )
 
     download_and_unzip_vault(env_name, scenario)
 
@@ -513,7 +511,7 @@ def run_experiment(cfg : DictConfig) -> None:
         "system": "maddpg+cql",
         "env": env_name,
         "scenario": scenario,
-        "dataset": dataset
+        "dataset": dataset,
     }
     logger = WandbLogger(project=wandb_project, config=wandb_config)
 
@@ -523,5 +521,6 @@ def run_experiment(cfg : DictConfig) -> None:
 
     system.train(buffer, training_steps=int(training_steps))
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     run_experiment()

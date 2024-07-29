@@ -9,15 +9,21 @@ FLAGS = flags.FLAGS
 
 
 SCRIPT = "og_marl/tf2/systems/maddpg_cql.py"
-EXPERIMENT_CONFIGS = ["maddpg_cql/mamujoco/2halfcheetah/Lemon.yaml", "maddpg_cql/mamujoco/2halfcheetah/Cherry.yaml"] #, "idrqn_cql/smac_v1/5m_vs_6m/Medium_OG_MARL.yaml"]
+EXPERIMENT_CONFIGS = [
+    "maddpg_cql/mamujoco/2halfcheetah/Lemon",
+    "maddpg_cql/mamujoco/2halfcheetah/Cherry",
+]  # , "idrqn_cql/smac_v1/5m_vs_6m/Medium_OG_MARL.yaml"]
 WANDB_PROJECT = "lemon-cherry-experiments"
-SEEDS = [9,10]
+SEEDS = [1, 2]
+
 
 def main(_):
-
     for seed in SEEDS:
         for config in EXPERIMENT_CONFIGS:
-                    os.system(f"python {SCRIPT} +task={config} task.seed={seed} task.wandb_project={WANDB_PROJECT}")
+            os.system(
+                f"python {SCRIPT} +task={config} task.seed={seed} task.wandb_project={WANDB_PROJECT}"
+            )
+
 
 if __name__ == "__main__":
     app.run(main)
