@@ -14,7 +14,6 @@
 from typing import Any, Dict, Optional
 
 import numpy as np
-from gymnasium.spaces import Box
 from multiagent_mujoco.mujoco_multi import MujocoMulti
 
 from og_marl.environments.base import BaseEnvironment, ResetReturn, StepReturn
@@ -48,27 +47,9 @@ class MAMuJoCo(BaseEnvironment):
         env_args = get_mamujoco_args(scenario)
         self._environment = MujocoMulti(env_args=env_args, seed=seed)
 
-        self.possible_agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
-        self._num_actions = self._environment.n_actions
+        self.agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
+        self.num_actions = self._environment.n_actions
 
-        self.observation_spaces = {
-            agent: Box(float(), 1, (self._environment.obs_size,), "float32")
-            for i, agent in enumerate(self.possible_agents)
-        }
-
-        self.action_spaces = {
-            agent: self._environment.action_space[i] for i, agent in enumerate(self.possible_agents)
-        }
-
-        self.info_spec = {
-            "state": self._environment.get_state(),
-            "legals": {
-                agent: np.zeros(self.action_spaces[agent].shape, "int64")
-                for agent in self.possible_agents
-            },
-        }
-
-        self.max_episode_length = 1000
 
     def reset(self) -> ResetReturn:
         self._environment.reset()
@@ -76,7 +57,7 @@ class MAMuJoCo(BaseEnvironment):
         observations = self._environment.get_obs()
 
         observations = {
-            agent: observations[i].astype("float32") for i, agent in enumerate(self.possible_agents)
+            agent: observations[i].astype("float32") for i, agent in enumerate(self.agents)
         }
 
         info = {"state": self._environment.get_state()}
@@ -85,20 +66,20 @@ class MAMuJoCo(BaseEnvironment):
 
     def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         mujoco_actions = []
-        for agent in self.possible_agents:
+        for agent in self.agents:
             mujoco_actions.append(actions[agent])
 
         reward, done, info = self._environment.step(mujoco_actions)
 
-        terminals = {agent: done for agent in self.possible_agents}
-        trunctations = {agent: False for agent in self.possible_agents}
+        terminals = done
+        trunctations = False # TODO: handle truncation better
 
-        rewards = {agent: reward for agent in self.possible_agents}
+        rewards = {agent: reward for agent in self.agents}
 
         observations = self._environment.get_obs()
 
         observations = {
-            agent: observations[i].astype("float32") for i, agent in enumerate(self.possible_agents)
+            agent: observations[i].astype("float32") for i, agent in enumerate(self.agents)
         }
 
         info["state"] = self._environment.get_state()
