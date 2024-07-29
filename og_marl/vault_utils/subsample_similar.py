@@ -5,6 +5,7 @@ from flashbax.vault import Vault
 from og_marl.vault_utils.subsample_smaller import stitch_vault_from_sampled_episodes_
 from og_marl.vault_utils.download_vault import check_directory_exists_and_not_empty
 import pickle
+from os.path import exists
 
 # cumulative summing per-episode
 def get_episode_returns_and_term_idxes(offline_data):
@@ -95,22 +96,31 @@ def subsample_similar(first_vault_info, second_vault_info, new_rel_dir, new_vaul
 
         # basic information about the vault
         returns, episode_end_idxes = get_episode_returns_and_term_idxes(offline_data)
+
+        # no need to save the returns if they already exist! 
+        if not exists(f"./{rel_dir}/{vault_name}/{vault_uid}/returns.pickle"):
+            with open(f"{rel_dir}/{vault_name}/{vault_uid}/returns.pickle","wb") as f:
+                pickle.dump(returns,f)
+
     
         # sort the episodes by return and store them
         return_start_end_list.append(sort_concat(returns,episode_end_idxes))
         experience_list.append(offline_data)
 
-
+    # extract the returns specfically
     base_ret = return_start_end_list[0][:,0]
     comp_ret = return_start_end_list[1][:,0]
 
+    # get two sets of episode indices, s.t. the episode returns are as similar as possible
     b,c = get_idxes_of_similar_subsets(base_ret,comp_ret,tol=0.01)
 
+    # take the specified episodes
     vlt1_samples = return_start_end_list[0][b,:]
     vlt2_samples = return_start_end_list[1][c,:]
 
     for experience,sample_idxes,uid in zip(experience_list,[vlt1_samples,vlt2_samples],[first_vault_info['uid'], second_vault_info['uid']]):
 
+        # use the specified episodes to write a new vault
         timesteps_written = stitch_vault_from_sampled_episodes_(
                                                 experience=experience,
                                                 len_start_end_sample=sample_idxes,
@@ -122,5 +132,9 @@ def subsample_similar(first_vault_info, second_vault_info, new_rel_dir, new_vaul
         # save the number of timesteps actually written
         with open(f"{new_rel_dir}/{new_vault_name}/{uid}/timesteps.pickle","wb") as f:
             pickle.dump(timesteps_written,f)
+
+        # save the returns list of the episodes
+        with open(f"{new_rel_dir}/{new_vault_name}/{uid}/returns.pickle","wb") as f:
+            pickle.dump(sample_idxes[:,0],f)
 
     return
