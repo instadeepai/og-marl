@@ -11,7 +11,7 @@ FLAGS = flags.FLAGS
 SCRIPT = "og_marl/tf2/systems/maddpg_cql.py"
 EXPERIMENT_CONFIGS = ["maddpg_cql/mamujoco/2halfcheetah/Lemon.yaml", "maddpg_cql/mamujoco/2halfcheetah/Cherry.yaml"] #, "idrqn_cql/smac_v1/5m_vs_6m/Medium_OG_MARL.yaml"]
 WANDB_PROJECT = "lemon-cherry-experiments"
-SEEDS = [3,4]
+SEEDS = [5,6]
 
 def main(_):
 
