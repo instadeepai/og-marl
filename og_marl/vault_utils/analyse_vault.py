@@ -147,6 +147,7 @@ def full_analysis(
     vault_name: str,
     vault_uids: Optional[List[str]] = None,
     rel_dir: str = "vaults",
+    n_bins = 40,
 ) -> Dict[str, Array]:
     vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
@@ -155,6 +156,9 @@ def full_analysis(
     all_count_vals = {}
 
     data_just_values = []
+
+    min_return = 10
+    max_return = -1
 
     for uid in vault_uids:
         vlt = Vault(vault_name=vault_name, rel_dir=rel_dir, vault_uid=uid)
@@ -172,14 +176,19 @@ def full_analysis(
         all_count_freq[uid] = count_freq
         all_count_vals[uid] = count_vals
 
+        min_return = min(min(uid_returns),min_return)
+        max_return = max(max(uid_returns),max_return)
+
     print(tabulate(data_just_values,headers=['Uid','Mean','Stddev','Transitions','Trajectories','Joint SACo']))
 
     # plot the episode return histograms
     fig, ax = plt.subplots(1,len(vault_uids),figsize=(3*len(vault_uids),3),sharex=True,sharey=True)
 
+    colors = sns.color_palette()
+
     for i, uid in enumerate(vault_uids):
-        counts, bins = np.histogram(all_returns[uid])
-        ax[i].stairs(counts, bins,fill=True)
+        counts, bins = np.histogram(all_returns[uid],bins=n_bins,range=(min_return-0.01,max_return+0.01))
+        ax[i].stairs(counts, bins,fill=True,color=colors[i])
         ax[i].set_title(uid)
         ax[i].set_xlabel("Episode return")
     ax[0].set_ylabel("Frequency")
@@ -188,7 +197,7 @@ def full_analysis(
 
     # plot the power law showing count frequencies
     for i, uid in enumerate(vault_uids):
-        plt.scatter(np.log(all_count_vals[uid].astype(float)),np.log(all_count_freq[uid].astype(float)),label=uid)
+        plt.scatter(np.log(all_count_vals[uid].astype(float)),np.log(all_count_freq[uid].astype(float)),label=uid,color=colors[i])
     plt.title("Frequency of unique pair counts power law")
     plt.xlabel("Count (log base 10)")
     plt.ylabel("Frequency of count (log base 10)")
@@ -196,87 +205,3 @@ def full_analysis(
     plt.show()
 
     return data_just_values
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# unused
-
-# given bin edges and a sorted array of values, get the bin number per value
-def get_bin_numbers(sorted_values,bin_edges):
-    bin_numbers = np.zeros_like(sorted_values)
-    
-    def get_bin_number(bin_num,value):
-        is_overflowing = value>bin_edges[bin_num]
-
-        if is_overflowing:
-            bin_num += 1
-            is_doubly_overflowing = value>bin_edges[bin_num]
-            if is_doubly_overflowing:
-                bin_num = get_bin_number(bin_num,value)
-            
-        return bin_num
-    
-    bin_bookmark = 0
-
-    for i,val in enumerate(sorted_values):
-        bin_bookmark = get_bin_number(bin_bookmark,val)
-        bin_numbers[i] = bin_bookmark
-
-    return bin_numbers
-
-
-def bin_processed_data(all_sorted_return_start_end, n_bins=500):
-    # get bin edges, including final endpoint
-    bin_edges = jnp.linspace(start=min(min(all_sorted_return_start_end[:,0]),0), stop = max(all_sorted_return_start_end[:,0]), num=n_bins,endpoint=True)
-    print(all_sorted_return_start_end.shape[0])
-
-    # get bin numbers
-    bin_numbers = get_bin_numbers(all_sorted_return_start_end[:,0], bin_edges)
-    print(bin_numbers.shape[0])
-
-    bar_labels, bar_heights= np.unique(bin_numbers,return_counts=True)
-
-    padded_heights = np.zeros(n_bins)
-    for bar_l, bar_h in zip(bar_labels,bar_heights):
-        padded_heights[int(bar_l)] = bar_h
-
-    return bar_labels, bar_heights, padded_heights, bin_edges, bin_numbers
-
-
-
-# sample from pdf according to heights
-# BIG NOTE: CHECK THE DISPARITY, OTHERWISE YOUR DISTRIBUTION WILL BE TOO MUCH
-def episode_idxes_sampled_from_pdf(pdf,bar_heights):
-    num_to_sample = np.round(pdf).astype(int)
-    sample_range_edges = np.concatenate([[0],np.cumsum(bar_heights)])
-
-    assert num_to_sample.shape==bar_heights.shape
-
-    target_sample_idxes = []
-    for i,n_sample in enumerate(num_to_sample):
-            sample_base = np.arange(sample_range_edges[i],sample_range_edges[i+1])
-            print(sample_base)
-            if n_sample<=0:
-                 pass
-            # if we sample more than all in the bar
-            else:
-                if n_sample>=bar_heights[i]:
-                    sample_rest = np.random.choice(sample_base,n_sample-bar_heights[i],replace=True)
-                    sample = np.concatenate([sample_base,sample_rest])
-                else:
-                    sample = np.random.choice(sample_base,n_sample,replace=True) #make false for no replace
-                target_sample_idxes = target_sample_idxes+list(np.sort(sample))
-    return target_sample_idxes
