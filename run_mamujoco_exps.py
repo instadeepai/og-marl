@@ -14,7 +14,7 @@ EXPERIMENT_CONFIGS = [
     "maddpg_cql/mamujoco/2halfcheetah/Cherry",
 ]  # , "idrqn_cql/smac_v1/5m_vs_6m/Medium_OG_MARL.yaml"]
 WANDB_PROJECT = "lemon-cherry-experiments"
-SEEDS = [3, 4]
+SEEDS = [5, 6]
 
 
 def main(_):
