@@ -24,6 +24,8 @@ from flashbax.vault import Vault
 from git import Optional
 import numpy as np
 from og_marl.vault_utils.download_vault import get_available_uids
+import pandas as pd
+from tabulate import tabulate
 
 
 def calculate_returns(
@@ -77,25 +79,21 @@ def calculate_returns(
     return episode_returns
 
 
-def get_saco(rel_dir,vault_name,uid):
-    vlt = Vault(rel_dir=rel_dir, vault_name=vault_name, vault_uid=uid)
-    all_data = vlt.read()
-    offline_data = all_data.experience
-    del vlt
-    del all_data
-
-    states = offline_data['infos']["state"]
+def get_saco(experience):
+    states = experience['infos']["state"]
 
     num_tot = states.shape[1]
 
-    reshaped_actions = offline_data["actions"].reshape((*offline_data["actions"].shape[:2],-1))
+    reshaped_actions = experience["actions"].reshape((*experience["actions"].shape[:2],-1))
     state_pairs = np.concatenate((states,reshaped_actions),axis=-1)
 
-    unique_vals = np.unique(state_pairs,axis=1)
+    unique_vals, counts = np.unique(state_pairs,axis=1,return_counts=True)
 
-    saco = len(unique_vals)/num_tot
+    count_vals, count_freq = np.unique(counts,return_counts=True)
 
-    return saco
+    saco = unique_vals.shape[1]/num_tot
+
+    return saco, count_vals, count_freq
 
 
 def analyse_vault(
@@ -142,6 +140,62 @@ def analyse_vault(
         plt.show()
 
     return all_uid_returns
+
+
+
+def full_analysis(
+    vault_name: str,
+    vault_uids: Optional[List[str]] = None,
+    rel_dir: str = "vaults",
+) -> Dict[str, Array]:
+    vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
+
+    all_returns = {}
+    all_count_freq = {}
+    all_count_vals = {}
+
+    data_just_values = []
+
+    for uid in vault_uids:
+        vlt = Vault(vault_name=vault_name, rel_dir=rel_dir, vault_uid=uid)
+        exp = vlt.read().experience
+        n_trans = exp['actions'].shape[1]
+
+        # we get episode returns and num traj from here.
+        uid_returns = calculate_returns(exp)
+
+        # we get joint saco and counts from here.
+        saco, count_vals, count_freq = get_saco(exp)
+
+        data_just_values.append([uid,np.mean(np.array(uid_returns)),np.std(np.array(uid_returns)),n_trans,len(uid_returns),saco])
+        all_returns[uid] = uid_returns
+        all_count_freq[uid] = count_freq
+        all_count_vals[uid] = count_vals
+
+    print(tabulate(data_just_values,headers=['Uid','Mean','Stddev','Transitions','Trajectories','Joint SACo']))
+
+    # plot the episode return histograms
+    fig, ax = plt.subplots(1,len(vault_uids),figsize=(3*len(vault_uids),3),sharex=True,sharey=True)
+
+    for i, uid in enumerate(vault_uids):
+        counts, bins = np.histogram(all_returns[uid])
+        ax[i].stairs(counts, bins,fill=True)
+        ax[i].set_title(uid)
+        ax[i].set_xlabel("Episode return")
+    ax[0].set_ylabel("Frequency")
+    fig.tight_layout()
+    plt.show()
+
+    # plot the power law showing count frequencies
+    for i, uid in enumerate(vault_uids):
+        plt.scatter(np.log(all_count_vals[uid].astype(float)),np.log(all_count_freq[uid].astype(float)),label=uid)
+    plt.title("Frequency of unique pair counts power law")
+    plt.xlabel("Count (log base 10)")
+    plt.ylabel("Frequency of count (log base 10)")
+    plt.legend()
+    plt.show()
+
+    return data_just_values
 
 
 
