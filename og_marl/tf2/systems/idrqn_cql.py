@@ -286,6 +286,7 @@ def run_experiment(cfg : DictConfig) -> None:
 
     download_and_unzip_vault(env_name, scenario)
 
+    dataset = str(dataset)
     buffer.populate_from_vault(env_name, scenario, dataset)
 
     wandb_config = {
