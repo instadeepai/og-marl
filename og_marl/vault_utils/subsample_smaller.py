@@ -97,7 +97,7 @@ def stitch_vault_from_sampled_episodes_(
     )
 
     for start,end in zip(len_start_end_sample[:,1],len_start_end_sample[:,2]):
-        sample_experience = jax.tree_util.tree_map(lambda x: x[:,int(start+1):int(end+1),...], experience)
+        sample_experience = jax.tree_util.tree_map(lambda x: x[:,int(start):int(end+1),...], experience)
         dest_state = buffer_add(dest_state, sample_experience)
         
     timesteps_written = dest_vault.write(dest_state)
