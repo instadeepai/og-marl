@@ -444,13 +444,13 @@ class MADDPGCQLSystem(BaseOfflineSystem):
             *self.critic_network_2.trainable_variables,
         )
         gradients = tape.gradient(critic_loss, variables)
-        gradients, _ = tf.clip_by_global_norm(gradients, 5.0)
+        gradients, _ = tf.clip_by_global_norm(gradients, 10.0)
         self.critic_optimizer.apply(gradients, variables)
 
         # Train policy
         variables = (*self.policy_network.trainable_variables,)
         gradients = tape.gradient(policy_loss, variables)
-        gradients, _ = tf.clip_by_global_norm(gradients, 5.0)
+        gradients, _ = tf.clip_by_global_norm(gradients, 10.0)
         self.policy_optimizer.apply(gradients, variables)
 
         # Update target networks

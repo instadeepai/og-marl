@@ -3,7 +3,7 @@ scenario: 2halfcheetah
 dataset: Cherry
 wandb_project: og-marl-maddpg-cql
 seed: 42
-training_steps: 5e5
+training_steps: 1e6
 sequence_length: 20
 sample_period: 1
 
@@ -11,9 +11,9 @@ linear_layer_dim: 64
 recurrent_layer_dim: 64
 discount: 0.99
 add_agent_id_to_obs: True
-target_update_rate: 0.005
+target_update_rate: 0.01
 critic_learning_rate: 1e-3
-policy_learning_rate: 3e-4
+policy_learning_rate: 1e-3
 num_ood_actions: 10
 cql_weight: 5.0
 cql_sigma: 0.3
