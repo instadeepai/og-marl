@@ -13,7 +13,7 @@ def get_episode_returns_and_term_idxes(offline_data):
     rewards = offline_data['rewards'][0, :, 0]
     terminal_flag = offline_data['terminals'][0, :, ...].all(axis=-1)
 
-    # assert terminal_flag[-1]==True
+    assert terminal_flag[-1]==True
 
     def scan_cumsum(return_so_far,prev_term_reward):
         term, reward = prev_term_reward
