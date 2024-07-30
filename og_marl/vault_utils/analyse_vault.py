@@ -145,11 +145,13 @@ def analyse_vault(
 
 def full_analysis(
     vault_name: str,
-    vault_uids: Optional[List[str]] = None,
+    vault_uids: Optional[List[str]] = [],
     rel_dir: str = "vaults",
     n_bins = 40,
 ) -> Dict[str, Array]:
-    vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
+    
+    if len(vault_uids)==0:
+        vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
     all_returns = {}
     all_count_freq = {}
@@ -182,16 +184,16 @@ def full_analysis(
     print(tabulate(data_just_values,headers=['Uid','Mean','Stddev','Transitions','Trajectories','Joint SACo']))
 
     # plot the episode return histograms
-    fig, ax = plt.subplots(1,len(vault_uids),figsize=(3*len(vault_uids),3),sharex=True,sharey=True)
+    fig, ax = plt.subplots(1,len(vault_uids),figsize=(3*len(vault_uids),3),sharex=True,sharey=True,squeeze=False)
 
     colors = sns.color_palette()
 
     for i, uid in enumerate(vault_uids):
         counts, bins = np.histogram(all_returns[uid],bins=n_bins,range=(min_return-0.01,max_return+0.01))
-        ax[i].stairs(counts, bins,fill=True,color=colors[i])
-        ax[i].set_title(uid)
-        ax[i].set_xlabel("Episode return")
-    ax[0].set_ylabel("Frequency")
+        ax[0,i].stairs(counts, bins,fill=True,color=colors[i])
+        ax[0,i].set_title(uid)
+        ax[0,i].set_xlabel("Episode return")
+    ax[0,0].set_ylabel("Frequency")
     fig.tight_layout()
     plt.show()
 
