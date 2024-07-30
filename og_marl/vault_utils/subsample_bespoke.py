@@ -40,9 +40,7 @@ def bin_processed_data(all_sorted_return_start_end, n_bins=500):
     for bar_l, bar_h in zip(bar_labels,bar_heights):
         padded_heights[int(bar_l)] = bar_h
 
-    return bar_labels, bar_heights, padded_heights, bin_edges, bin_numbers
-
-
+    return bar_labels, bar_heights, padded_heights.astype(int), bin_edges, bin_numbers
 
 # sample from pdf according to heights
 # BIG NOTE: CHECK THE DISPARITY, OTHERWISE YOUR DISTRIBUTION WILL BE TOO MUCH
@@ -55,15 +53,14 @@ def episode_idxes_sampled_from_pdf(pdf,bar_heights):
     target_sample_idxes = []
     for i,n_sample in enumerate(num_to_sample):
             sample_base = np.arange(sample_range_edges[i],sample_range_edges[i+1])
-            print(sample_base)
-            if n_sample<=0:
+            if n_sample<=0: # we don't have any to sample
                  pass
-            # if we sample more than all in the bar
+            
             else:
-                if n_sample>=bar_heights[i]:
+                if n_sample>bar_heights[i]: # if we sample more than all in the bar
                     sample_rest = np.random.choice(sample_base,n_sample-bar_heights[i],replace=True)
                     sample = np.concatenate([sample_base,sample_rest])
                 else:
-                    sample = np.random.choice(sample_base,n_sample,replace=True) #make false for no replace
+                    sample = np.random.choice(sample_base,n_sample,replace=False) #make false for no replace
                 target_sample_idxes = target_sample_idxes+list(np.sort(sample))
     return target_sample_idxes
