@@ -10,15 +10,15 @@ flags.DEFINE_integer("num_seeds", 10, "Number of seeds to use.")
 
 SCRIPT = "og_marl/tf2/systems/idrqn_cql.py"
 EXPERIMENT_CONFIGS = ["idrqn_cql/smac_v2/all.yaml"] #, "idrqn_cql/smac_v1/5m_vs_6m/Medium_OG_MARL.yaml"]
-WANDB_PROJECT = "smac-v2-benchmark"
+WANDB_PROJECT = "smac_v2_std_exp"
 
-SCENARIOS = ["terran_5_vs_5", "zerg_5_vs_5"]
+SCENARIOS = ["terran_5_vs_5"]
 
-DATASETS = ["Replay"]
+DATASETS = ["0", "1", "2", "3"]
 
 def main(_):
 
-    SEEDS = list(range(FLAGS.num_seeds))
+    SEEDS = [1,2,3,4,5]
 
     for seed in SEEDS:
         for config in EXPERIMENT_CONFIGS:
