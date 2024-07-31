@@ -54,7 +54,9 @@ VAULT_INFO = {
         "2halfcheetah": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omar/2halfcheetah.zip"},
     },
     "mpe_omar": {
-        "simple_spread": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omar/simple_spread.zip"}
+        "simple_spread": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omar/simple_spread.zip"},
+        "simple_tag": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omar/simple_tag.zip"},
+        "simple_world": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omar/simple_world.zip"},
     }
 }
 
@@ -134,7 +136,7 @@ def calculate_returns(
     # We want all the time data, but just from one agent
     experience_one_agent = jax.tree_map(lambda x: x[0, :, 0, ...], experience)
     rewards = experience_one_agent[reward_key]
-    terminals = jnp.array(experience['terminals'].all(axis=-1).squeeze(), dtype=jnp.float32)
+    terminals = jnp.array(experience['terminals'][0].all(axis=-1).squeeze(), dtype=jnp.float32)
 
     def sum_rewards(terminals: Array, rewards: Array) -> Array:
         def scan_fn(carry: Array, inputs: Array) -> Array:
