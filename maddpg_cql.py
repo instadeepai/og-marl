@@ -185,6 +185,7 @@ class MADDPGCQLSystem:
         self.priority_on_ramp = priority_on_ramp
         self.gaussian_steepness = gaussian_steepness
         self.min_priority = min_priority
+        self.beta = 1
 
         # CQL
         self._num_ood_actions = num_ood_actions
@@ -222,7 +223,7 @@ class MADDPGCQLSystem:
 
             start_time = time.time()
             train_logs = self.train_step(
-                data_batch.experience, trainer_step_ctr
+                data_batch.experience, trainer_step_ctr, data_batch.priorities
             )
             end_time = time.time()
             time_train_step = end_time - start_time
@@ -354,15 +355,15 @@ class MADDPGCQLSystem:
         logs = {"evaluator/episode_return": np.mean(episode_returns)}
         return logs
 
-    def train_step(self, experience, trainer_step_ctr) -> Dict[str, Numeric]:
+    def train_step(self, experience, trainer_step_ctr, priorities) -> Dict[str, Numeric]:
         trainer_step_ctr = tf.convert_to_tensor(trainer_step_ctr, "float32")
-
-        logs = self._tf_train_step(experience, trainer_step_ctr)
+        priorities = tf.convert_to_tensor(priorities, "float32")
+        logs = self._tf_train_step(experience, trainer_step_ctr, priorities)
 
         return logs
 
     @tf.function(jit_compile=True)
-    def _tf_train_step(self, experience, train_steps):
+    def _tf_train_step(self, experience, train_steps, priorities):
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = tf.clip_by_value(experience["actions"], -1, 1)  # (B,T,N,A)
@@ -428,8 +429,8 @@ class MADDPGCQLSystem:
             )
 
             # Squared TD-error
-            critic_loss_1 = tf.reduce_mean(0.5 * (targets - qs_1[:-1]) ** 2)
-            critic_loss_2 = tf.reduce_mean(0.5 * (targets - qs_2[:-1]) ** 2)
+            critic_loss_1 = tf.reduce_mean(tf.reduce_mean(0.5 * (targets - qs_1[:-1]) ** 2, axis=-1), axis=0)
+            critic_loss_2 = tf.reduce_mean(tf.reduce_mean(0.5 * (targets - qs_2[:-1]) ** 2, axis=-1), axis=0)
 
             ###########
             ### CQL ###
@@ -567,19 +568,20 @@ class MADDPGCQLSystem:
                 (ood_qs_2, current_ood_qs_2, next_current_ood_qs_2), axis=2
             )
 
-            cql_loss_1 = tf.reduce_mean(
-                tf.reduce_logsumexp(all_ood_qs_1, axis=2, keepdims=False)
-            ) - tf.reduce_mean(qs_1[:-1])
-            cql_loss_2 = tf.reduce_mean(
-                tf.reduce_logsumexp(all_ood_qs_2, axis=2, keepdims=False)
-            ) - tf.reduce_mean(qs_2[:-1])
+            cql_loss_1 = tf.reduce_mean(tf.reduce_mean(tf.reduce_logsumexp(all_ood_qs_1, axis=2, keepdims=False), axis=-1), axis=0) - tf.reduce_mean(tf.reduce_mean(qs_1[:-1], axis=-1), axis=0)
+            cql_loss_2 = tf.reduce_mean(tf.reduce_mean(tf.reduce_logsumexp(all_ood_qs_2, axis=2, keepdims=False), axis=-1), axis=0) - tf.reduce_mean(tf.reduce_mean(qs_2[:-1], axis=-1), axis=0)
 
             critic_loss_1 += self._cql_weight * cql_loss_1
             critic_loss_2 += self._cql_weight * cql_loss_2
 
-            ### END CQL ###
-
             critic_loss = (critic_loss_1 + critic_loss_2) / 2
+
+            is_w = (1/B)**self.beta * (1/priorities)**self.beta
+            is_w = is_w / tf.reduce_max(is_w)
+
+            critic_loss = tf.reduce_mean(is_w * critic_loss)
+
+            ### END CQL ###
 
             # Policy Loss
             # Unroll online policy

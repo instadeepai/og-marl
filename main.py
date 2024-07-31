@@ -7,8 +7,8 @@ from maddpg_cql import MADDPGCQLSystem
 set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("dataset", "Medium-Replay", "Use either 'Good' or 'GoodMedium'")
-flags.DEFINE_string("scenario", "2ant", "Use either '3hopper' or '2halfcheetah'")
+flags.DEFINE_string("dataset", "Expert", "Use either 'Good' or 'GoodMedium'")
+flags.DEFINE_string("scenario", "6halfcheetah", "Use either '3hopper' or '2halfcheetah'")
 flags.DEFINE_string(
     "system", "maddpg+cql+pjap", "Use either 'maddpg+cql' or 'maddpg+cql+pjap'"
 )
@@ -21,26 +21,26 @@ flags.DEFINE_float(
 flags.DEFINE_float("min_priority", 0.01, "Minimum priority.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 
-STEEPNESS_CONFIG = {
-    "2ant": {
-        "Medium-Replay": 1.2,
-        "Medium": 0.5,
-        "Medium-Expert": 8,
-        "Expert": 8
-    },
-    "6halfcheetah": {
-        "Medium-Replay": 2,
-        "Medium": 2,
-        "Medium-Expert": 2,
-        "Expert": 2
-    },
-    "3hopper": {
-        "Medium-Replay": 2,
-        "Medium": 4,
-        "Medium-Expert": 6,
-        "Expert": 6
-    },
-}
+# STEEPNESS_CONFIG = {
+#     "2ant": {
+#         "Medium-Replay": 1.2,
+#         "Medium": 0.5,
+#         "Medium-Expert": 8,
+#         "Expert": 8
+#     },
+#     "6halfcheetah": {
+#         "Medium-Replay": 2,
+#         "Medium": 2,
+#         "Medium-Expert": 2,
+#         "Expert": 2
+#     },
+#     "3hopper": {
+#         "Medium-Replay": 2,
+#         "Medium": 4,
+#         "Medium-Expert": 6,
+#         "Expert": 6
+#     },
+# }
 
 
 def main(_):
@@ -95,7 +95,7 @@ def main(_):
 
     system_kwargs = {
         "add_agent_id_to_obs": True,
-        "gaussian_steepness": STEEPNESS_CONFIG[FLAGS.scenario][FLAGS.dataset],
+        "gaussian_steepness": 2,#STEEPNESS_CONFIG[FLAGS.scenario][FLAGS.dataset],
         "min_priority": FLAGS.min_priority,
         "is_omiga": FLAGS.scenario in ["3hopper", "2ant", "6halfcheetah"],
         "cql_sigma": cql_sigma,
