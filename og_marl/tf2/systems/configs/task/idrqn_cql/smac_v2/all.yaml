@@ -3,7 +3,7 @@ scenario: terran_5_vs_5
 dataset: Replay
 wandb_project: og-marl-hydra
 seed: 42
-training_steps: 1e5
+training_steps: 5e4
 sequence_length: 20
 sample_period: 1
 
