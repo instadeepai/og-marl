@@ -51,7 +51,7 @@ class IDDPGBCSystem(IDDPGSystem):
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
-        actions = experience["actions"]  # (B,T,N,A)
+        actions = tf.clip_by_value(experience["actions"], -1.0, 1.0)  # (B,T,N,A)
         env_states = experience["infos"]["state"] if "state" in experience["infos"] else experience["infos"]["states"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
         truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)

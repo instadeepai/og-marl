@@ -6,6 +6,10 @@ def get_environment(env_name: str, scenario: str) -> BaseEnvironment:  # noqa: C
         from environment_wrappers.smacv1 import SMACv1
 
         return SMACv1(scenario)
+    elif env_name == "rware":
+        from environment_wrappers.warehouse_alberdice import Warehouse
+
+        return Warehouse(scenario)
     elif env_name == "smac_v1_omiga":
         from environment_wrappers.smacv1_omiga import SMACv1
 

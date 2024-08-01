@@ -25,13 +25,12 @@ class IDRQNCQLSystem(IDRQNSystem):
         self,
         environment: BaseEnvironment,
         logger: BaseLogger,
-        num_ood_actions: int = 10,
-        cql_weight: float = 2.0,
-        linear_layer_dim: int = 64,
-        recurrent_layer_dim: int = 64,
+        cql_weight: float = 10,
+        linear_layer_dim: int = 128,
+        recurrent_layer_dim: int = 128,
         discount: float = 0.99,
         target_update_period: int = 200,
-        learning_rate: float = 3e-4,
+        learning_rate: float = 1e-4,
         add_agent_id_to_obs_in_trainer: bool = True,
         add_agent_id_to_obs_in_action_selection: bool = True
     ):
@@ -48,14 +47,13 @@ class IDRQNCQLSystem(IDRQNSystem):
         )
 
         # CQL
-        self._num_ood_actions = num_ood_actions
         self._cql_weight = cql_weight
 
     @tf.function(jit_compile=True)
     def _tf_train_step(self, train_step: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
-        actions = tf.cast(experience["actions"], "int32")  # (B,T,N)
+        actions = tf.cast(experience["actions"], "int32")[:,:,:,0]  # (B,T,N)
         rewards = experience["rewards"]  # (B,T,N)
         truncations = experience["truncations"]  # (B,T,N)
         terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
@@ -123,26 +121,8 @@ class IDRQNCQLSystem(IDRQNSystem):
             #### CQL ####
             #############
 
-            random_ood_actions = tf.random.uniform(
-                shape=(self._num_ood_actions, B, T, N), minval=0, maxval=A, dtype=tf.dtypes.int64
-            )  # [Ra, B, T, N]
-
-            all_ood_qs = []
-            for i in range(self._num_ood_actions):
-                # Gather
-                one_hot_indices = tf.one_hot(random_ood_actions[i], depth=qs_out.shape[-1])
-                ood_qs = tf.reduce_sum(
-                    qs_out * one_hot_indices, axis=-1, keepdims=False
-                )  # [B, T, N]
-
-                # Mixing
-                all_ood_qs.append(ood_qs)  # [B, T, Ra]
-
-            all_ood_qs.append(chosen_action_qs)  # [B, T, Ra + 1]
-            all_ood_qs = tf.concat(all_ood_qs, axis=-1)
-
             cql_loss = tf.reduce_mean(
-                tf.reduce_logsumexp(all_ood_qs, axis=-1, keepdims=True)[:, :-1]
+                tf.reduce_logsumexp(qs_out, axis=-1, keepdims=True)[:, :-1]
             ) - tf.reduce_mean(chosen_action_qs[:, :-1])
 
             #############
@@ -150,7 +130,7 @@ class IDRQNCQLSystem(IDRQNSystem):
             #############
 
             # Mask out zero-padded timesteps
-            loss = td_loss + cql_loss
+            loss = td_loss + self._cql_weight * cql_loss
 
         # Get trainable variables
         variables = (
