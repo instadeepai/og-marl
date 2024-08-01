@@ -14,11 +14,11 @@ WANDB_PROJECT = "smac_v2_std_exp"
 
 SCENARIOS = ["terran_5_vs_5"]
 
-DATASETS = ["0", "1", "2", "3"]
+DATASETS = ["0", "1", "2", "3", "4", "5"]
 
 def main(_):
 
-    SEEDS = [1,2,3,4,5]
+    SEEDS = [1,2]
 
     for seed in SEEDS:
         for config in EXPERIMENT_CONFIGS:
