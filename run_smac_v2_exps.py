@@ -18,7 +18,7 @@ DATASETS = ["0", "1", "2", "3", "4", "5"]
 
 def main(_):
 
-    SEEDS = [99,100]
+    SEEDS = [97,98]
 
     for seed in SEEDS:
         for config in EXPERIMENT_CONFIGS:
