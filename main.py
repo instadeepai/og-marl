@@ -7,18 +7,18 @@ from maddpg_cql import MADDPGCQLSystem
 set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("dataset", "Expert", "Use either 'Good' or 'GoodMedium'")
-flags.DEFINE_string("scenario", "6halfcheetah", "Use either '3hopper' or '2halfcheetah'")
+flags.DEFINE_string("dataset", "Good", "Use either 'Good' or 'GoodMedium'")
+flags.DEFINE_string("scenario", "2halfcheetah", "Use either '3hopper' or '2halfcheetah'")
 flags.DEFINE_string(
     "system", "maddpg+cql+pjap", "Use either 'maddpg+cql' or 'maddpg+cql+pjap'"
 )
-flags.DEFINE_float("trainer_steps", 3e5, "Number of training steps.")
+flags.DEFINE_float("trainer_steps", 5e5, "Number of training steps.")
 flags.DEFINE_float(
     "gaussian_steepness",
-    2.0,
+    4.0,
     "Parameter to control relationship between distance and priority.",
 )
-flags.DEFINE_float("min_priority", 0.01, "Minimum priority.")
+flags.DEFINE_float("min_priority", 0.001, "Minimum priority.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 
 # STEEPNESS_CONFIG = {
@@ -60,13 +60,13 @@ def main(_):
     else:
         raise ValueError("Scenario not recognised.")
 
-    if FLAGS.system == "maddpg+cql+pjap":
+    if FLAGS.system in ["maddpg+cql+pjap", "maddpg+cql+per"]:
         buffer = PrioritisedFlashbaxReplayBuffer(
             batch_size=64,
             sequence_length=20,
             sample_period=10,
             seed=FLAGS.seed,
-            priority_exponent=0.99,
+            priority_exponent=0.6,
         )
     else:
         buffer = FlashbaxReplayBuffer(
@@ -99,6 +99,7 @@ def main(_):
         "min_priority": FLAGS.min_priority,
         "is_omiga": FLAGS.scenario in ["3hopper", "2ant", "6halfcheetah"],
         "cql_sigma": cql_sigma,
+        "priority_type": "td"
     }
 
     system = MADDPGCQLSystem(env, logger, **system_kwargs)

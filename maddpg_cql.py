@@ -121,6 +121,7 @@ class MADDPGCQLSystem:
         policy_learning_rate: float = 3e-4,
         add_agent_id_to_obs: bool = False,
         random_exploration_timesteps: int = 0,
+        priority_type = "pjap",
         num_ood_actions: int = 10,  # CQL
         cql_weight: float = 3.0,  # CQL
         cql_sigma: float = 0.2,  # CQL
@@ -132,6 +133,7 @@ class MADDPGCQLSystem:
         self._discount = discount
         self._add_agent_id_to_obs = add_agent_id_to_obs
         self._env_step_ctr = 0.0
+        self.priority_type = priority_type
 
         self._linear_layer_dim = linear_layer_dim
         self._recurrent_layer_dim = recurrent_layer_dim
@@ -231,7 +233,10 @@ class MADDPGCQLSystem:
             if isinstance(replay_buffer, PrioritisedFlashbaxReplayBuffer):
                 start_time = time.time()
                 uniform_data = replay_buffer.sample_flat()
-                priority = self.compute_new_priorities(tree.map_structure(tf.convert_to_tensor, uniform_data.experience))
+                if self.priority_type == "td":
+                    priority = self.compute_new_priorities_td(tree.map_structure(tf.convert_to_tensor, uniform_data.experience))
+                else:
+                    priority = self.compute_new_priorities(tree.map_structure(tf.convert_to_tensor, uniform_data.experience))
                 replay_buffer.update_priorities(uniform_data.indices, priority)
                 end_time = time.time()
                 time_priority = end_time - start_time
@@ -429,8 +434,8 @@ class MADDPGCQLSystem:
             )
 
             # Squared TD-error
-            critic_loss_1 = tf.reduce_mean(tf.reduce_mean(0.5 * (targets - qs_1[:-1]) ** 2, axis=-1), axis=0)
-            critic_loss_2 = tf.reduce_mean(tf.reduce_mean(0.5 * (targets - qs_2[:-1]) ** 2, axis=-1), axis=0)
+            td_error_1 = tf.reduce_mean(tf.reduce_mean(0.5 * (targets - qs_1[:-1]) ** 2, axis=-1), axis=0)
+            td_error_2 = tf.reduce_mean(tf.reduce_mean(0.5 * (targets - qs_2[:-1]) ** 2, axis=-1), axis=0)
 
             ###########
             ### CQL ###
@@ -571,15 +576,15 @@ class MADDPGCQLSystem:
             cql_loss_1 = tf.reduce_mean(tf.reduce_mean(tf.reduce_logsumexp(all_ood_qs_1, axis=2, keepdims=False), axis=-1), axis=0) - tf.reduce_mean(tf.reduce_mean(qs_1[:-1], axis=-1), axis=0)
             cql_loss_2 = tf.reduce_mean(tf.reduce_mean(tf.reduce_logsumexp(all_ood_qs_2, axis=2, keepdims=False), axis=-1), axis=0) - tf.reduce_mean(tf.reduce_mean(qs_2[:-1], axis=-1), axis=0)
 
-            critic_loss_1 += self._cql_weight * cql_loss_1
-            critic_loss_2 += self._cql_weight * cql_loss_2
+            critic_loss_1 = td_error_1 +  self._cql_weight * cql_loss_1
+            critic_loss_2 = td_error_2 + self._cql_weight * cql_loss_2
 
             critic_loss = (critic_loss_1 + critic_loss_2) / 2
 
-            is_w = (1/B)**self.beta * (1/priorities)**self.beta
-            is_w = is_w / tf.reduce_max(is_w)
+            # is_w = (1/B)**self.beta * (1/priorities)**self.beta
+            # is_w = is_w / tf.reduce_max(is_w)
 
-            critic_loss = tf.reduce_mean(is_w * critic_loss)
+            critic_loss = tf.reduce_mean(critic_loss)
 
             ### END CQL ###
 
@@ -661,6 +666,80 @@ class MADDPGCQLSystem:
         }
 
         return logs
+    
+    @tf.function(jit_compile=True)
+    def compute_new_priorities_td(self, experience):
+        # Unpack the batch
+        observations = experience["observations"]  # (B,T,N,O)
+        actions = tf.clip_by_value(experience["actions"], -1, 1)  # (B,T,N,A)
+        env_states = experience["infos"]["state"]  # (B,T,S)
+        rewards = experience["rewards"]  # (B,T,N)
+        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
+        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
+
+        # When to reset the RNN hidden state
+        resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
+
+        # Get dims
+        B, T, N = actions.shape[:3]
+
+        # Maybe add agent ids to observation
+        if self._add_agent_id_to_obs and not self._is_omiga:
+            observations = batch_concat_agent_id_to_obs(observations)
+
+        # Make time-major
+        observations = switch_two_leading_dims(observations)
+        replay_actions = switch_two_leading_dims(actions)
+        rewards = switch_two_leading_dims(rewards)
+        terminals = switch_two_leading_dims(terminals)
+        env_states = switch_two_leading_dims(env_states)
+        resets = switch_two_leading_dims(resets)
+
+        # Unroll target policy
+        target_actions = unroll_rnn(
+            self._target_policy_network,
+            merge_batch_and_agent_dim_of_time_major_sequence(observations),
+            merge_batch_and_agent_dim_of_time_major_sequence(resets),
+        )
+        target_actions = expand_batch_and_agent_dim_of_time_major_sequence(
+            target_actions, B, N
+        )
+
+        # Target critics
+        target_qs_1 = self._target_critic_network_1(
+            env_states, target_actions, target_actions
+        )
+        target_qs_2 = self._target_critic_network_2(
+            env_states, target_actions, target_actions
+        )
+
+        # Take minimum between two target critics
+        target_qs = tf.minimum(target_qs_1, target_qs_2)
+
+        # Compute Bellman targets
+        targets = rewards[:-1] + self._discount * (1 - terminals[:-1]) * tf.squeeze(
+            target_qs[1:], axis=-1
+        )
+
+        # Online critics
+        qs_1 = tf.squeeze(
+            self._critic_network_1(env_states, replay_actions, replay_actions),
+            axis=-1,
+        )
+        qs_2 = tf.squeeze(
+            self._critic_network_2(env_states, replay_actions, replay_actions),
+            axis=-1,
+        )
+
+        # Squared TD-error
+        td_error_1 = tf.reduce_mean(tf.reduce_mean(0.5 * (targets - qs_1[:-1]) ** 2, axis=-1), axis=0)
+        td_error_2 = tf.reduce_mean(tf.reduce_mean(0.5 * (targets - qs_2[:-1]) ** 2, axis=-1), axis=0)
+        
+        priority = (td_error_1 + td_error_2) / 2
+
+        priority = tf.clip_by_value(priority, self.min_priority, 10000)
+
+        return priority
 
     @tf.function(jit_compile=True)
     def compute_new_priorities(self, experience):
