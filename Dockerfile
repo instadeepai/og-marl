@@ -32,21 +32,21 @@ RUN pip install --quiet --upgrade pip setuptools wheel &&  \
     pip install -r requirements1.txt && \
     pip install -r requirements2.txt
 
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
-ENV SUPPRESS_GR_PROMPT 1
-RUN ./install_mamujoco.sh
-RUN pip install -r mamujoco_requirements.txt
-RUN pip install git+https://github.com/schroederdewitt/multiagent_mujoco
+# ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
+# ENV SUPPRESS_GR_PROMPT 1
+# RUN ./install_mamujoco.sh
+# RUN pip install -r mamujoco_requirements.txt
+# RUN pip install git+https://github.com/schroederdewitt/multiagent_mujoco
 
 
 #######################
 # Start of MuJoCo 200 #
 #######################
 
-# # MuJoCo
-# RUN ./install_mujoco200.sh
+# MuJoCo
+RUN ./install_mujoco200.sh
 
-# # MAMuJoCo Requirements
-# RUN pip install -r mamujoco_requirements.txt
-# ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco200/bin:/usr/lib/nvidia
-# RUN pip install mujoco-py==2.0.2.5
+# MAMuJoCo Requirements
+RUN pip install -r mamujoco_requirements.txt
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco200/bin:/usr/lib/nvidia
+RUN pip install mujoco-py==2.0.2.5
