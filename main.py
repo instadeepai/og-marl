@@ -66,7 +66,7 @@ def main(_):
             sequence_length=20,
             sample_period=10,
             seed=FLAGS.seed,
-            priority_exponent=0.6,
+            priority_exponent=0.99,
         )
     else:
         buffer = FlashbaxReplayBuffer(
