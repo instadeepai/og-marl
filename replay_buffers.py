@@ -212,15 +212,33 @@ class PrioritisedFlashbaxReplayBuffer:
         dataset_name="tmp",
         rel_dir: str = "vaults",
     ) -> bool:
-        self._vault_buffer_state = Vault(
+        vault_buffer_experience_1 = Vault(
             vault_name=f"mamujoco/{scenario}.vlt",
             # vault_name=vault_name,
-            vault_uid=dataset_name,
+            vault_uid="Good",
             rel_dir=rel_dir,
-        ).read(percentiles=(0, 100))
+        ).read(percentiles=(0, 100)).experience
+
+
+        vault_buffer_experience_2 = Vault(
+            vault_name=f"mamujoco/{scenario}.vlt",
+            # vault_name=vault_name,
+            vault_uid="Medium",
+            rel_dir=rel_dir,
+        ).read(percentiles=(0, 100)).experience
+
+        vault_experience_state = tree.map_structure(lambda *x: jnp.concatenate(x, axis=1), *[vault_buffer_experience_1, vault_buffer_experience_2])
+
+        self._vault_buffer_state = TrajectoryBufferState(
+            experience=vault_experience_state,
+            current_index=jnp.array(0),
+            is_full=jnp.array(True),
+        )
+
         example_timestep = self._vault_replay_buffer.sample(
             self._vault_buffer_state, jax.random.PRNGKey(0)
         )
+
         example_timestep = jax.tree_map(lambda x: x[0, 0], example_timestep.experience)
 
         # Recreate the buffer and associated pure functions

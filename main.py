@@ -66,7 +66,7 @@ def main(_):
             sequence_length=20,
             sample_period=10,
             seed=FLAGS.seed,
-            priority_exponent=0.99,
+            priority_exponent=0.6,
         )
     else:
         buffer = FlashbaxReplayBuffer(
@@ -95,11 +95,11 @@ def main(_):
 
     system_kwargs = {
         "add_agent_id_to_obs": True,
-        "gaussian_steepness": STEEPNESS_CONFIG[FLAGS.scenario][FLAGS.dataset],
+        "gaussian_steepness": 4,#STEEPNESS_CONFIG[FLAGS.scenario][FLAGS.dataset],
         "min_priority": FLAGS.min_priority,
         "is_omiga": FLAGS.scenario in ["3hopper", "2ant", "6halfcheetah"],
         "cql_sigma": cql_sigma,
-        "priority_type": "pjap"
+        "priority_type": "td"
     }
 
     system = MADDPGCQLSystem(env, logger, **system_kwargs)
