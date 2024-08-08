@@ -68,6 +68,28 @@ VAULT_INFO = {
             },
         },
     },
+    "alberdice": {
+        "rware": {
+            "small-2ag": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/alberdice/rware/small-2ag.zip"
+            },
+            "small-4ag": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/alberdice/rware/small-4ag.zip"
+            },
+            "small-6ag": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/alberdice/rware/small-6ag.zip"
+            },
+            "tiny-2ag": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/alberdice/rware/tiny-2ag.zip"
+            },
+            "tiny-4ag": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/alberdice/rware/tiny-4ag.zip"
+            },
+            "tiny-6ag": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/alberdice/rware/tiny-6ag.zip"
+            },
+        },
+    },
 }
 
 def print_download_options():
