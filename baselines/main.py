@@ -71,9 +71,7 @@ def main(_):
 
     system = get_system(FLAGS.system, env, logger, **system_kwargs)
 
-    #system.train_offline(buffer, max_trainer_steps=FLAGS.trainer_steps, json_writer=json_writer)
-    online_replay_buffer = FlashbaxReplayBuffer(sequence_length=20, sample_period=1)
-    system.train_online(online_replay_buffer)
+    system.train_offline(buffer, max_trainer_steps=FLAGS.trainer_steps, json_writer=json_writer)
 
 
 if __name__ == "__main__":
