@@ -17,7 +17,7 @@ SCRIPTS = [
 
 TASK = "task.scenario=5m_vs_6m task.dataset=Good"
 
-SEEDS = [7,8]
+SEEDS = [9,10]
 
 def main():
 
