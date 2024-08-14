@@ -17,13 +17,13 @@ SCRIPTS = [
 
 TASK = "task.scenario=5m_vs_6m task.dataset=Good"
 
-SEEDS = [1,2]
+SEEDS = [3,4]
 
 def main():
 
     for seed in SEEDS:
         for script in SCRIPTS:
-            os.system(f"python {script} {TASK} wandb_project={WANDB_PROJECT}")
+            os.system(f"python {script} {TASK} wandb_project={WANDB_PROJECT} seed={seed}")
 
 if __name__ == "__main__":
     main()
