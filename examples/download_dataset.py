@@ -16,8 +16,8 @@ from absl import app, flags
 from og_marl.offline_dataset import download_and_unzip_vault
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("env", "smac_v1", "Environment name.")
-flags.DEFINE_string("scenario", "3m", "Environment scenario name.")
+flags.DEFINE_string("env_name", "smac_v1", "Environment name.")
+flags.DEFINE_string("scenario_name", "3m", "Environment scenario name.")
 
 
 def main(_):
