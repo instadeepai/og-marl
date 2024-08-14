@@ -4,7 +4,7 @@ from og_marl.tf2.utils import set_growing_gpu_memory
 
 set_growing_gpu_memory()
 
-WANDB_PROJECT = "og-marl-baselines"
+WANDB_PROJECT = "og-marl-smacv1-baselines"
 
 SCRIPTS = [
     "og_marl/tf2/systems/iql_cql.py",
