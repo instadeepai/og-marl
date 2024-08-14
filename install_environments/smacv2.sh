@@ -1,7 +1,8 @@
 #!/bin/bash
 # Install SC2 and add the custom maps
 # Script adapted from https://github.com/oxwhirl/pymarl
-SC2PATH=~/StarCraftII
+
+export SC2PATH=~/StarCraftII
 
 echo 'StarCraftII is not installed. Installing now ...';
 wget --progress=dot:mega http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.10.zip

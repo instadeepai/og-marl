@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from og_marl.environments.smacv1 import SMACv1
+from og_marl.environment_wrappers.smacv1 import SMACv1
 from og_marl.loggers import WandbLogger
 from og_marl.replay_buffers import FlashbaxReplayBuffer
 from og_marl.tf2.systems.idrqn import IDRQNSystem

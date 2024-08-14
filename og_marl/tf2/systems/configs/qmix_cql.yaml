@@ -1,11 +1,11 @@
-system_name: maddpg+cql
+system_name: qmix+cql
 seed: 42
 wandb_project: og-marl
-training_steps: 2e5
+training_steps: 1e5
 
 task:
-  env: mamujoco
-  scenario: 2halfcheetah
+  env: smac_v1
+  scenario: 3m
   dataset: Good
 
 replay:
@@ -13,13 +13,11 @@ replay:
   sample_period: 1
 
 system:
+  learning_rate: 3e-4
   linear_layer_dim: 64
   recurrent_layer_dim: 64
   discount: 0.99
-  target_update_rate: 0.005
-  critic_learning_rate: 3e-4
-  policy_learning_rate: 3e-4
+  target_update_period: 200
   add_agent_id_to_obs: True
-  num_ood_actions: 10
+  num_ood_actions: 20
   cql_weight: 3.0
-  cql_sigma: 0.3

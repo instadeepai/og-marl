@@ -14,10 +14,10 @@
 
 # from og_marl.environments.gymnasium_mamujoco import MAMuJoCo
 # from og_marl.environments.wrappers import Dtype, PadObsandActs
-from og_marl.environments.old_mamujoco import MAMuJoCo
+from og_marl.environment_wrappers.old_mamujoco import MAMuJoCo
 from og_marl.loggers import WandbLogger
 from og_marl.replay_buffers import FlashbaxReplayBuffer
-from og_marl.tf2.systems.maddpg import MADDPGSystem
+from development.maddpg import MADDPGSystem
 
 env = MAMuJoCo("4ant")
 

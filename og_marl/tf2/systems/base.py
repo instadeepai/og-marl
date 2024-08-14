@@ -13,12 +13,12 @@
 # limitations under the License.
 
 import time
-from typing import Dict, Optional, Tuple, List
+from typing import Dict
 
 import numpy as np
 from chex import Numeric
 
-from og_marl.environments.base import BaseEnvironment
+from og_marl.environment_wrappers.base import BaseEnvironment
 from og_marl.loggers import BaseLogger
 from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
 
@@ -29,7 +29,7 @@ class BaseOfflineSystem:
         environment: BaseEnvironment,
         logger: BaseLogger,
     ):
-        self.environment = environment # only used for evaluation
+        self.environment = environment  # only used for evaluation
         self.logger = logger
 
         self.agents = environment.agents
@@ -53,20 +53,18 @@ class BaseOfflineSystem:
 
                 actions = self.select_actions(observations, legal_actions)
 
-                observations, rewards, terminal, truncation, infos = self.environment.step(
-                    actions
-                )
+                observations, rewards, terminal, truncation, infos = self.environment.step(actions)
 
                 episode_return += np.mean(list(rewards.values()), dtype="float")
 
-                done = terminal or truncation
+                done = all(terminal.values()) or all(truncation.values())
 
             episode_returns.append(episode_return)
 
         logs = {
-            "evaluation/mean_episode_return": np.mean(episode_returns), 
+            "evaluation/mean_episode_return": np.mean(episode_returns),
             "evaluation/max_episode_return": np.max(episode_returns),
-            "evaluation/min_episode_return": np.min(episode_returns)
+            "evaluation/min_episode_return": np.min(episode_returns),
         }
         return logs
 
@@ -76,7 +74,7 @@ class BaseOfflineSystem:
         training_steps: int = int(1e5),
         evaluation_every: int = 5000,
         num_eval_episodes: int = 32,
-    ) -> List:
+    ) -> None:
         """Method to train the system offline."""
         for _ in range(training_steps):
             if evaluation_every is not None and self.training_step_ctr % evaluation_every == 0:
@@ -115,8 +113,6 @@ class BaseOfflineSystem:
         self.logger.write(
             eval_logs | {"evaluation/training_steps": self.training_step_ctr}, force=True
         )
-
-        return True
 
     def reset(self) -> None:
         """Called at the start of each new episode during evaluation."""

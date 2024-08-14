@@ -46,8 +46,7 @@ VAULT_INFO = {
     },
     "smac_v2": {
         "terran_5_vs_5": {
-            # "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v2/terran_5_vs_5.zip"
-            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v2/terran_5_vs_5_std_exp.zip"
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v2/terran_5_vs_5.zip"
         },
         "zerg_5_vs_5": {
             "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v2/zerg_5_vs_5.zip"
@@ -55,8 +54,7 @@ VAULT_INFO = {
     },
     "mamujoco": {
         "2halfcheetah": {
-            # "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/mamujoco/2halfcheetah.zip"
-            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/mamujoco/2halfcheetah_lemon_and_cherry.zip"
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/mamujoco/2halfcheetah.zip"
         },
     },
 }

@@ -1,0 +1,22 @@
+system_name: iql+bcq
+seed: 42
+wandb_project: og-marl
+training_steps: 1e5
+
+task:
+  env: smac_v1
+  scenario: 3m
+  dataset: Good
+
+replay:
+  sequence_length: 20
+  sample_period: 1
+
+system:
+  learning_rate: 3e-4
+  linear_layer_dim: 64
+  recurrent_layer_dim: 64
+  discount: 0.99
+  target_update_period: 200
+  add_agent_id_to_obs: True
+  bc_threshold: 0.4

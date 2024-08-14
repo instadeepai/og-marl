@@ -1,4 +1,4 @@
-from og_marl.environments.smacv2 import SMACv2
+from og_marl.environment_wrappers.smacv2 import SMACv2
 from og_marl.loggers import WandbLogger
 from og_marl.replay_buffers import SequenceCPPRB
 from og_marl.tf2.systems.qmix import QMIXSystem

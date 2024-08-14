@@ -1,4 +1,4 @@
-system_name: maddpg+cql
+system_name: iddpg+cql
 seed: 42
 wandb_project: og-marl
 training_steps: 2e5

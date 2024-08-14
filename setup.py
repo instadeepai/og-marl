@@ -15,12 +15,12 @@
 from setuptools import find_packages, setup
 
 setup(
-    name="OG-MARL",
+    name="og-marl",
     version="0.0.2",
     author="Claude Formanek",
     author_email="c.formanek@instadeep.com",
     packages=find_packages(),
-    url="https://sites.google.com/view/og-marl",
+    url="",
     license="",
     description="Off-the-Grid MARL: Datasets and Baselines for Offline \
         Multi-Agent Reinforcement Learning",
@@ -29,7 +29,7 @@ setup(
         "numpy",
         "dm_tree",
         "tensorflow[and-cuda]==2.15.1.*",
-        "tensorflow_io", 
+        "tensorflow_io",
         "tensorflow-probability[tf]==0.23.0",
         "dm_sonnet",
         "wandb",
@@ -39,10 +39,7 @@ setup(
         "jax",
         "matplotlib",
         "seaborn",
-        "hydra-core"
+        "hydra-core",
         # "flashbax==0.1.2", # install post
     ],
-    extras_require={
-        "jax": ["flashbax==0.1.2", "optax", "jax", "flax", "orbax-checkpoint"],
-    },
 )

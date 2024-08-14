@@ -54,7 +54,7 @@ class TerminalLogger(BaseLogger):
 class WandbLogger(BaseLogger):
     def __init__(
         self,
-        name = None,
+        name: Optional[str] = None,
         config: Dict = {},  # noqa: B006
         project: str = "default_project",
         notes: str = "",

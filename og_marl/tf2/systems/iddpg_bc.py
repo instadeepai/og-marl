@@ -12,25 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implementation of MADDPG+CQL"""
+"""Implementation of IDDPG+CQL"""
 from typing import Any, Dict, Optional, Tuple
-import copy
 
+import copy
 import hydra
 import numpy as np
-import sonnet as snt
 from omegaconf import DictConfig
 import tensorflow as tf
 from tensorflow import Tensor
+import sonnet as snt
 import tree
 from chex import Numeric
 
 from og_marl.environments import get_environment, BaseEnvironment
-from og_marl.tf2.networks import StateAndJointActionCritic
-from og_marl.tf2.systems.base import BaseOfflineSystem
 from og_marl.loggers import BaseLogger, WandbLogger
 from og_marl.offline_dataset import download_and_unzip_vault
 from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
+from og_marl.tf2.networks import StateAndActionCritic
+from og_marl.tf2.systems.base import BaseOfflineSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
     concat_agent_id_to_obs,
@@ -44,8 +44,12 @@ from og_marl.tf2.utils import (
 set_growing_gpu_memory()
 
 
-class MADDPGCQLSystem(BaseOfflineSystem):
-    """Multi-Agent Deep Deterministic Policy Gradients with CQL."""
+class IDDPGBCSystem(BaseOfflineSystem):
+    """Independent DDPG + BC.
+
+    NOTE: the critic conditions on states and individual agent actions.
+
+    """
 
     def __init__(
         self,
@@ -55,17 +59,18 @@ class MADDPGCQLSystem(BaseOfflineSystem):
         recurrent_layer_dim: int = 64,
         discount: float = 0.99,
         target_update_rate: float = 0.005,
-        critic_learning_rate: float = 1e-3,
+        critic_learning_rate: float = 3e-4,
         policy_learning_rate: float = 3e-4,
         add_agent_id_to_obs: bool = True,
-        num_ood_actions: int = 10,  # CQL
-        cql_weight: float = 3.0,  # CQL
-        cql_sigma: float = 0.2,  # CQL
+        bc_alpha: float = 2.5,  # BC
     ):
-        super().__init__(environment=environment, logger=logger)
+        super().__init__(
+            environment=environment,
+            logger=logger,
+        )
 
-        self.add_agent_id_to_obs = add_agent_id_to_obs
         self.discount = discount
+        self.add_agent_id_to_obs = add_agent_id_to_obs
 
         # Policy network
         self.policy_network = snt.DeepRNN(
@@ -83,8 +88,8 @@ class MADDPGCQLSystem(BaseOfflineSystem):
         self.target_policy_network = copy.deepcopy(self.policy_network)
 
         # Critic network
-        self.critic_network_1 = StateAndJointActionCritic(
-            len(self.environment.agents), self.environment.num_actions
+        self.critic_network_1 = StateAndActionCritic(
+            len(self.environment.agents), self.environment.num_actions, add_agent_id_to_obs
         )  # shared network for all agents
         self.critic_network_2 = copy.deepcopy(self.critic_network_1)
 
@@ -102,10 +107,7 @@ class MADDPGCQLSystem(BaseOfflineSystem):
             agent: self.policy_network.initial_state(1) for agent in self.environment.agents
         }
 
-        # CQL
-        self.num_ood_actions = num_ood_actions
-        self.cql_weight = cql_weight
-        self.cql_sigma = cql_sigma
+        self.bc_alpha = bc_alpha
 
     def reset(self) -> None:
         """Called at the start of a new episode."""
@@ -157,12 +159,12 @@ class MADDPGCQLSystem(BaseOfflineSystem):
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
-        observations = experience["observations"]  # (B,T,N,O)
-        actions = tf.clip_by_value(
-            experience["actions"], -1.0, 1.0
-        )  # (B,T,N,A) clip for omiga datasets
-        env_states = experience["infos"]["state"]  # (B,T,S)
-        rewards = experience["rewards"]  # (B,T,N)
+        observations = tf.cast(experience["observations"], "float32")  # (B,T,N,O)
+        replay_actions = tf.cast(
+            tf.clip_by_value(experience["actions"], -1.0, 1.0), "float32"
+        )  # (B,T,N,A)
+        env_states = tf.cast(experience["infos"]["state"], "float32")  # (B,T,S)
+        rewards = tf.cast(experience["rewards"], "float32")  # (B,T,N)
         truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
         terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
 
@@ -170,7 +172,7 @@ class MADDPGCQLSystem(BaseOfflineSystem):
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
 
         # Get dims
-        B, T, N = actions.shape[:3]
+        B, T, N = replay_actions.shape[:3]
 
         # Maybe add agent ids to observation
         if self.add_agent_id_to_obs:
@@ -178,7 +180,7 @@ class MADDPGCQLSystem(BaseOfflineSystem):
 
         # Make time-major
         observations = switch_two_leading_dims(observations)
-        replay_actions = switch_two_leading_dims(actions)
+        replay_actions = switch_two_leading_dims(replay_actions)
         rewards = switch_two_leading_dims(rewards)
         terminals = switch_two_leading_dims(terminals)
         env_states = switch_two_leading_dims(env_states)
@@ -193,8 +195,8 @@ class MADDPGCQLSystem(BaseOfflineSystem):
         target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
         # Target critics
-        target_qs_1 = self.target_critic_network_1(env_states, target_actions, target_actions)
-        target_qs_2 = self.target_critic_network_2(env_states, target_actions, target_actions)
+        target_qs_1 = self.target_critic_network_1(env_states, target_actions)
+        target_qs_2 = self.target_critic_network_2(env_states, target_actions)
 
         # Take minimum between two target critics
         target_qs = tf.minimum(target_qs_1, target_qs_2)
@@ -208,11 +210,11 @@ class MADDPGCQLSystem(BaseOfflineSystem):
         with tf.GradientTape(persistent=True) as tape:
             # Online critics
             qs_1 = tf.squeeze(
-                self.critic_network_1(env_states, replay_actions, replay_actions),
+                self.critic_network_1(env_states, replay_actions),
                 axis=-1,
             )
             qs_2 = tf.squeeze(
-                self.critic_network_2(env_states, replay_actions, replay_actions),
+                self.critic_network_2(env_states, replay_actions),
                 axis=-1,
             )
 
@@ -220,10 +222,12 @@ class MADDPGCQLSystem(BaseOfflineSystem):
             critic_loss_1 = tf.reduce_mean(0.5 * (targets - qs_1[:-1]) ** 2)
             critic_loss_2 = tf.reduce_mean(0.5 * (targets - qs_2[:-1]) ** 2)
 
-            ###########
-            ### CQL ###
-            ###########
+            # Combine critic loss
+            critic_loss = (critic_loss_1 + critic_loss_2) / 2
 
+            ###################
+            ### Policy Loss ###
+            ###################
             online_actions = unroll_rnn(
                 self.policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
@@ -231,143 +235,16 @@ class MADDPGCQLSystem(BaseOfflineSystem):
             )
             online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
 
-            # Repeat all tensors num_ood_actions times andadd  next to batch dim
-            repeat_observations = tf.stack(
-                [observations] * self.num_ood_actions, axis=2
-            )  # next to batch dim
-            repeat_env_states = tf.stack(
-                [env_states] * self.num_ood_actions, axis=2
-            )  # next to batch dim
-            repeat_online_actions = tf.stack(
-                [online_actions] * self.num_ood_actions, axis=2
-            )  # next to batch dim
-
-            # Flatten into batch dim
-            repeat_observations = tf.reshape(
-                repeat_observations, (T, -1, *repeat_observations.shape[3:])
-            )
-            repeat_env_states = tf.reshape(repeat_env_states, (T, -1, *repeat_env_states.shape[3:]))
-            repeat_online_actions = tf.reshape(
-                repeat_online_actions, (T, -1, *repeat_online_actions.shape[3:])
-            )
-
-            # CQL Loss
-            random_ood_actions = tf.random.uniform(
-                shape=repeat_online_actions.shape,
-                minval=-1.0,
-                maxval=1.0,
-                dtype=repeat_online_actions.dtype,
-            )
-            random_ood_action_log_pi = tf.math.log(0.5 ** (random_ood_actions.shape[-1]))
-
-            ood_qs_1 = (
-                self.critic_network_1(repeat_env_states, random_ood_actions, random_ood_actions)[
-                    :-1
-                ]
-                - random_ood_action_log_pi
-            )
-            ood_qs_2 = (
-                self.critic_network_2(repeat_env_states, random_ood_actions, random_ood_actions)[
-                    :-1
-                ]
-                - random_ood_action_log_pi
-            )
-
-            # # Actions near true actions
-            mu = 0.0
-            std = self.cql_sigma
-            action_noise = tf.random.normal(
-                repeat_online_actions.shape,
-                mean=mu,
-                stddev=std,
-                dtype=repeat_online_actions.dtype,
-            )
-            current_ood_actions = tf.clip_by_value(repeat_online_actions + action_noise, -1.0, 1.0)
-
-            ood_actions_prob = (1 / (self.cql_sigma * tf.math.sqrt(2 * np.pi))) * tf.exp(
-                -((action_noise - mu) ** 2) / (2 * self.cql_sigma**2)
-            )
-            ood_actions_log_prob = tf.math.log(
-                tf.reduce_prod(ood_actions_prob, axis=-1, keepdims=True)
-            )
-
-            current_ood_qs_1 = (
-                self.critic_network_1(
-                    repeat_env_states[:-1],
-                    current_ood_actions[:-1],
-                    current_ood_actions[:-1],
-                )
-                - ood_actions_log_prob[:-1]
-            )
-            current_ood_qs_2 = (
-                self.critic_network_2(
-                    repeat_env_states[:-1],
-                    current_ood_actions[:-1],
-                    current_ood_actions[:-1],
-                )
-                - ood_actions_log_prob[:-1]
-            )
-
-            next_current_ood_qs_1 = (
-                self.critic_network_1(
-                    repeat_env_states[:-1],
-                    current_ood_actions[1:],
-                    current_ood_actions[1:],
-                )
-                - ood_actions_log_prob[1:]
-            )
-            next_current_ood_qs_2 = (
-                self.critic_network_2(
-                    repeat_env_states[:-1],
-                    current_ood_actions[1:],
-                    current_ood_actions[1:],
-                )
-                - ood_actions_log_prob[1:]
-            )
-
-            # Reshape
-            ood_qs_1 = tf.reshape(ood_qs_1, (T - 1, B, self.num_ood_actions, N))
-            ood_qs_2 = tf.reshape(ood_qs_2, (T - 1, B, self.num_ood_actions, N))
-            current_ood_qs_1 = tf.reshape(current_ood_qs_1, (T - 1, B, self.num_ood_actions, N))
-            current_ood_qs_2 = tf.reshape(current_ood_qs_2, (T - 1, B, self.num_ood_actions, N))
-            next_current_ood_qs_1 = tf.reshape(
-                next_current_ood_qs_1, (T - 1, B, self.num_ood_actions, N)
-            )
-            next_current_ood_qs_2 = tf.reshape(
-                next_current_ood_qs_2, (T - 1, B, self.num_ood_actions, N)
-            )
-
-            all_ood_qs_1 = tf.concat((ood_qs_1, current_ood_qs_1, next_current_ood_qs_1), axis=2)
-            all_ood_qs_2 = tf.concat((ood_qs_2, current_ood_qs_2, next_current_ood_qs_2), axis=2)
-
-            cql_loss_1 = tf.reduce_mean(
-                tf.reduce_logsumexp(all_ood_qs_1, axis=2, keepdims=False)
-            ) - tf.reduce_mean(qs_1[:-1])
-            cql_loss_2 = tf.reduce_mean(
-                tf.reduce_logsumexp(all_ood_qs_2, axis=2, keepdims=False)
-            ) - tf.reduce_mean(qs_2[:-1])
-
-            critic_loss_1 += self.cql_weight * cql_loss_1
-            critic_loss_2 += self.cql_weight * cql_loss_2
-
-            ### END CQL ###
-
-            critic_loss = (critic_loss_1 + critic_loss_2) / 2
-
-            # Policy Loss
             # Unroll online policy
-            onlin_actions = unroll_rnn(
-                self.policy_network,
-                merge_batch_and_agent_dim_of_time_major_sequence(observations),
-                merge_batch_and_agent_dim_of_time_major_sequence(resets),
-            )
-            online_actions = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
-
-            policy_qs_1 = self.critic_network_1(env_states, online_actions, replay_actions)
-            policy_qs_2 = self.critic_network_2(env_states, online_actions, replay_actions)
+            policy_qs_1 = self.critic_network_1(env_states, online_actions)
+            policy_qs_2 = self.critic_network_2(env_states, online_actions)
             policy_qs = tf.minimum(policy_qs_1, policy_qs_2)
 
-            policy_loss = -tf.reduce_mean(policy_qs) + 1e-3 * tf.reduce_mean(online_actions**2)
+            policy_loss = (
+                -(self.bc_alpha / tf.reduce_mean(tf.abs(policy_qs))) * tf.reduce_mean(policy_qs)
+                + 1e-3 * tf.reduce_mean(tf.square(online_actions))
+                + tf.reduce_mean(tf.square(online_actions - replay_actions))
+            )
 
         # Train critics
         variables = (
@@ -375,13 +252,11 @@ class MADDPGCQLSystem(BaseOfflineSystem):
             *self.critic_network_2.trainable_variables,
         )
         gradients = tape.gradient(critic_loss, variables)
-        gradients, _ = tf.clip_by_global_norm(gradients, 10.0)
         self.critic_optimizer.apply(gradients, variables)
 
         # Train policy
         variables = (*self.policy_network.trainable_variables,)
         gradients = tape.gradient(policy_loss, variables)
-        gradients, _ = tf.clip_by_global_norm(gradients, 10.0)
         self.policy_optimizer.apply(gradients, variables)
 
         # Update target networks
@@ -406,7 +281,6 @@ class MADDPGCQLSystem(BaseOfflineSystem):
         logs = {
             "mean_dataset_q_values": tf.reduce_mean((qs_1 + qs_2) / 2),
             "critic_loss": critic_loss,
-            "cql_loss": (cql_loss_1 + cql_loss_2) / 2.0,
             "policy_loss": policy_loss,
             "mean_chosen_q_values": tf.reduce_mean((policy_qs_1 + policy_qs_2) / 2),
         }
@@ -414,7 +288,7 @@ class MADDPGCQLSystem(BaseOfflineSystem):
         return logs
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="maddpg_cql")
+@hydra.main(version_base=None, config_path="configs", config_name="iddpg_bc")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
 
@@ -431,7 +305,7 @@ def run_experiment(cfg: DictConfig) -> None:
     buffer.populate_from_vault(cfg["task"]["env"], cfg["task"]["scenario"], cfg["task"]["dataset"])
 
     wandb_config = {
-        "system": "maddpg+cql",
+        "system": "iddpg+bc",
         "seed": cfg["seed"],
         "training_steps": cfg["training_steps"],
         **cfg["task"],
@@ -440,7 +314,7 @@ def run_experiment(cfg: DictConfig) -> None:
     }
     logger = WandbLogger(project=cfg["wandb_project"], config=wandb_config)
 
-    system = MADDPGCQLSystem(env, logger, **cfg["system"])
+    system = IDDPGBCSystem(env, logger, **cfg["system"])
 
     tf.random.set_seed(cfg["seed"])
 

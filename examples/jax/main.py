@@ -13,7 +13,7 @@
 # limitations under the License.
 from absl import app, flags
 
-from og_marl.environments.utils import get_environment
+from og_marl.environment_wrappers.utils import get_environment
 from og_marl.jax.utils import get_system
 from og_marl.loggers import JsonWriter, WandbLogger
 
