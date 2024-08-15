@@ -106,7 +106,7 @@ def plot_eps_returns_hist(all_uid_returns, vault_name, n_bins, min_return, max_r
     vault_uids = list(all_uid_returns.keys())
 
     sns.set_theme(style="whitegrid")  # Set seaborn theme with a light blue background
-    fig, ax = plt.subplots(1,len(vault_uids),figsize=(3*len(vault_uids),3),sharex=True,sharey=True,squeeze=False)
+    fig, ax = plt.subplots(1,len(vault_uids),figsize=(0.5+2.5*len(vault_uids),3),sharex=True,sharey=True,squeeze=False)
 
     colors = sns.color_palette()
 
@@ -120,6 +120,7 @@ def plot_eps_returns_hist(all_uid_returns, vault_name, n_bins, min_return, max_r
     if len(save_path)>0:
         plt.savefig(save_path,format='pdf',bbox_inches='tight')
     fig.suptitle(f"Histogram of distributions of episode returns for {vault_name}")
+    fig.tight_layout()
     plt.show()
     return
 
