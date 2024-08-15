@@ -9,9 +9,9 @@ WANDB_PROJECT = "og-marl-smacv1-baselines"
 SCRIPTS = [
     # "og_marl/tf2/systems/iql_cql.py",
     # "og_marl/tf2/systems/qmix_cql.py",
-    # "og_marl/tf2/systems/maicq.py",
+    "og_marl/tf2/systems/maicq.py",
     # "og_marl/tf2/systems/iql_bcq.py",
-    "og_marl/tf2/systems/qmix_bcq.py",
+    # "og_marl/tf2/systems/qmix_bcq.py",
     # "og_marl/tf2/systems/discrete_bc.py",
 ]
 
