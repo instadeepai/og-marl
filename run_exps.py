@@ -48,7 +48,7 @@ SCRIPTS = [
 
 TASK = "task.scenario=2halfcheetah task.dataset=Good"
 
-SEEDS = [1]
+SEEDS = [2]
 
 def main():
 
