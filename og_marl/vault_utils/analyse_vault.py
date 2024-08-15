@@ -307,6 +307,7 @@ def descriptive_summary(
     vault_uids: Optional[List[str]] = [],
     rel_dir: str = "vaults",
     plot_hist: bool = True,
+    save_hist: bool = False,
     n_bins = 40,
 ) -> Dict[str, Array]:
     
@@ -332,6 +333,10 @@ def descriptive_summary(
     if plot_hist:
         min_of_all = min([x[3] for x in single_values])
         max_of_all = max([x[4] for x in single_values])
-        plot_eps_returns_hist(all_returns,vault_name,n_bins,min_of_all,max_of_all)
+        if save_hist:
+            plot_eps_returns_hist(all_returns,vault_name,n_bins,min_of_all, max_of_all, save_path = f"{rel_dir}/{vault_name}/histogram.pdf")
+        else:
+            plot_eps_returns_hist(all_returns,vault_name,n_bins,min_of_all, max_of_all)
+
 
     return all_returns
