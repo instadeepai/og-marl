@@ -104,6 +104,7 @@ def plot_eps_returns_violin(all_uid_returns,vault_name):
 def plot_eps_returns_hist(all_uid_returns, vault_name, n_bins, min_return, max_return):
     vault_uids = list(all_uid_returns.keys())
 
+    sns.set_theme(style="whitegrid")  # Set seaborn theme with a light blue background
     fig, ax = plt.subplots(1,len(vault_uids),figsize=(3*len(vault_uids),3),sharex=True,sharey=True,squeeze=False)
 
     colors = sns.color_palette()
