@@ -208,7 +208,19 @@ def calculate_returns(
     return episode_returns
 
 
-def get_saco(experience):
+def get_saco(
+    experience: Dict[str, Array]
+) -> List[float, Array, Array]:
+    """Calculate the joint SACo in a dataset of experience.
+
+    Args:
+        experience (Dict[str, Array]): experience coming from an OG-MARL vault.
+
+    Returns:
+        float: The joint SACo value for that dataset.
+        Array: numpy array containing the counts of unique pairs.
+        Array: numpy array containing the counts of counts of unique pairs.
+    """
     states = experience['infos']["state"]
 
     num_tot = states.shape[1]
@@ -217,12 +229,11 @@ def get_saco(experience):
     state_pairs = np.concatenate((states,reshaped_actions),axis=-1)
 
     unique_vals, counts = np.unique(state_pairs,axis=1,return_counts=True)
-
     count_vals, count_freq = np.unique(counts,return_counts=True)
 
     saco = unique_vals.shape[1]/num_tot
-
     return saco, count_vals, count_freq
+
 
 def plot_count_frequencies(all_count_vals, all_count_freq):
     vault_uids = list(all_count_vals.keys())
