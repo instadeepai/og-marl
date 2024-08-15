@@ -87,7 +87,7 @@ def get_episode_return_descriptors(experience):
     return mean, stddev, jnp.max(episode_returns), jnp.min(episode_returns), episode_returns
 
 
-def plot_eps_returns_violin(all_uid_returns,vault_name):
+def plot_eps_returns_violin(all_uid_returns,vault_name, save_path = ""):
 
     sns.set_theme(style="whitegrid")  # Set seaborn theme with a light blue background
     plt.figure(figsize=(8, 6))  # Adjust figsize as needed
@@ -97,11 +97,12 @@ def plot_eps_returns_violin(all_uid_returns,vault_name):
     plt.xlabel("Dataset Quality")
     plt.ylabel("Episode Returns")
     plt.xticks(range(len(all_uid_returns)), list(all_uid_returns.keys()))
+    if len(save_path)>0:
+        plt.savefig(save_path,format='pdf',bbox_inches='tight')
     plt.show()
-
     return
 
-def plot_eps_returns_hist(all_uid_returns, vault_name, n_bins, min_return, max_return):
+def plot_eps_returns_hist(all_uid_returns, vault_name, n_bins, min_return, max_return, save_path = ""):
     vault_uids = list(all_uid_returns.keys())
 
     sns.set_theme(style="whitegrid")  # Set seaborn theme with a light blue background
@@ -117,8 +118,9 @@ def plot_eps_returns_hist(all_uid_returns, vault_name, n_bins, min_return, max_r
     ax[0,0].set_ylabel("Frequency")
     fig.suptitle(f"Histogram of distributions of episode returns for {vault_name}")
     fig.tight_layout()
+    if len(save_path)>0:
+        plt.savefig(save_path,format='pdf',bbox_inches='tight')
     plt.show()
-
     return
 
 def describe_episode_returns(
@@ -126,7 +128,9 @@ def describe_episode_returns(
     vault_uids: Optional[List[str]] = [],
     rel_dir: str = "vaults",
     plot_hist: bool = True,
+    save_hist: bool = False,
     plot_violin: bool = True,
+    save_violin: bool = False,
     n_bins: Optional[int] = 50,
 ) -> Dict[str, Array]:
     
@@ -150,10 +154,16 @@ def describe_episode_returns(
     if plot_hist:
         min_of_all = min([x[-1] for x in single_values])
         max_of_all = max([x[-2] for x in single_values])
-        plot_eps_returns_hist(all_uid_eps_returns,vault_name,n_bins,min_of_all,max_of_all)
+        if save_hist:
+            plot_eps_returns_hist(all_uid_eps_returns,vault_name,n_bins,min_of_all, max_of_all, save_path = f"{rel_dir}/{vault_name}/histogram.pdf")
+        else:
+            plot_eps_returns_hist(all_uid_eps_returns,vault_name,n_bins,min_of_all, max_of_all)
 
     if plot_violin:
-        plot_eps_returns_violin(all_uid_eps_returns,vault_name)
+        if save_violin:
+            plot_eps_returns_violin(all_uid_eps_returns,vault_name,save_path = f"{rel_dir}/{vault_name}/violin_plot.pdf")
+        else:
+            plot_eps_returns_violin(all_uid_eps_returns,vault_name)
 
     return 
 
@@ -236,7 +246,7 @@ def get_saco(
     return saco, count_vals, count_freq
 
 
-def plot_count_frequencies(all_count_vals, all_count_freq):
+def plot_count_frequencies(all_count_vals, all_count_freq, save_path = ""):
     vault_uids = list(all_count_vals.keys())
     colors = sns.color_palette()
 
@@ -247,6 +257,9 @@ def plot_count_frequencies(all_count_vals, all_count_freq):
     plt.xlabel("Count (log base 10)")
     plt.ylabel("Frequency of count (log base 10)")
     plt.legend()
+
+    if len(save_path)>0:
+        plt.savefig(save_path,format='pdf',bbox_inches='tight')
     plt.show()
     return
 
@@ -256,6 +269,7 @@ def describe_coverage(
     vault_uids: Optional[List[str]] = [],
     rel_dir: str = "vaults",
     plot_count_freq: bool = True,
+    save_plot: bool =  False,
 ) -> Dict[str, Array]:
     
     # get all uids if not specified
@@ -278,7 +292,11 @@ def describe_coverage(
     print(tabulate(single_values,headers=['Uid','Joint SACo']))
 
     if plot_count_freq:
-        plot_count_frequencies(all_uid_count_vals,all_uid_count_freq)
+        if save_plot:
+            plot_count_frequencies(all_uid_count_vals,all_uid_count_freq, save_path=f"{rel_dir}/{vault_name}/count_frequency_loglog.pdf")
+        else:
+            plot_count_frequencies(all_uid_count_vals,all_uid_count_freq)
+ 
 
     return 
 
