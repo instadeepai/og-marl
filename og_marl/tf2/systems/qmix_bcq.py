@@ -85,6 +85,7 @@ class QMIXBCQSystem(BaseOfflineSystem):
 
         # Optimizer
         self.optimizer = snt.optimizers.Adam(learning_rate=learning_rate)
+        self.bc_optimizer = snt.optimizers.Adam(learning_rate=learning_rate)
 
         # Recurrent neural network hidden states for evaluation
         self.rnn_states = {
@@ -268,21 +269,22 @@ class QMIXBCQSystem(BaseOfflineSystem):
             # TD-Error Loss
             td_loss = 0.5 * tf.reduce_mean(tf.square(targets - chosen_action_qs))
 
-            # Mask out zero-padded timesteps
-            loss = td_loss + bc_loss
-
         # Get trainable variables
         variables = (
             *self.q_network.trainable_variables,
             *self.mixer.trainable_variables,
-            *self.behaviour_cloning_network.trainable_variables,
         )
-
         # Compute gradients.
-        gradients = tape.gradient(loss, variables)
-
+        gradients = tape.gradient(td_loss, variables)
         # Apply gradients.
         self.optimizer.apply(gradients, variables)
+
+        # BC network update
+        variables = (*self.behaviour_cloning_network.trainable_variables,)
+        # Compute gradients.
+        gradients = tape.gradient(bc_loss, variables)
+        # Apply gradients.
+        self.bc_optimizer.apply(gradients, variables)
 
         # Online variables
         online_variables = (
@@ -302,9 +304,10 @@ class QMIXBCQSystem(BaseOfflineSystem):
                 dest.assign(src)
 
         return {
-            "Loss": loss,
-            "Mean Q-values": tf.reduce_mean(qs_out),
-            "Mean Chosen Q-values": tf.reduce_mean(chosen_action_qs),
+            "td_loss": td_loss,
+            "bc_loss": bc_loss,
+            "mean_q_values": tf.reduce_mean(qs_out),
+            "mean_chosen_q_values": tf.reduce_mean(chosen_action_qs),
         }
 
     def mixing(

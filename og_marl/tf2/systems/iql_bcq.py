@@ -83,8 +83,9 @@ class IQLBCQSystem(BaseOfflineSystem):
         self.target_q_network = copy.deepcopy(self.q_network)
         self.target_update_period = target_update_period
 
-        # Optimizer
+        # Optimizers
         self.optimizer = snt.optimizers.Adam(learning_rate=learning_rate)
+        self.bc_optimizer = snt.optimizers.Adam(learning_rate=learning_rate)
 
         # Recurrent neural network hidden states for evaluation
         self.rnn_states = {
@@ -195,7 +196,7 @@ class IQLBCQSystem(BaseOfflineSystem):
         # Make batch-major again
         target_qs_out = switch_two_leading_dims(target_qs_out)
 
-        with tf.GradientTape() as tape:
+        with tf.GradientTape(persistent=True) as tape:
             # Unroll online network
             qs_out = unroll_rnn(self.q_network, observations, resets)
 
@@ -256,31 +257,32 @@ class IQLBCQSystem(BaseOfflineSystem):
             # TD-Error Loss
             td_loss = 0.5 * tf.reduce_mean(tf.square(targets - chosen_action_qs))
 
-            # Combined loss
-            loss = td_loss + bc_loss
-
         # Get trainable variables
-        variables = (
-            *self.q_network.trainable_variables,
-            *self.behaviour_cloning_network.trainable_variables,
-        )
+        variables = (*self.q_network.trainable_variables,)
 
         # Compute gradients.
-        gradients = tape.gradient(loss, variables)
+        gradients = tape.gradient(td_loss, variables)
 
         # Apply gradients.
         self.optimizer.apply(gradients, variables)
 
+        # BC network update
+        variables = (*self.behaviour_cloning_network.trainable_variables,)
+        # Compute gradients.
+        gradients = tape.gradient(bc_loss, variables)
+        # Apply gradients.
+        self.bc_optimizer.apply(gradients, variables)
+
         # Online variables
         online_variables = (*self.q_network.variables,)
-
         # Get target variables
         target_variables = (*self.target_q_network.variables,)
-
         # Maybe update target network
         if train_step % self.target_update_period == 0:
             for src, dest in zip(online_variables, target_variables):
                 dest.assign(src)
+
+        del tape
 
         return {
             "td_loss": td_loss,
