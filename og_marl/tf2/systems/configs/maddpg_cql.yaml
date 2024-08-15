@@ -1,7 +1,7 @@
 system_name: maddpg+cql
 seed: 42
 wandb_project: og-marl
-training_steps: 2e5
+training_steps: 5e5
 
 task:
   env: mamujoco
