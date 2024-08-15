@@ -305,7 +305,7 @@ def run_experiment(cfg: DictConfig) -> None:
     buffer.populate_from_vault(cfg["task"]["env"], cfg["task"]["scenario"], cfg["task"]["dataset"])
 
     wandb_config = {
-        "system": "iddpg+bc",
+        "system": cfg["system_name"],
         "seed": cfg["seed"],
         "training_steps": cfg["training_steps"],
         **cfg["task"],

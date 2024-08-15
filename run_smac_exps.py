@@ -7,17 +7,17 @@ set_growing_gpu_memory()
 WANDB_PROJECT = "og-marl-smacv1-baselines"
 
 SCRIPTS = [
-    "og_marl/tf2/systems/iql_cql.py",
-    "og_marl/tf2/systems/qmix_cql.py",
-    "og_marl/tf2/systems/maicq.py",
-    "og_marl/tf2/systems/iql_bcq.py",
+    # "og_marl/tf2/systems/iql_cql.py",
+    # "og_marl/tf2/systems/qmix_cql.py",
+    # "og_marl/tf2/systems/maicq.py",
+    # "og_marl/tf2/systems/iql_bcq.py",
     "og_marl/tf2/systems/qmix_bcq.py",
-    "og_marl/tf2/systems/discrete_bc.py",
+    # "og_marl/tf2/systems/discrete_bc.py",
 ]
 
 TASK = "task.scenario=5m_vs_6m task.dataset=Good"
 
-SEEDS = [9,10]
+SEEDS = [1,2,3,4,5]
 
 def main():
 
