@@ -93,12 +93,12 @@ def plot_eps_returns_violin(all_uid_returns,vault_name, save_path = ""):
     plt.figure(figsize=(8, 6))  # Adjust figsize as needed
 
     sns.violinplot(data=list(all_uid_returns.values()), inner="point")
-    plt.title(f"Violin Distributions of Returns for {vault_name}")
     plt.xlabel("Dataset Quality")
     plt.ylabel("Episode Returns")
     plt.xticks(range(len(all_uid_returns)), list(all_uid_returns.keys()))
     if len(save_path)>0:
         plt.savefig(save_path,format='pdf',bbox_inches='tight')
+    plt.title(f"Violin Distributions of Returns for {vault_name}")
     plt.show()
     return
 
@@ -116,10 +116,10 @@ def plot_eps_returns_hist(all_uid_returns, vault_name, n_bins, min_return, max_r
         ax[0,i].set_title(uid)
         ax[0,i].set_xlabel("Episode return")
     ax[0,0].set_ylabel("Frequency")
-    fig.suptitle(f"Histogram of distributions of episode returns for {vault_name}")
     fig.tight_layout()
     if len(save_path)>0:
         plt.savefig(save_path,format='pdf',bbox_inches='tight')
+    fig.suptitle(f"Histogram of distributions of episode returns for {vault_name}")
     plt.show()
     return
 
@@ -221,7 +221,7 @@ def calculate_returns(
 
 def get_saco(
     experience: Dict[str, Array]
-) -> List[float, Array, Array]:
+):
     """Calculate the joint SACo in a dataset of experience.
 
     Args:
@@ -253,13 +253,14 @@ def plot_count_frequencies(all_count_vals, all_count_freq, save_path = ""):
     # plot the power law showing count frequencies
     for i, uid in enumerate(vault_uids):
         plt.scatter(np.log(all_count_vals[uid].astype(float)),np.log(all_count_freq[uid].astype(float)),label=uid,color=colors[i])
-    plt.title("Frequency of unique pair counts power law")
+
     plt.xlabel("Count (log base 10)")
     plt.ylabel("Frequency of count (log base 10)")
     plt.legend()
 
     if len(save_path)>0:
         plt.savefig(save_path,format='pdf',bbox_inches='tight')
+    plt.title("Frequency of unique pair counts power law")
     plt.show()
     return
 
