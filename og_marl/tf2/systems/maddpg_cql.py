@@ -349,20 +349,11 @@ class MADDPGCQLSystem(BaseOfflineSystem):
 
             critic_loss_1 += self.cql_weight * cql_loss_1
             critic_loss_2 += self.cql_weight * cql_loss_2
+            critic_loss = (critic_loss_1 + critic_loss_2) / 2
 
             ### END CQL ###
 
-            critic_loss = (critic_loss_1 + critic_loss_2) / 2
-
             # Policy Loss
-            # Unroll online policy
-            onlin_actions = unroll_rnn(
-                self.policy_network,
-                merge_batch_and_agent_dim_of_time_major_sequence(observations),
-                merge_batch_and_agent_dim_of_time_major_sequence(resets),
-            )
-            online_actions = expand_batch_and_agent_dim_of_time_major_sequence(onlin_actions, B, N)
-
             policy_qs_1 = self.critic_network_1(env_states, online_actions, replay_actions)
             policy_qs_2 = self.critic_network_2(env_states, online_actions, replay_actions)
             policy_qs = tf.minimum(policy_qs_1, policy_qs_2)
@@ -375,13 +366,11 @@ class MADDPGCQLSystem(BaseOfflineSystem):
             *self.critic_network_2.trainable_variables,
         )
         gradients = tape.gradient(critic_loss, variables)
-        gradients, _ = tf.clip_by_global_norm(gradients, 10.0)
         self.critic_optimizer.apply(gradients, variables)
 
         # Train policy
         variables = (*self.policy_network.trainable_variables,)
         gradients = tape.gradient(policy_loss, variables)
-        gradients, _ = tf.clip_by_global_norm(gradients, 10.0)
         self.policy_optimizer.apply(gradients, variables)
 
         # Update target networks
