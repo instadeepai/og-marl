@@ -32,7 +32,7 @@ def get_structure_descriptors(experience, n_head=1):
 
     struct = jax.tree_map(lambda x: x.shape, experience)
 
-    head = jax.tree_map(lambda x: x[:n_head], experience)
+    head = jax.tree_map(lambda x: x[0,:n_head,...], experience)
 
     terminal_flag = experience['terminals'][0, :, ...].all(axis=-1)
     num_episodes = jnp.sum(terminal_flag)
