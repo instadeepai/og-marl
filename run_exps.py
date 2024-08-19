@@ -44,13 +44,13 @@ SCRIPTS = [
     # "og_marl/tf2/systems/omar.py",
     # "og_marl/tf2/systems/maddpg_cql.py",
     # "og_marl/tf2/systems/continuous_bc.py",
-    # "og_marl/tf2/systems/hacql.py",
-    "og_marl/tf2/systems/maddpg_cql_cpg.py"
+     "og_marl/tf2/systems/hacql.py",
+#    "og_marl/tf2/systems/maddpg_cql_cpg.py"
 ]
 
 TASK = "task.scenario=2halfcheetah task.dataset=Good"
 
-SEEDS = [5] 
+SEEDS = [1] 
 
 def main():
 
