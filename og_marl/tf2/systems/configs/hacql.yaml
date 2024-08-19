@@ -1,0 +1,25 @@
+system_name: hacql
+seed: 42
+wandb_project: og-marl
+training_steps: 5e5
+
+task:
+  env: mamujoco
+  scenario: 2halfcheetah
+  dataset: Good
+
+replay:
+  sequence_length: 20
+  sample_period: 1
+
+system:
+  linear_layer_dim: 64
+  recurrent_layer_dim: 64
+  discount: 0.99
+  target_update_rate: 0.01
+  critic_learning_rate: 1e-3
+  policy_learning_rate: 1e-3
+  add_agent_id_to_obs: True
+  num_ood_actions: 10
+  cql_weight: 5.0
+  cql_sigma: 0.2

@@ -39,16 +39,17 @@ set_growing_gpu_memory()
 WANDB_PROJECT = "og-marl-mamujoco-baselines"
 
 SCRIPTS = [
-    "og_marl/tf2/systems/iddpg_cql.py",
+    # "og_marl/tf2/systems/iddpg_cql.py",
     # "og_marl/tf2/systems/iddpg_bc.py",
-    "og_marl/tf2/systems/omar.py",
-    "og_marl/tf2/systems/maddpg_cql.py",
+    # "og_marl/tf2/systems/omar.py",
+    # "og_marl/tf2/systems/maddpg_cql.py",
     # "og_marl/tf2/systems/continuous_bc.py",
+    "og_marl/tf2/systems/hacql.py",
 ]
 
 TASK = "task.scenario=2halfcheetah task.dataset=Good"
 
-SEEDS = [5]
+SEEDS = [1]
 
 def main():
 
