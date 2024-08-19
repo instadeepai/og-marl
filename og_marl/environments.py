@@ -2,7 +2,7 @@ from og_marl.environment_wrappers.base import BaseEnvironment
 
 
 def get_environment(env_name: str, scenario: str, seed: int = 42) -> BaseEnvironment:  # noqa: C901
-    if env_name == "smac_v1":
+    if env_name in ["smac_v1", "smac_v1_cfcql"]:
         from og_marl.environment_wrappers.smacv1 import SMACv1
 
         return SMACv1(scenario, seed=seed)
