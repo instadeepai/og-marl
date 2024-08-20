@@ -375,8 +375,8 @@ class MADDPGCQLNonSharedSystem(BaseOfflineSystem):
             ### END CQL ###
 
             # Policy Loss
-            policy_qs_1 = self.critic_network_1(env_states, online_actions, replay_actions)
-            policy_qs_2 = self.critic_network_2(env_states, online_actions, replay_actions)
+            policy_qs_1 = self.critic_network_1(env_states, online_actions, online_actions)
+            policy_qs_2 = self.critic_network_2(env_states, online_actions, online_actions)
             policy_qs = tf.minimum(policy_qs_1, policy_qs_2)
 
             policy_loss = -tf.reduce_mean(policy_qs) + 1e-3 * tf.reduce_mean(online_actions**2)
@@ -429,7 +429,7 @@ class MADDPGCQLNonSharedSystem(BaseOfflineSystem):
         return logs
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="maddpg_cql_non_shared")
+@hydra.main(version_base=None, config_path="configs", config_name="maddpg_cql_non_shared_online")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
 
