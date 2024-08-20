@@ -19,17 +19,18 @@ import numpy as np
 import flashbax as fbx
 from flashbax.vault import Vault
 import flashbax
-from og_marl.vault_utils.download_vault import check_directory_exists_and_not_empty, get_available_uids
+from og_marl.vault_utils.download_vault import (
+    check_directory_exists_and_not_empty,
+    get_available_uids,
+)
 
-from typing import Dict, List
+from typing import Dict
 from chex import Array
 
 # subsample vault smaller
 
-def get_length_start_end(
-    experience: Dict[str, Array], terminal_key: str = "terminals"
-) -> Array:
-    
+
+def get_length_start_end(experience: Dict[str, Array], terminal_key: str = "terminals") -> Array:
     # extract terminals
     terminal_flag = experience[terminal_key][0, :, ...].all(axis=-1)
 
@@ -41,45 +42,46 @@ def get_length_start_end(
     start_idxes[1:] = term_idxes[:-1]
 
     # get the length per-episode (TODO maybe redundant)
-    lengths = term_idxes-start_idxes
+    lengths = term_idxes - start_idxes
 
     # concatenate for easier unpacking
-    len_start_end = np.concatenate((lengths,start_idxes,term_idxes),axis=1)
+    len_start_end = np.concatenate((lengths, start_idxes, term_idxes), axis=1)
 
     return len_start_end
 
 
-def select_episodes_uniformly_up_to_n_transitions(len_start_end,n):
-
+def select_episodes_uniformly_up_to_n_transitions(len_start_end, n):
     # shuffle idxes of all the episodes from the vault
     shuffled_idxes = np.arange(len_start_end.shape[0])
     np.random.shuffle(shuffled_idxes)
 
     # grab the lengths of the shuffled episodes in order and cumulatively sum
-    shuffled_lengths = len_start_end[shuffled_idxes,0]
+    shuffled_lengths = len_start_end[shuffled_idxes, 0]
     shuffled_cumsum_of_eps_lengths = np.cumsum(shuffled_lengths)
 
     # select the first x episodes until we reach the target in the cumsum
-    selected_idxes = shuffled_idxes[np.where(shuffled_cumsum_of_eps_lengths<n)]
+    selected_idxes = shuffled_idxes[np.where(shuffled_cumsum_of_eps_lengths < n)]
     print(shuffled_cumsum_of_eps_lengths[-1])
 
     # get the lengths, starts and ends of the data- shuffled subsample
-    randomly_sampled_len_start_end = len_start_end[selected_idxes,:]
+    randomly_sampled_len_start_end = len_start_end[selected_idxes, :]
 
     return randomly_sampled_len_start_end
 
 
 # given the indices of the required episodes, stitch a vault and save under a user-specified name
 def stitch_vault_from_sampled_episodes_(
-    experience: Dict[str, Array], len_start_end_sample, dest_vault_name: str, vault_uid: str, rel_dir: str, n: int = 500_000
+    experience: Dict[str, Array],
+    len_start_end_sample,
+    dest_vault_name: str,
+    vault_uid: str,
+    rel_dir: str,
+    n: int = 500_000,
 ) -> Array:
-    
-    
     # to prevent downloading the vault twice into the same folder
     if check_directory_exists_and_not_empty(f"{rel_dir}/{dest_vault_name}.vlt/{vault_uid}/"):
         print(f"Vault '{rel_dir}/{dest_vault_name}.vlt/{vault_uid}' already exists.")
         return f"{rel_dir}/{dest_vault_name}.vlt/{vault_uid}"
-
 
     dest_buffer = fbx.make_trajectory_buffer(
         # Sampling parameters
@@ -100,41 +102,48 @@ def stitch_vault_from_sampled_episodes_(
         experience_structure=dest_state.experience,
         vault_name=dest_vault_name,
         vault_uid=vault_uid,
-        rel_dir = rel_dir,
+        rel_dir=rel_dir,
     )
 
-    for start,end in zip(len_start_end_sample[:,1],len_start_end_sample[:,2]):
-        sample_experience = jax.tree_util.tree_map(lambda x: x[:,int(start):int(end+1),...], experience)
+    for start, end in zip(len_start_end_sample[:, 1], len_start_end_sample[:, 2]):
+        sample_experience = jax.tree_util.tree_map(
+            lambda x: x[:, int(start) : int(end + 1), ...], experience
+        )
         dest_state = buffer_add(dest_state, sample_experience)
-        
+
     timesteps_written = dest_vault.write(dest_state)
 
     print(timesteps_written)
-     
+
     return timesteps_written
 
 
-def subsample_smaller_vault(vaults_dir: str, vault_name: str, vault_uids: list = [], target_number_of_transitions: int = 500000):
-
+def subsample_smaller_vault(
+    vaults_dir: str,
+    vault_name: str,
+    vault_uids: list = [],
+    target_number_of_transitions: int = 500000,
+):
     # check that the vault to be subsampled exists
     if not check_directory_exists_and_not_empty(f"./{vaults_dir}/{vault_name}"):
         print(f"Vault './{vaults_dir}/{vault_name}' does not exist and cannot be subsampled.")
         return
-    
+
     # if uids aren't specified, use all uids for subsampling
-    if len(vault_uids)==0:
+    if len(vault_uids) == 0:
         vault_uids = get_available_uids(f"./{vaults_dir}/{vault_name}")
 
     # name of subsampled vault (at task level)
-    new_vault_name = vault_name.strip('.vlt') + "_" + str(target_number_of_transitions)+'.vlt'
+    new_vault_name = vault_name.strip(".vlt") + "_" + str(target_number_of_transitions) + ".vlt"
 
     # check that a subsampled vault by the same name does not already exist
     if check_directory_exists_and_not_empty(f"./{vaults_dir}/{new_vault_name}"):
-        print(f"Vault '{vaults_dir}/{new_vault_name.strip('.vlt')}' already exists. To subsample from scratch, please remove the current subsampled vault from its directory.")
+        print(
+            f"Vault '{vaults_dir}/{new_vault_name.strip('.vlt')}' already exists. To subsample from scratch, please remove the current subsampled vault from its directory."
+        )
         return
-    
-    
-    for vault_uid in vault_uids: 
+
+    for vault_uid in vault_uids:
         vlt = Vault(rel_dir=vaults_dir, vault_name=vault_name, vault_uid=vault_uid)
 
         # read in data
@@ -145,12 +154,21 @@ def subsample_smaller_vault(vaults_dir: str, vault_name: str, vault_uids: list =
         len_start_end = get_length_start_end(offline_data)
 
         # get a number of transitions from randomly sampled episodes within one episode length of the target num of transitions
-        len_start_end_sample = select_episodes_uniformly_up_to_n_transitions(len_start_end,target_number_of_transitions)
+        len_start_end_sample = select_episodes_uniformly_up_to_n_transitions(
+            len_start_end, target_number_of_transitions
+        )
 
-        timesteps_written = stitch_vault_from_sampled_episodes_(offline_data, len_start_end_sample, new_vault_name, vault_uid, vaults_dir, target_number_of_transitions)
+        timesteps_written = stitch_vault_from_sampled_episodes_(
+            offline_data,
+            len_start_end_sample,
+            new_vault_name,
+            vault_uid,
+            vaults_dir,
+            target_number_of_transitions,
+        )
 
         # save the number of timesteps actually written
-        with open(f"{vaults_dir}/{new_vault_name}/{vault_uid}/timesteps.pickle","wb") as f:
-            pickle.dump(timesteps_written,f)
+        with open(f"{vaults_dir}/{new_vault_name}/{vault_uid}/timesteps.pickle", "wb") as f:
+            pickle.dump(timesteps_written, f)
 
     return new_vault_name

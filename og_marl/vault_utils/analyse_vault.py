@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 from typing import Dict, List
 
 import jax
@@ -24,17 +23,16 @@ from flashbax.vault import Vault
 from git import Optional
 import numpy as np
 from og_marl.vault_utils.download_vault import get_available_uids
-import pandas as pd
 from tabulate import tabulate
 
-# obtain "sanity" info about the vault - 
-def get_structure_descriptors(experience, n_head=1):
 
+# obtain "sanity" info about the vault -
+def get_structure_descriptors(experience, n_head=1):
     struct = jax.tree_map(lambda x: x.shape, experience)
 
-    head = jax.tree_map(lambda x: x[0,:n_head,...], experience)
+    head = jax.tree_map(lambda x: x[0, :n_head, ...], experience)
 
-    terminal_flag = experience['terminals'][0, :, ...].all(axis=-1)
+    terminal_flag = experience["terminals"][0, :, ...].all(axis=-1)
     num_episodes = jnp.sum(terminal_flag)
 
     return struct, head, num_episodes
@@ -46,9 +44,8 @@ def describe_structure(
     rel_dir: str = "vaults",
     n_head: int = 0,
 ) -> Dict[str, Array]:
-    
     # get all uids if not specified
-    if len(vault_uids)==0:
+    if len(vault_uids) == 0:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
     # get structure, number of transitions and the head of the block
@@ -58,37 +55,35 @@ def describe_structure(
     for uid in vault_uids:
         vlt = Vault(vault_name=vault_name, rel_dir=rel_dir, vault_uid=uid)
         exp = vlt.read().experience
-        n_trans = exp['actions'].shape[1]
+        n_trans = exp["actions"].shape[1]
 
-        struct, head, n_traj = get_structure_descriptors(exp,n_head)
+        struct, head, n_traj = get_structure_descriptors(exp, n_head)
 
-        print(str(uid)+ '\n-----')
+        print(str(uid) + "\n-----")
         for key, val in struct.items():
             print(f"{str(key)+':': <15}{str(val): >15}")
-        print('\n')
+        print("\n")
 
         heads[uid] = head
         structs[uid] = struct
 
-        single_values.append([uid,n_trans,n_traj])
+        single_values.append([uid, n_trans, n_traj])
 
-    print(tabulate(single_values,headers=['Uid','Transitions','Trajectories']))
+    print(tabulate(single_values, headers=["Uid", "Transitions", "Trajectories"]))
 
     return heads
 
 
 def get_episode_return_descriptors(experience):
-
     episode_returns = calculate_returns(experience)
 
     mean = jnp.mean(episode_returns)
-    stddev = jnp.std(episode_returns)      
+    stddev = jnp.std(episode_returns)
 
     return mean, stddev, jnp.max(episode_returns), jnp.min(episode_returns), episode_returns
 
 
-def plot_eps_returns_violin(all_uid_returns,vault_name, save_path = ""):
-
+def plot_eps_returns_violin(all_uid_returns, vault_name, save_path=""):
     sns.set_theme(style="whitegrid")  # Set seaborn theme with a light blue background
     plt.figure(figsize=(8, 6))  # Adjust figsize as needed
 
@@ -96,33 +91,46 @@ def plot_eps_returns_violin(all_uid_returns,vault_name, save_path = ""):
     plt.xlabel("Dataset Quality")
     plt.ylabel("Episode Returns")
     plt.xticks(range(len(all_uid_returns)), list(all_uid_returns.keys()))
-    if len(save_path)>0:
-        plt.savefig(save_path,format='pdf',bbox_inches='tight')
+    if len(save_path) > 0:
+        plt.savefig(save_path, format="pdf", bbox_inches="tight")
     plt.title(f"Violin Distributions of Returns for {vault_name}")
     plt.show()
     return
 
-def plot_eps_returns_hist(all_uid_returns, vault_name, n_bins, min_return, max_return, save_path = ""):
+
+def plot_eps_returns_hist(
+    all_uid_returns, vault_name, n_bins, min_return, max_return, save_path=""
+):
     vault_uids = list(all_uid_returns.keys())
 
     sns.set_theme(style="whitegrid")  # Set seaborn theme with a light blue background
-    fig, ax = plt.subplots(1,len(vault_uids),figsize=(0.5+2.5*len(vault_uids),3),sharex=True,sharey=True,squeeze=False)
+    fig, ax = plt.subplots(
+        1,
+        len(vault_uids),
+        figsize=(0.5 + 2.5 * len(vault_uids), 3),
+        sharex=True,
+        sharey=True,
+        squeeze=False,
+    )
 
     colors = sns.color_palette()
 
     for i, uid in enumerate(vault_uids):
-        counts, bins = np.histogram(all_uid_returns[uid],bins=n_bins,range=(min_return,max_return))
-        ax[0,i].stairs(counts, bins,fill=True,color=colors[i])
-        ax[0,i].set_title(uid)
-        ax[0,i].set_xlabel("Episode return")
-    ax[0,0].set_ylabel("Frequency")
+        counts, bins = np.histogram(
+            all_uid_returns[uid], bins=n_bins, range=(min_return, max_return)
+        )
+        ax[0, i].stairs(counts, bins, fill=True, color=colors[i])
+        ax[0, i].set_title(uid)
+        ax[0, i].set_xlabel("Episode return")
+    ax[0, 0].set_ylabel("Frequency")
     fig.tight_layout()
-    if len(save_path)>0:
-        plt.savefig(save_path,format='pdf',bbox_inches='tight')
+    if len(save_path) > 0:
+        plt.savefig(save_path, format="pdf", bbox_inches="tight")
     fig.suptitle(f"Histogram of distributions of episode returns for {vault_name}")
     fig.tight_layout()
     plt.show()
     return
+
 
 def describe_episode_returns(
     vault_name: str,
@@ -134,9 +142,8 @@ def describe_episode_returns(
     save_violin: bool = False,
     n_bins: Optional[int] = 50,
 ) -> Dict[str, Array]:
-    
     # get all uids if not specified
-    if len(vault_uids)==0:
+    if len(vault_uids) == 0:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
     single_values = []
@@ -148,25 +155,34 @@ def describe_episode_returns(
         mean, stddev, max_ret, min_ret, episode_returns = get_episode_return_descriptors(exp)
         all_uid_eps_returns[uid] = episode_returns
 
-        single_values.append([uid,mean,stddev,max_ret,min_ret])
+        single_values.append([uid, mean, stddev, max_ret, min_ret])
 
-    print(tabulate(single_values,headers=['Uid','Mean','Stddev','Max','Min']))
+    print(tabulate(single_values, headers=["Uid", "Mean", "Stddev", "Max", "Min"]))
 
     if plot_hist:
         min_of_all = min([x[-1] for x in single_values])
         max_of_all = max([x[-2] for x in single_values])
         if save_hist:
-            plot_eps_returns_hist(all_uid_eps_returns,vault_name,n_bins,min_of_all, max_of_all, save_path = f"{rel_dir}/{vault_name}/histogram.pdf")
+            plot_eps_returns_hist(
+                all_uid_eps_returns,
+                vault_name,
+                n_bins,
+                min_of_all,
+                max_of_all,
+                save_path=f"{rel_dir}/{vault_name}/histogram.pdf",
+            )
         else:
-            plot_eps_returns_hist(all_uid_eps_returns,vault_name,n_bins,min_of_all, max_of_all)
+            plot_eps_returns_hist(all_uid_eps_returns, vault_name, n_bins, min_of_all, max_of_all)
 
     if plot_violin:
         if save_violin:
-            plot_eps_returns_violin(all_uid_eps_returns,vault_name,save_path = f"{rel_dir}/{vault_name}/violin_plot.pdf")
+            plot_eps_returns_violin(
+                all_uid_eps_returns, vault_name, save_path=f"{rel_dir}/{vault_name}/violin_plot.pdf"
+            )
         else:
-            plot_eps_returns_violin(all_uid_eps_returns,vault_name)
+            plot_eps_returns_violin(all_uid_eps_returns, vault_name)
 
-    return 
+    return
 
 
 def calculate_returns(
@@ -220,9 +236,7 @@ def calculate_returns(
     return episode_returns
 
 
-def get_saco(
-    experience: Dict[str, Array]
-):
+def get_saco(experience: Dict[str, Array]):
     """Calculate the joint SACo in a dataset of experience.
 
     Args:
@@ -233,34 +247,39 @@ def get_saco(
         Array: numpy array containing the counts of unique pairs.
         Array: numpy array containing the counts of counts of unique pairs.
     """
-    states = experience['infos']["state"]
+    states = experience["infos"]["state"]
 
     num_tot = states.shape[1]
 
-    reshaped_actions = experience["actions"].reshape((*experience["actions"].shape[:2],-1))
-    state_pairs = np.concatenate((states,reshaped_actions),axis=-1)
+    reshaped_actions = experience["actions"].reshape((*experience["actions"].shape[:2], -1))
+    state_pairs = np.concatenate((states, reshaped_actions), axis=-1)
 
-    unique_vals, counts = np.unique(state_pairs,axis=1,return_counts=True)
-    count_vals, count_freq = np.unique(counts,return_counts=True)
+    unique_vals, counts = np.unique(state_pairs, axis=1, return_counts=True)
+    count_vals, count_freq = np.unique(counts, return_counts=True)
 
-    saco = unique_vals.shape[1]/num_tot
+    saco = unique_vals.shape[1] / num_tot
     return saco, count_vals, count_freq
 
 
-def plot_count_frequencies(all_count_vals, all_count_freq, save_path = ""):
+def plot_count_frequencies(all_count_vals, all_count_freq, save_path=""):
     vault_uids = list(all_count_vals.keys())
     colors = sns.color_palette()
 
     # plot the power law showing count frequencies
     for i, uid in enumerate(vault_uids):
-        plt.scatter(np.log(all_count_vals[uid].astype(float)),np.log(all_count_freq[uid].astype(float)),label=uid,color=colors[i])
+        plt.scatter(
+            np.log(all_count_vals[uid].astype(float)),
+            np.log(all_count_freq[uid].astype(float)),
+            label=uid,
+            color=colors[i],
+        )
 
     plt.xlabel("Count (log base 10)")
     plt.ylabel("Frequency of count (log base 10)")
     plt.legend()
 
-    if len(save_path)>0:
-        plt.savefig(save_path,format='pdf',bbox_inches='tight')
+    if len(save_path) > 0:
+        plt.savefig(save_path, format="pdf", bbox_inches="tight")
     plt.title("Frequency of unique pair counts power law")
     plt.show()
     return
@@ -271,11 +290,10 @@ def describe_coverage(
     vault_uids: Optional[List[str]] = [],
     rel_dir: str = "vaults",
     plot_count_freq: bool = True,
-    save_plot: bool =  False,
+    save_plot: bool = False,
 ) -> Dict[str, Array]:
-    
     # get all uids if not specified
-    if len(vault_uids)==0:
+    if len(vault_uids) == 0:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
     single_values = []
@@ -289,19 +307,21 @@ def describe_coverage(
         all_uid_count_freq[uid] = count_freq
         all_uid_count_vals[uid] = count_vals
 
-        single_values.append([uid,saco])
+        single_values.append([uid, saco])
 
-    print(tabulate(single_values,headers=['Uid','Joint SACo']))
+    print(tabulate(single_values, headers=["Uid", "Joint SACo"]))
 
     if plot_count_freq:
         if save_plot:
-            plot_count_frequencies(all_uid_count_vals,all_uid_count_freq, save_path=f"{rel_dir}/{vault_name}/count_frequency_loglog.pdf")
+            plot_count_frequencies(
+                all_uid_count_vals,
+                all_uid_count_freq,
+                save_path=f"{rel_dir}/{vault_name}/count_frequency_loglog.pdf",
+            )
         else:
-            plot_count_frequencies(all_uid_count_vals,all_uid_count_freq)
- 
+            plot_count_frequencies(all_uid_count_vals, all_uid_count_freq)
 
-    return 
-
+    return
 
 
 def descriptive_summary(
@@ -310,10 +330,9 @@ def descriptive_summary(
     rel_dir: str = "vaults",
     plot_hist: bool = True,
     save_hist: bool = False,
-    n_bins = 40,
+    n_bins=40,
 ) -> Dict[str, Array]:
-    
-    if len(vault_uids)==0:
+    if len(vault_uids) == 0:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
     all_returns = {}
@@ -325,20 +344,40 @@ def descriptive_summary(
         saco, _, _ = get_saco(exp)
         mean, stddev, max_ret, min_ret, episode_returns = get_episode_return_descriptors(exp)
         n_traj = len(episode_returns)
-        n_trans = exp['actions'].shape[1]
+        n_trans = exp["actions"].shape[1]
 
-        single_values.append([uid,mean,stddev,min_ret, max_ret, n_trans,n_traj,saco])
+        single_values.append([uid, mean, stddev, min_ret, max_ret, n_trans, n_traj, saco])
         all_returns[uid] = episode_returns
 
-    print(tabulate(single_values,headers=['Uid','Mean','Stddev','Min return','Max return','Transitions','Trajectories','Joint SACo']))
+    print(
+        tabulate(
+            single_values,
+            headers=[
+                "Uid",
+                "Mean",
+                "Stddev",
+                "Min return",
+                "Max return",
+                "Transitions",
+                "Trajectories",
+                "Joint SACo",
+            ],
+        )
+    )
 
     if plot_hist:
         min_of_all = min([x[3] for x in single_values])
         max_of_all = max([x[4] for x in single_values])
         if save_hist:
-            plot_eps_returns_hist(all_returns,vault_name,n_bins,min_of_all, max_of_all, save_path = f"{rel_dir}/{vault_name}/histogram.pdf")
+            plot_eps_returns_hist(
+                all_returns,
+                vault_name,
+                n_bins,
+                min_of_all,
+                max_of_all,
+                save_path=f"{rel_dir}/{vault_name}/histogram.pdf",
+            )
         else:
-            plot_eps_returns_hist(all_returns,vault_name,n_bins,min_of_all, max_of_all)
-
+            plot_eps_returns_hist(all_returns, vault_name, n_bins, min_of_all, max_of_all)
 
     return all_returns

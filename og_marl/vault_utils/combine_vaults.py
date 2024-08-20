@@ -3,12 +3,14 @@ import pickle
 import flashbax as fbx
 from flashbax.vault import Vault
 import flashbax
-from og_marl.vault_utils.download_vault import check_directory_exists_and_not_empty, get_available_uids
+from og_marl.vault_utils.download_vault import (
+    check_directory_exists_and_not_empty,
+    get_available_uids,
+)
 
 
-def get_all_vaults(rel_dir,vault_name,vault_uids=[]):
-
-    if len(vault_uids)==0:
+def get_all_vaults(rel_dir, vault_name, vault_uids=[]):
+    if len(vault_uids) == 0:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
     vlts = []
@@ -17,8 +19,7 @@ def get_all_vaults(rel_dir,vault_name,vault_uids=[]):
     return vlts
 
 
-def stitch_vault_from_many(vlts, vault_name, vault_uid,rel_dir):
-
+def stitch_vault_from_many(vlts, vault_name, vault_uid, rel_dir):
     all_data = vlts[0].read()
     offline_data = all_data.experience
 
@@ -48,46 +49,46 @@ def stitch_vault_from_many(vlts, vault_name, vault_uid,rel_dir):
 
     tot_timesteps = 0
     for vlt in vlts:
-
         all_data = vlt.read()
         offline_data = all_data.experience
 
         dest_state = buffer_add(dest_state, offline_data)
-        
+
         timesteps_written = dest_vault.write(dest_state)
 
-        tot_timesteps+=timesteps_written
+        tot_timesteps += timesteps_written
         del offline_data
         del all_data
 
     return tot_timesteps
-        
-def combine_vaults(rel_dir,vault_name,vault_uids=[]):
 
+
+def combine_vaults(rel_dir, vault_name, vault_uids=[]):
     # check that the vault to be combined exists
     if not check_directory_exists_and_not_empty(f"./{rel_dir}/{vault_name}"):
         print(f"Vault './{rel_dir}/{vault_name}' does not exist and cannot be combined.")
         return
-    
+
     # if uids aren't specified, use all uids for subsampling
-    if len(vault_uids)==0:
+    if len(vault_uids) == 0:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
     # name of subsampled vault (at task level)
-    uids_str = '_'.join(vault_uids)
-    new_vault_name = vault_name.strip('.vlt') + "_combined.vlt"
+    uids_str = "_".join(vault_uids)
+    new_vault_name = vault_name.strip(".vlt") + "_combined.vlt"
 
     # check that a subsampled vault by the same name does not already exist
     if check_directory_exists_and_not_empty(f"./{rel_dir}/{new_vault_name}"):
-        print(f"Vault '{rel_dir}/{new_vault_name.strip('.vlt')}' already exists. To combine from scratch, please remove the current combined vault from its directory.")
+        print(
+            f"Vault '{rel_dir}/{new_vault_name.strip('.vlt')}' already exists. To combine from scratch, please remove the current combined vault from its directory."
+        )
         return
-    
-    vlts = get_all_vaults(rel_dir,vault_name,vault_uids)
 
-    timesteps = stitch_vault_from_many(vlts,new_vault_name,uids_str,rel_dir)
+    vlts = get_all_vaults(rel_dir, vault_name, vault_uids)
 
-    
-    with open(f"{rel_dir}/{new_vault_name}/{uids_str}/timesteps.pickle","wb") as f:
-        pickle.dump(timesteps,f) 
+    timesteps = stitch_vault_from_many(vlts, new_vault_name, uids_str, rel_dir)
+
+    with open(f"{rel_dir}/{new_vault_name}/{uids_str}/timesteps.pickle", "wb") as f:
+        pickle.dump(timesteps, f)
 
     return new_vault_name
