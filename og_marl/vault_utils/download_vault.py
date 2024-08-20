@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import List
+
 import os
 import sys
 import zipfile
@@ -104,7 +106,7 @@ def download_and_unzip_vault(
     scenario_name: str,
     dataset_base_dir: str = "./vaults",
     dataset_download_url: str = "",
-) -> None:
+) -> str:
     # to prevent downloading the vault twice into the same folder
     if check_directory_exists_and_not_empty(
         f"{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}.vlt"
@@ -172,7 +174,7 @@ def check_directory_exists_and_not_empty(path: str) -> bool:
         return False  # Directory does not exist
 
 
-def get_available_uids(rel_vault_path):
+def get_available_uids(rel_vault_path: str) -> List[str]:
     vault_uids = sorted(
         next(os.walk(rel_vault_path))[1],
         reverse=True,
