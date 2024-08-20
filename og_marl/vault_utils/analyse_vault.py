@@ -1,4 +1,4 @@
-# Copyright 2023 InstaDeep Ltd. All rights reserved.
+# Copyright 2024 InstaDeep Ltd. All rights reserved.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -278,7 +278,8 @@ def plot_count_frequencies(
 
     Args:
         all_count_vals (Dict[str, Array]): for each uid (key), the counts of state-action pairs
-        all_count_freq (Dict[str, Array]): for each uid (key), the number of times a state-action pair appears a specific number of times
+        all_count_freq (Dict[str, Array]):
+            for each uid (key), the number of times a state-action pair appears a specific number of times
         save_path (string): path to save the plot to. If empty, the figure is unsaved.
 
     Artefacts:
@@ -319,16 +320,20 @@ def describe_coverage(
     """Provides coverage, structural and episode return descriptors of a Vault of datasets.
 
     Args:
-        vault_name (string): the name of the Vault, not containing the .vlt suffix
-        vault_uids (List[str]): a list of uids of datasets in the Vault, use if we only describe a subset of all datasets in the Vault
+        vault_name (string): the name of the Vault,
+            not containing the .vlt suffix
+        vault_uids (List[str]): a list of uids of datasets in the Vault,
+            use if we only describe a subset of all datasets in the Vault
         rel_dir (string): relative  directory of the Vault
-        plot_count_freq (bool): True when the user wants to generate a plot of state-action count frequencies
+        plot_count_freq (bool):
+            True when the user wants to generate a plot of state-action count frequencies
         save_plot (bool): True when the user wants to save the generated plot
 
     Artefacts:
         A table is printed containing for each dataset in the list of uids:
         - Joint SACo
-        if plot_count_freq is True, plt shows a log-log plot of state-action pair count frequencies per dataset
+        if plot_count_freq is True,
+            plt shows a log-log plot of state-action pair count frequencies per dataset
         if save_plot is True, plt saves the figure as a pdf under the vault_name directory
 
     """
@@ -376,7 +381,8 @@ def descriptive_summary(
 
     Args:
         vault_name (string): the name of the Vault, not containing the .vlt suffix
-        vault_uids (List[str]): a list of uids of datasets in the Vault, use if we only describe a subset of all datasets in the Vault
+        vault_uids (List[str]): a list of uids of datasets in the Vault,
+            use if we only describe a subset of all datasets in the Vault
         rel_dir (string): relative  directory of the Vault
         plot_hist (bool): True when the user wants to generate a histogram
         save_hist (bool): True when the user wants to save a generated histogram

@@ -1,3 +1,20 @@
+# Copyright 2024 InstaDeep Ltd. All rights reserved.
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from typing import Dict, Tuple, List
+from chex import Array
+
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -9,13 +26,15 @@ from os.path import exists
 
 
 # cumulative summing per-episode
-def get_episode_returns_and_term_idxes(offline_data):
+def get_episode_returns_and_term_idxes(offline_data: Dict[str, Array]) -> Tuple[Array, Array]:
     rewards = offline_data["rewards"][0, :, 0]
     terminal_flag = offline_data["terminals"][0, :, ...].all(axis=-1)
 
     assert terminal_flag[-1] == True
 
-    def scan_cumsum(return_so_far, prev_term_reward):
+    def scan_cumsum(
+        return_so_far: float, prev_term_reward: Tuple[bool, float]
+    ) -> Tuple[float, float]:
         term, reward = prev_term_reward
         return_so_far = return_so_far * (1 - term) + reward
         return return_so_far, return_so_far
@@ -32,7 +51,7 @@ def get_episode_returns_and_term_idxes(offline_data):
 
 # first store indices of episodes, then sort by episode return.
 # outputs return, start, end and vault index in vault list
-def sort_concat(returns, eps_ends):
+def sort_concat(returns: Array, eps_ends: Array) -> Array:
     episode_start_idxes = eps_ends[:-1] + 1
     episode_start_idxes = jnp.insert(episode_start_idxes, 0, 0).reshape(-1, 1)
     sorting_idxes = jnp.lexsort(jnp.array([returns[:, 0]]), axis=-1)
@@ -47,7 +66,9 @@ def sort_concat(returns, eps_ends):
     return sorted_return_start_end
 
 
-def get_idxes_of_similar_subsets(base_returns, comp_returns, tol=0.1):
+def get_idxes_of_similar_subsets(
+    base_returns: List, comp_returns: List, tol: float = 0.1
+) -> Tuple[List, List]:
     base_selected_idxes = []
     comp_selected_idxes = []
 
@@ -71,7 +92,12 @@ def get_idxes_of_similar_subsets(base_returns, comp_returns, tol=0.1):
     return base_selected_idxes, comp_selected_idxes
 
 
-def subsample_similar(first_vault_info, second_vault_info, new_rel_dir, new_vault_name):
+def subsample_similar(
+    first_vault_info: Dict[str, str],
+    second_vault_info: Dict[str, str],
+    new_rel_dir: str,
+    new_vault_name: str,
+) -> None:
     # check that a subsampled vault by the same name does not already exist
     if check_directory_exists_and_not_empty(f"./{new_rel_dir}/{new_vault_name}"):
         print(

@@ -1,4 +1,4 @@
-# Copyright 2023 InstaDeep Ltd. All rights reserved.
+# Copyright 2024 InstaDeep Ltd. All rights reserved.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ VAULT_INFO = {
 }
 
 
-def print_download_options():
+def print_download_options() -> None:
     pprint.pprint(VAULT_INFO, depth=3)
     return
 
@@ -129,7 +129,8 @@ def download_and_unzip_vault(
             + str(dataset_download_url)
             + " could not be downloaded. Try entering a different URL, or removing the part which auto-downloads."
         )
-        return
+        return f"{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}.vlt"
+
     total_length = response.headers.get("content-length")
 
     # make storage dirs

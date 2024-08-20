@@ -1,4 +1,4 @@
-# Copyright 2023 InstaDeep Ltd. All rights reserved.
+# Copyright 2024 InstaDeep Ltd. All rights reserved.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Tuple
+from typing import Tuple
 from chex import Array
 
 import numpy as np
@@ -23,7 +23,7 @@ import jax.numpy as jnp
 def get_bin_numbers(sorted_values: Array, bin_edges: Array) -> Array:
     bin_numbers = np.zeros_like(sorted_values)
 
-    def get_bin_number(bin_num, value):
+    def get_bin_number(bin_num: int, value: float) -> int:
         is_overflowing = value > bin_edges[bin_num]
 
         if is_overflowing:
@@ -70,13 +70,13 @@ def bin_processed_data(
 
 # sample from pdf according to heights
 # BIG NOTE: CHECK THE DISPARITY, OTHERWISE YOUR DISTRIBUTION WILL BE TOO MUCH
-def episode_idxes_sampled_from_pdf(pdf: Array, bar_heights: Array) -> List:
+def episode_idxes_sampled_from_pdf(pdf: Array, bar_heights: Array) -> list[int]:
     num_to_sample = np.round(pdf).astype(int)
     sample_range_edges = np.concatenate([[0], np.cumsum(bar_heights)])
 
     assert num_to_sample.shape == bar_heights.shape
 
-    target_sample_idxes = []
+    target_sample_idxes: list = []
     for i, n_sample in enumerate(num_to_sample):
         sample_base = np.arange(sample_range_edges[i], sample_range_edges[i + 1])
         if n_sample <= 0:  # we don't have any to sample

@@ -50,7 +50,7 @@ def get_length_start_end(experience: Dict[str, Array], terminal_key: str = "term
     return len_start_end
 
 
-def select_episodes_uniformly_up_to_n_transitions(len_start_end, n):
+def select_episodes_uniformly_up_to_n_transitions(len_start_end: Array, n: int) -> Array:
     # shuffle idxes of all the episodes from the vault
     shuffled_idxes = np.arange(len_start_end.shape[0])
     np.random.shuffle(shuffled_idxes)
@@ -72,7 +72,7 @@ def select_episodes_uniformly_up_to_n_transitions(len_start_end, n):
 # given the indices of the required episodes, stitch a vault and save under a user-specified name
 def stitch_vault_from_sampled_episodes_(
     experience: Dict[str, Array],
-    len_start_end_sample,
+    len_start_end_sample: Array,
     dest_vault_name: str,
     vault_uid: str,
     rel_dir: str,
@@ -123,11 +123,11 @@ def subsample_smaller_vault(
     vault_name: str,
     vault_uids: list = [],
     target_number_of_transitions: int = 500000,
-):
+) -> str:
     # check that the vault to be subsampled exists
     if not check_directory_exists_and_not_empty(f"./{vaults_dir}/{vault_name}"):
         print(f"Vault './{vaults_dir}/{vault_name}' does not exist and cannot be subsampled.")
-        return
+        return f"./{vaults_dir}/{vault_name}"
 
     # if uids aren't specified, use all uids for subsampling
     if len(vault_uids) == 0:
@@ -141,7 +141,7 @@ def subsample_smaller_vault(
         print(
             f"Vault '{vaults_dir}/{new_vault_name.strip('.vlt')}' already exists. To subsample from scratch, please remove the current subsampled vault from its directory."
         )
-        return
+        return f"./{vaults_dir}/{vault_name}"
 
     for vault_uid in vault_uids:
         vlt = Vault(rel_dir=vaults_dir, vault_name=vault_name, vault_uid=vault_uid)

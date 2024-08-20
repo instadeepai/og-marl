@@ -1,4 +1,17 @@
-from typing import List
+# Copyright 2024 InstaDeep Ltd. All rights reserved.
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from git import Optional
 
 import jax
@@ -14,9 +27,9 @@ from og_marl.vault_utils.download_vault import (
 
 def get_all_vaults(
     vault_name: str,
-    vault_uids: Optional[List[str]] = [],
+    vault_uids: Optional[list[str]] = [],
     rel_dir: str = "vaults",
-) -> List[Vault]:
+) -> list[Vault]:
     if len(vault_uids) == 0:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
@@ -26,7 +39,7 @@ def get_all_vaults(
     return vlts
 
 
-def stitch_vault_from_many(vlts: List[Vault], vault_name: str, vault_uid: str, rel_dir: str) -> int:
+def stitch_vault_from_many(vlts: list[Vault], vault_name: str, vault_uid: str, rel_dir: str) -> int:
     all_data = vlts[0].read()
     offline_data = all_data.experience
 
@@ -70,11 +83,11 @@ def stitch_vault_from_many(vlts: List[Vault], vault_name: str, vault_uid: str, r
     return tot_timesteps
 
 
-def combine_vaults(rel_dir: str, vault_name: str, vault_uids: List[str] = []) -> str:
+def combine_vaults(rel_dir: str, vault_name: str, vault_uids: Optional[list[str]] = []) -> str:
     # check that the vault to be combined exists
     if not check_directory_exists_and_not_empty(f"./{rel_dir}/{vault_name}"):
         print(f"Vault './{rel_dir}/{vault_name}' does not exist and cannot be combined.")
-        return
+        return f"./{rel_dir}/{vault_name}"
 
     # if uids aren't specified, use all uids for subsampling
     if len(vault_uids) == 0:
@@ -89,7 +102,7 @@ def combine_vaults(rel_dir: str, vault_name: str, vault_uids: List[str] = []) ->
         print(
             f"Vault '{rel_dir}/{new_vault_name.strip('.vlt')}' already exists. To combine from scratch, please remove the current combined vault from its directory."
         )
-        return
+        return new_vault_name
 
     vlts = get_all_vaults(rel_dir, vault_name, vault_uids)
 
