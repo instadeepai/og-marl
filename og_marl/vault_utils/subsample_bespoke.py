@@ -1,9 +1,26 @@
+# Copyright 2023 InstaDeep Ltd. All rights reserved.
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from typing import List, Tuple
+from chex import Array
+
 import numpy as np
 import jax.numpy as jnp
 
 
 # given bin edges and a sorted array of values, get the bin number per value
-def get_bin_numbers(sorted_values, bin_edges):
+def get_bin_numbers(sorted_values: Array, bin_edges: Array) -> Array:
     bin_numbers = np.zeros_like(sorted_values)
 
     def get_bin_number(bin_num, value):
@@ -26,7 +43,9 @@ def get_bin_numbers(sorted_values, bin_edges):
     return bin_numbers
 
 
-def bin_processed_data(all_sorted_return_start_end, n_bins=500):
+def bin_processed_data(
+    all_sorted_return_start_end: Array, n_bins: int = 500
+) -> Tuple[Array, Array, Array, Array, Array]:
     # get bin edges, including final endpoint
     bin_edges = jnp.linspace(
         start=min(min(all_sorted_return_start_end[:, 0]), 0),
@@ -51,7 +70,7 @@ def bin_processed_data(all_sorted_return_start_end, n_bins=500):
 
 # sample from pdf according to heights
 # BIG NOTE: CHECK THE DISPARITY, OTHERWISE YOUR DISTRIBUTION WILL BE TOO MUCH
-def episode_idxes_sampled_from_pdf(pdf, bar_heights):
+def episode_idxes_sampled_from_pdf(pdf: Array, bar_heights: Array) -> List:
     num_to_sample = np.round(pdf).astype(int)
     sample_range_edges = np.concatenate([[0], np.cumsum(bar_heights)])
 
