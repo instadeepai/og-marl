@@ -44,7 +44,8 @@ SCRIPTS = [
     # "og_marl/tf2/systems/omar.py",
     # "og_marl/tf2/systems/maddpg_cql.py",
     # "og_marl/tf2/systems/continuous_bc.py",
-     "og_marl/tf2/systems/hacql.py",
+    # "og_marl/tf2/systems/hacql.py",
+    "og_marl/tf2/systems/maddpg_cql_non_shared.py",
 #    "og_marl/tf2/systems/maddpg_cql_cpg.py"
 ]
 
