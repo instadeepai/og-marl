@@ -1,3 +1,6 @@
+from typing import List
+from git import Optional
+
 import jax
 import pickle
 import flashbax as fbx
@@ -9,7 +12,11 @@ from og_marl.vault_utils.download_vault import (
 )
 
 
-def get_all_vaults(rel_dir, vault_name, vault_uids=[]):
+def get_all_vaults(
+    vault_name: str,
+    vault_uids: Optional[List[str]] = [],
+    rel_dir: str = "vaults",
+) -> List[Vault]:
     if len(vault_uids) == 0:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
@@ -19,7 +26,7 @@ def get_all_vaults(rel_dir, vault_name, vault_uids=[]):
     return vlts
 
 
-def stitch_vault_from_many(vlts, vault_name, vault_uid, rel_dir):
+def stitch_vault_from_many(vlts: List[Vault], vault_name: str, vault_uid: str, rel_dir: str) -> int:
     all_data = vlts[0].read()
     offline_data = all_data.experience
 
@@ -63,7 +70,7 @@ def stitch_vault_from_many(vlts, vault_name, vault_uid, rel_dir):
     return tot_timesteps
 
 
-def combine_vaults(rel_dir, vault_name, vault_uids=[]):
+def combine_vaults(rel_dir: str, vault_name: str, vault_uids: List[str] = []) -> str:
     # check that the vault to be combined exists
     if not check_directory_exists_and_not_empty(f"./{rel_dir}/{vault_name}"):
         print(f"Vault './{rel_dir}/{vault_name}' does not exist and cannot be combined.")
