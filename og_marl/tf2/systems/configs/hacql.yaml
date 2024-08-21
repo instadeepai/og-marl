@@ -1,4 +1,4 @@
-system_name: hacql
+system_name: hacql (seq-critic)
 seed: 42
 wandb_project: og-marl
 training_steps: 5e5

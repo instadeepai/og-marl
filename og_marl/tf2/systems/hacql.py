@@ -83,7 +83,7 @@ def ha_unroll_rnn(rnn_networks: List[snt.Module], inputs: Tensor, resets: Tensor
             )  # hidden state wrapped in tuple
 
         outputs = tf.stack(outputs, axis=0)  # type: ignore
-        return tf.expand_dims(outputs, axis=2) # add agent dim back
+        return outputs
     
 class StateAndJointActionCritic(snt.Module):
     def __init__(self, num_agents: int, num_actions: int):
@@ -106,9 +106,6 @@ class StateAndJointActionCritic(snt.Module):
         self,
         states: Tensor,
         agent_actions: Tensor,
-        other_actions: Tensor,
-        stop_other_actions_gradient: bool = True,
-        agent_idx = None
     ) -> Tensor:
         """Forward pass of critic network.
 
@@ -117,55 +114,12 @@ class StateAndJointActionCritic(snt.Module):
         agent_actions [T,B,N,A]: the actions the agent took.
         other_actions [T,B,N,A]: the actions the other agents took.
         """
-
-        if agent_idx is None:
-            if stop_other_actions_gradient:
-                other_actions = tf.stop_gradient(other_actions)
-
-            # Make joint action
-            joint_actions = self.make_joint_action(agent_actions, other_actions)
-
-            # Repeat states for each agent
-            states = tf.stack([states] * self.N, axis=2)  # [T,B,S] -> [T,B,N,S]
-
-            # Concat states and joint actions
-            critic_input = tf.concat([states, joint_actions], axis=-1)
-
-            # Concat agent IDs to critic input
-            # critic_input = batch_concat_agent_id_to_obs(critic_input)
-
-            q_values: Tensor = self._critic_network(critic_input)
-
-            return q_values
-        else:
-            # Concat states and joint actions
-            T,B,N,A = agent_actions.shape
-            agent_actions = tf.reshape(agent_actions, shape=(T,B,N*A))
-            critic_input = tf.concat([states, agent_actions], axis=-1)
-            q_values: Tensor = self._critic_network(critic_input)
-            return q_values
-
-    def make_joint_action(self, agent_actions: Tensor, other_actions: Tensor) -> Tensor:
-        """Method to construct the joint action.
-
-        agent_actions [T,B,N,A]: tensor of actions the agent took. Usually
-            the actions from the learnt policy network.
-        other_actions [[T,B,N,A]]: tensor of actions the agent took. Usually
-            the actions from the replay buffer.
-        """
-        T, B, N, A = agent_actions.shape[:4]  # (B,N,A)
-        all_joint_actions = []
-        for i in range(N):  # type: ignore
-            one_hot = tf.expand_dims(
-                tf.cast(tf.stack([tf.stack([tf.one_hot(i, N)] * B, axis=0)] * T, axis=0), "bool"),  # type: ignore
-                axis=-1,
-            )
-            joint_action = tf.where(one_hot, agent_actions, other_actions)
-            joint_action = tf.reshape(joint_action, (T, B, N * A))  # type: ignore
-            all_joint_actions.append(joint_action)
-        all_joint_actions: Tensor = tf.stack(all_joint_actions, axis=2)
-
-        return all_joint_actions
+        # Concat states and joint actions
+        T,B,N,A = agent_actions.shape
+        agent_actions = tf.reshape(agent_actions, shape=(T,B,N*A))
+        critic_input = tf.concat([states, agent_actions], axis=-1)
+        q_values: Tensor = self._critic_network(critic_input)
+        return q_values
 
 
 class HACQLSystem(BaseOfflineSystem):
@@ -209,19 +163,22 @@ class HACQLSystem(BaseOfflineSystem):
         self.target_policy_networks = [copy.deepcopy(policy_network) for i in range(len(self.agents))]
 
         # Critic network
-        self.critic_network_1 = StateAndJointActionCritic(
+        critic_network_1 = StateAndJointActionCritic(
             len(self.environment.agents), self.environment.num_actions
         )  # shared network for all agents
-        self.critic_network_2 = copy.deepcopy(self.critic_network_1)
+
+
+        self.critic_networks_1 = [copy.deepcopy(copy.deepcopy(critic_network_1)) for i in range(len(self.agents))]
+        self.critic_networks_2 = [copy.deepcopy(copy.deepcopy(critic_network_1)) for i in range(len(self.agents))]
 
         # Target critic network
-        self.target_critic_network_1 = copy.deepcopy(self.critic_network_1)
-        self.target_critic_network_2 = copy.deepcopy(self.critic_network_1)
+        self.target_critic_networks_1 = copy.deepcopy(self.critic_networks_1)
+        self.target_critic_networks_2 = copy.deepcopy(self.critic_networks_2)
         self.target_update_rate = target_update_rate
 
         # Optimizers
-        self.critic_optimizer = snt.optimizers.Adam(learning_rate=critic_learning_rate)
-        self.policy_optimizer = snt.optimizers.Adam(learning_rate=policy_learning_rate)
+        self.critic_optimizers = [snt.optimizers.Adam(learning_rate=critic_learning_rate) for i in range(len(self.agents))]
+        self.policy_optimizers = [snt.optimizers.Adam(learning_rate=policy_learning_rate) for i in range(len(self.agents))]
 
         # Reset the recurrent neural network
         self.rnn_states = {
@@ -282,6 +239,8 @@ class HACQLSystem(BaseOfflineSystem):
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
+        logs = {}
+
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = tf.clip_by_value(
@@ -310,183 +269,195 @@ class HACQLSystem(BaseOfflineSystem):
         env_states = switch_two_leading_dims(env_states)
         resets = switch_two_leading_dims(resets)
 
-        # Unroll target policy
         target_actions = ha_unroll_rnn(
             self.target_policy_networks,
             observations,
             resets,
         )
 
-        # Target critics
-        target_qs_1 = self.target_critic_network_1(env_states, target_actions, target_actions)
-        target_qs_2 = self.target_critic_network_2(env_states, target_actions, target_actions)
-
-        # Take minimum between two target critics
-        target_qs = tf.minimum(target_qs_1, target_qs_2)
-
-        # Compute Bellman targets
-        targets = rewards[:-1] + self.discount * (1 - terminals[:-1]) * tf.squeeze(
-            target_qs[1:], axis=-1
+        online_actions = ha_unroll_rnn(
+            self.policy_networks,
+            observations,
+            resets,
         )
 
-        # Do forward passes through the networks and calculate the losses
-        with tf.GradientTape() as tape:
-            # Online critics
-            qs_1 = tf.squeeze(
-                self.critic_network_1(env_states, replay_actions, replay_actions),
-                axis=-1,
-            )
-            qs_2 = tf.squeeze(
-                self.critic_network_2(env_states, replay_actions, replay_actions),
-                axis=-1,
-            )
-
-            # Squared TD-error
-            critic_loss_1 = tf.reduce_mean(0.5 * (targets - qs_1[:-1]) ** 2)
-            critic_loss_2 = tf.reduce_mean(0.5 * (targets - qs_2[:-1]) ** 2)
-
-            ###########
-            ### CQL ###
-            ###########
-
-            online_actions = ha_unroll_rnn(
-                self.policy_networks,
-                observations,
-                resets,
-            )
-
-            # Repeat all tensors num_ood_actions times andadd  next to batch dim
-            repeat_observations = tf.stack(
-                [observations] * self.num_ood_actions, axis=2
-            )  # next to batch dim
-            repeat_env_states = tf.stack(
-                [env_states] * self.num_ood_actions, axis=2
-            )  # next to batch dim
-            repeat_online_actions = tf.stack(
-                [online_actions] * self.num_ood_actions, axis=2
-            )  # next to batch dim
-
-            # Flatten into batch dim
-            repeat_observations = tf.reshape(
-                repeat_observations, (T, -1, *repeat_observations.shape[3:])
-            )
-            repeat_env_states = tf.reshape(repeat_env_states, (T, -1, *repeat_env_states.shape[3:]))
-            repeat_online_actions = tf.reshape(
-                repeat_online_actions, (T, -1, *repeat_online_actions.shape[3:])
-            )
-
-            # CQL Loss
-            random_ood_actions = tf.random.uniform(
-                shape=repeat_online_actions.shape,
-                minval=-1.0,
-                maxval=1.0,
-                dtype=repeat_online_actions.dtype,
-            )
-            random_ood_action_log_pi = tf.math.log(0.5 ** (random_ood_actions.shape[-1]))
-
-            ood_qs_1 = (
-                self.critic_network_1(repeat_env_states, random_ood_actions, random_ood_actions)[
-                    :-1
-                ]
-                - random_ood_action_log_pi
-            )
-            ood_qs_2 = (
-                self.critic_network_2(repeat_env_states, random_ood_actions, random_ood_actions)[
-                    :-1
-                ]
-                - random_ood_action_log_pi
-            )
-
-            # # Actions near true actions
-            mu = 0.0
-            std = self.cql_sigma
-            action_noise = tf.random.normal(
-                repeat_online_actions.shape,
-                mean=mu,
-                stddev=std,
-                dtype=repeat_online_actions.dtype,
-            )
-            current_ood_actions = tf.clip_by_value(repeat_online_actions + action_noise, -1.0, 1.0)
-
-            ood_actions_prob = (1 / (self.cql_sigma * tf.math.sqrt(2 * np.pi))) * tf.exp(
-                -((action_noise - mu) ** 2) / (2 * self.cql_sigma**2)
-            )
-            ood_actions_log_prob = tf.math.log(
-                tf.reduce_prod(ood_actions_prob, axis=-1, keepdims=True)
-            )
-
-            current_ood_qs_1 = (
-                self.critic_network_1(
-                    repeat_env_states[:-1],
-                    current_ood_actions[:-1],
-                    current_ood_actions[:-1],
-                )
-                - ood_actions_log_prob[:-1]
-            )
-            current_ood_qs_2 = (
-                self.critic_network_2(
-                    repeat_env_states[:-1],
-                    current_ood_actions[:-1],
-                    current_ood_actions[:-1],
-                )
-                - ood_actions_log_prob[:-1]
-            )
-
-            next_current_ood_qs_1 = (
-                self.critic_network_1(
-                    repeat_env_states[:-1],
-                    current_ood_actions[1:],
-                    current_ood_actions[1:],
-                )
-                - ood_actions_log_prob[1:]
-            )
-            next_current_ood_qs_2 = (
-                self.critic_network_2(
-                    repeat_env_states[:-1],
-                    current_ood_actions[1:],
-                    current_ood_actions[1:],
-                )
-                - ood_actions_log_prob[1:]
-            )
-
-            # Reshape
-            ood_qs_1 = tf.reshape(ood_qs_1, (T - 1, B, self.num_ood_actions, N))
-            ood_qs_2 = tf.reshape(ood_qs_2, (T - 1, B, self.num_ood_actions, N))
-            current_ood_qs_1 = tf.reshape(current_ood_qs_1, (T - 1, B, self.num_ood_actions, N))
-            current_ood_qs_2 = tf.reshape(current_ood_qs_2, (T - 1, B, self.num_ood_actions, N))
-            next_current_ood_qs_1 = tf.reshape(
-                next_current_ood_qs_1, (T - 1, B, self.num_ood_actions, N)
-            )
-            next_current_ood_qs_2 = tf.reshape(
-                next_current_ood_qs_2, (T - 1, B, self.num_ood_actions, N)
-            )
-
-            all_ood_qs_1 = tf.concat((ood_qs_1, current_ood_qs_1, next_current_ood_qs_1), axis=2)
-            all_ood_qs_2 = tf.concat((ood_qs_2, current_ood_qs_2, next_current_ood_qs_2), axis=2)
-
-            cql_loss_1 = tf.reduce_mean(
-                tf.reduce_logsumexp(all_ood_qs_1, axis=2, keepdims=False)
-            ) - tf.reduce_mean(qs_1[:-1])
-            cql_loss_2 = tf.reduce_mean(
-                tf.reduce_logsumexp(all_ood_qs_2, axis=2, keepdims=False)
-            ) - tf.reduce_mean(qs_2[:-1])
-
-            critic_loss_1 += self.cql_weight * cql_loss_1
-            critic_loss_2 += self.cql_weight * cql_loss_2
-            critic_loss = (critic_loss_1 + critic_loss_2) / 2
-
-            ### END CQL ###
-
-        # Train critics
-        variables = (
-            *self.critic_network_1.trainable_variables,
-            *self.critic_network_2.trainable_variables,
-        )
-        gradients = tape.gradient(critic_loss, variables)
-        self.critic_optimizer.apply(gradients, variables)
-
+        latest_target_actions = []
         latest_online_actions = []
         for i in range(len(self.agents)):
+            latest_target_actions.append(target_actions[:,:,i])
+            latest_online_actions.append(online_actions[:,:,i])
+
+
+        for i in range(len(self.agents)):
+            # Unroll target policy
+            agent_target_actions = ha_unroll_rnn(
+                self.target_policy_networks,
+                observations,
+                resets,
+                i
+            )
+            latest_target_actions[i] = agent_target_actions
+
+            target_actions = tf.stack(latest_target_actions, axis=2)
+
+            # Target critics
+            target_qs_1 = self.target_critic_networks_1[i](env_states, target_actions)
+            target_qs_2 = self.target_critic_networks_2[i](env_states, target_actions)
+
+            # Take minimum between two target critics
+            target_qs = tf.minimum(target_qs_1, target_qs_2)
+
+            # Compute Bellman targets
+            targets = rewards[:-1,:,i] + self.discount * (1 - terminals[:-1,:,i]) * tf.squeeze(
+                target_qs[1:], axis=-1
+            )
+
+            with tf.GradientTape() as tape:
+                # Online critics
+                qs_1 = tf.squeeze(
+                    self.critic_networks_1[i](env_states, replay_actions),
+                    axis=-1,
+                )
+                qs_2 = tf.squeeze(
+                    self.critic_networks_2[i](env_states, replay_actions),
+                    axis=-1,
+                )
+
+                # Squared TD-error
+                critic_loss_1 = tf.reduce_mean(0.5 * (targets - qs_1[:-1]) ** 2)
+                critic_loss_2 = tf.reduce_mean(0.5 * (targets - qs_2[:-1]) ** 2)
+
+                ###########
+                ### CQL ###
+                ###########
+
+                online_actions = tf.stack(latest_online_actions, axis=2)
+
+                # Repeat all tensors num_ood_actions times andadd  next to batch dim
+                repeat_observations = tf.stack(
+                    [observations] * self.num_ood_actions, axis=2
+                )  # next to batch dim
+                repeat_env_states = tf.stack(
+                    [env_states] * self.num_ood_actions, axis=2
+                )  # next to batch dim
+                repeat_online_actions = tf.stack(
+                    [online_actions] * self.num_ood_actions, axis=2
+                )  # next to batch dim
+
+                # Flatten into batch dim
+                repeat_observations = tf.reshape(
+                    repeat_observations, (T, -1, *repeat_observations.shape[3:])
+                )
+                repeat_env_states = tf.reshape(repeat_env_states, (T, -1, *repeat_env_states.shape[3:]))
+                repeat_online_actions = tf.reshape(
+                    repeat_online_actions, (T, -1, *repeat_online_actions.shape[3:])
+                )
+
+                # CQL Loss
+                random_ood_actions = tf.random.uniform(
+                    shape=repeat_online_actions.shape,
+                    minval=-1.0,
+                    maxval=1.0,
+                    dtype=repeat_online_actions.dtype,
+                )
+                random_ood_action_log_pi = tf.math.log(0.5 ** (random_ood_actions.shape[-1]))
+
+                ood_qs_1 = (
+                    self.critic_networks_1[i](repeat_env_states, random_ood_actions)[
+                        :-1
+                    ]
+                    - random_ood_action_log_pi
+                )
+                ood_qs_2 = (
+                    self.critic_networks_2[i](repeat_env_states, random_ood_actions)[
+                        :-1
+                    ]
+                    - random_ood_action_log_pi
+                )
+
+                # # Actions near true actions
+                mu = 0.0
+                std = self.cql_sigma
+                action_noise = tf.random.normal(
+                    repeat_online_actions.shape,
+                    mean=mu,
+                    stddev=std,
+                    dtype=repeat_online_actions.dtype,
+                )
+                current_ood_actions = tf.clip_by_value(repeat_online_actions + action_noise, -1.0, 1.0)
+
+                ood_actions_prob = (1 / (self.cql_sigma * tf.math.sqrt(2 * np.pi))) * tf.exp(
+                    -((action_noise - mu) ** 2) / (2 * self.cql_sigma**2)
+                )
+                ood_actions_log_prob = tf.math.log(
+                     tf.reduce_prod(tf.reduce_prod(ood_actions_prob, axis=-1),axis=-1, keepdims=True)
+                )
+
+                current_ood_qs_1 = (
+                    self.critic_networks_1[i](
+                        repeat_env_states[:-1],
+                        current_ood_actions[:-1],
+                    )
+                    - ood_actions_log_prob[:-1]
+                )
+                current_ood_qs_2 = (
+                    self.critic_networks_2[i](
+                        repeat_env_states[:-1],
+                        current_ood_actions[:-1],
+                    )
+                    - ood_actions_log_prob[:-1]
+                )
+
+                next_current_ood_qs_1 = (
+                    self.critic_networks_1[i](
+                        repeat_env_states[:-1],
+                        current_ood_actions[1:],
+                    )
+                    - ood_actions_log_prob[1:]
+                )
+                next_current_ood_qs_2 = (
+                    self.critic_networks_2[i](
+                        repeat_env_states[:-1],
+                        current_ood_actions[1:],
+                    )
+                    - ood_actions_log_prob[1:]
+                )
+
+                # Reshape
+                ood_qs_1 = tf.reshape(ood_qs_1, (T - 1, B, self.num_ood_actions))
+                ood_qs_2 = tf.reshape(ood_qs_2, (T - 1, B, self.num_ood_actions))
+                current_ood_qs_1 = tf.reshape(current_ood_qs_1, (T - 1, B, self.num_ood_actions))
+                current_ood_qs_2 = tf.reshape(current_ood_qs_2, (T - 1, B, self.num_ood_actions))
+                next_current_ood_qs_1 = tf.reshape(
+                    next_current_ood_qs_1, (T - 1, B, self.num_ood_actions)
+                )
+                next_current_ood_qs_2 = tf.reshape(
+                    next_current_ood_qs_2, (T - 1, B, self.num_ood_actions)
+                )
+
+                all_ood_qs_1 = tf.concat((ood_qs_1, current_ood_qs_1, next_current_ood_qs_1), axis=2)
+                all_ood_qs_2 = tf.concat((ood_qs_2, current_ood_qs_2, next_current_ood_qs_2), axis=2)
+
+                cql_loss_1 = tf.reduce_mean(
+                    tf.reduce_logsumexp(all_ood_qs_1, axis=2, keepdims=False)
+                ) - tf.reduce_mean(qs_1[:-1])
+                cql_loss_2 = tf.reduce_mean(
+                    tf.reduce_logsumexp(all_ood_qs_2, axis=2, keepdims=False)
+                ) - tf.reduce_mean(qs_2[:-1])
+
+                critic_loss_1 += self.cql_weight * cql_loss_1
+                critic_loss_2 += self.cql_weight * cql_loss_2
+                critic_loss = (critic_loss_1 + critic_loss_2) / 2
+
+                ### END CQL ###
+
+            # Train critics
+            variables = (
+                *self.critic_networks_1[i].trainable_variables,
+                *self.critic_networks_2[i].trainable_variables,
+            )
+            gradients = tape.gradient(critic_loss, variables)
+            self.critic_optimizers[i].apply(gradients, variables)
 
             with tf.GradientTape() as tape:
                 agent_latest_action = ha_unroll_rnn(
@@ -495,56 +466,52 @@ class HACQLSystem(BaseOfflineSystem):
                     resets,
                     agent_idx=i
                 )
-                latest_online_actions.append(agent_latest_action)
+                latest_online_actions[i] = agent_latest_action
 
-                joint_action = []
-                for x in range(N):
-                    if x < len(latest_online_actions):
-                        joint_action.append(latest_online_actions[x])
-                    else:
-                        joint_action.append(tf.expand_dims(online_actions[:,:,x], axis=2))
-                joint_action = tf.concat(joint_action, axis=2)
+                joint_action = tf.stack(latest_online_actions, axis=2)
 
                 # Policy Loss
-                policy_qs_1 = self.critic_network_1(env_states, joint_action, joint_action, agent_idx=x)
-                policy_qs_2 = self.critic_network_2(env_states, joint_action, joint_action, agent_idx=x)
+                policy_qs_1 = self.critic_networks_1[i](env_states, joint_action)
+                policy_qs_2 = self.critic_networks_2[i](env_states, joint_action)
                 policy_qs = tf.minimum(policy_qs_1, policy_qs_2)
 
-                policy_loss = -tf.reduce_mean(policy_qs) + 1e-3 * tf.reduce_mean(online_actions**2)
+                policy_loss = -tf.reduce_mean(policy_qs) + 1e-3 * tf.reduce_mean(agent_latest_action**2)
 
             # Train policy
             variables = (*self.policy_networks[i].trainable_variables,)
             gradients = tape.gradient(policy_loss, variables)
-            self.policy_optimizer.apply(gradients, variables)
+            self.policy_optimizers[i].apply(gradients, variables)
 
-        # Update target networks
-        online_variables = [
-            *self.critic_network_1.variables,
-            *self.critic_network_2.variables,
-        ]
-        target_variables = [
-            *self.target_critic_network_1.variables,
-            *self.target_critic_network_2.variables,
-        ]
+            # Update target networks
+            online_variables = [
+                *self.critic_networks_1[i].variables,
+                *self.critic_networks_2[i].variables,
+                *self.policy_networks[i].variables,
 
-        for n in range(N):
-            online_variables += [*self.policy_networks[n].variables,]
-            target_variables += [*self.target_policy_networks[n].variables,]
+            ]
+            target_variables = [
+                *self.target_critic_networks_1[i].variables,
+                *self.target_critic_networks_2[i].variables,
+                *self.target_policy_networks[i].variables,
+            ]
 
-        # Soft target update
-        tau = self.target_update_rate
-        for src, dest in zip(online_variables, target_variables):
-            dest.assign(dest * (1.0 - tau) + src * tau)
+            # Soft target update
+            tau = self.target_update_rate
+            for src, dest in zip(online_variables, target_variables):
+                dest.assign(dest * (1.0 - tau) + src * tau)
 
-        del tape
+            agent_logs = {
+                f"agent_{i}_mean_dataset_q_values": tf.reduce_mean((qs_1 + qs_2) / 2),
+                f"agent_{i}_critic_loss": critic_loss,
+                f"agent_{i}_cql_loss": (cql_loss_1 + cql_loss_2) / 2.0,
+                f"agent_{i}_policy_loss": policy_loss,
+                f"agent_{i}_mean_chosen_q_values": tf.reduce_mean((policy_qs_1 + policy_qs_2) / 2),
+            }
 
-        logs = {
-            "mean_dataset_q_values": tf.reduce_mean((qs_1 + qs_2) / 2),
-            "critic_loss": critic_loss,
-            "cql_loss": (cql_loss_1 + cql_loss_2) / 2.0,
-            "policy_loss": policy_loss,
-            "mean_chosen_q_values": tf.reduce_mean((policy_qs_1 + policy_qs_2) / 2),
-        }
+            logs = {
+                **logs,
+                **agent_logs
+            }
 
         return logs
 
