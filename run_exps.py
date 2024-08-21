@@ -51,7 +51,7 @@ SCRIPTS = [
 
 TASK = "task.env=mamujoco_omiga task.scenario=6halfcheetah task.dataset=Expert"
 
-SEEDS = [2] 
+SEEDS = [3] 
 
 def main():
 
