@@ -97,7 +97,7 @@ VAULT_INFO = {
 
 def print_download_options() -> None:
     pprint.pprint(VAULT_INFO, depth=3)
-    return
+    return VAULT_INFO
 
 
 def download_and_unzip_vault(
