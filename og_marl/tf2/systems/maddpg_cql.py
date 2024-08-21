@@ -217,8 +217,8 @@ class MADDPGCQLSystem(BaseOfflineSystem):
             )
 
             # Squared TD-error
-            critic_loss_1 = tf.reduce_mean(0.5 * (targets - qs_1[:-1]) ** 2)
-            critic_loss_2 = tf.reduce_mean(0.5 * (targets - qs_2[:-1]) ** 2)
+            td_error_1 = tf.reduce_mean(0.5 * (targets - qs_1[:-1]) ** 2)
+            td_error_2 = tf.reduce_mean(0.5 * (targets - qs_2[:-1]) ** 2)
 
             ###########
             ### CQL ###
@@ -347,8 +347,8 @@ class MADDPGCQLSystem(BaseOfflineSystem):
                 tf.reduce_logsumexp(all_ood_qs_2, axis=2, keepdims=False)
             ) - tf.reduce_mean(qs_2[:-1])
 
-            critic_loss_1 += self.cql_weight * cql_loss_1
-            critic_loss_2 += self.cql_weight * cql_loss_2
+            critic_loss_1 = td_error_1 + self.cql_weight * cql_loss_1
+            critic_loss_2 = td_error_2 + self.cql_weight * cql_loss_2
             critic_loss = (critic_loss_1 + critic_loss_2) / 2
 
             ### END CQL ###
@@ -395,6 +395,7 @@ class MADDPGCQLSystem(BaseOfflineSystem):
         logs = {
             "mean_dataset_q_values": tf.reduce_mean((qs_1 + qs_2) / 2),
             "critic_loss": critic_loss,
+            "td_loss": (td_error_1 + td_error_2) / 2,
             "cql_loss": (cql_loss_1 + cql_loss_2) / 2.0,
             "policy_loss": policy_loss,
             "mean_chosen_q_values": tf.reduce_mean((policy_qs_1 + policy_qs_2) / 2),

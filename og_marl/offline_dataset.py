@@ -77,6 +77,11 @@ VAULT_INFO = {
             "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/cfcql/smac_v1/3s_vs_5z.zip"
         },
     },
+    "mamujoco_omiga": {
+        "2ant": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/mamujoco/2ant.zip"
+        },
+    },
 }
 
 

@@ -18,6 +18,10 @@ def get_environment(env_name: str, scenario: str, seed: int = 42) -> BaseEnviron
         from og_marl.environment_wrappers.old_mamujoco import MAMuJoCo
 
         return MAMuJoCo(scenario, seed=seed)
+    elif env_name == "mamujoco_omiga":
+        from og_marl.environment_wrappers.mamujoco_omiga import MAMuJoCoOMIGA
+
+        return MAMuJoCoOMIGA(scenario, seed=seed)
     elif env_name == "flatland":
         from og_marl.environment_wrappers.flatland_wrapper import Flatland
 
