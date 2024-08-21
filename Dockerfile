@@ -39,14 +39,16 @@ RUN pip install --quiet --upgrade pip setuptools wheel &&  \
 # RUN ./install_environments/smacv1.sh
 # RUN ./install_environments/smacv2.sh
 
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
-ENV SUPPRESS_GR_PROMPT 1
-RUN ./install_environments/mamujoco.sh
+# ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
+# ENV SUPPRESS_GR_PROMPT 1
+# RUN ./install_environments/mamujoco.sh
+# RUN pip install git+https://github.com/schroederdewitt/multiagent_mujoco
 
-# RUN ./install_environments/pettingzoo.sh
 
-# RUN ./install_environments/flatland.sh
 
-# Copy all code
-# COPY ./examples ./examples
-# COPY ./baselines ./baselines
+
+# MAMuJoCo 200 Requirements
+RUN ./install_environments/mujoco200.sh
+RUN pip install -r ./install_environments/requirements/mamujoco.txt
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco200/bin:/usr/lib/nvidia
+RUN pip install mujoco-py==2.0.2.5

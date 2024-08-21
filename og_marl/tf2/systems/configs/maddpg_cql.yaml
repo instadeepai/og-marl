@@ -4,9 +4,9 @@ wandb_project: og-marl
 training_steps: 5e5
 
 task:
-  env: mamujoco
+  env: mamujoco_omiga
   scenario: 2halfcheetah
-  dataset: Good
+  dataset: Expert
 
 replay:
   sequence_length: 20
