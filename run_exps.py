@@ -51,7 +51,7 @@ SCRIPTS = [
 
 TASK = "task.env=mamujoco_omiga task.scenario=3hopper task.dataset=Expert"
 
-SEEDS = [4] 
+SEEDS = [3] 
 
 def main():
 
