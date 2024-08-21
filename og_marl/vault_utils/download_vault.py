@@ -92,6 +92,51 @@ VAULT_INFO = {
             },
         },
     },
+    "omar": {
+        "mpe": {
+            "simple_spread": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omar/mpe/simple_spread.zip"
+            },
+            "simple_tag": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omar/mpe/simple_tag.zip"
+            },
+            "simple_world": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omar/mpe/simple_world.zip"
+            },
+        },
+        "mamujoco": {
+            "2halfcheetah": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omar/mamujoco/2halfcheetah.zip"
+            },
+        },
+    },
+    "omiga": {
+        "smac_v1": {
+            "2c_vs_64zg": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/smac_v1/2c_vs_64zg.zip"
+            },
+            "6h_vs_8z": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/smac_v1/6h_vs_8z.zip"
+            },
+            "5m_vs_6m": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/smac_v1/5m_vs_6m.zip"
+            },
+            "corridor": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/smac_v1/corridor.zip"
+            },
+        },
+        "mamujoco": {
+            "6halfcheetah": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/mamujoco/6halfcheetah.zip"
+            },
+            "2ant": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/mamujoco/2ant.zip"
+            },
+            "3hopper": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/mamujoco/3hopper.zip"
+            },
+        },
+    },
 }
 
 
