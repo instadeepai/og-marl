@@ -17,9 +17,10 @@ system:
   recurrent_layer_dim: 64
   discount: 0.99
   target_update_rate: 0.01
-  critic_learning_rate: 1e-3
-  policy_learning_rate: 1e-3
+  critic_learning_rate: 3e-4
+  policy_learning_rate: 3e-5
   add_agent_id_to_obs: True
   num_ood_actions: 10
-  cql_weight: 5.0
-  cql_sigma: 0.2
+  cql_weight: 0.5
+  cql_sigma: 0.1
+

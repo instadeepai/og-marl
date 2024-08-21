@@ -49,7 +49,7 @@ SCRIPTS = [
 #    "og_marl/tf2/systems/maddpg_cql_cpg.py"
 ]
 
-TASK = "task.env=mamujoco_omiga task.scenario=2halfcheetah task.dataset=Expert"
+TASK = "task.env=mamujoco_omiga task.scenario=2ant task.dataset=Expert"
 
 SEEDS = [5] 
 
