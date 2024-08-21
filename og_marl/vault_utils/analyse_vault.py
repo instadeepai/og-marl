@@ -389,7 +389,8 @@ def descriptive_summary(
         n_bins (integer): number of bins to use when generating a histogram
 
     Returns:
-        all_returns (Dict[str, Array]): for each uid (key), an Array of all episode returns in that dataset
+        all_returns (Dict[str, Array]): for each uid (key), 
+            an Array of all episode returns in that dataset
 
     Artefacts:
         A table is printed containing for each dataset in the list of uids:

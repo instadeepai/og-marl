@@ -153,7 +153,8 @@ def subsample_smaller_vault(
         # get per-episode length, start and end indexes in the vault data
         len_start_end = get_length_start_end(offline_data)
 
-        # get a number of transitions from randomly sampled episodes within one episode length of the target num of transitions
+        # get a number of transitions from randomly sampled episodes
+        # within one episode length of the target num of transitions
         len_start_end_sample = select_episodes_uniformly_up_to_n_transitions(
             len_start_end, target_number_of_transitions
         )
