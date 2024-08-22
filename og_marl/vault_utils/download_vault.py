@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List
+from typing import List, Dict
 
 import os
 import sys
@@ -139,7 +139,7 @@ VAULT_INFO = {
 }
 
 
-def print_download_options() -> None:
+def print_download_options() -> Dict[str, Dict]:
     print("VAULT_INFO:")
     for source in VAULT_INFO.keys():
         print(f"\t {source}")
@@ -163,7 +163,7 @@ def download_and_unzip_vault(
         f"{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}.vlt"
     ):
         print(
-            f"Vault '{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}' already exists."
+            f"Vault '{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}' already exists."  # noqa
         )
         return f"{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}.vlt"
 
@@ -178,7 +178,7 @@ def download_and_unzip_vault(
         print(
             "Dataset from "
             + str(dataset_download_url)
-            + " could not be downloaded. Try entering a different URL, or removing the part which auto-downloads."
+            + " could not be downloaded. Try entering a different URL, or removing the part which auto-downloads."  # noqa
         )
         return f"{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}.vlt"
 

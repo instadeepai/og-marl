@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from git import Optional
 
 import jax
 import pickle
@@ -107,7 +107,8 @@ def stitch_vault_from_sampled_episodes_(
 
     for start, end in zip(len_start_end_sample[:, 1], len_start_end_sample[:, 2]):
         sample_experience = jax.tree_util.tree_map(
-            lambda x: x[:, int(start) : int(end + 1), ...], experience
+            lambda x: x[:, int(start) : int(end + 1), ...],  # noqa
+            experience,
         )
         dest_state = buffer_add(dest_state, sample_experience)
 
@@ -115,13 +116,13 @@ def stitch_vault_from_sampled_episodes_(
 
     print(timesteps_written)
 
-    return timesteps_written
+    return int(timesteps_written)
 
 
 def subsample_smaller_vault(
     vaults_dir: str,
     vault_name: str,
-    vault_uids: list = None,
+    vault_uids: Optional[list] = None,
     target_number_of_transitions: int = 500000,
 ) -> str:
     # check that the vault to be subsampled exists
@@ -141,7 +142,7 @@ def subsample_smaller_vault(
     # check that a subsampled vault by the same name does not already exist
     if check_directory_exists_and_not_empty(f"./{vaults_dir}/{new_vault_name}"):
         print(
-            f"Vault '{vaults_dir}/{new_vault_name.removesuffix('.vlt')}' already exists. To subsample from scratch, please remove the current subsampled vault from its directory." #noqa
+            f"Vault '{vaults_dir}/{new_vault_name.removesuffix('.vlt')}' already exists. To subsample from scratch, please remove the current subsampled vault from its directory."  # noqa
         )
         return f"./{vaults_dir}/{vault_name}"
 
