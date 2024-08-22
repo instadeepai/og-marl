@@ -16,7 +16,7 @@ SCRIPTS = [
 
 TASK = "task.env=mpe_omar task.scenario=simple_spread"
 
-SEEDS = [4]
+SEEDS = [3]
 DATASETS = ["a", "b", "c", "d", "e"]
 
 
