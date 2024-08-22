@@ -82,7 +82,7 @@ def stitch_vault_from_sampled_episodes_(
     if check_directory_exists_and_not_empty(f"{rel_dir}/{dest_vault_name}/{vault_uid}/"):
         print(f"Vault '{rel_dir}/{dest_vault_name}.vlt/{vault_uid}' already exists.")
         return 0
-    
+
     dest_buffer = fbx.make_trajectory_buffer(
         # Sampling parameters
         sample_batch_size=1,
@@ -91,7 +91,7 @@ def stitch_vault_from_sampled_episodes_(
         # Not important in this example, as we are not adding to the buffer
         max_length_time_axis=n,
         min_length_time_axis=100,
-        add_batch_size=experience['actions'].shape[0],
+        add_batch_size=experience["actions"].shape[0],
     )
 
     dummy_experience = jax.tree_map(lambda x: x[0, 0, ...], experience)
@@ -134,7 +134,9 @@ def subsample_smaller_vault(
         vault_uids = get_available_uids(f"./{vaults_dir}/{vault_name}")
 
     # name of subsampled vault (at task level)
-    new_vault_name = vault_name.removesuffix(".vlt") + "_" + str(target_number_of_transitions) + ".vlt"
+    new_vault_name = (
+        vault_name.removesuffix(".vlt") + "_" + str(target_number_of_transitions) + ".vlt"
+    )
 
     # check that a subsampled vault by the same name does not already exist
     if check_directory_exists_and_not_empty(f"./{vaults_dir}/{new_vault_name}"):

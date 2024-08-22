@@ -156,7 +156,7 @@ def describe_episode_returns(
     # get all uids if not specified
     if len(vault_uids) == 0:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
-    
+
     single_values = []
     all_uid_eps_returns = {}
     for uid in vault_uids:
@@ -170,8 +170,8 @@ def describe_episode_returns(
 
     print(tabulate(single_values, headers=["Uid", "Mean", "Stddev", "Max", "Min"]))
 
-    if plot_saving_rel_dir=="vaults":
-        plot_saving_rel_dir=rel_dir
+    if plot_saving_rel_dir == "vaults":
+        plot_saving_rel_dir = rel_dir
 
     if plot_hist:
         min_of_all = min([x[-1] for x in single_values])
@@ -191,7 +191,9 @@ def describe_episode_returns(
     if plot_violin:
         if save_violin:
             plot_eps_returns_violin(
-                all_uid_eps_returns, vault_name, save_path=f"{plot_saving_rel_dir}/{vault_name.removesuffix('.vlt')}_violin_plot.pdf"
+                all_uid_eps_returns,
+                vault_name,
+                save_path=f"{plot_saving_rel_dir}/{vault_name.removesuffix('.vlt')}_violin_plot.pdf",
             )
         else:
             plot_eps_returns_violin(all_uid_eps_returns, vault_name)
@@ -393,7 +395,7 @@ def descriptive_summary(
         n_bins (integer): number of bins to use when generating a histogram
 
     Returns:
-        all_returns (Dict[str, Array]): for each uid (key), 
+        all_returns (Dict[str, Array]): for each uid (key),
             an Array of all episode returns in that dataset
 
     Artefacts:

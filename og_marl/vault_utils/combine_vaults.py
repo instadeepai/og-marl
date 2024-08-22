@@ -49,9 +49,9 @@ def stitch_vault_from_many(vlts: list[Vault], vault_name: str, vault_uid: str, r
         sample_sequence_length=1,
         period=1,
         # Not important in this example, as we are not adding to the buffer
-        max_length_time_axis=offline_data['actions'].shape[1]+1,
+        max_length_time_axis=offline_data["actions"].shape[1] + 1,
         min_length_time_axis=100,
-        add_batch_size=offline_data['actions'].shape[0],
+        add_batch_size=offline_data["actions"].shape[0],
     )
 
     dummy_experience = jax.tree_map(lambda x: x[0, 0, ...], offline_data)
