@@ -1,3 +1,38 @@
+import os
+
+from og_marl.tf2.utils import set_growing_gpu_memory
+
+set_growing_gpu_memory()
+
+WANDB_PROJECT = "mpe-std-matters"
+
+SCRIPTS = [
+    # "og_marl/tf2/systems/iddpg_cql.py",
+    "og_marl/tf2/systems/iddpg_bc.py",
+    # "og_marl/tf2/systems/omar.py",
+    # "og_marl/tf2/systems/maddpg_cql.py",
+    # "og_marl/tf2/systems/continuous_bc.py",
+]
+
+TASK = "task.env=mpe_omar task.scenario=simple_spread"
+
+SEEDS = [5]
+DATASETS = ["a", "b", "c", "d", "e"]
+
+
+def main():
+    for seed in SEEDS:
+        for script in SCRIPTS:
+            for dataset in DATASETS:
+                os.system(
+                    f"python {script} {TASK} task.dataset{dataset} wandb_project={WANDB_PROJECT} seed={seed}"
+                )
+
+
+if __name__ == "__main__":
+    main()
+
+
 # import os
 
 # from og_marl.tf2.utils import set_growing_gpu_memory
@@ -29,32 +64,31 @@
 #     main()
 
 
+# import os
 
-import os
+# from og_marl.tf2.utils import set_growing_gpu_memory
 
-from og_marl.tf2.utils import set_growing_gpu_memory
+# set_growing_gpu_memory()
 
-set_growing_gpu_memory()
+# WANDB_PROJECT = "og-marl-mamujoco-baselines"
 
-WANDB_PROJECT = "og-marl-mamujoco-baselines"
+# SCRIPTS = [
+#     "og_marl/tf2/systems/iddpg_cql.py",
+#     # "og_marl/tf2/systems/iddpg_bc.py",
+#     "og_marl/tf2/systems/omar.py",
+#     "og_marl/tf2/systems/maddpg_cql.py",
+#     # "og_marl/tf2/systems/continuous_bc.py",
+# ]
 
-SCRIPTS = [
-    "og_marl/tf2/systems/iddpg_cql.py",
-    # "og_marl/tf2/systems/iddpg_bc.py",
-    "og_marl/tf2/systems/omar.py",
-    "og_marl/tf2/systems/maddpg_cql.py",
-    # "og_marl/tf2/systems/continuous_bc.py",
-]
+# TASK = "task.scenario=2halfcheetah task.dataset=Good"
 
-TASK = "task.scenario=2halfcheetah task.dataset=Good"
+# SEEDS = [5]
 
-SEEDS = [5]
+# def main():
 
-def main():
+#     for seed in SEEDS:
+#         for script in SCRIPTS:
+#             os.system(f"python {script} {TASK} wandb_project={WANDB_PROJECT} seed={seed}")
 
-    for seed in SEEDS:
-        for script in SCRIPTS:
-            os.system(f"python {script} {TASK} wandb_project={WANDB_PROJECT} seed={seed}")
-
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

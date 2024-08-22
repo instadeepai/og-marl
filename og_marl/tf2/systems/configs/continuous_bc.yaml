@@ -4,12 +4,12 @@ wandb_project: og-marl
 training_steps: 5e5
 
 task:
-  env: mamujoco
-  scenario: 2halfcheetah
-  dataset: Good
+  env: mpe_omar
+  scenario: simple_spread
+  dataset: c
 
 replay:
-  sequence_length: 20
+  sequence_length: 5
   sample_period: 1
 
 system:

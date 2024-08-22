@@ -14,7 +14,7 @@
 
 # from og_marl.environments.gymnasium_mamujoco import MAMuJoCo
 # from og_marl.environments.wrappers import Dtype, PadObsandActs
-from og_marl.environment_wrappers.old_mamujoco import MAMuJoCo
+from og_marl.environment_wrappers.mamujoco import MAMuJoCo
 from og_marl.loggers import WandbLogger
 from og_marl.replay_buffers import FlashbaxReplayBuffer
 from development.maddpg import MADDPGSystem
