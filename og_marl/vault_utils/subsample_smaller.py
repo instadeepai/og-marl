@@ -121,7 +121,7 @@ def stitch_vault_from_sampled_episodes_(
 def subsample_smaller_vault(
     vaults_dir: str,
     vault_name: str,
-    vault_uids: list = [],
+    vault_uids: list = None,
     target_number_of_transitions: int = 500000,
 ) -> str:
     # check that the vault to be subsampled exists
@@ -130,7 +130,7 @@ def subsample_smaller_vault(
         return f"./{vaults_dir}/{vault_name}"
 
     # if uids aren't specified, use all uids for subsampling
-    if len(vault_uids) == 0:
+    if vault_uids is None:
         vault_uids = get_available_uids(f"./{vaults_dir}/{vault_name}")
 
     # name of subsampled vault (at task level)

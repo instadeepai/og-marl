@@ -27,10 +27,10 @@ from og_marl.vault_utils.download_vault import (
 
 def get_all_vaults(
     vault_name: str,
-    vault_uids: Optional[list[str]] = [],
+    vault_uids: Optional[list[str]] = None,
     rel_dir: str = "vaults",
 ) -> list[Vault]:
-    if len(vault_uids) == 0:
+    if vault_uids is None:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
     vlts = []
@@ -83,14 +83,14 @@ def stitch_vault_from_many(vlts: list[Vault], vault_name: str, vault_uid: str, r
     return tot_timesteps
 
 
-def combine_vaults(rel_dir: str, vault_name: str, vault_uids: Optional[list[str]] = []) -> str:
+def combine_vaults(rel_dir: str, vault_name: str, vault_uids: Optional[list[str]] = None) -> str:
     # check that the vault to be combined exists
     if not check_directory_exists_and_not_empty(f"./{rel_dir}/{vault_name}"):
         print(f"Vault './{rel_dir}/{vault_name}' does not exist and cannot be combined.")
         return f"./{rel_dir}/{vault_name}"
 
     # if uids aren't specified, use all uids for subsampling
-    if len(vault_uids) == 0:
+    if vault_uids is None:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
     # name of subsampled vault (at task level)

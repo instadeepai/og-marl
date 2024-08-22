@@ -41,12 +41,12 @@ def get_structure_descriptors(
 
 def describe_structure(
     vault_name: str,
-    vault_uids: Optional[List[str]] = [],
+    vault_uids: Optional[List[str]] = None,
     rel_dir: str = "vaults",
     n_head: int = 0,
 ) -> Dict[str, Array]:
     # get all uids if not specified
-    if len(vault_uids) == 0:
+    if vault_uids is None:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
     # get structure, number of transitions and the head of the block
@@ -144,7 +144,7 @@ def plot_eps_returns_hist(
 
 def describe_episode_returns(
     vault_name: str,
-    vault_uids: Optional[List[str]] = [],
+    vault_uids: Optional[List[str]] = None,
     rel_dir: str = "vaults",
     plot_hist: bool = True,
     save_hist: bool = False,
@@ -154,7 +154,7 @@ def describe_episode_returns(
     n_bins: Optional[int] = 50,
 ) -> None:
     # get all uids if not specified
-    if len(vault_uids) == 0:
+    if vault_uids is None:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
     single_values = []
@@ -318,7 +318,7 @@ def plot_count_frequencies(
 
 def describe_coverage(
     vault_name: str,
-    vault_uids: Optional[List[str]] = [],
+    vault_uids: Optional[List[str]] = None,
     rel_dir: str = "vaults",
     plot_count_freq: bool = True,
     save_plot: bool = False,
@@ -344,7 +344,7 @@ def describe_coverage(
 
     """
     # get all uids if not specified
-    if len(vault_uids) == 0:
+    if vault_uids is None:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
     single_values = []
@@ -377,7 +377,7 @@ def describe_coverage(
 
 def descriptive_summary(
     vault_name: str,
-    vault_uids: Optional[List[str]] = [],
+    vault_uids: Optional[List[str]] = None,
     rel_dir: str = "vaults",
     plot_hist: bool = True,
     save_hist: bool = False,
@@ -412,7 +412,7 @@ def descriptive_summary(
         if save_hist is True, plt saves the figure as a pdf under the vault_name directory
 
     """
-    if len(vault_uids) == 0:
+    if vault_uids is None:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
     all_returns = {}
