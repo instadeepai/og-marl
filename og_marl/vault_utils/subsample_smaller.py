@@ -134,12 +134,12 @@ def subsample_smaller_vault(
         vault_uids = get_available_uids(f"./{vaults_dir}/{vault_name}")
 
     # name of subsampled vault (at task level)
-    new_vault_name = vault_name.strip(".vlt") + "_" + str(target_number_of_transitions) + ".vlt"
+    new_vault_name = vault_name.removesuffix(".vlt") + "_" + str(target_number_of_transitions) + ".vlt"
 
     # check that a subsampled vault by the same name does not already exist
     if check_directory_exists_and_not_empty(f"./{vaults_dir}/{new_vault_name}"):
         print(
-            f"Vault '{vaults_dir}/{new_vault_name.strip('.vlt')}' already exists. To subsample from scratch, please remove the current subsampled vault from its directory."
+            f"Vault '{vaults_dir}/{new_vault_name.removesuffix('.vlt')}' already exists. To subsample from scratch, please remove the current subsampled vault from its directory."
         )
         return f"./{vaults_dir}/{vault_name}"
 

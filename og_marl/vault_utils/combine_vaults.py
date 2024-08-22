@@ -96,12 +96,12 @@ def combine_vaults(rel_dir: str, vault_name: str, vault_uids: Optional[list[str]
     # name of subsampled vault (at task level)
     print(vault_uids)
     uids_str = "_".join(vault_uids)
-    new_vault_name = vault_name.strip(".vlt") + "_combined.vlt"
+    new_vault_name = vault_name.removesuffix(".vlt") + "_combined.vlt"
 
     # check that a subsampled vault by the same name does not already exist
     if check_directory_exists_and_not_empty(f"./{rel_dir}/{new_vault_name}"):
         print(
-            f"Vault '{rel_dir}/{new_vault_name.strip('.vlt')}' already exists. To combine from scratch, please remove the current combined vault from its directory."
+            f"Vault '{rel_dir}/{new_vault_name.removesuffix('.vlt')}' already exists. To combine from scratch, please remove the current combined vault from its directory."
         )
         return new_vault_name
 
