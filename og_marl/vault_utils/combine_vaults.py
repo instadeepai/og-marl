@@ -101,8 +101,7 @@ def combine_vaults(rel_dir: str, vault_name: str, vault_uids: Optional[list[str]
     # check that a subsampled vault by the same name does not already exist
     if check_directory_exists_and_not_empty(f"./{rel_dir}/{new_vault_name}"):
         print(
-            f"Vault '{rel_dir}/{new_vault_name.removesuffix('.vlt')}' already exists. 
-            To combine from scratch, please remove the current combined vault from its directory."
+            f"Vault '{rel_dir}/{new_vault_name.removesuffix('.vlt')}' already exists. To combine from scratch, please remove the current combined vault from its directory." #noqa
         )
         return new_vault_name
 

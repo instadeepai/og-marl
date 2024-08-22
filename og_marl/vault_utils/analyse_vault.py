@@ -285,7 +285,7 @@ def plot_count_frequencies(
     Args:
         all_count_vals (Dict[str, Array]): for each uid (key), the counts of state-action pairs
         all_count_freq (Dict[str, Array]):
-            for each uid (key), the number of times 
+            for each uid (key), the number of times
             a state-action pair appears a specific number of times
         save_path (string): path to save the plot to. If empty, the figure is unsaved.
 

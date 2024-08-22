@@ -101,8 +101,7 @@ def subsample_similar(
     # check that a subsampled vault by the same name does not already exist
     if check_directory_exists_and_not_empty(f"./{new_rel_dir}/{new_vault_name}"):
         print(
-            f"Vault '{new_rel_dir}/{new_vault_name.removesuffix('.vlt')}' already exists. 
-            To subsample from scratch, please remove the current subsampled vault from its directory."
+            f"Vault '{new_rel_dir}/{new_vault_name.removesuffix('.vlt')}' already exists. To subsample from scratch, please remove the current subsampled vault from its directory." #noqa
         )
         return
 
