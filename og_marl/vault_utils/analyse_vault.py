@@ -135,7 +135,7 @@ def plot_eps_returns_hist(
     ax[0, 0].set_ylabel("Frequency")
     fig.tight_layout()
     if len(save_path) > 0:
-        plt.savefig(save_path, format="pdf", bbox_inches="tight")
+        plt.savefig(save_path, bbox_inches="tight")
     fig.suptitle(f"Histogram of distributions of episode returns for {vault_name}")
     fig.tight_layout()
     plt.show()
@@ -150,12 +150,13 @@ def describe_episode_returns(
     save_hist: bool = False,
     plot_violin: bool = True,
     save_violin: bool = False,
+    plot_saving_rel_dir: str = "vaults",
     n_bins: Optional[int] = 50,
 ) -> None:
     # get all uids if not specified
     if len(vault_uids) == 0:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
-
+    
     single_values = []
     all_uid_eps_returns = {}
     for uid in vault_uids:
@@ -169,6 +170,9 @@ def describe_episode_returns(
 
     print(tabulate(single_values, headers=["Uid", "Mean", "Stddev", "Max", "Min"]))
 
+    if plot_saving_rel_dir=="vaults":
+        plot_saving_rel_dir=rel_dir
+
     if plot_hist:
         min_of_all = min([x[-1] for x in single_values])
         max_of_all = max([x[-2] for x in single_values])
@@ -179,7 +183,7 @@ def describe_episode_returns(
                 n_bins,
                 min_of_all,
                 max_of_all,
-                save_path=f"{rel_dir}/{vault_name}/histogram.pdf",
+                save_path=f"{plot_saving_rel_dir}/{vault_name.removesuffix('.vlt')}_histogram.pdf",
             )
         else:
             plot_eps_returns_hist(all_uid_eps_returns, vault_name, n_bins, min_of_all, max_of_all)
@@ -187,7 +191,7 @@ def describe_episode_returns(
     if plot_violin:
         if save_violin:
             plot_eps_returns_violin(
-                all_uid_eps_returns, vault_name, save_path=f"{rel_dir}/{vault_name}/violin_plot.pdf"
+                all_uid_eps_returns, vault_name, save_path=f"{plot_saving_rel_dir}/{vault_name.removesuffix('.vlt')}_violin_plot.pdf"
             )
         else:
             plot_eps_returns_violin(all_uid_eps_returns, vault_name)
