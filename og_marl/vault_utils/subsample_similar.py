@@ -30,7 +30,7 @@ def get_episode_returns_and_term_idxes(offline_data: Dict[str, Array]) -> Tuple[
     rewards = offline_data["rewards"][0, :, 0]
     terminal_flag = offline_data["terminals"][0, :, ...].all(axis=-1)
 
-    assert terminal_flag[-1] == True
+    assert terminal_flag[-1] is True
 
     def scan_cumsum(
         return_so_far: float, prev_term_reward: Tuple[bool, float]
@@ -101,7 +101,8 @@ def subsample_similar(
     # check that a subsampled vault by the same name does not already exist
     if check_directory_exists_and_not_empty(f"./{new_rel_dir}/{new_vault_name}"):
         print(
-            f"Vault '{new_rel_dir}/{new_vault_name.removesuffix('.vlt')}' already exists. To subsample from scratch, please remove the current subsampled vault from its directory."
+            f"Vault '{new_rel_dir}/{new_vault_name.removesuffix('.vlt')}' already exists. 
+            To subsample from scratch, please remove the current subsampled vault from its directory."
         )
         return
 

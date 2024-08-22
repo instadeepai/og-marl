@@ -141,7 +141,14 @@ VAULT_INFO = {
 
 
 def print_download_options() -> None:
-    pprint.pprint(VAULT_INFO, depth=3)
+    print("VAULT_INFO:")
+    for source in VAULT_INFO.keys():
+        print(f'\t {source}')
+        for env in VAULT_INFO[source].keys():
+            print(f'\t \t {env}')
+            for scenario in VAULT_INFO[source][env].keys():
+                print(f'\t \t \t {scenario}')
+        print('---------')
     return VAULT_INFO
 
 
@@ -168,7 +175,7 @@ def download_and_unzip_vault(
     # check that the URL works
     try:
         response = requests.get(dataset_download_url, stream=True)
-    except:
+    except Exception as error:
         print(
             "Dataset from "
             + str(dataset_download_url)

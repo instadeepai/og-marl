@@ -141,7 +141,8 @@ def subsample_smaller_vault(
     # check that a subsampled vault by the same name does not already exist
     if check_directory_exists_and_not_empty(f"./{vaults_dir}/{new_vault_name}"):
         print(
-            f"Vault '{vaults_dir}/{new_vault_name.removesuffix('.vlt')}' already exists. To subsample from scratch, please remove the current subsampled vault from its directory."
+            f"Vault '{vaults_dir}/{new_vault_name.removesuffix('.vlt')}' already exists. 
+            To subsample from scratch, please remove the current subsampled vault from its directory."
         )
         return f"./{vaults_dir}/{vault_name}"
 
