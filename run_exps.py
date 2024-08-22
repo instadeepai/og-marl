@@ -4,7 +4,7 @@ from og_marl.tf2.utils import set_growing_gpu_memory
 
 set_growing_gpu_memory()
 
-WANDB_PROJECT = "mpe-std-matters"
+WANDB_PROJECT = "mpe-std-really-matters"
 
 SCRIPTS = [
     # "og_marl/tf2/systems/iddpg_cql.py",
