@@ -25,7 +25,7 @@ def main():
         for script in SCRIPTS:
             for dataset in DATASETS:
                 os.system(
-                    f"python {script} {TASK} task.dataset{dataset} wandb_project={WANDB_PROJECT} seed={seed}"
+                    f"python {script} {TASK} task.dataset={dataset} wandb_project={WANDB_PROJECT} seed={seed}"
                 )
 
 
