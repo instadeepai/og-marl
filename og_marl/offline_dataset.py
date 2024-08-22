@@ -84,7 +84,7 @@ VAULT_INFO = {
     },
     "mpe_omar": {
         "simple_spread": {
-            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omar/mpe/simple_spread_mean.zip"
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omar/mpe/simple_spread_std.zip"
         },
         
     },
