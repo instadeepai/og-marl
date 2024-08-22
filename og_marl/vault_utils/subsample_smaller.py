@@ -82,7 +82,7 @@ def stitch_vault_from_sampled_episodes_(
     if check_directory_exists_and_not_empty(f"{rel_dir}/{dest_vault_name}.vlt/{vault_uid}/"):
         print(f"Vault '{rel_dir}/{dest_vault_name}.vlt/{vault_uid}' already exists.")
         return f"{rel_dir}/{dest_vault_name}.vlt/{vault_uid}"
-
+    
     dest_buffer = fbx.make_trajectory_buffer(
         # Sampling parameters
         sample_batch_size=1,
@@ -91,7 +91,7 @@ def stitch_vault_from_sampled_episodes_(
         # Not important in this example, as we are not adding to the buffer
         max_length_time_axis=n,
         min_length_time_axis=100,
-        add_batch_size=1,
+        add_batch_size=experience['actions'].shape[0],
     )
 
     dummy_experience = jax.tree_map(lambda x: x[0, 0, ...], experience)
