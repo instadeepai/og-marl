@@ -77,11 +77,11 @@ def stitch_vault_from_sampled_episodes_(
     vault_uid: str,
     rel_dir: str,
     n: int = 500_000,
-) -> Array:
+) -> int:
     # to prevent downloading the vault twice into the same folder
-    if check_directory_exists_and_not_empty(f"{rel_dir}/{dest_vault_name}.vlt/{vault_uid}/"):
+    if check_directory_exists_and_not_empty(f"{rel_dir}/{dest_vault_name}/{vault_uid}/"):
         print(f"Vault '{rel_dir}/{dest_vault_name}.vlt/{vault_uid}' already exists.")
-        return f"{rel_dir}/{dest_vault_name}.vlt/{vault_uid}"
+        return 0
     
     dest_buffer = fbx.make_trajectory_buffer(
         # Sampling parameters
