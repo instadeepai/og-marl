@@ -49,12 +49,12 @@ def stitch_vault_from_many(vlts: list[Vault], vault_name: str, vault_uid: str, r
         sample_sequence_length=1,
         period=1,
         # Not important in this example, as we are not adding to the buffer
-        max_length_time_axis=500_000,
+        max_length_time_axis=offline_data['actions'].shape[1]+1,
         min_length_time_axis=100,
-        add_batch_size=1,
+        add_batch_size=offline_data['actions'].shape[0],
     )
 
-    dummy_experience = jax.tree_map(lambda x: x[0, 0, ...], all_data.experience)
+    dummy_experience = jax.tree_map(lambda x: x[0, 0, ...], offline_data)
     del offline_data
     del all_data
 
@@ -94,6 +94,7 @@ def combine_vaults(rel_dir: str, vault_name: str, vault_uids: Optional[list[str]
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
     # name of subsampled vault (at task level)
+    print(vault_uids)
     uids_str = "_".join(vault_uids)
     new_vault_name = vault_name.strip(".vlt") + "_combined.vlt"
 
@@ -104,7 +105,7 @@ def combine_vaults(rel_dir: str, vault_name: str, vault_uids: Optional[list[str]
         )
         return new_vault_name
 
-    vlts = get_all_vaults(rel_dir, vault_name, vault_uids)
+    vlts = get_all_vaults(rel_dir=rel_dir, vault_name=vault_name, vault_uids=vault_uids)
 
     timesteps = stitch_vault_from_many(vlts, new_vault_name, uids_str, rel_dir)
 
