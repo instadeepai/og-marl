@@ -138,7 +138,7 @@ def subsample_similar(
         return_start_end_list.append(sort_concat(returns, episode_end_idxes))
         experience_list.append(offline_data)
 
-    # extract the returns specfically
+    # extract the returns specifically
     base_ret = return_start_end_list[0][:, 0]
     comp_ret = return_start_end_list[1][:, 0]
 
