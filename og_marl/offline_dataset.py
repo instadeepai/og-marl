@@ -81,6 +81,12 @@ VAULT_INFO = {
         "2ant": {
             "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/mamujoco/2ant.zip"
         },
+        "3hopper": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/mamujoco/3hopper.zip"
+        },
+        "6halfcheetah": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/mamujoco/6halfcheetah.zip"
+        },
     },
 }
 

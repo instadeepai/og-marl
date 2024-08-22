@@ -358,7 +358,7 @@ class MADDPGCQLSystem(BaseOfflineSystem):
             policy_qs_2 = self.critic_network_2(env_states, online_actions, replay_actions)
             policy_qs = tf.minimum(policy_qs_1, policy_qs_2)
 
-            policy_loss = -tf.reduce_mean(policy_qs) + 1e-3 * tf.reduce_mean(online_actions**2)
+            policy_loss = -tf.reduce_mean(policy_qs) #+ 1e-3 * tf.reduce_mean(online_actions**2)
 
         # Train critics
         variables = (
@@ -395,7 +395,7 @@ class MADDPGCQLSystem(BaseOfflineSystem):
         logs = {
             "mean_dataset_q_values": tf.reduce_mean((qs_1 + qs_2) / 2),
             "critic_loss": critic_loss,
-            "td_loss": (td_error_1 + td_error_2) / 2,
+            "td_loss": (td_error_1 + td_error_2) / 2.0,
             "cql_loss": (cql_loss_1 + cql_loss_2) / 2.0,
             "policy_loss": policy_loss,
             "mean_chosen_q_values": tf.reduce_mean((policy_qs_1 + policy_qs_2) / 2),
