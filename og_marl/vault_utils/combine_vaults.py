@@ -30,6 +30,7 @@ def get_all_vaults(
     vault_uids: Optional[list[str]] = None,
     rel_dir: str = "vaults",
 ) -> list[Vault]:
+    """Gets a list of Vaults from the specified directory. Each uid produces one Vault."""
     if vault_uids is None:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")
 
@@ -40,6 +41,7 @@ def get_all_vaults(
 
 
 def stitch_vault_from_many(vlts: list[Vault], vault_name: str, vault_uid: str, rel_dir: str) -> int:
+    """Given a list of vaults, writes all experience in each of them to one new vault."""
     all_data = vlts[0].read()
     offline_data = all_data.experience
 
@@ -84,6 +86,11 @@ def stitch_vault_from_many(vlts: list[Vault], vault_name: str, vault_uid: str, r
 
 
 def combine_vaults(rel_dir: str, vault_name: str, vault_uids: Optional[list[str]] = None) -> str:
+    """Combines datasets in a vault.
+
+    Takes multiple datasets in a vault and combines them into one new vault
+    with added "_combined" in the name.
+    """
     # check that the vault to be combined exists
     if not check_directory_exists_and_not_empty(f"./{rel_dir}/{vault_name}"):
         print(f"Vault './{rel_dir}/{vault_name}' does not exist and cannot be combined.")

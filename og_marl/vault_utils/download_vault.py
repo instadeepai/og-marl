@@ -140,6 +140,7 @@ VAULT_INFO = {
 
 
 def print_download_options() -> Dict[str, Dict]:
+    """Prints as well as returns all options for downloading vaults from OG-MARL huggingface."""
     print("VAULT_INFO:")
     for source in VAULT_INFO.keys():
         print(f"\t {source}")
@@ -158,6 +159,11 @@ def download_and_unzip_vault(
     dataset_base_dir: str = "./vaults",
     dataset_download_url: str = "",
 ) -> str:
+    """Downloads and unzips vaults.
+
+    The location of the vault is dataset_base_dir/dataset_source/env_name/scenario_name/.
+    If the vault already exists and is not empty, the download does not happen.
+    """
     # to prevent downloading the vault twice into the same folder
     if check_directory_exists_and_not_empty(
         f"{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}.vlt"
@@ -215,6 +221,7 @@ def download_and_unzip_vault(
 
 
 def check_directory_exists_and_not_empty(path: str) -> bool:
+    """Checks that the directory at path exists and is not empty."""
     # Check if the directory exists
     if os.path.exists(path) and os.path.isdir(path):
         # Check if the directory is not empty
@@ -227,6 +234,7 @@ def check_directory_exists_and_not_empty(path: str) -> bool:
 
 
 def get_available_uids(rel_vault_path: str) -> List[str]:
+    """Obtains the uids of datasets in a vault at the relative path."""
     vault_uids = sorted(
         next(os.walk(rel_vault_path))[1],
         reverse=True,

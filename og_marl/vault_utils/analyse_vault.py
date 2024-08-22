@@ -153,6 +153,14 @@ def describe_episode_returns(
     plot_saving_rel_dir: str = "vaults",
     n_bins: Optional[int] = 50,
 ) -> None:
+    """Describe a vault.
+
+    From the specified directory and for the specified uids,
+    describes vaults according to their episode returns.
+    The descriptors include a table of episode return mean, standard deviation, min and max.
+    Additionally, the distributions of episode returns are visualised in histograms
+    and violin plots. n_bins is how many bins the histogram should have.
+    """
     # get all uids if not specified
     if vault_uids is None:
         vault_uids = get_available_uids(f"./{rel_dir}/{vault_name}")

@@ -21,6 +21,7 @@ import jax.numpy as jnp
 
 # given bin edges and a sorted array of values, get the bin number per value
 def get_bin_numbers(sorted_values: Array, bin_edges: Array) -> Array:
+    """Assigns known, sorted values to given bins."""
     bin_numbers = np.zeros_like(sorted_values)
 
     def get_bin_number(bin_num: int, value: float) -> int:
@@ -46,6 +47,12 @@ def get_bin_numbers(sorted_values: Array, bin_edges: Array) -> Array:
 def bin_processed_data(
     all_sorted_return_start_end: Array, n_bins: int = 500
 ) -> Tuple[Array, Array, Array, Array, Array]:
+    """Bins rows in an array according to the values in a particular column.
+
+    Returns bar_labels connected with bar_heights,
+    as well as padded_heights whose entries' indices are the bin number.
+    Bin edges and all numbers are also returned.
+    """
     # get bin edges, including final endpoint
     bin_edges = jnp.linspace(
         start=min(min(all_sorted_return_start_end[:, 0]), 0),
@@ -68,9 +75,16 @@ def bin_processed_data(
     return bar_labels, bar_heights, padded_heights.astype(int), bin_edges, bin_numbers
 
 
-# sample from pdf according to heights
-# BIG NOTE: CHECK THE DISPARITY, OTHERWISE YOUR DISTRIBUTION WILL BE TOO MUCH
 def episode_idxes_sampled_from_pdf(pdf: Array, bar_heights: Array) -> list[int]:
+    """Gets a list of episode indices according to how many episodes you want from each bin.
+
+    Given an array of desired bar heights and the actual bar heights, produces the
+    indices of the episodes which should be sampled to produce the desired bar heights.
+    It is assumed that episodes which will be sampled are sorted ascending, and so, for example,
+    with bars of heights 3,5,7 if you want a resultant histogram of 0,2,0, you will need to
+    sample two indices randomly from {3,4,5,6,7}.
+    The function will then return the list of sampled indices.
+    """
     num_to_sample = np.round(pdf).astype(int)
     sample_range_edges = np.concatenate([[0], np.cumsum(bar_heights)])
 

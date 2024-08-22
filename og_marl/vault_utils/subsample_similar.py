@@ -27,6 +27,11 @@ from os.path import exists
 
 # cumulative summing per-episode
 def get_episode_returns_and_term_idxes(offline_data: Dict[str, Array]) -> Tuple[Array, Array]:
+    """Gets the episode returns and final indices from a batch of experience.
+
+    From a batch of experience extract the indices
+    of the final transitions as well as the returns of each episode in order.
+    """
     rewards = offline_data["rewards"][0, :, 0]
     terminal_flag = offline_data["terminals"][0, :, ...].all(axis=-1)
 
@@ -49,13 +54,17 @@ def get_episode_returns_and_term_idxes(offline_data: Dict[str, Array]) -> Tuple[
     return cumsums[term_idxes - 1], term_idxes
 
 
-# first store indices of episodes, then sort by episode return.
-# outputs return, start, end and vault index in vault list
 def sort_concat(returns: Array, eps_ends: Array) -> Array:
+    """An original-order-aware sorting and concatenating of episode information.
+
+    From a list of episodes ends and returns which are in the order of the episodes in the
+    original experience batch, produces an array of rows of return,
+    start index and end index for each episode.
+    """
+    # build start indexes from end indexes since they are in order
     episode_start_idxes = eps_ends[:-1] + 1
     episode_start_idxes = jnp.insert(episode_start_idxes, 0, 0).reshape(-1, 1)
     sorting_idxes = jnp.lexsort(jnp.array([returns[:, 0]]), axis=-1)
-    # print(sorting_idxes)
 
     return_start_end = jnp.concatenate(
         [returns, episode_start_idxes.reshape(-1, 1), eps_ends], axis=-1
@@ -69,6 +78,15 @@ def sort_concat(returns: Array, eps_ends: Array) -> Array:
 def get_idxes_of_similar_subsets(
     base_returns: List, comp_returns: List, tol: float = 0.1
 ) -> Tuple[List, List]:
+    """Gets indices of episodes s.t. the subsets of two datasets have similar return distributions.
+
+    Iteratively selects episodes from either dataset with episode return within "tol" of each other.
+    Importantly, returns are SORTED BEFORE BEING PASSED TO THIS FUNCTION.
+    Returns the list of all such almost-matching episodes.
+    (For each episode Ea in dataset A, if there is an episode Eb in dataset B with a return within
+    "tol" of the return of E, select Ea and Eb to be sampled.
+    If not, move on from Ea.)
+    """
     base_selected_idxes = []
     comp_selected_idxes = []
 
@@ -98,6 +116,7 @@ def subsample_similar(
     new_rel_dir: str,
     new_vault_name: str,
 ) -> None:
+    """Subsamples 2 datasets s.t. the new datasets have similar episode return distributions."""
     # check that a subsampled vault by the same name does not already exist
     if check_directory_exists_and_not_empty(f"./{new_rel_dir}/{new_vault_name}"):
         print(

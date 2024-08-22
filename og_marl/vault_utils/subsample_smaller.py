@@ -31,6 +31,12 @@ from chex import Array
 
 
 def get_length_start_end(experience: Dict[str, Array], terminal_key: str = "terminals") -> Array:
+    """Process experience to get the length, start and end of all episodes.
+
+    From a block of experience, extracts the length, start position and end position of each
+    episode. Length is stored for the convenience of a cumsum in the following function, and
+    to match other episode information blocks which store return, instead.
+    """
     # extract terminals
     terminal_flag = experience[terminal_key][0, :, ...].all(axis=-1)
 
@@ -41,7 +47,7 @@ def get_length_start_end(experience: Dict[str, Array], terminal_key: str = "term
     start_idxes = np.zeros_like(term_idxes)
     start_idxes[1:] = term_idxes[:-1]
 
-    # get the length per-episode (TODO maybe redundant)
+    # get the length per-episode
     lengths = term_idxes - start_idxes
 
     # concatenate for easier unpacking
@@ -51,6 +57,13 @@ def get_length_start_end(experience: Dict[str, Array], terminal_key: str = "term
 
 
 def select_episodes_uniformly_up_to_n_transitions(len_start_end: Array, n: int) -> Array:
+    """Uniformly selects episodes from an episode info array.
+
+    Selects rows (episodes) randomly uniformly from an array containing
+    episode lengths, start indices and end indices.
+    Shuffles the indices of the array, then selects the first x shuffled rows
+    up til the cumulative sum of their lengths exceeds n.
+    """
     # shuffle idxes of all the episodes from the vault
     shuffled_idxes = np.arange(len_start_end.shape[0])
     np.random.shuffle(shuffled_idxes)
@@ -69,7 +82,6 @@ def select_episodes_uniformly_up_to_n_transitions(len_start_end: Array, n: int) 
     return randomly_sampled_len_start_end
 
 
-# given the indices of the required episodes, stitch a vault and save under a user-specified name
 def stitch_vault_from_sampled_episodes_(
     experience: Dict[str, Array],
     len_start_end_sample: Array,
@@ -78,6 +90,16 @@ def stitch_vault_from_sampled_episodes_(
     rel_dir: str,
     n: int = 500_000,
 ) -> int:
+    """Writes a vault given episode information and a batch of experience.
+
+    Takes in experience
+    and an array with columns R,S,E (reward, start, end) or L, S, E (length, start, end)
+    describing episode returns (or redundantly lengths) and their positions in the block of
+    experience.
+    For every row in len_start_end_sample (for every episode in the sample),
+    selects the relevant transitions from "experience" and adds it to a new buffer.
+    In the end, writes the buffer of all episodes to the destination vault.
+    """
     # to prevent downloading the vault twice into the same folder
     if check_directory_exists_and_not_empty(f"{rel_dir}/{dest_vault_name}/{vault_uid}/"):
         print(f"Vault '{rel_dir}/{dest_vault_name}.vlt/{vault_uid}' already exists.")
@@ -125,6 +147,15 @@ def subsample_smaller_vault(
     vault_uids: Optional[list] = None,
     target_number_of_transitions: int = 500000,
 ) -> str:
+    """Subsamples a vault to a smaller number of transitions.
+
+    Subsamples every dataset in the list of uids (or, if unspecified, all uids in the vault)
+    by uniformly randomly selecting episodes from that dataset and storing it in a new vault.
+
+    Once the number of transitions in the episode selection is within one trajectory length
+    of the desired number of transitions, no further transitions are included.
+    This is to avoid creating partial trajectories.
+    """
     # check that the vault to be subsampled exists
     if not check_directory_exists_and_not_empty(f"./{vaults_dir}/{vault_name}"):
         print(f"Vault './{vaults_dir}/{vault_name}' does not exist and cannot be subsampled.")
