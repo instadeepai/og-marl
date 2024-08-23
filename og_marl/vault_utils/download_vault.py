@@ -148,7 +148,6 @@ def print_download_options() -> Dict[str, Dict]:
             print(f"\t \t {env}")
             for scenario in VAULT_INFO[source][env].keys():
                 print(f"\t \t \t {scenario}")
-        print("---------")
     return VAULT_INFO
 
 
