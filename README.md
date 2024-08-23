@@ -17,15 +17,15 @@
     <a href="https://arxiv.org/abs/2302.00521">
         <img src="https://img.shields.io/badge/PrePrint-ArXiv-red" alt="ArXiv">
     </a>
-    <a href="https://github.com/instadeepai/og-marl/actions/workflows/tests_linters.yml">
+    <!-- <a href="https://github.com/instadeepai/og-marl/actions/workflows/tests_linters.yml">
         <img src="https://github.com/instadeepai/og-marl/actions/workflows/tests_linters.yml/badge.svg" alt="Tests and Linters">
-    </a>
-    <a href="https://github.com/psf/black">
+    </a> -->
+    <!-- <a href="https://github.com/psf/black">
         <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
-    </a>
-    <a href="http://mypy-lang.org/">
+    </a> -->
+    <!-- <a href="http://mypy-lang.org/">
         <img src="http://www.mypy-lang.org/static/mypy_badge.svg" alt="MyPy">
-    </a>
+    </a> -->
 </p>
 
 <p align="center">
@@ -49,23 +49,29 @@ Clone this repository.
 
 `git clone https://github.com/instadeepai/og-marl.git`
 
-Install `og-marl` and its dependencies. We tested `og-marl` with Python 3.9. Consider using a `conda` virtual environment.
+Install `og-marl` and its requirements. We tested `og-marl` with Python 3.10. Consider using a `conda` virtual environment.
+
+`pip install -r requirements.txt`
 
 `pip install -e .`
 
-`pip install flashbax==0.1.2`
-
-Download environment dependencies. We will use SMACv1 in this example.
+Download environment files. We will use SMACv1 in this example.
 
 `bash install_environments/smacv1.sh`
 
+Download environment requirements.
+
+`pip install -r install_environments/requirements/smacv1.txt`
+
 Download a dataset.
 
-`python examples/download_dataset.py --env=smac_v1 --scenario=3m`
+`python examples/download_dataset.py --source=og_marl --env=smac_v1 --scenario=3m`
 
-Run a baseline. In this example we will run MAICQ.
+Train an offline system. In this example we will run Independent Q-Learning with Conservative Q-Learning (iql+cql).
 
-`python baselines/main.py --env=smac_v1 --scenario=3m --dataset=Good --system=maicq`
+`python og_marl/tf2/systems/iql_cql.py --task.source=og_marl --task.env=smac_v1 --task.scenario=3m --task.dataset=Good`
+
+You can find all offline systems at `og_marl/tf2/systems/` and they can be run similarly. Be careful, some systems only work on discrete action space environments and vice versa for continuous action space environments. The config files for systems are found at `og_marl/tf2/systems/configs/`. We use [hydra](https://hydra.cc/docs/intro/) for our config management. Config defaults can be overwritten as command line arguments like above.
 
 ## Dataset API 🔌
 
@@ -73,11 +79,15 @@ We provide a simple demonstrative notebook of how to use OG-MARL's dataset API h
 
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/instadeepai/og-marl/blob/main/examples/dataset_api_demo.ipynb)
 
-> ⚠️ If you are having issues with downloading our datasets, it may because you are downloading from a region far from where we are hosting the datasets. As an alternative, please try this [Google Drive link](https://drive.google.com/drive/folders/1lw-e5VwIdCtmsGWgQG902yZRArU69TrH?usp=sharing) instead.
-
 ## Datasets 🎥
 
 We have generated datasets on a diverse set of popular MARL environments. A list of currently supported environments is included in the table below. It is well known from the single-agent offline RL literature that the quality of experience in offline datasets can play a large role in the final performance of offline RL algorithms. Therefore in OG-MARL, for each environment and scenario, we include a range of dataset distributions including `Good`, `Medium`, `Poor` and `Replay` datasets in order to benchmark offline MARL algorithms on a range of different dataset qualities. For more information on why we chose to include each environment and its task properties, please read our accompanying [paper](https://arxiv.org/abs/2302.00521).
+
+<img src="docs/assets/hugging_face.png" alt="Hugging Face logo" width="25%"/>
+
+Our datasets are now hosted on Hugging Face for improved accessibility for the community: [https://huggingface.co/datasets/InstaDeepAI/og-marl](https://huggingface.co/datasets/InstaDeepAI/og-marl)
+
+> ⚠️ Some datasets have yet to be converted to the new dataset format (Vault). For available datasets, please refer to `og_marl/vault_utils/download_vault.py` or the Hugging Face datasets repository.
 
 <div class="collage">
   <div class="row" align="center">
@@ -108,12 +118,6 @@ We have generated datasets on a diverse set of popular MARL environments. A list
 | 🐜MAMuJoCo | 2x3 HalfCheetah <br/> 2x4 Ant <br/> 4x2 Ant | 2 <br/> 2 <br/> 4 | Cont. | Vector | Dense | Heterog <br/> Homog <br/> Homog | [source](https://github.com/schroederdewitt/multiagent_mujoco) |
 | 🐻PettingZoo | Pursuit  <br/> Co-op Pong | 8 <br/> 2 | Discrete <br/> Discrete  | Pixels <br/> Pixels | Dense | Homog <br/> Heterog | [source](https://pettingzoo.farama.org/) |
 
-Our datasets are now hosted on Hugging Face to further improve accessibility for the community. A few datasets have yet to be uploaded, but will be very soon.
-
-> [https://huggingface.co/datasets/InstaDeepAI/og-marl](https://huggingface.co/datasets/InstaDeepAI/og-marl)
-
-<img src="docs/assets/hugging_face.png" alt="Hugging Face logo" width="25%"/>
-
 ### Datasets from Prior Works 🥇
 We recently converted several datasets from prior works to Vaults and benchmarked our baseline algorithms on them. For more information, see our [technical report](https://arxiv.org/abs/2406.09068) on ArXiv. All of the code for re-running the experiments is available on the following branch of this repository:
 
@@ -128,6 +132,27 @@ We include the following datasets from prior works.
 | [Shao et al. (2023)](https://openreview.net/forum?id=62zmO4mv8X) | 🔫SMAC v1 | 5m_vs_6m <br/> 2s3z <br/> 3s_vs_5z <br/> 6h_vs_8z | [source](https://github.com/thu-rllab/CFCQL) |
 | [Wang et al. (2023)](https://papers.nips.cc/paper_files/paper/2023/hash/a46c84276e3a4249ab7dbf3e069baf7f-Abstract-Conference.html) | 🔫SMAC v1 | 5m_vs_6m <br/> 6h_vs_8z <br/> 2c_vs_64zg <br/> corridor| [source](https://github.com/ZhengYinan-AIR/OMIGA) |
 | [Wang et al. (2023)](https://papers.nips.cc/paper_files/paper/2023/hash/a46c84276e3a4249ab7dbf3e069baf7f-Abstract-Conference.html) | 🐜MAMuJoCo | 6x1 HalfCheetah <br/> 3x1 Hopper <br/> 2x4 Ant| [source](https://github.com/ZhengYinan-AIR/OMIGA) |
+
+# Installing MAMuJoCo 🐆
+
+The OG-MARL datasets use the latest version of MuJoCo (210). While the OMIGA and OMAR datasets use an older version (200). They each have different instalation instructions and should be installed in seperate virtual environments.
+
+#### MAMuJoCo 210
+
+`bash install_environments/mujoco210.sh`
+
+`pip install -r install_environments/mujoco.txt`
+
+`pip install -r install_environments/mamujoco210.txt`
+
+#### MAMuJoCo 200
+
+`bash install_environments/mujoco200.sh`
+
+`pip install -r install_environments/mujoco.txt`
+
+`pip install -r install_environments/mamujoco200.txt`
+
 
 ## See Also 🔎
 

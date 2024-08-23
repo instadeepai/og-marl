@@ -22,5 +22,3 @@ rm -rf SMAC_Maps.zip
 
 echo 'StarCraft II is installed.'
 
-# Install SMAC
-pip install -r install_environments/requirements/smacv2.txt

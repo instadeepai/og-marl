@@ -25,21 +25,5 @@ setup(
     description="Off-the-Grid MARL: Datasets and Baselines for Offline \
         Multi-Agent Reinforcement Learning",
     long_description="",
-    install_requires=[
-        "numpy",
-        "dm_tree",
-        "tensorflow[and-cuda]==2.15.1.*",
-        "tensorflow_io",
-        "tensorflow-probability[tf]==0.23.0",
-        "dm_sonnet",
-        "wandb",
-        "absl-py",
-        "gymnasium",
-        "requests",
-        "jax",
-        "matplotlib",
-        "seaborn",
-        "hydra-core",
-        # "flashbax==0.1.2", # install post
-    ],
+    install_requires=[],
 )
