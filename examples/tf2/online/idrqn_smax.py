@@ -19,7 +19,7 @@ from og_marl.tf2.systems.qmix import QMIXSystem
 
 env = SMAX("3m")
 
-logger = WandbLogger(entity="claude_formanek")
+logger = WandbLogger()
 
 system = QMIXSystem(env, logger, eps_decay_timesteps=50_000)
 

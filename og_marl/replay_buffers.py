@@ -64,13 +64,20 @@ class FlashbaxReplayBuffer:
         truncations: Dict[str, np.ndarray],
         infos: Dict[str, Any],
     ) -> None:
+        stacked_infos = {}
+        for key, value in infos.items():
+            if isinstance(value, dict):
+                stacked_infos[key] = np.stack(list(value.values()), axis=0)
+            else:
+                stacked_infos[key] = value
+
         timestep = {
-            "observations": observations,
-            "actions": actions,
-            "rewards": rewards,
-            "terminals": terminals,
-            "truncations": truncations,
-            "infos": infos,
+            "observations": np.stack(list(observations.values()), axis=0),
+            "actions": np.stack(list(actions.values()), axis=0),
+            "rewards": np.stack(list(rewards.values()), axis=0),
+            "terminals": np.stack(list(terminals.values()), axis=0),
+            "truncations": np.stack(list(truncations.values()), axis=0),
+            "infos": stacked_infos,
         }
 
         if self._buffer_state is None:

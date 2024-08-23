@@ -5,7 +5,7 @@ from og_marl.tf2.systems.qmix import QMIXSystem
 
 env = Pursuit()
 
-logger = WandbLogger(entity="claude_formanek")
+logger = WandbLogger()
 
 system = QMIXSystem(env, logger, add_agent_id_to_obs=True, target_update_rate=0.00005)
 

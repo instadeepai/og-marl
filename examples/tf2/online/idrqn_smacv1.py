@@ -19,7 +19,7 @@ from og_marl.tf2.systems.idrqn import IDRQNSystem
 
 env = SMACv1("3m")
 
-logger = WandbLogger(entity="claude_formanek")
+logger = WandbLogger()
 
 system = IDRQNSystem(env, logger, eps_decay_timesteps=10_000)
 
