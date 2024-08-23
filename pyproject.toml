@@ -1,5 +1,8 @@
 [tool.ruff]
 line-length = 100
+exclude = [
+    "custom_environments"
+]
 
 [tool.ruff.lint]
 select = ["A","B","C","D","E","F","G","N","T","W"]  # Specify list of error codes to report.
@@ -14,6 +17,7 @@ exclude = [
     "*.egg-info",
     ".cache",
     ".eggs",
+    "custom_environments"
 ]
 ignore = [
     "A002",  # Argument shadowing a Python builtin.
@@ -70,7 +74,7 @@ strict_equality = true
 explicit_package_bases = true
 follow_imports = "skip"
 ignore_missing_imports = true
-exclude = "jax"  # Ignoring until JAX systems are fully supported
+exclude = "custom_environments"
 
 [[tool.mypy.overrides]]
 module = [

@@ -54,6 +54,7 @@ class TerminalLogger(BaseLogger):
 class WandbLogger(BaseLogger):
     def __init__(
         self,
+        name: Optional[str] = None,
         config: Dict = {},  # noqa: B006
         project: str = "default_project",
         notes: str = "",
@@ -61,7 +62,7 @@ class WandbLogger(BaseLogger):
         entity: Optional[str] = None,
         log_every: int = 2,  # seconds
     ):
-        wandb.init(project=project, notes=notes, tags=tags, entity=entity, config=config)
+        wandb.init(name=name, project=project, notes=notes, tags=tags, entity=entity, config=config)
 
         self._log_every = log_every
         self._ctr = 0

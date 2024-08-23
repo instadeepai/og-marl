@@ -13,27 +13,36 @@
 # limitations under the License.
 
 """Implementation of QMIX+BCQ"""
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Tuple
+import copy
 
+import hydra
+import tree
+import numpy as np
+from omegaconf import DictConfig
 import sonnet as snt
 import tensorflow as tf
 from chex import Numeric
+from tensorflow import Tensor
 
-from og_marl.environments.base import BaseEnvironment
-from og_marl.loggers import BaseLogger
-from og_marl.tf2.systems.qmix import QMIXSystem
+from og_marl.environments import get_environment, BaseEnvironment
+from og_marl.loggers import BaseLogger, WandbLogger
+from og_marl.vault_utils.download_vault import download_and_unzip_vault
+from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
+from og_marl.tf2.systems.base import BaseOfflineSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
+    concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
     gather,
     merge_batch_and_agent_dim_of_time_major_sequence,
     switch_two_leading_dims,
     unroll_rnn,
 )
-from og_marl.tf2.networks import IdentityNetwork
+from og_marl.tf2.networks import QMixer
 
 
-class QMIXBCQSystem(QMIXSystem):
+class QMIXBCQSystem(BaseOfflineSystem):
 
     """QMIX+BCQ System"""
 
@@ -41,7 +50,6 @@ class QMIXBCQSystem(QMIXSystem):
         self,
         environment: BaseEnvironment,
         logger: BaseLogger,
-        bc_threshold: float = 0.4,  # BCQ parameter
         linear_layer_dim: int = 64,
         recurrent_layer_dim: int = 64,
         mixer_embed_dim: int = 32,
@@ -49,40 +57,110 @@ class QMIXBCQSystem(QMIXSystem):
         discount: float = 0.99,
         target_update_period: int = 200,
         learning_rate: float = 3e-4,
-        add_agent_id_to_obs: bool = False,
-        observation_embedding_network: Optional[snt.Module] = None,
-        state_embedding_network: Optional[snt.Module] = None,
+        add_agent_id_to_obs: bool = True,
+        bc_threshold: float = 0.4,  # BCQ parameter
     ):
         super().__init__(
             environment,
             logger,
-            linear_layer_dim=linear_layer_dim,
-            recurrent_layer_dim=recurrent_layer_dim,
-            mixer_embed_dim=mixer_embed_dim,
-            mixer_hyper_dim=mixer_hyper_dim,
-            add_agent_id_to_obs=add_agent_id_to_obs,
-            discount=discount,
-            target_update_period=target_update_period,
-            learning_rate=learning_rate,
-            observation_embedding_network=observation_embedding_network,
-            state_embedding_network=state_embedding_network,
         )
 
-        self._threshold = bc_threshold
-        self._behaviour_cloning_network = snt.DeepRNN(
+        self.discount = discount
+        self.add_agent_id_to_obs = add_agent_id_to_obs
+
+        # Q-network
+        self.q_network = snt.DeepRNN(
             [
                 snt.Linear(linear_layer_dim),
                 tf.nn.relu,
                 snt.GRU(recurrent_layer_dim),
                 tf.nn.relu,
-                snt.Linear(self._environment._num_actions),
+                snt.Linear(self.environment.num_actions),
+            ]
+        )  # shared network for all agents
+
+        # Target Q-network
+        self.target_q_network = copy.deepcopy(self.q_network)
+        self.target_update_period = target_update_period
+
+        # Optimizer
+        self.optimizer = snt.optimizers.Adam(learning_rate=learning_rate)
+        self.bc_optimizer = snt.optimizers.Adam(learning_rate=learning_rate)
+
+        # Recurrent neural network hidden states for evaluation
+        self.rnn_states = {
+            agent: self.q_network.initial_state(1) for agent in self.environment.agents
+        }
+
+        self.mixer = QMixer(len(self.environment.agents), mixer_embed_dim, mixer_hyper_dim)
+        self.target_mixer = QMixer(len(self.environment.agents), mixer_embed_dim, mixer_hyper_dim)
+
+        self.bc_threshold = bc_threshold
+        self.behaviour_cloning_network = snt.DeepRNN(
+            [
+                snt.Linear(linear_layer_dim),
+                tf.nn.relu,
+                snt.GRU(recurrent_layer_dim),
+                tf.nn.relu,
+                snt.Linear(self.environment.num_actions),
                 tf.nn.softmax,
             ]
         )
 
-        if observation_embedding_network is None:
-            observation_embedding_network = IdentityNetwork()
-        self._bc_embedding_network = observation_embedding_network
+    def reset(self) -> None:
+        """Called at the start of a new episode during evaluation."""
+        self.rnn_states = {
+            agent: self.q_network.initial_state(1) for agent in self.environment.agents
+        }  # reset the rnn hidden states
+
+    def select_actions(
+        self,
+        observations: Dict[str, np.ndarray],
+        legal_actions: Dict[str, np.ndarray],
+    ) -> Dict[str, np.ndarray]:
+        observations, legal_actions = tree.map_structure(
+            tf.convert_to_tensor, (observations, legal_actions)
+        )
+        actions, next_rnn_states = self._tf_select_actions(
+            observations, legal_actions, self.rnn_states
+        )
+        self.rnn_states = next_rnn_states
+        return tree.map_structure(  # type: ignore
+            lambda x: x.numpy(), actions
+        )  # convert to numpy and squeeze batch dim
+
+    @tf.function(jit_compile=True)
+    def _tf_select_actions(
+        self,
+        observations: Dict[str, Tensor],
+        legal_actions: Dict[str, Tensor],
+        rnn_states: Dict[str, Tensor],
+    ) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
+        actions = {}
+        next_rnn_states = {}
+        for i, agent in enumerate(self.agents):
+            agent_observation = observations[agent]
+            if self.add_agent_id_to_obs:
+                agent_observation = concat_agent_id_to_obs(agent_observation, i, len(self.agents))
+            agent_observation = tf.expand_dims(agent_observation, axis=0)  # add batch dimension
+            q_values, next_rnn_states[agent] = self.q_network(agent_observation, rnn_states[agent])
+
+            agent_legal_actions = legal_actions[agent]
+            masked_q_values = tf.where(
+                tf.cast(agent_legal_actions, "bool"),
+                q_values[0],
+                -99999999,
+            )
+            greedy_action = tf.argmax(masked_q_values)
+
+            actions[agent] = greedy_action
+
+        return actions, next_rnn_states
+
+    def train_step(self, experience: Experience) -> Dict[str, Numeric]:
+        train_step = tf.convert_to_tensor(self.training_step_ctr)
+        logs = self._tf_train_step(train_step, experience)
+        return logs  # type: ignore
 
     @tf.function(jit_compile=True)
     def _tf_train_step(self, train_step: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
@@ -102,7 +180,7 @@ class QMIXBCQSystem(QMIXSystem):
         B, T, N, A = legal_actions.shape
 
         # Maybe add agent ids to observation
-        if self._add_agent_id_to_obs:
+        if self.add_agent_id_to_obs:
             observations = batch_concat_agent_id_to_obs(observations)
 
         # Make time-major
@@ -114,8 +192,7 @@ class QMIXBCQSystem(QMIXSystem):
         resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
         # Unroll target network
-        target_embeddings = self._target_q_embedding_network(observations)
-        target_qs_out = unroll_rnn(self._target_q_network, target_embeddings, resets)
+        target_qs_out = unroll_rnn(self.target_q_network, observations, resets)
 
         # Expand batch and agent_dim
         target_qs_out = expand_batch_and_agent_dim_of_time_major_sequence(target_qs_out, B, N)
@@ -123,10 +200,9 @@ class QMIXBCQSystem(QMIXSystem):
         # Make batch-major again
         target_qs_out = switch_two_leading_dims(target_qs_out)
 
-        with tf.GradientTape() as tape:
+        with tf.GradientTape(persistent=True) as tape:
             # Unroll online network
-            q_embeddings = self._q_embedding_network(observations)
-            qs_out = unroll_rnn(self._q_network, q_embeddings, resets)
+            qs_out = unroll_rnn(self.q_network, observations, resets)
 
             # Expand batch and agent_dim
             qs_out = expand_batch_and_agent_dim_of_time_major_sequence(qs_out, B, N)
@@ -142,8 +218,7 @@ class QMIXBCQSystem(QMIXSystem):
             ###################
 
             # Unroll behaviour cloning network
-            bc_embeddings = self._bc_embedding_network(observations)
-            probs_out = unroll_rnn(self._behaviour_cloning_network, bc_embeddings, resets)
+            probs_out = unroll_rnn(self.behaviour_cloning_network, observations, resets)
 
             # Expand batch and agent_dim
             probs_out = expand_batch_and_agent_dim_of_time_major_sequence(probs_out, B, N)
@@ -164,7 +239,7 @@ class QMIXBCQSystem(QMIXSystem):
             # Behaviour cloning action mask
             bc_action_mask = (
                 masked_probs_out / tf.reduce_max(masked_probs_out, axis=-1, keepdims=True)
-            ) >= self._threshold
+            ) >= self.bc_threshold
 
             q_selector = tf.where(bc_action_mask, qs_out, -999999)
             max_actions = tf.argmax(q_selector, axis=-1)
@@ -175,21 +250,16 @@ class QMIXBCQSystem(QMIXSystem):
             ###################
 
             # Q-MIXING
-            env_state_embeddings, target_env_state_embeddings = (
-                self._state_embedding_network(env_states),
-                self._target_state_embedding_network(env_states),
-            )
-            chosen_action_qs, target_max_qs, rewards = self._mixing(
+            chosen_action_qs, target_max_qs, rewards = self.mixing(
                 chosen_action_qs,
                 target_max_qs,
-                env_state_embeddings,
-                target_env_state_embeddings,
+                env_states,
                 rewards,
             )
 
             # Compute targets
             targets = (
-                rewards[:, :-1] + (1 - terminals[:, :-1]) * self._discount * target_max_qs[:, 1:]
+                rewards[:, :-1] + (1 - terminals[:, :-1]) * self.discount * target_max_qs[:, 1:]
             )
             targets = tf.stop_gradient(targets)
 
@@ -197,47 +267,100 @@ class QMIXBCQSystem(QMIXSystem):
             chosen_action_qs = chosen_action_qs[:, :-1]  # shape=(B,T-1)
 
             # TD-Error Loss
-            loss = 0.5 * tf.square(targets - chosen_action_qs)
-
-            # Mask out zero-padded timesteps
-            loss = tf.reduce_mean(loss) + bc_loss
+            td_loss = 0.5 * tf.reduce_mean(tf.square(targets - chosen_action_qs))
 
         # Get trainable variables
         variables = (
-            *self._q_network.trainable_variables,
-            *self._q_embedding_network.trainable_variables,
-            *self._mixer.trainable_variables,
-            *self._state_embedding_network.trainable_variables,
-            *self._behaviour_cloning_network.trainable_variables,
+            *self.q_network.trainable_variables,
+            *self.mixer.trainable_variables,
         )
-
         # Compute gradients.
-        gradients = tape.gradient(loss, variables)
-
+        gradients = tape.gradient(td_loss, variables)
         # Apply gradients.
-        self._optimizer.apply(gradients, variables)
+        self.optimizer.apply(gradients, variables)
+
+        # BC network update
+        variables = (*self.behaviour_cloning_network.trainable_variables,)
+        # Compute gradients.
+        gradients = tape.gradient(bc_loss, variables)
+        # Apply gradients.
+        self.bc_optimizer.apply(gradients, variables)
 
         # Online variables
         online_variables = (
-            *self._q_network.variables,
-            *self._q_embedding_network.variables,
-            *self._mixer.variables,
-            *self._state_embedding_network.variables,
+            *self.q_network.variables,
+            *self.mixer.variables,
         )
 
         # Get target variables
         target_variables = (
-            *self._target_q_network.variables,
-            *self._target_q_embedding_network.variables,
-            *self._target_mixer.variables,
-            *self._target_state_embedding_network.variables,
+            *self.target_q_network.variables,
+            *self.target_mixer.variables,
         )
 
         # Maybe update target network
-        self._update_target_network(train_step, online_variables, target_variables)
+        if train_step % self.target_update_period == 0:
+            for src, dest in zip(online_variables, target_variables):
+                dest.assign(src)
 
         return {
-            "Loss": loss,
-            "Mean Q-values": tf.reduce_mean(qs_out),
-            "Mean Chosen Q-values": tf.reduce_mean(chosen_action_qs),
+            "td_loss": td_loss,
+            "bc_loss": bc_loss,
+            "mean_q_values": tf.reduce_mean(qs_out),
+            "mean_chosen_q_values": tf.reduce_mean(chosen_action_qs),
         }
+
+    def mixing(
+        self,
+        chosen_action_qs: Tensor,
+        target_max_qs: Tensor,
+        states: Tensor,
+        rewards: Tensor,
+    ) -> Tuple[Tensor, Tensor, Tensor]:
+        """QMIX"""
+        # VDN
+        # chosen_action_qs = tf.reduce_sum(chosen_action_qs, axis=2, keepdims=True)
+        # target_max_qs = tf.reduce_sum(target_max_qs, axis=2, keepdims=True)
+        # VDN
+
+        chosen_action_qs = self.mixer(chosen_action_qs, states)
+        target_max_qs = self.target_mixer(target_max_qs, states)
+        rewards = tf.reduce_mean(rewards, axis=2, keepdims=True)
+        return chosen_action_qs, target_max_qs, rewards
+
+
+@hydra.main(version_base=None, config_path="configs", config_name="qmix_bcq")
+def run_experiment(cfg: DictConfig) -> None:
+    print(cfg)
+
+    env = get_environment(cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"])
+
+    buffer = FlashbaxReplayBuffer(
+        sequence_length=cfg["replay"]["sequence_length"],
+        sample_period=cfg["replay"]["sample_period"],
+        seed=cfg["seed"],
+    )
+
+    download_and_unzip_vault(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"])
+
+    buffer.populate_from_vault(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], cfg["task"]["dataset"])
+
+    wandb_config = {
+        "system": cfg["system_name"],
+        "seed": cfg["seed"],
+        "training_steps": cfg["training_steps"],
+        **cfg["task"],
+        **cfg["replay"],
+        **cfg["system"],
+    }
+    logger = WandbLogger(project=cfg["wandb_project"], config=wandb_config)
+
+    system = QMIXBCQSystem(env, logger, **cfg["system"])
+
+    tf.random.set_seed(cfg["seed"])
+
+    system.train(buffer, training_steps=int(cfg["training_steps"]))
+
+
+if __name__ == "__main__":
+    run_experiment()
