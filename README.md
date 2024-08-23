@@ -147,6 +147,8 @@ The OG-MARL datasets use the latest version of MuJoCo (210). While the OMIGA and
 
 `pip install -r install_environments/requirements/mujoco.txt`
 
+`export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.mujoco/mujoco200/bin`
+
 `pip install -r install_environments/requirements/mamujoco200.txt`
 
 
