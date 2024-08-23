@@ -137,17 +137,17 @@ The OG-MARL datasets use the latest version of MuJoCo (210). While the OMIGA and
 
 `bash install_environments/mujoco210.sh`
 
-`pip install -r install_environments/mujoco.txt`
+`pip install -r install_environments/requirements/mujoco.txt`
 
-`pip install -r install_environments/mamujoco210.txt`
+`pip install -r install_environments/requirements/mamujoco210.txt`
 
 #### MAMuJoCo 200
 
 `bash install_environments/mujoco200.sh`
 
-`pip install -r install_environments/mujoco.txt`
+`pip install -r install_environments/requirements/mujoco.txt`
 
-`pip install -r install_environments/mamujoco200.txt`
+`pip install -r install_environments/requirements/mamujoco200.txt`
 
 
 ## See Also 🔎
