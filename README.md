@@ -49,13 +49,13 @@ Clone this repository.
 
 `git clone https://github.com/instadeepai/og-marl.git`
 
-Install `og-marl` and its requirements. We tested `og-marl` with Python 3.10. Consider using a `conda` virtual environment.
+Install `og-marl` and its requirements. We tested `og-marl` with Python 3.10 and Ubuntu 20.04. Consider using a `conda` virtual environment.
 
 `pip install -r requirements.txt`
 
 `pip install -e .`
 
-Download environment files. We will use SMACv1 in this example.
+Download environment files. We will use SMACv1 in this example. MAMuJoCo installation instructions are included near the bottom of the README.
 
 `bash install_environments/smacv1.sh`
 
@@ -63,13 +63,9 @@ Download environment requirements.
 
 `pip install -r install_environments/requirements/smacv1.txt`
 
-Download a dataset.
+Train an offline system. In this example we will run Independent Q-Learning with Conservative Q-Learning (iql+cql). The script will automatically download the neccessary dataset if it is not found locally.
 
-`python examples/download_dataset.py --source=og_marl --env=smac_v1 --scenario=3m`
-
-Train an offline system. In this example we will run Independent Q-Learning with Conservative Q-Learning (iql+cql).
-
-`python og_marl/tf2/systems/iql_cql.py --task.source=og_marl --task.env=smac_v1 --task.scenario=3m --task.dataset=Good`
+`python og_marl/tf2/systems/iql_cql.py task.source=og_marl task.env=smac_v1 task.scenario=3m task.dataset=Good`
 
 You can find all offline systems at `og_marl/tf2/systems/` and they can be run similarly. Be careful, some systems only work on discrete action space environments and vice versa for continuous action space environments. The config files for systems are found at `og_marl/tf2/systems/configs/`. We use [hydra](https://hydra.cc/docs/intro/) for our config management. Config defaults can be overwritten as command line arguments like above.
 
