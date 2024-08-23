@@ -1,7 +1,7 @@
 system_name: iddpg+bc
 seed: 42
 wandb_project: og-marl
-training_steps: 1e5
+training_steps: 3e5
 
 task:
   env: mpe_omar

@@ -4,19 +4,19 @@ from og_marl.tf2.utils import set_growing_gpu_memory
 
 set_growing_gpu_memory()
 
-WANDB_PROJECT = "mpe-std-really-matters"
+WANDB_PROJECT = "mpe-std-matters"
 
 SCRIPTS = [
     # "og_marl/tf2/systems/iddpg_cql.py",
-    "og_marl/tf2/systems/iddpg_bc.py",
+    # "og_marl/tf2/systems/iddpg_bc.py",
     # "og_marl/tf2/systems/omar.py",
-    # "og_marl/tf2/systems/maddpg_cql.py",
+    "og_marl/tf2/systems/maddpg_cql.py",
     # "og_marl/tf2/systems/continuous_bc.py",
 ]
 
 TASK = "task.env=mpe_omar task.scenario=simple_spread"
 
-SEEDS = [5]
+SEEDS = [1,2,3]
 DATASETS = ["a", "b", "c", "d", "e"]
 
 
