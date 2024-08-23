@@ -94,10 +94,10 @@ class FlashbaxReplayBuffer:
         return batch.experience  # type: ignore
 
     def populate_from_vault(
-        self, env_name: str, scenario_name: str, dataset_name: str, rel_dir: str = "vaults"
+        self, source: str, env_name: str, scenario_name: str, dataset_name: str, rel_dir: str = "vaults"
     ) -> bool:
         self._buffer_state = Vault(
-            vault_name=f"{env_name}/{scenario_name}.vlt",
+            vault_name=f"{source}/{env_name}/{scenario_name}.vlt",
             vault_uid=dataset_name,
             rel_dir=rel_dir,
         ).read()

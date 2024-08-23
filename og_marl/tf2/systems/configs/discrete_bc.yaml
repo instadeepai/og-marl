@@ -4,6 +4,7 @@ wandb_project: og-marl
 training_steps: 1e5
 
 task:
+  source: og_marl
   env: smac_v1
   scenario: 3m
   dataset: Good

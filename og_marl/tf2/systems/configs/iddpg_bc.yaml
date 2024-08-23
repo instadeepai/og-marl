@@ -1,15 +1,16 @@
 system_name: iddpg+bc
 seed: 42
 wandb_project: og-marl
-training_steps: 3e5
+training_steps: 5e5
 
 task:
-  env: mpe_omar
-  scenario: simple_spread
-  dataset: e
+  source: og_marl
+  env: mamujoco
+  scenario: 2halfcheetah
+  dataset: Good
 
 replay:
-  sequence_length: 5
+  sequence_length: 20
   sample_period: 1
 
 system:

@@ -27,7 +27,7 @@ import copy
 
 from og_marl.environments import get_environment, BaseEnvironment
 from og_marl.loggers import BaseLogger, WandbLogger
-from og_marl.offline_dataset import download_and_unzip_vault
+from og_marl.vault_utils.download_vault import download_and_unzip_vault
 from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
 from og_marl.tf2.networks import QMixer
 from og_marl.tf2.systems.base import BaseOfflineSystem
@@ -339,9 +339,9 @@ def run_experiment(cfg: DictConfig) -> None:
         seed=cfg["seed"],
     )
 
-    download_and_unzip_vault(cfg["task"]["env"], cfg["task"]["scenario"])
+    download_and_unzip_vault(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"])
 
-    buffer.populate_from_vault(cfg["task"]["env"], cfg["task"]["scenario"], cfg["task"]["dataset"])
+    buffer.populate_from_vault(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], cfg["task"]["dataset"])
 
     wandb_config = {
         "system": cfg["system_name"],
