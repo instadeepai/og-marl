@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 import jax
 import jax.numpy as jnp
@@ -20,7 +20,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from chex import Array
 from flashbax.vault import Vault
-from git import Optional
 import numpy as np
 from og_marl.vault_utils.download_vault import get_available_uids
 from tabulate import tabulate
