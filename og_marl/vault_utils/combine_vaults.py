@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from git import Optional
+from typing import Optional
 
 import jax
 import pickle

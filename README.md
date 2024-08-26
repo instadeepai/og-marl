@@ -129,7 +129,7 @@ We include the following datasets from prior works.
 | [Wang et al. (2023)](https://papers.nips.cc/paper_files/paper/2023/hash/a46c84276e3a4249ab7dbf3e069baf7f-Abstract-Conference.html) | 🔫SMAC v1 | 5m_vs_6m <br/> 6h_vs_8z <br/> 2c_vs_64zg <br/> corridor| [source](https://github.com/ZhengYinan-AIR/OMIGA) |
 | [Wang et al. (2023)](https://papers.nips.cc/paper_files/paper/2023/hash/a46c84276e3a4249ab7dbf3e069baf7f-Abstract-Conference.html) | 🐜MAMuJoCo | 6x1 HalfCheetah <br/> 3x1 Hopper <br/> 2x4 Ant| [source](https://github.com/ZhengYinan-AIR/OMIGA) |
 
-# Installing MAMuJoCo 🐆
+## Installing MAMuJoCo 🐆
 
 The OG-MARL datasets use the latest version of MuJoCo (210). While the OMIGA and OMAR datasets use an older version (200). They each have different instalation instructions and should be installed in seperate virtual environments.
 
@@ -137,17 +137,19 @@ The OG-MARL datasets use the latest version of MuJoCo (210). While the OMIGA and
 
 `bash install_environments/mujoco210.sh`
 
-`pip install -r install_environments/mujoco.txt`
+`pip install -r install_environments/requirements/mujoco.txt`
 
-`pip install -r install_environments/mamujoco210.txt`
+`pip install -r install_environments/requirements/mamujoco210.txt`
 
 #### MAMuJoCo 200
 
 `bash install_environments/mujoco200.sh`
 
-`pip install -r install_environments/mujoco.txt`
+`pip install -r install_environments/requirements/mujoco.txt`
 
-`pip install -r install_environments/mamujoco200.txt`
+`export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.mujoco/mujoco200/bin`
+
+`pip install -r install_environments/requirements/mamujoco200.txt`
 
 
 ## See Also 🔎
