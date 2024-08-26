@@ -490,7 +490,7 @@ class OMARSystem(BaseOfflineSystem):
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
 
-    env = get_environment(cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"])
+    env = get_environment(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"])
 
     buffer = FlashbaxReplayBuffer(
         sequence_length=cfg["replay"]["sequence_length"],
