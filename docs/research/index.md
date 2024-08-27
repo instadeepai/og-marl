@@ -1,0 +1,1 @@
+These pages detail the cutting-edge offline MARL research directions which utilise OG-MARL. We strive to update this list regularly. Please open a pull-request on the GitHub repo if you would like to be featured!

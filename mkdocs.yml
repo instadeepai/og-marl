@@ -38,6 +38,10 @@ theme:
 
 nav:
   - "Home": 'index.md'
+  - "Research":
+    - "": research/index.md
+    - "Coordination Failure in Cooperative Offline MARL": research/polygames.md
+    - "Selective Reincarnation in Multi-Agent Reinforcement Learning": research/selective-reincarnation.md
   - "Baseline Results":
     - "SMACv1": baselines/smac_v1.md
     - "SMACv2": baselines/smac_v2.md
@@ -66,6 +70,16 @@ markdown_extensions:
   - def_list
   - admonition
   - pymdownx.details
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - js/katex.js
+  - https://unpkg.com/katex@0/dist/katex.min.js
+  - https://unpkg.com/katex@0/dist/contrib/auto-render.min.js
+
+extra_css:
+  - https://unpkg.com/katex@0/dist/katex.min.css
 
 # Git repo
 repo_name: instadeepai/og-marl
