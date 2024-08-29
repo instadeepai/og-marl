@@ -214,7 +214,7 @@ class ISACNSystem(BaseOfflineSystem):
         # Unpack the batch
         observations_ = tf.cast(experience["observations"], "float32") # (B,T,N,O)
         replay_actions = tf.cast(
-            tf.clip_by_value(experience["actions"], -0.999999, 0.999999), "float32"
+            tf.clip_by_value(experience["actions"], -1.0, 1.0), "float32"
         ) # (B,T,N,A)
         env_states_ = tf.cast(experience["infos"]["state"], "float32") # (B,T,S)
         rewards = tf.cast(experience["rewards"], "float32") # (B,T,N)
@@ -266,9 +266,11 @@ class ISACNSystem(BaseOfflineSystem):
             ###################
 
             critic_losses = []
+            in_dist_qs = []
             for critic in self.critics:
                 # Critic
                 qs = critic(env_states, replay_actions)
+                in_dist_qs.append(qs)
 
                 # Squared TD-error
                 critic_losses.append(tf.reduce_mean(0.5 * (targets - qs) ** 2, axis=0)) # mean across batch
@@ -332,6 +334,15 @@ class ISACNSystem(BaseOfflineSystem):
         for src, dest in zip(online_variables, target_variables):
             dest.assign(dest * (1.0 - tau) + src * tau)
 
+        # Log standard deviation of Q-values for OOD actions
+        rand_actions = tf.random.uniform(replay_actions.shape, -1.0, 1.0, "float32")
+        q_rands = []
+        for critic in self.critics:
+            q_rands.append(critic(env_states, rand_actions))
+        q_random_std = tf.reduce_mean(tf.math.reduce_std(q_rands,axis=0))
+
+        in_dist_qs_std = tf.reduce_mean(tf.math.reduce_std(in_dist_qs,axis=0))
+
         del tape
 
         logs = {
@@ -339,6 +350,9 @@ class ISACNSystem(BaseOfflineSystem):
             "critic_loss": critic_loss,
             "alpha_loss": alpha_loss,
             "alpha": tf.reduce_mean(tf.exp(self.log_alpha)),
+            "ood_q_values_std": q_random_std,
+            "in_dist_q_values_std": in_dist_qs_std,
+            "mean_policy_q_values": tf.reduce_mean(policy_qs),
             # "cql_loss": (cql_loss_1 + cql_loss_2) / 2.0,
             "policy_loss": policy_loss,
             # "mean_chosen_q_values": tf.reduce_mean((policy_qs_1 + policy_qs_2) / 2),
