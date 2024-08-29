@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: python og_marl/tf2/systems/isac_n.py
+  command: python og_marl/tf2/systems/masac_n.py
   types:
     Worker:
       count: 5

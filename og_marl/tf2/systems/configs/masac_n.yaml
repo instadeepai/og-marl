@@ -1,0 +1,23 @@
+system_name: masacn
+seed: 42
+wandb_project: masacn
+training_steps: 3e6
+
+task:
+  source: og_marl
+  env: mamujoco
+  scenario: 2halfcheetah
+  dataset: Good
+
+replay:
+  sequence_length: 2
+  sample_period: 1
+  batch_size: 256
+
+system:
+  discount: 0.99
+  critic_learning_rate: 3e-4
+  policy_learning_rate: 3e-4
+  alpha_learning_rate: 3e-4
+  add_agent_id_to_obs: True
+  num_critics: 10
