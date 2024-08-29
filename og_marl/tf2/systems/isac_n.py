@@ -47,28 +47,28 @@ tfd = tfp.distributions
 
 set_growing_gpu_memory()
 
+    
 class Actor(snt.Module):
     def __init__(
         self,
         action_dim: int,
     ):
+        super().__init__()
         self.action_dim = action_dim
 
         self.base_network = snt.Sequential(
             [
-                snt.Linear(256, w_init=snt.initializers.Constant(0.1)),
+                snt.Linear(256),
                 tf.nn.relu,
-                snt.Linear(256, w_init=snt.initializers.Constant(0.1)),
+                snt.Linear(256),
                 tf.nn.relu,
-                snt.Linear(256, w_init=snt.initializers.Constant(0.1)),
+                snt.Linear(256),
                 tf.nn.relu,
             ]
         )
 
-        self.mu = snt.Linear(self.action_dim, w_init=snt.initializers.RandomUniform(-1e-3, 1e-3), b_init=snt.initializers.RandomUniform(-1e-3, 1e-3))
-        self.log_sigma = snt.Linear(self.action_dim, w_init=snt.initializers.RandomUniform(-1e-3, 1e-3), b_init=snt.initializers.RandomUniform(-1e-3, 1e-3))
-
-        super().__init__()
+        self.mu = snt.Linear(self.action_dim)
+        self.log_sigma = snt.Linear(self.action_dim)
 
     def __call__(
         self,
@@ -78,23 +78,16 @@ class Actor(snt.Module):
         
         hidden = self.base_network(observations)
 
-        mean = self.mu(hidden)
+        mu = self.mu(hidden)
         log_sigma = self.log_sigma(hidden)
 
-        # clipping params from EDAC paper, not as in SAC paper (-20, 2)
         log_sigma = tf.clip_by_value(log_sigma, -5, 2)
+        policy_dist = tfd.Normal(mu, tf.exp(log_sigma))
 
-        policy_dist = tfd.Normal(mean, tf.exp(log_sigma))
-
-        if deterministic:
-            action = mean
-        else:
-            action = policy_dist.sample()
-
+        action = policy_dist.sample()
         tanh_action = tf.tanh(action)
 
         log_prob = tf.reduce_sum(policy_dist.log_prob(action), axis=-1)
-
         log_prob = log_prob - tf.reduce_sum(tf.math.log(1 - tf.pow(tanh_action, 2) + 1e-6), axis=-1)
 
         return tanh_action, log_prob
@@ -112,7 +105,7 @@ class CriticNetwork(snt.Module):
 
         layers = []
         for _ in range(n_hidden_layers):
-            layers.append(snt.Linear(256, w_init=snt.initializers.Constant(0.1)))
+            layers.append(snt.Linear(256, w_init=snt.initializers.RandomUniform(-3e-3, 3e-3), b_init=snt.initializers.RandomUniform(-3e-3, 3e-3)))
             layers.append(tf.nn.relu)
         layers.append(snt.Linear(1, w_init=snt.initializers.RandomUniform(-3e-3, 3e-3), b_init=snt.initializers.RandomUniform(-3e-3, 3e-3)))
 
@@ -221,7 +214,7 @@ class ISACNSystem(BaseOfflineSystem):
         # Unpack the batch
         observations_ = tf.cast(experience["observations"], "float32") # (B,T,N,O)
         replay_actions = tf.cast(
-            tf.clip_by_value(experience["actions"], -1.0, 1.0), "float32"
+            tf.clip_by_value(experience["actions"], -0.999999, 0.999999), "float32"
         ) # (B,T,N,A)
         env_states_ = tf.cast(experience["infos"]["state"], "float32") # (B,T,S)
         rewards = tf.cast(experience["rewards"], "float32") # (B,T,N)
@@ -300,6 +293,7 @@ class ISACNSystem(BaseOfflineSystem):
             entropy = tf.reduce_sum(entropy)
 
             policy_loss = entropy - policy_qs
+            # policy_loss = tf.reduce_mean((online_actions-replay_actions)**2)
 
             ###################
             ### Alpha Loss ###

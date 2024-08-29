@@ -1,6 +1,6 @@
 system_name: isacn
 seed: 42
-wandb_project: og-marl
+wandb_project: isacn
 training_steps: 3e6
 
 task:
@@ -20,4 +20,4 @@ system:
   policy_learning_rate: 3e-4
   alpha_learning_rate: 3e-4
   add_agent_id_to_obs: True
-  num_critics: 50
+  num_critics: 10
