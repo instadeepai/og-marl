@@ -1,3 +1,5 @@
+# Coordination Failure in Cooperative Offline MARL
+
 *[Paper](https://arxiv.org/abs/2407.01343) | [Notebook](https://tinyurl.com/pjap-polygames) | [Announcement](https://x.com/callumtilbury/status/1816489404766224479)*
 
 What happens when trying to learn multi-agent coordination from a static dataset? Catastrophe, if you’re not careful! This is the topic of our work on ✨Coordination Failure in Offline Multi-Agent Reinforcement Learning ✨
@@ -56,3 +58,16 @@ Importantly, our work shows how insights drawn from simplified, tractable games 
 </a>
 
 We presented this paper at the [ARLET workshop](https://icml.cc/virtual/2024/workshop/29964) at ICML 2024.
+
+
+## Cite
+
+```
+@inproceedings{tilbury2024coordination,
+    title={Coordination Failure in Cooperative Offline MARL},
+    author={Tilbury, Callum Rhys and Formanek, Juan Claude and Beyers, Louise and Shock, Jonathan Phillip and Pretorius, Arnu},
+    booktitle={ICML 2024 Workshop: Aligning Reinforcement Learning Experimentalists and Theorists},
+    year={2024},
+    url={https://arxiv.org/abs/2407.01343}
+}
+```
