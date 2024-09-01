@@ -56,7 +56,7 @@ TASKS = [
     "task.source=og_marl task.env=mamujoco task.scenario=2halfcheetah task.dataset=Poor",
 ]
 
-SEEDS = [2] 
+SEEDS = [3] 
 
 def main():
 
