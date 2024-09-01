@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: run_exps.py
+  command: python run_exps.py
   types:
     Worker:
       count: 1
