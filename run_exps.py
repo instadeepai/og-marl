@@ -44,8 +44,8 @@ SCRIPTS = [
     # "og_marl/tf2/systems/iddpg_cql.py",
     # "og_marl/tf2/systems/iddpg_bc.py",
     # "og_marl/tf2/systems/omar.py",
-    # "og_marl/tf2/systems/maddpg_bc.py",
-    # "og_marl/tf2/systems/iddpg_bc.py",
+    "og_marl/tf2/systems/maddpg_bc.py",
+    "og_marl/tf2/systems/iddpg_bc.py",
     "og_marl/tf2/systems/continuous_bc.py",
     # "og_marl/tf2/systems/hacql.py",
     # "og_marl/tf2/systems/maddpg_cql_non_shared.py",
@@ -58,7 +58,7 @@ TASKS = [
     "task.source=og_marl task.env=mamujoco task.scenario=2halfcheetah task.dataset=Poor",
 ]
 
-SEEDS = [3,4] 
+SEEDS = [5] 
 
 def main():
 
