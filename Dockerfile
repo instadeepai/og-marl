@@ -29,6 +29,7 @@ COPY ./install_environments ./install_environments
 COPY ./og_marl ./og_marl
 COPY setup.py .
 COPY ./requirements.txt .
+COPY ./run_exps.py .
 
 RUN echo "Installing requirements..."
 RUN pip install --quiet --upgrade pip setuptools wheel &&  \
