@@ -172,7 +172,7 @@ class MADDPGBCSystem(BaseOfflineSystem):
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
 
         # Get dims
-        B, T, N = replay_actions.shape[:3]
+        B, T, N, A = replay_actions.shape[:4]
 
         # Maybe add agent ids to observation
         if self.add_agent_id_to_obs:
@@ -219,11 +219,18 @@ class MADDPGBCSystem(BaseOfflineSystem):
             )
 
             # Squared TD-error
-            critic_loss_1 = tf.reduce_mean(0.5 * (targets - qs_1[:-1]) ** 2)
-            critic_loss_2 = tf.reduce_mean(0.5 * (targets - qs_2[:-1]) ** 2)
+            critic_loss_1 = 0.5 * (targets - qs_1[:-1]) ** 2
+            critic_loss_2 = 0.5 * (targets - qs_2[:-1]) ** 2
 
-            # Combine critic loss
+            # Combine critic losses
             critic_loss = (critic_loss_1 + critic_loss_2) / 2
+
+            # Mean over batch and time dims
+            critic_loss = tf.reshape(critic_loss, (-1,N))
+            critic_loss = tf.reduce_mean(critic_loss, axis=0)
+
+            # Sum agent losses
+            critic_loss = tf.reduce_sum(critic_loss) 
 
             ###################
             ### Policy Loss ###
@@ -238,12 +245,24 @@ class MADDPGBCSystem(BaseOfflineSystem):
             # Unroll online policy
             policy_qs_1 = self.critic_network_1(env_states, online_actions, replay_actions)
             policy_qs_2 = self.critic_network_2(env_states, online_actions, replay_actions)
-            policy_qs = tf.minimum(policy_qs_1, policy_qs_2)
+            policy_qs = tf.squeeze(tf.minimum(policy_qs_1, policy_qs_2))
 
+            action_mse = tf.square(online_actions - replay_actions)
+
+            # Mean over time and batch dims
+            abs_policy_qs = tf.reduce_mean(tf.reshape(tf.abs(policy_qs), (-1,N)), axis=0)
+            policy_qs = tf.reduce_mean(tf.reshape(policy_qs, (-1,N)), axis=0)
+            action_mse = tf.reduce_mean(tf.reshape(action_mse, (-1, N, A)), axis=0)
+            action_mse = tf.reduce_mean(action_mse, axis=-1) # mean over act dim
+
+            # TD3+BC policy loss
             policy_loss = (
-                -tf.stop_gradient(self.bc_alpha / tf.reduce_mean(tf.abs(policy_qs))) * tf.reduce_mean(policy_qs)
-                + tf.reduce_mean(tf.square(online_actions - replay_actions))
+                -tf.stop_gradient(self.bc_alpha / abs_policy_qs) * policy_qs
+                + action_mse
             )
+
+            # Sum agent's losses
+            policy_loss = tf.reduce_sum(policy_loss)
 
         # Train critics
         variables = (
