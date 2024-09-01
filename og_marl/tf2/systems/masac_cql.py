@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implementation of ISACN"""
+"""Implementation of MASAC+CQL"""
 from typing import Any, Dict, Optional, Tuple
 
 import random
@@ -119,17 +119,17 @@ class CriticNetwork(snt.Module):
         other_actions [[T,B,N,A]]: tensor of actions the agent took. Usually
             the actions from the replay buffer.
         """
-        T, B, N, A = agent_actions.shape[:4]  # (B,N,A)
+        B, N, A = agent_actions.shape[:3]  # (B,N,A)
         all_joint_actions = []
         for i in range(N):  # type: ignore
             one_hot = tf.expand_dims(
-                tf.cast(tf.stack([tf.stack([tf.one_hot(i, N)] * B, axis=0)] * T, axis=0), "bool"),  # type: ignore
+                tf.cast(tf.stack([tf.one_hot(i, N)] * B, axis=0), "bool"),  # type: ignore
                 axis=-1,
             )
             joint_action = tf.where(one_hot, agent_actions, other_actions)
-            joint_action = tf.reshape(joint_action, (T, B, N * A))  # type: ignore
+            joint_action = tf.reshape(joint_action, (B, N * A))  # type: ignore
             all_joint_actions.append(joint_action)
-        all_joint_actions: Tensor = tf.stack(all_joint_actions, axis=2)
+        all_joint_actions: Tensor = tf.stack(all_joint_actions, axis=1)
 
         return all_joint_actions
 
@@ -140,8 +140,8 @@ class CriticNetwork(snt.Module):
         return q_values
 
 
-class ISACNSystem(BaseOfflineSystem):
-    """Independent SAC + CQL.
+class MASACCQLSystem(BaseOfflineSystem):
+    """MA-SAC + CQL.
 
     NOTE: the critic conditions on states and individual agent actions.
 
@@ -152,13 +152,18 @@ class ISACNSystem(BaseOfflineSystem):
         environment: BaseEnvironment,
         logger: BaseLogger,
         discount: float = 0.99,
-        num_critics: int = 100,
+        num_critics: int = 2,
         critic_learning_rate: float = 3e-4,
         policy_learning_rate: float = 3e-4,
         alpha_learning_rate: float = 3e-4,
+        alpha_prime_learning_rate: float = 3e-3,
         target_update_rate: float = 0.005,
         add_agent_id_to_obs: bool = True,
-        use_automatic_entropy_tuning: bool = True
+        use_automatic_entropy_tuning: bool = True,
+        cql_n_actions=10,
+        cql_temp=1.0,
+        cql_target_action_gap=-1.0,
+        cql_alpha=5.0
     ):
         super().__init__(
             environment=environment,
@@ -191,6 +196,18 @@ class ISACNSystem(BaseOfflineSystem):
             )
         else:
             self.log_alpha = None
+
+        # CQL
+        self.cql_n_actions = cql_n_actions
+        self.log_alpha_prime = tf.Variable(tf.zeros((len(self.agents),), "float32"))
+        self.alpha_prime_optimizer = snt.optimizers.Adam(
+            learning_rate=alpha_prime_learning_rate,
+        )
+        self.cql_temp = cql_temp
+        self.cql_clip_diff_min = -np.inf
+        self.cql_clip_diff_max = np.inf
+        self.cql_target_action_gap = cql_target_action_gap
+        self.cql_alpha = cql_alpha
 
     def reset(self) -> None:
         """Called at the start of a new episode."""
@@ -244,7 +261,7 @@ class ISACNSystem(BaseOfflineSystem):
         terminals = tf.cast(experience["terminals"], "float32") # (B,T,N)
 
         # Get dims
-        B, T, N = replay_actions.shape[:3]
+        B, T, N, A = replay_actions.shape[:4]
 
         # Repeat states for each agent
         env_states_ = tf.stack([env_states_]*N, axis=2)
@@ -254,13 +271,13 @@ class ISACNSystem(BaseOfflineSystem):
             observations_ = batch_concat_agent_id_to_obs(observations_)
             env_states_ = batch_concat_agent_id_to_obs(env_states_)
 
-        observations = observations_[:,:-1]
-        next_observations = observations_[:,1:]
-        env_states = env_states_[:,:-1]
-        next_env_states = env_states_[:,1:]
-        rewards = rewards[:,:-1]
-        replay_actions = replay_actions[:,:-1]
-        terminals = terminals[:,:-1]
+        observations = observations_[:,0]
+        next_observations = observations_[:,1]
+        env_states = env_states_[:,0]
+        next_env_states = env_states_[:,1]
+        rewards = rewards[:,0]
+        replay_actions = replay_actions[:,0]
+        terminals = terminals[:,0]
 
         # Target actions
         target_actions, target_action_log_prob = self.actor(next_observations)
@@ -288,7 +305,7 @@ class ISACNSystem(BaseOfflineSystem):
             ### Critic Loss ###
             ###################
 
-            critic_losses = []
+            td_loss = []
             in_dist_qs = []
             for critic in self.critics:
                 # Critic
@@ -296,8 +313,72 @@ class ISACNSystem(BaseOfflineSystem):
                 in_dist_qs.append(qs)
 
                 # Squared TD-error
-                critic_losses.append(tf.reduce_mean(0.5 * (targets - qs) ** 2, axis=0)) # mean across batch
-            critic_loss = tf.reduce_sum(critic_losses) # sum across critics and agents
+                td_loss.append(tf.reduce_mean(0.5 * (targets - qs) ** 2, axis=0)) # mean across batch
+            td_loss = tf.reduce_sum(td_loss) # sum across critics and agents
+
+            # CQL
+            cql_random_actions = tf.random.uniform((B,self.cql_n_actions,N,A), -1, 1)
+
+            repeat_observations = tf.stack([observations]*self.cql_n_actions, axis=1)
+            repeat_next_observations = tf.stack([next_observations]*self.cql_n_actions, axis=1)
+            repeat_env_states = tf.stack([env_states]*self.cql_n_actions, axis=1)
+
+            cql_current_actions, cql_current_log_pis = self.actor(
+                repeat_observations
+            )
+            cql_next_actions, cql_next_log_pis = self.actor(
+                repeat_next_observations
+            )
+
+            # Merge cql dim into batch dim
+            repeat_env_states = tf.reshape(repeat_env_states, shape=(-1, *repeat_env_states.shape[2:]))
+            cql_random_actions = tf.reshape(cql_random_actions, shape=(-1, *cql_random_actions.shape[2:]))
+            cql_current_actions = tf.reshape(cql_current_actions, shape=(-1, *cql_current_actions.shape[2:]))
+            cql_next_actions = tf.reshape(cql_next_actions, shape=(-1, *cql_next_actions.shape[2:]))
+
+            cql_min_qf_loss = []
+            for i, critic in enumerate(self.critics):
+                cql_q_rand = critic(repeat_env_states, cql_random_actions, cql_random_actions)
+                cql_q_current_actions = critic(repeat_env_states, cql_current_actions, cql_current_actions)
+                cql_q_next_actions = critic(repeat_env_states, cql_next_actions, cql_next_actions)
+
+                # Split cql and batch dims
+                cql_q_rand = tf.reshape(cql_q_rand, shape=(B, self.cql_n_actions, *cql_q_rand.shape[1:]))
+                cql_q_current_actions = tf.reshape(cql_q_current_actions, shape=(B, self.cql_n_actions, *cql_q_current_actions.shape[1:]))
+                cql_q_next_actions = tf.reshape(cql_q_next_actions, shape=(B, self.cql_n_actions, *cql_q_next_actions.shape[1:]))
+
+                cql_cat_q = tf.concat(
+                    [
+                        cql_q_rand - tf.math.log(0.5**A),
+                        cql_q_current_actions - cql_current_log_pis,
+                        cql_q_next_actions - cql_next_log_pis,
+                    ],
+                    axis=1,
+                )
+
+                cql_qf_ood = tf.reduce_logsumexp(cql_cat_q / self.cql_temp, axis=1) * self.cql_temp
+
+                cql_qf_diff = tf.reduce_mean(
+                    tf.clip_by_value(
+                        cql_qf_ood - in_dist_qs[i],
+                        self.cql_clip_diff_min,
+                        self.cql_clip_diff_max,
+                    ),
+                    axis=0
+                ) # mean across batch
+
+                alpha_prime = 1.0# tf.clip_by_value(tf.exp(self.log_alpha_prime), 0.0, 1000000.0)
+                
+                cql_min_qf_loss.append(
+                    alpha_prime
+                    * self.cql_alpha
+                    * (cql_qf_diff) # - self.cql_target_action_gap)
+                )
+
+            cql_min_qf_loss = tf.reduce_sum(cql_min_qf_loss) # sum across critics and agents
+            # alpha_prime_loss = -0.5*tf.reduce_sum(cql_min_qf_loss) # sum across critics and agents
+
+            critic_loss = cql_min_qf_loss + td_loss
 
             ###################
             ### Policy Loss ###
@@ -345,6 +426,11 @@ class ISACNSystem(BaseOfflineSystem):
         gradients = tape.gradient(alpha_loss, variables)
         self.alpha_optimizer.apply(gradients, variables)
 
+        # Alpha prime loss
+        # variables = (self.log_alpha_prime,)
+        # gradients = tape.gradient(alpha_prime_loss, variables)
+        # self.alpha_prime_optimizer.apply(gradients, variables)
+
         # Update target networks
         online_variables = []
         target_variables = []
@@ -357,24 +443,17 @@ class ISACNSystem(BaseOfflineSystem):
         for src, dest in zip(online_variables, target_variables):
             dest.assign(dest * (1.0 - tau) + src * tau)
 
-        # Log standard deviation of Q-values for OOD actions
-        rand_actions = tf.random.uniform(replay_actions.shape, -1.0, 1.0, "float32")
-        q_rands = []
-        for critic in self.critics:
-            q_rands.append(critic(env_states, rand_actions, rand_actions))
-        q_random_std = tf.reduce_mean(tf.math.reduce_std(q_rands,axis=0))
-
-        in_dist_qs_std = tf.reduce_mean(tf.math.reduce_std(in_dist_qs,axis=0))
-
         del tape
 
         logs = {
             # "mean_dataset_q_values": tf.reduce_mean((qs_1 + qs_2) / 2),
             "critic_loss": critic_loss,
+            "td_loss": td_loss,
+            "cql_loss": cql_min_qf_loss,
+            # "alpha_prime_loss": alpha_prime_loss,
             "alpha_loss": alpha_loss,
+            "alpha_prime": tf.reduce_mean(tf.exp(self.log_alpha_prime)),
             "alpha": tf.reduce_mean(tf.exp(self.log_alpha)),
-            "ood_q_values_std": q_random_std,
-            "in_dist_q_values_std": in_dist_qs_std,
             "mean_policy_q_values": tf.reduce_mean(policy_qs),
             # "cql_loss": (cql_loss_1 + cql_loss_2) / 2.0,
             "policy_loss": policy_loss,
@@ -384,7 +463,7 @@ class ISACNSystem(BaseOfflineSystem):
         return logs
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="masac_n")
+@hydra.main(version_base=None, config_path="configs", config_name="masac_cql")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
 
@@ -412,7 +491,7 @@ def run_experiment(cfg: DictConfig) -> None:
     }
     logger = WandbLogger(project=cfg["wandb_project"], config=wandb_config)
 
-    system = ISACNSystem(env, logger, **cfg["system"])
+    system = MASACCQLSystem(env, logger, **cfg["system"])
 
     tf.random.set_seed(seed)
 

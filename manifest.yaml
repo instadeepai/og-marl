@@ -13,10 +13,10 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: python og_marl/tf2/systems/masac_n.py
+  command: run_exps.py
   types:
     Worker:
-      count: 5
+      count: 1
 
       resources:
         # 10-15 cpus for single process

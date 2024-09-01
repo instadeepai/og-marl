@@ -16,8 +16,14 @@ replay:
 
 system:
   discount: 0.99
-  critic_learning_rate: 1e-3
-  policy_learning_rate: 1e-3
-  alpha_learning_rate: 1e-3
+  critic_learning_rate: 3e-4
+  policy_learning_rate: 3e-5
+  alpha_learning_rate: 3e-4
+  alpha_prime_learning_rate: 3e-4
   add_agent_id_to_obs: True
-  num_critics: 10
+  num_critics: 2
+  cql_n_actions: 10
+  cql_temp: 1.0
+  cql_alpha: 10.0
+  cql_target_action_gap: 10
+
