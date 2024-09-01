@@ -166,7 +166,9 @@ class ContinuousActionBehaviourCloning(BaseOfflineSystem):
 
             # Behaviour cloning loss
             mse = (policy_actions - actions) ** 2
-            bc_loss = tf.reduce_mean(mse)
+            bc_loss = tf.reduce_mean(tf.reduce_mean(tf.reshape(mse, (-1,N,A)), axis=-1), axis=0)
+            bc_loss = tf.reduce_sum(bc_loss)
+
 
         # Apply gradients to policy
         variables = (*self.policy_network.trainable_variables,)  # Get trainable variables
