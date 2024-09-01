@@ -38,6 +38,8 @@ set_growing_gpu_memory()
 
 WANDB_PROJECT = "bc-systems-on-mamujoco-1m"
 
+TRAINING_STEPS = int(1e6)
+
 SCRIPTS = [
     # "og_marl/tf2/systems/iddpg_cql.py",
     # "og_marl/tf2/systems/iddpg_bc.py",
@@ -63,7 +65,7 @@ def main():
     for task in TASKS:
         for seed in SEEDS:
             for script in SCRIPTS:
-                os.system(f"python {script} {task} wandb_project={WANDB_PROJECT} seed={seed}")
+                os.system(f"python {script} {task} wandb_project={WANDB_PROJECT} seed={seed} training_steps={TRAINING_STEPS}")
 
 if __name__ == "__main__":
     main()
