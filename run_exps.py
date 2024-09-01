@@ -59,7 +59,7 @@ TASKS = [
     "task.source=omiga task.env=mamujoco task.scenario=2ant task.dataset=Medium-Replay",
 ]
 
-SEEDS = [2] 
+SEEDS = [1] 
 
 def main():
 
