@@ -241,8 +241,7 @@ class IDDPGBCSystem(BaseOfflineSystem):
             policy_qs = tf.minimum(policy_qs_1, policy_qs_2)
 
             policy_loss = (
-                -(self.bc_alpha / tf.reduce_mean(tf.abs(policy_qs))) * tf.reduce_mean(policy_qs)
-                + 1e-3 * tf.reduce_mean(tf.square(online_actions))
+                -tf.stop_gradient(self.bc_alpha / tf.reduce_mean(tf.abs(policy_qs))) * tf.reduce_mean(policy_qs)
                 + tf.reduce_mean(tf.square(online_actions - replay_actions))
             )
 

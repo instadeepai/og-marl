@@ -10,7 +10,7 @@ task:
   dataset: Good
 
 replay:
-  sequence_length: 20
+  sequence_length: 10
   sample_period: 1
 
 system:
