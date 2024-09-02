@@ -133,7 +133,7 @@ class ContinuousActionBehaviourCloning(BaseOfflineSystem):
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the relevant quantities
         observations = tf.cast(experience["observations"], "float32")  # (B,T,N,O)
-        actions = tf.cast(experience["actions"], "float32")  # (B,T,N,A)
+        actions = tf.clip_by_value(tf.cast(experience["actions"], "float32"), -1.0, 1.0)  # (B,T,N,A)
         truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
         terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
 
@@ -165,9 +165,10 @@ class ContinuousActionBehaviourCloning(BaseOfflineSystem):
             policy_actions = expand_batch_and_agent_dim_of_time_major_sequence(policy_actions, B, N)
 
             # Behaviour cloning loss
-            mse = (policy_actions - actions) ** 2
-            bc_loss = tf.reduce_mean(tf.reduce_mean(tf.reshape(mse, (-1,N,A)), axis=-1), axis=0)
-            bc_loss = tf.reduce_sum(bc_loss)
+            mse = tf.reduce_mean((policy_actions - actions) ** 2)
+            bc_loss = mse
+            # bc_loss = tf.reduce_mean(tf.reduce_mean(tf.reshape(mse, (-1,N,A)), axis=-1), axis=0)
+            # bc_loss = tf.reduce_sum(bc_loss)
 
 
         # Apply gradients to policy

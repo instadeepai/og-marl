@@ -99,8 +99,8 @@ class MADDPGBCSystem(BaseOfflineSystem):
         self.target_update_rate = target_update_rate
 
         # Optimizers
-        self.critic_optimizer = snt.optimizers.Adam(learning_rate=critic_learning_rate)
-        self.policy_optimizer = snt.optimizers.Adam(learning_rate=policy_learning_rate)
+        self.critic_optimizer = snt.optimizers.RMSProp(learning_rate=critic_learning_rate)
+        self.policy_optimizer = snt.optimizers.RMSProp(learning_rate=policy_learning_rate)
 
         # Reset the recurrent neural network
         self.rnn_states = {

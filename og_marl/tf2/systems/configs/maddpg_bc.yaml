@@ -6,8 +6,8 @@ training_steps: 5e5
 task:
   source: omiga
   env: mamujoco
-  scenario: 2ant
-  dataset: Medium
+  scenario: 3hopper
+  dataset: Expert
 replay:
   sequence_length: 10
   sample_period: 1
@@ -20,4 +20,4 @@ system:
   critic_learning_rate: 3e-4
   policy_learning_rate: 3e-4
   add_agent_id_to_obs: True
-  bc_alpha: 0.5
+  bc_alpha: 5.0

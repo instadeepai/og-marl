@@ -4,13 +4,13 @@ wandb_project: og-marl
 training_steps: 5e5
 
 task:
-  source: og_marl
+  source: omiga
   env: mamujoco
-  scenario: 2halfcheetah
-  dataset: Good
+  scenario: 6halfcheetah
+  dataset: Expert
 
 replay:
-  sequence_length: 10
+  sequence_length: 20
   sample_period: 1
 
 system:
