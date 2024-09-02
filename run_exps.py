@@ -38,7 +38,7 @@ set_growing_gpu_memory()
 
 WANDB_PROJECT = "bc-systems-on-mamujoco-1m"
 
-TRAINING_STEPS = int(5e5)
+TRAINING_STEPS = int(2.5e5)
 
 SCRIPTS = [
     # "og_marl/tf2/systems/iddpg_cql.py",
@@ -53,10 +53,10 @@ SCRIPTS = [
 ]
 
 TASKS = [
-    "task.source=omiga task.env=mamujoco task.scenario=2ant task.dataset=Expert",
-    "task.source=omiga task.env=mamujoco task.scenario=2ant task.dataset=Medium",
-    "task.source=omiga task.env=mamujoco task.scenario=2ant task.dataset=Medium-Expert",
-    "task.source=omiga task.env=mamujoco task.scenario=2ant task.dataset=Medium-Replay",
+    "task.source=omiga task.env=mamujoco task.scenario=2ant task.dataset=Expert system.bc_alpha=0.5",
+    "task.source=omiga task.env=mamujoco task.scenario=2ant task.dataset=Medium system.bc_alpha=0.1",
+    "task.source=omiga task.env=mamujoco task.scenario=2ant task.dataset=Medium-Expert system.bc_alpha=0.1",
+    "task.source=omiga task.env=mamujoco task.scenario=2ant task.dataset=Medium-Replay system.bc_alpha=0.1",
 ]
 
 SEEDS = [5] 

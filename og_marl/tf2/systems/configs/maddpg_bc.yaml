@@ -4,11 +4,10 @@ wandb_project: og-marl
 training_steps: 5e5
 
 task:
-  source: og_marl
+  source: omiga
   env: mamujoco
-  scenario: 2halfcheetah
-  dataset: Good
-
+  scenario: 2ant
+  dataset: Medium
 replay:
   sequence_length: 10
   sample_period: 1
@@ -21,4 +20,4 @@ system:
   critic_learning_rate: 3e-4
   policy_learning_rate: 3e-4
   add_agent_id_to_obs: True
-  bc_alpha: 1.0
+  bc_alpha: 0.5
