@@ -38,7 +38,7 @@ set_growing_gpu_memory()
 
 WANDB_PROJECT = "bc-systems-on-mamujoco-1m"
 
-TRAINING_STEPS = int(5e6)
+TRAINING_STEPS = int(5e5)
 
 SCRIPTS = [
     # "og_marl/tf2/systems/iddpg_cql.py",

@@ -21,4 +21,4 @@ system:
   critic_learning_rate: 3e-4
   policy_learning_rate: 3e-4
   add_agent_id_to_obs: True
-  bc_alpha: 2.5
+  bc_alpha: 1.0
