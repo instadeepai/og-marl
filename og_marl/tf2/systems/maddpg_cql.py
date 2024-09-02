@@ -434,7 +434,7 @@ def run_experiment(cfg: DictConfig) -> None:
 
     tf.random.set_seed(cfg["seed"])
 
-    system.train(buffer, training_steps=int(cfg["training_steps"]))
+    system.train(buffer, num_eval_episodes=10, training_steps=int(cfg["training_steps"]))
 
 
 if __name__ == "__main__":

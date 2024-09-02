@@ -93,7 +93,7 @@ class MAMuJoCoOMIGA(BaseEnvironment):
             one_hot[i] = 1
             agent_obs = observations[agent].astype("float32")
             agent_obs = np.concatenate([agent_obs, one_hot], axis=-1)
-            agent_obs = agent_obs - np.mean(agent_obs) / np.std(agent_obs)
+            agent_obs = (agent_obs - np.mean(agent_obs)) / np.std(agent_obs)
             observations[agent] = agent_obs
         return observations
 

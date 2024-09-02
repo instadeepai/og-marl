@@ -4,12 +4,12 @@ wandb_project: og-marl
 training_steps: 5e5
 
 task:
-  env: mamujoco
-  scenario: 2halfcheetah
-  dataset: Good
+  env: mamujoco_omiga
+  scenario: 3hopper
+  dataset: Expert
 
 replay:
-  sequence_length: 20
+  sequence_length: 10
   sample_period: 1
 
 system:
@@ -17,10 +17,10 @@ system:
   recurrent_layer_dim: 64
   discount: 0.99
   target_update_rate: 0.01
-  critic_learning_rate: 3e-4
-  policy_learning_rate: 3e-5
+  critic_learning_rate: 1e-3
+  policy_learning_rate: 3e-4
   add_agent_id_to_obs: True
   num_ood_actions: 10
-  cql_weight: 0.5
-  cql_sigma: 0.1
+  cql_weight: 1.0
+  cql_sigma: 0.2
 
