@@ -52,11 +52,18 @@ SCRIPTS = [
 #    "og_marl/tf2/systems/maddpg_cql_cpg.py"
 ]
 
+# TASKS = [
+#     "task.source=omiga task.env=mamujoco task.scenario=2ant task.dataset=Expert system.bc_alpha=0.5",
+#     "task.source=omiga task.env=mamujoco task.scenario=2ant task.dataset=Medium system.bc_alpha=0.1",
+#     "task.source=omiga task.env=mamujoco task.scenario=2ant task.dataset=Medium-Expert system.bc_alpha=0.1",
+#     "task.source=omiga task.env=mamujoco task.scenario=2ant task.dataset=Medium-Replay system.bc_alpha=0.1",
+# ]
+
 TASKS = [
-    "task.source=omiga task.env=mamujoco task.scenario=2ant task.dataset=Expert system.bc_alpha=0.5",
-    "task.source=omiga task.env=mamujoco task.scenario=2ant task.dataset=Medium system.bc_alpha=0.1",
-    "task.source=omiga task.env=mamujoco task.scenario=2ant task.dataset=Medium-Expert system.bc_alpha=0.1",
-    "task.source=omiga task.env=mamujoco task.scenario=2ant task.dataset=Medium-Replay system.bc_alpha=0.1",
+    "task.source=omiga task.env=mamujoco task.scenario=3hopper task.dataset=Expert system.bc_alpha=5.0",
+    "task.source=omiga task.env=mamujoco task.scenario=3hopper task.dataset=Medium system.bc_alpha=5.0",
+    "task.source=omiga task.env=mamujoco task.scenario=3hopper task.dataset=Medium-Expert system.bc_alpha=5.0",
+    "task.source=omiga task.env=mamujoco task.scenario=3hopper task.dataset=Medium-Replay system.bc_alpha=5.0",
 ]
 
 SEEDS = [5] 
