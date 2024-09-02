@@ -36,7 +36,7 @@ from og_marl.tf2.utils import set_growing_gpu_memory
 
 set_growing_gpu_memory()
 
-WANDB_PROJECT = "og-marl-mamujoco-baselines"
+WANDB_PROJECT = "hacql"
 
 SCRIPTS = [
     # "og_marl/tf2/systems/iddpg_cql.py",
@@ -49,7 +49,7 @@ SCRIPTS = [
 #    "og_marl/tf2/systems/maddpg_cql_cpg.py"
 ]
 
-TASK = [
+TASKS = [
     "task.env=mamujoco_omiga task.scenario=3hopper task.dataset=Expert system.cql_sigma=0.2",
     "task.env=mamujoco_omiga task.scenario=3hopper task.dataset=Medium-Expert system.cql_sigma=0.2",
     "task.env=mamujoco_omiga task.scenario=2ant task.dataset=Expert system.cql_sigma=0.1",
@@ -64,10 +64,10 @@ training_steps = int(3e5)
 SEEDS = [5] 
 
 def main():
-
-    for seed in SEEDS:
-        for script in SCRIPTS:
-            os.system(f"python {script} {TASK} wandb_project={WANDB_PROJECT} seed={seed} training_steps={training_steps}")
+    for task in TASKS:
+        for seed in SEEDS:
+            for script in SCRIPTS:
+                os.system(f"python {script} {task} wandb_project={WANDB_PROJECT} seed={seed} training_steps={training_steps}")
 
 if __name__ == "__main__":
     main()
