@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implementation of MADDPG+CQL"""
+"""Implementation of HADDPG+CQL"""
 from typing import Any, Dict, Optional, Tuple, List
 import copy
 
@@ -206,7 +206,7 @@ class HACQLSystem(BaseOfflineSystem):
         self.policy_networks = [copy.deepcopy(policy_network) for i in range(len(self.agents))]
 
         # Target policy networks
-        self.target_policy_networks = [copy.deepcopy(policy_network) for i in range(len(self.agents))]
+        self.target_policy_networks = copy.deepcopy(self.policy_networks)
 
         # Critic network
         self.critic_network_1 = StateAndJointActionCritic(
@@ -220,8 +220,8 @@ class HACQLSystem(BaseOfflineSystem):
         self.target_update_rate = target_update_rate
 
         # Optimizers
-        self.critic_optimizer = snt.optimizers.Adam(learning_rate=critic_learning_rate)
-        self.policy_optimizer = snt.optimizers.Adam(learning_rate=policy_learning_rate)
+        self.critic_optimizer = snt.optimizers.RMSProp(learning_rate=critic_learning_rate)
+        self.policy_optimizer = snt.optimizers.RMSProp(learning_rate=policy_learning_rate)
 
         # Reset the recurrent neural network
         self.rnn_states = {
@@ -485,8 +485,11 @@ class HACQLSystem(BaseOfflineSystem):
         gradients = tape.gradient(critic_loss, variables)
         self.critic_optimizer.apply(gradients, variables)
 
+        # agent_ids = list()
+        # np.random.shuffle(agent_ids)
         latest_online_actions = []
         for i in range(len(self.agents)):
+            
 
             with tf.GradientTape() as tape:
                 agent_latest_action = ha_unroll_rnn(
@@ -510,7 +513,7 @@ class HACQLSystem(BaseOfflineSystem):
                 policy_qs_2 = self.critic_network_2(env_states, joint_action, joint_action, agent_idx=x)
                 policy_qs = tf.minimum(policy_qs_1, policy_qs_2)
 
-                policy_loss = -tf.reduce_mean(policy_qs) + 1e-3 * tf.reduce_mean(online_actions**2)
+                policy_loss = -tf.reduce_mean(policy_qs)
 
             # Train policy
             variables = (*self.policy_networks[i].trainable_variables,)
@@ -549,7 +552,7 @@ class HACQLSystem(BaseOfflineSystem):
         return logs
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="hacql")
+@hydra.main(version_base=None, config_path="configs", config_name="haddpg_cql")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
 
@@ -579,7 +582,7 @@ def run_experiment(cfg: DictConfig) -> None:
 
     tf.random.set_seed(cfg["seed"])
 
-    system.train(buffer, num_eval_episodes=32, training_steps=int(cfg["training_steps"]))
+    system.train(buffer, num_eval_episodes=10, training_steps=int(cfg["training_steps"]))
 
 
 if __name__ == "__main__":
