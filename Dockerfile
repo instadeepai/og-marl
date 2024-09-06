@@ -42,7 +42,7 @@ RUN pip install --quiet --upgrade pip setuptools wheel &&  \
 
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
 ENV SUPPRESS_GR_PROMPT 1
-RUN ./install_environments/mamujoco.sh
+RUN ./install_environments/mujoco210.sh
 RUN pip install gymnasium_robotics
 
 # RUN ./install_environments/pettingzoo.sh
