@@ -51,7 +51,7 @@ SCRIPTS = [
 ]
 
 TASKS = [
-    "task.env=gymnasium_mamujoco task.scenario=2walker task.dataset=Replay",
+    "task.env=gymnasium_mamujoco task.scenario=6halfcheetah task.dataset=Replay1400",
 ]
 
 training_steps = int(5e5)

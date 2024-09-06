@@ -35,7 +35,6 @@ class FlashbaxReplayBuffer:
         sample_period: int = 1,
         seed: int = 42,
         store_to_vault: bool = False,
-        write_to_vault_every: int = 10_000,
         vault_name: str = "recorded_data",
     ):
         self._sequence_length = sequence_length
@@ -45,7 +44,7 @@ class FlashbaxReplayBuffer:
         # Vault
         self._store_to_vault = store_to_vault
         self._vault_name = vault_name
-        self._write_to_vault_every = write_to_vault_every
+        self._write_to_vault_every = max_size - 10
         self._vault_has_initialised = False
         self._step_count = 0
 

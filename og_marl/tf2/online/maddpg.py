@@ -304,6 +304,7 @@ def run_experiment(cfg: DictConfig) -> None:
         sequence_length=cfg["replay"]["sequence_length"],
         sample_period=cfg["replay"]["sample_period"],
         seed=cfg["seed"],
+        max_size=cfg["replay"]["max_size"],
         store_to_vault=True,
     )
 

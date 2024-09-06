@@ -1,4 +1,4 @@
-system_name: iddpg
+system_name: maddpg
 seed: 42
 wandb_project: og-marl
 environment_steps: 2e6
@@ -14,7 +14,7 @@ replay:
   max_size: 10000
 
 system:
-  train_period: 4
+  train_period: 10
   env_steps_before_train: 5000
   linear_layer_dim: 64
   recurrent_layer_dim: 64
