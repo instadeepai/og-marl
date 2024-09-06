@@ -42,8 +42,8 @@ SCRIPTS = [
     # "og_marl/tf2/systems/iddpg_cql.py",
     # "og_marl/tf2/systems/iddpg_bc.py",
     # "og_marl/tf2/systems/omar.py",
-    "og_marl/tf2/offline/haddpg_cql.py",
     "og_marl/tf2/offline/maddpg_cql.py",
+    "og_marl/tf2/offline/haddpg_cql.py",
     # "og_marl/tf2/systems/continuous_bc.py",
     # "og_marl/tf2/systems/haddpg_cql.py",
     # "og_marl/tf2/systems/maddpg_cql_non_shared.py",
@@ -57,7 +57,7 @@ TASKS = [
 training_steps = int(5e5)
 
 
-SEEDS = [4] 
+SEEDS = [3] 
 
 def main():
     for task in TASKS:
