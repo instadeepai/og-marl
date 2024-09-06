@@ -1,12 +1,12 @@
 system_name: maddpg
 seed: 42
 wandb_project: og-marl
-environment_steps: 2e6
+environment_steps: 3e6
 
 task:
   source: og_marl
   env: gymnasium_mamujoco
-  scenario: 6halfcheetah
+  scenario: 2halfcheetah
 
 replay:
   sequence_length: 10
