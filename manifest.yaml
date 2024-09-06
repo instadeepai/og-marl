@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: python og_marl/tf2/offline/haddpg_cql.py
+  command: python og_marl/tf2/offline/maddpg_cql.py
   types:
     Worker:
       count: 1
