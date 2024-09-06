@@ -168,7 +168,7 @@ def download_and_unzip_vault(
         f"{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}.vlt"
     ):
         print(
-            f"Vault '{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}' already exists."  # noqa
+            f"Vault '{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}.vlt' already exists."  # noqa
         )
         return f"{dataset_base_dir}/{dataset_source}/{env_name}/{scenario_name}.vlt"
 

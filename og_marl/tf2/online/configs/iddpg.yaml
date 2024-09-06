@@ -1,19 +1,21 @@
-system_name: iddpg+bc
+system_name: iddpg
 seed: 42
 wandb_project: og-marl
-training_steps: 5e5
+environment_steps: 3e6
 
 task:
   source: og_marl
-  env: mamujoco
-  scenario: 2halfcheetah
-  dataset: Good
+  env: gymnasium_mamujoco
+  scenario: 2walker
 
 replay:
-  sequence_length: 20
+  sequence_length: 10
   sample_period: 1
+  max_size: 10000
 
 system:
+  train_period: 4
+  env_steps_before_train: 5000
   linear_layer_dim: 64
   recurrent_layer_dim: 64
   discount: 0.99
@@ -21,4 +23,4 @@ system:
   critic_learning_rate: 3e-4
   policy_learning_rate: 3e-4
   add_agent_id_to_obs: True
-  bc_alpha: 2.5
+  explore_stddev: 0.2

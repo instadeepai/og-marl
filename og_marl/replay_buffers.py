@@ -34,10 +34,20 @@ class FlashbaxReplayBuffer:
         batch_size: int = 32,
         sample_period: int = 1,
         seed: int = 42,
+        store_to_vault: bool = False,
+        write_to_vault_every: int = 10_000,
+        vault_name: str = "recorded_data",
     ):
         self._sequence_length = sequence_length
         self._max_size = max_size
         self._batch_size = batch_size
+
+        # Vault
+        self._store_to_vault = store_to_vault
+        self._vault_name = vault_name
+        self._write_to_vault_every = write_to_vault_every
+        self._vault_has_initialised = False
+        self._step_count = 0
 
         # Flashbax buffer
         self._replay_buffer = fbx.make_trajectory_buffer(
@@ -83,10 +93,24 @@ class FlashbaxReplayBuffer:
         if self._buffer_state is None:
             self._buffer_state = self._replay_buffer.init(timestep)
 
+            # Log stuff to vault/flashbax
+            if not self._vault_has_initialised and self._store_to_vault:
+                self._vault = Vault(
+                    vault_name=self._vault_name,
+                    experience_structure=self._buffer_state.experience,
+                )
+                self._vault_has_initialised = True
+
         timestep = tree.map_structure(
             lambda x: jnp.expand_dims(jnp.expand_dims(jnp.array(x), 0), 0), timestep
         )  # add batch & time dims
+
         self._buffer_state = self._buffer_add_fn(self._buffer_state, timestep)
+
+        self._step_count += 1
+
+        if self._step_count % self._write_to_vault_every == 0 and self._vault_has_initialised:
+            self._vault.write(self._buffer_state)
 
     def sample(self) -> Experience:
         self._rng_key, sample_key = jax.random.split(self._rng_key, 2)
@@ -94,7 +118,12 @@ class FlashbaxReplayBuffer:
         return batch.experience  # type: ignore
 
     def populate_from_vault(
-        self, source: str, env_name: str, scenario_name: str, dataset_name: str, rel_dir: str = "vaults"
+        self,
+        source: str,
+        env_name: str,
+        scenario_name: str,
+        dataset_name: str,
+        rel_dir: str = "vaults",
     ) -> bool:
         self._buffer_state = Vault(
             vault_name=f"{source}/{env_name}/{scenario_name}.vlt",

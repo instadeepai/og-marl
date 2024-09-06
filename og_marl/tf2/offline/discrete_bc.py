@@ -28,7 +28,7 @@ from og_marl.environments import get_environment, BaseEnvironment
 from og_marl.loggers import BaseLogger, WandbLogger
 from og_marl.vault_utils.download_vault import download_and_unzip_vault
 from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
-from og_marl.tf2.systems.base import BaseOfflineSystem
+from og_marl.tf2.offline.base import BaseOfflineSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
     concat_agent_id_to_obs,
@@ -202,7 +202,9 @@ class DicreteActionBehaviourCloning(BaseOfflineSystem):
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
 
-    env = get_environment(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"])
+    env = get_environment(
+        cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"]
+    )
 
     buffer = FlashbaxReplayBuffer(
         sequence_length=cfg["replay"]["sequence_length"],
@@ -212,7 +214,9 @@ def run_experiment(cfg: DictConfig) -> None:
 
     download_and_unzip_vault(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"])
 
-    buffer.populate_from_vault(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], cfg["task"]["dataset"])
+    buffer.populate_from_vault(
+        cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], cfg["task"]["dataset"]
+    )
 
     wandb_config = {
         "system": cfg["system_name"],

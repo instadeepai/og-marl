@@ -34,6 +34,12 @@ def get_mamujoco_args(scenario: str) -> Dict[str, Any]:
     elif scenario.lower() == "2halfcheetah":
         env_args["scenario"] = "HalfCheetah-v2"
         env_args["agent_conf"] = "2x3"
+    elif scenario.lower() == "2walker":
+        env_args["scenario"] = "Walker2d-v2"
+        env_args["agent_conf"] = "2x3"
+    elif scenario.lower() == "2humanoid":
+        env_args["scenario"] = "Humanoid-v2"
+        env_args["agent_conf"] = "9|8"
     else:
         raise ValueError("Not a valid mamujoco scenario")
     return env_args
@@ -68,7 +74,7 @@ class MAMuJoCo(BaseEnvironment):
         for agent in self.agents:
             mujoco_actions.append(actions[agent])
 
-        reward, done, info = self._environment.step(mujoco_actions)
+        reward, done, _ = self._environment.step(mujoco_actions)
 
         terminals = {agent: np.array(done) for agent in self.agents}
         truncations = {agent: np.array(False) for agent in self.agents}
@@ -81,7 +87,7 @@ class MAMuJoCo(BaseEnvironment):
             agent: observations[i].astype("float32") for i, agent in enumerate(self.agents)
         }
 
-        info["state"] = self._environment.get_state()
+        info = {"state": self._environment.get_state()}
 
         return observations, rewards, terminals, truncations, info  # type: ignore
 
