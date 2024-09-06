@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: python og_marl/tf2/offline/maddpg_cql.py
+  command: python run_exps.py
   types:
     Worker:
       count: 1
