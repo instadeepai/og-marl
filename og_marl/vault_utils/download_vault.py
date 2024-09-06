@@ -39,6 +39,11 @@ VAULT_INFO = {
                 "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/3s5z_vs_3s6z.zip"
             },
         },
+        "gymnasium_mamujoco": {
+            "2walker": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/gymnasium_mamujoco/2walker.zip"
+            }
+        },
         "smac_v2": {
             "terran_5_vs_5": {
                 "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v2/terran_5_vs_5.zip"
