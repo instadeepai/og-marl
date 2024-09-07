@@ -29,7 +29,6 @@
 #     main()
 
 
-
 import os
 
 from og_marl.tf2.utils import set_growing_gpu_memory
@@ -47,7 +46,7 @@ SCRIPTS = [
     # "og_marl/tf2/systems/continuous_bc.py",
     # "og_marl/tf2/systems/haddpg_cql.py",
     # "og_marl/tf2/systems/maddpg_cql_non_shared.py",
-#    "og_marl/tf2/systems/maddpg_cql_cpg.py"
+    #    "og_marl/tf2/systems/maddpg_cql_cpg.py"
 ]
 
 TASKS = [
@@ -57,13 +56,17 @@ TASKS = [
 training_steps = int(5e5)
 
 
-SEEDS = [6] 
+SEEDS = [7]
+
 
 def main():
     for task in TASKS:
         for seed in SEEDS:
             for script in SCRIPTS:
-                os.system(f"python {script} {task} wandb_project={WANDB_PROJECT} seed={seed} training_steps={training_steps}")
+                os.system(
+                    f"python {script} {task} wandb_project={WANDB_PROJECT} seed={seed} training_steps={training_steps}"
+                )
+
 
 if __name__ == "__main__":
     main()
