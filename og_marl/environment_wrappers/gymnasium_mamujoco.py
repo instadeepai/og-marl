@@ -38,6 +38,9 @@ def get_env_config(scenario: str) -> Dict[str, Any]:
     elif scenario.lower() == "2ant":
         env_args["scenario"] = "Ant"
         env_args["agent_conf"] = "2x4"
+    elif scenario.lower() == "2humanoid":
+        env_args["scenario"] = "Humanoid"
+        env_args["agent_conf"] = "9|8"
     elif scenario.lower() == "4ant":
         env_args["scenario"] = "Ant"
         env_args["agent_conf"] = "4x2"

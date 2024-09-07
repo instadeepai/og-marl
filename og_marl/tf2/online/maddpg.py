@@ -289,7 +289,7 @@ class MADDPGSystem(BaseOnlineSystem):
         return logs
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="iddpg")
+@hydra.main(version_base=None, config_path="configs", config_name="maddpg")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
 
