@@ -40,7 +40,7 @@ WANDB_PROJECT = "haddpg+cql-vs-maddpg+cql-2walker"
 SCRIPTS = [
     # "og_marl/tf2/systems/iddpg_cql.py",
     # "og_marl/tf2/systems/iddpg_bc.py",
-    "og_marl/tf2/systems/omar.py",
+    "og_marl/tf2/offline/omar.py",
     # "og_marl/tf2/offline/haddpg_cql.py",
     # "og_marl/tf2/offline/maddpg_cql.py",
     # "og_marl/tf2/systems/continuous_bc.py",
