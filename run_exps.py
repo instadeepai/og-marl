@@ -41,8 +41,8 @@ SCRIPTS = [
     # "og_marl/tf2/systems/iddpg_cql.py",
     # "og_marl/tf2/systems/iddpg_bc.py",
     "og_marl/tf2/offline/omar.py",
-    # "og_marl/tf2/offline/haddpg_cql.py",
-    # "og_marl/tf2/offline/maddpg_cql.py",
+    "og_marl/tf2/offline/haddpg_cql.py",
+    "og_marl/tf2/offline/maddpg_cql.py",
     # "og_marl/tf2/systems/continuous_bc.py",
     # "og_marl/tf2/systems/haddpg_cql.py",
     # "og_marl/tf2/systems/maddpg_cql_non_shared.py",
@@ -50,8 +50,8 @@ SCRIPTS = [
 ]
 
 TASKS = [
-    "task.env=gymnasium_mamujoco task.scenario=2walker task.dataset=Replay",
-    "task.env=gymnasium_mamujoco task.scenario=6halfcheetah task.dataset=Replay1400",
+    "task.env=gymnasium_mamujoco task.scenario=3hopper task.dataset=Replay",
+    "task.env=gymnasium_mamujoco task.scenario=4ant task.dataset=Replay",
 ]
 
 training_steps = int(5e5)

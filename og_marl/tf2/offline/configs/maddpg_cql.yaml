@@ -6,7 +6,7 @@ training_steps: 5e5
 task:
   source: og_marl
   env: gymnasium_mamujoco
-  scenario: 2walker
+  scenario: 2halfcheetah
   dataset: Replay
 
 replay:
