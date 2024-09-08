@@ -51,6 +51,9 @@ VAULT_INFO = {
             },
             "4ant": {
                 "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/gymnasium_mamujoco/4ant.zip"
+            },
+            "2ant": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/gymnasium_mamujoco/2ant.zip"
             }
         },
         "smac_v2": {

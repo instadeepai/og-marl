@@ -50,14 +50,14 @@ SCRIPTS = [
 ]
 
 TASKS = [
-    "task.env=gymnasium_mamujoco task.scenario=3hopper task.dataset=Replay",
-    "task.env=gymnasium_mamujoco task.scenario=4ant task.dataset=Replay",
+    # "task.env=gymnasium_mamujoco task.scenario=3hopper task.dataset=Replay",
+    "task.env=gymnasium_mamujoco task.scenario=2ant task.dataset=Replay",
 ]
 
 training_steps = int(5e5)
 
 
-SEEDS = [3]
+SEEDS = [1]
 
 
 def main():
