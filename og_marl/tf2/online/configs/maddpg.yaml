@@ -6,7 +6,7 @@ environment_steps: 3e6
 task:
   source: og_marl
   env: gymnasium_mamujoco
-  scenario: 2humanoid
+  scenario: 2ant
 
 replay:
   sequence_length: 10

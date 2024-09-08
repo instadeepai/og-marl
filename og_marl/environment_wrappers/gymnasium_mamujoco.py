@@ -50,7 +50,7 @@ def get_env_config(scenario: str) -> Dict[str, Any]:
     elif scenario.lower() == "2walker":
         env_args["scenario"] = "Walker2d"
         env_args["agent_conf"] = "2x3"
-    elif scenario.lower() == "2walker":
+    elif scenario.lower() == "2reacher":
         env_args["scenario"] = "Reacher"
         env_args["agent_conf"] = "2x1"
     return env_args
