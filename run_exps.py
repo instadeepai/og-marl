@@ -40,8 +40,8 @@ WANDB_PROJECT = "haddpg+cql-vs-maddpg+cql-2walker"
 SCRIPTS = [
     # "og_marl/tf2/systems/iddpg_cql.py",
     # "og_marl/tf2/systems/iddpg_bc.py",
-    # "og_marl/tf2/offline/haddpg_cql.py",
-    # "og_marl/tf2/offline/maddpg_cql.py",
+    "og_marl/tf2/offline/haddpg_cql.py",
+    "og_marl/tf2/offline/maddpg_cql.py",
     "og_marl/tf2/offline/omar.py",
     # "og_marl/tf2/systems/continuous_bc.py",
     # "og_marl/tf2/systems/haddpg_cql.py",
@@ -51,13 +51,13 @@ SCRIPTS = [
 
 TASKS = [
     # "task.env=gymnasium_mamujoco task.scenario=3hopper task.dataset=Replay",
-    "task.env=gymnasium_mamujoco task.scenario=3hopper task.dataset=Replay",
+    "task.env=gymnasium_mamujoco task.scenario=2halfcheetah task.dataset=Replay",
 ]
 
 training_steps = int(5e5)
 
 
-SEEDS = [9]
+SEEDS = [1]
 
 
 def main():
