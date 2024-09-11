@@ -52,6 +52,26 @@ VAULT_INFO = {
                 "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/mamujoco/2halfcheetah.zip"
             },
         },
+        "gymnasium_mamujoco": {
+            "2ant": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/gymnasium_mamujoco/2ant.zip"
+            },
+            "2halfcheetah": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/gymnasium_mamujoco/2halfcheetah.zip"
+            },
+            "2walker": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/gymnasium_mamujoco/2walker.zip"
+            },
+            "3hopper": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/gymnasium_mamujoco/3hopper.zip"
+            },
+            "4ant": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/gymnasium_mamujoco/4ant.zip"
+            },
+            "6halfcheetah": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/gymnasium_mamujoco/6halfcheetah.zip"
+            },
+        },
     },
     "cfcql": {
         "smac_v1": {
