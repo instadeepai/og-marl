@@ -26,13 +26,23 @@ from tabulate import tabulate
 
 
 def get_structure_descriptors(
-    experience: Dict[str, Array], n_head: int = 1
+    experience: Dict[str, Array], n_head: int = 1, done_flags: list = ["terminals"],
 ) -> Tuple[Dict[str, Array], Dict[str, Array], int]:
     struct = jax.tree_map(lambda x: x.shape, experience)
 
     head = jax.tree_map(lambda x: x[0, :n_head, ...], experience)
 
-    terminal_flag = experience["terminals"][0, :, ...].all(axis=-1)
+    if len(done_flags==1):
+        terminal_flag = experience[done_flags[0]][0, :, ...].all(axis=-1)
+    elif len(done_flags==2):
+        done_1 = experience[done_flags[0]][0, :, ...].all(axis=-1)
+        done_2 = experience[done_flags[1]][0, :, ...].all(axis=-1)
+
+        terminal_flag = jnp.logical_or(done_1,done_2)
+    else:
+        print("Too many done flags. Please revise.")
+        return struct, head, 0
+
     num_episodes = int(jnp.sum(terminal_flag))
 
     return struct, head, num_episodes
