@@ -26,7 +26,7 @@ from tabulate import tabulate
 
 
 def get_structure_descriptors(
-    experience: Dict[str, Array], n_head: int = 1, done_flags: tuple = ("terminals"),
+    experience: Dict[str, Array], n_head: int = 1, done_flags: tuple = ("terminals",),
 ) -> Tuple[Dict[str, Array], Dict[str, Array], int]:
     struct = jax.tree_map(lambda x: x.shape, experience)
 
@@ -54,7 +54,7 @@ def describe_structure(
     vault_uids: Optional[List[str]] = None,
     rel_dir: str = "vaults",
     n_head: int = 0,
-    done_flags: tuple = ("terminals"),
+    done_flags: tuple = ("terminals",),
 ) -> Dict[str, Array]:
     # get all uids if not specified
     if vault_uids is None:
@@ -87,7 +87,7 @@ def describe_structure(
 
 
 def get_episode_return_descriptors(
-    experience: Dict[str, Array], done_flags: tuple = ("terminals"),
+    experience: Dict[str, Array], done_flags: tuple = ("terminals",),
 ) -> Tuple[float, float, float, float, Array]:
     episode_returns = calculate_returns(experience, done_flags = done_flags)
 
@@ -163,7 +163,7 @@ def describe_episode_returns(
     save_violin: bool = False,
     plot_saving_rel_dir: str = "vaults",
     n_bins: Optional[int] = 50,
-    done_flags: tuple = ("terminals"),
+    done_flags: tuple = ("terminals",),
 ) -> None:
     """Describe a vault.
 
@@ -222,7 +222,7 @@ def describe_episode_returns(
 
 
 def calculate_returns(
-    experience: Dict[str, Array], reward_key: str = "rewards", done_flags: tuple = ("terminals"),
+    experience: Dict[str, Array], reward_key: str = "rewards", done_flags: tuple = ("terminals",),
 ) -> Array:
     """Calculate the returns in a dataset of experience.
 
@@ -409,7 +409,7 @@ def descriptive_summary(
     plot_hist: bool = True,
     save_hist: bool = False,
     n_bins: int = 40,
-    done_flags: tuple = ("terminals"),
+    done_flags: tuple = ("terminals",),
 ) -> Dict[str, Array]:
     """Provides coverage, structural and episode return descriptors of a Vault of datasets.
 

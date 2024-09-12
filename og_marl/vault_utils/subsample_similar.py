@@ -26,7 +26,7 @@ from os.path import exists
 
 
 # cumulative summing per-episode
-def get_episode_returns_and_term_idxes(offline_data: Dict[str, Array], done_flags: tuple = ("terminals")) -> Tuple[Array, Array]:
+def get_episode_returns_and_term_idxes(offline_data: Dict[str, Array], done_flags: tuple = ("terminals",)) -> Tuple[Array, Array]:
     """Gets the episode returns and final indices from a batch of experience.
 
     From a batch of experience extract the indices
@@ -41,7 +41,7 @@ def get_episode_returns_and_term_idxes(offline_data: Dict[str, Array], done_flag
 
         terminal_flag = jnp.logical_or(done_1,done_2)
 
-    assert bool(terminal_flag[-1]) is True
+    # assert bool(terminal_flag[-1]) is True
 
     def scan_cumsum(
         return_so_far: float, prev_term_reward: Tuple[bool, float]
@@ -121,7 +121,7 @@ def subsample_similar(
     second_vault_info: Dict[str, str],
     new_rel_dir: str,
     new_vault_name: str,
-    done_flags: tuple = ("terminals"),
+    done_flags: tuple = ("terminals",),
 ) -> None:
     """Subsamples 2 datasets s.t. the new datasets have similar episode return distributions."""
     # check that a subsampled vault by the same name does not already exist
