@@ -26,16 +26,22 @@ from os.path import exists
 
 
 # cumulative summing per-episode
-def get_episode_returns_and_term_idxes(offline_data: Dict[str, Array]) -> Tuple[Array, Array]:
+def get_episode_returns_and_term_idxes(offline_data: Dict[str, Array], done_flags: tuple = ("terminals",)) -> Tuple[Array, Array]:
     """Gets the episode returns and final indices from a batch of experience.
 
     From a batch of experience extract the indices
     of the final transitions as well as the returns of each episode in order.
     """
     rewards = offline_data["rewards"][0, :, 0]
-    terminal_flag = offline_data["terminals"][0, :, ...].all(axis=-1)
+    if len(done_flags)==1:
+        terminal_flag = offline_data[done_flags[0]][0, :, ...].all(axis=-1)
+    elif len(done_flags)==2:
+        done_1 = offline_data[done_flags[0]][0, :, ...].all(axis=-1)
+        done_2 = offline_data[done_flags[1]][0, :, ...].all(axis=-1)
 
-    assert bool(terminal_flag[-1]) is True
+        terminal_flag = jnp.logical_or(done_1,done_2)
+
+    # assert bool(terminal_flag[-1]) is True
 
     def scan_cumsum(
         return_so_far: float, prev_term_reward: Tuple[bool, float]
@@ -115,6 +121,7 @@ def subsample_similar(
     second_vault_info: Dict[str, str],
     new_rel_dir: str,
     new_vault_name: str,
+    done_flags: tuple = ("terminals",),
 ) -> None:
     """Subsamples 2 datasets s.t. the new datasets have similar episode return distributions."""
     # check that a subsampled vault by the same name does not already exist
@@ -146,7 +153,7 @@ def subsample_similar(
         del all_data
 
         # basic information about the vault
-        returns, episode_end_idxes = get_episode_returns_and_term_idxes(offline_data)
+        returns, episode_end_idxes = get_episode_returns_and_term_idxes(offline_data, done_flags=done_flags)
 
         # no need to save the returns if they already exist!
         if not exists(f"./{rel_dir}/{vault_name}/{vault_uid}/returns.pickle"):

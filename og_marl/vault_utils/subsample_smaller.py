@@ -14,6 +14,7 @@
 from typing import Optional
 
 import jax
+import jax.numpy as jnp
 import pickle
 import numpy as np
 import flashbax as fbx
@@ -30,15 +31,21 @@ from chex import Array
 # subsample vault smaller
 
 
-def get_length_start_end(experience: Dict[str, Array], terminal_key: str = "terminals") -> Array:
+def get_length_start_end(experience: Dict[str, Array], done_flags: tuple = ("terminals",)) -> Array:
     """Process experience to get the length, start and end of all episodes.
 
     From a block of experience, extracts the length, start position and end position of each
     episode. Length is stored for the convenience of a cumsum in the following function, and
     to match other episode information blocks which store return, instead.
     """
-    # extract terminals
-    terminal_flag = experience[terminal_key][0, :, ...].all(axis=-1)
+    # extract episode ends, could be term or trunc
+    if len(done_flags)==1:
+        terminal_flag = experience[done_flags[0]][0, :, ...].all(axis=-1)
+    elif len(done_flags)==2:
+        done_1 = experience[done_flags[0]][0, :, ...].all(axis=-1)
+        done_2 = experience[done_flags[1]][0, :, ...].all(axis=-1)
+
+        terminal_flag = jnp.logical_or(done_1,done_2)
 
     # list of indices of terminal entries
     term_idxes = np.argwhere(terminal_flag)

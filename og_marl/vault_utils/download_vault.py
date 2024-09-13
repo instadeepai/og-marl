@@ -63,6 +63,9 @@ VAULT_INFO = {
             "terran_5_vs_5": {
                 "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v2/terran_5_vs_5.zip"
             },
+            "terran_10_vs_10": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v2/terran_10_vs_10.zip"
+            },
             "zerg_5_vs_5": {
                 "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v2/zerg_5_vs_5.zip"
             },
@@ -70,6 +73,26 @@ VAULT_INFO = {
         "mamujoco": {
             "2halfcheetah": {
                 "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/mamujoco/2halfcheetah.zip"
+            },
+        },
+        "gymnasium_mamujoco": {
+            "2ant": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/gymnasium_mamujoco/2ant.zip"
+            },
+            "2halfcheetah": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/gymnasium_mamujoco/2halfcheetah.zip"
+            },
+            "2walker": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/gymnasium_mamujoco/2walker.zip"
+            },
+            "3hopper": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/gymnasium_mamujoco/3hopper.zip"
+            },
+            "4ant": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/gymnasium_mamujoco/4ant.zip"
+            },
+            "6halfcheetah": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/gymnasium_mamujoco/6halfcheetah.zip"
             },
         },
     },
