@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implementation discrete action MADDPG+CQL"""
-from typing import Any, Dict, Optional, Tuple
+"""Implementation of Discrete HADDPG+CQL"""
+from typing import Any, Dict, Optional, Tuple, List
 import copy
 
 import hydra
 import numpy as np
 import sonnet as snt
 from omegaconf import DictConfig
-import tensorflow_probability as tfp
 import tensorflow as tf
+import tensorflow_probability as tfp
 from tensorflow import Tensor
 import tree
 from chex import Numeric
@@ -75,8 +75,132 @@ class DiscreteGradientEstimator(snt.Module):
         else:
             return tf.cast(one_hot_action, "float32")
 
+def ha_unroll_rnn(rnn_networks: List[snt.Module], inputs: Tensor, resets: Tensor, agent_idx: Optional[int]=None) -> Tensor:
+    T, B, N = inputs.shape[:3]
 
-class DiscreteMADDPGCQLSystem(BaseOfflineSystem):
+
+    if agent_idx is None:
+        all_agent_outputs = []
+        for n in range(N):
+            outputs = []
+            hidden_state = rnn_networks[n].initial_state(B)  # type: ignore
+            for i in range(T):  # type: ignore
+                output, hidden_state = rnn_networks[n](inputs[i,:,n], hidden_state)  # type: ignore
+                outputs.append(output)
+
+                hidden_state = (
+                    tf.where(
+                        tf.cast(tf.expand_dims(resets[i,:,n], axis=-1), "bool"),
+                        rnn_networks[n].initial_state(B)[0],  # type: ignore
+                        hidden_state[0],
+                    ),
+                )  # hidden state wrapped in tuple
+
+            all_agent_outputs.append(tf.stack(outputs, axis=0))  # type: ignore
+        return tf.stack(all_agent_outputs, axis=2)
+    else:
+        n = agent_idx
+        outputs = []
+        hidden_state = rnn_networks[n].initial_state(B)  # type: ignore
+        for i in range(T):  # type: ignore
+            output, hidden_state = rnn_networks[n](inputs[i,:,n], hidden_state)  # type: ignore
+            outputs.append(output)
+
+            hidden_state = (
+                tf.where(
+                    tf.cast(tf.expand_dims(resets[i,:,n], axis=-1), "bool"),
+                    rnn_networks[n].initial_state(B)[0],  # type: ignore
+                    hidden_state[0],
+                ),
+            )  # hidden state wrapped in tuple
+
+        outputs = tf.stack(outputs, axis=0)  # type: ignore
+        return tf.expand_dims(outputs, axis=2) # add agent dim back
+    
+class StateAndJointActionCritic(snt.Module):
+    def __init__(self, num_agents: int, num_actions: int):
+        self.N = num_agents
+        self.A = num_actions
+
+        self._critic_network = snt.Sequential(
+            [
+                snt.Linear(128),
+                tf.nn.relu,
+                snt.Linear(128),
+                tf.nn.relu,
+                snt.Linear(1),
+            ]
+        )
+
+        super().__init__()
+
+    def __call__(
+        self,
+        states: Tensor,
+        agent_actions: Tensor,
+        other_actions: Tensor,
+        stop_other_actions_gradient: bool = True,
+        agent_idx = None
+    ) -> Tensor:
+        """Forward pass of critic network.
+
+        observations [T,B,N,O]
+        states [T,B,S]
+        agent_actions [T,B,N,A]: the actions the agent took.
+        other_actions [T,B,N,A]: the actions the other agents took.
+        """
+
+        if agent_idx is None:
+            if stop_other_actions_gradient:
+                other_actions = tf.stop_gradient(other_actions)
+
+            # Make joint action
+            joint_actions = self.make_joint_action(agent_actions, other_actions)
+
+            # Repeat states for each agent
+            states = tf.stack([states] * self.N, axis=2)  # [T,B,S] -> [T,B,N,S]
+
+            # Concat states and joint actions
+            critic_input = tf.concat([states, joint_actions], axis=-1)
+
+            # Concat agent IDs to critic input
+            # critic_input = batch_concat_agent_id_to_obs(critic_input)
+
+            q_values: Tensor = self._critic_network(critic_input)
+
+            return q_values
+        else:
+            # Concat states and joint actions
+            T,B,N,A = agent_actions.shape
+            agent_actions = tf.reshape(agent_actions, shape=(T,B,N*A))
+            critic_input = tf.concat([states, agent_actions], axis=-1)
+            q_values: Tensor = self._critic_network(critic_input)
+            return q_values
+
+    def make_joint_action(self, agent_actions: Tensor, other_actions: Tensor) -> Tensor:
+        """Method to construct the joint action.
+
+        agent_actions [T,B,N,A]: tensor of actions the agent took. Usually
+            the actions from the learnt policy network.
+        other_actions [[T,B,N,A]]: tensor of actions the agent took. Usually
+            the actions from the replay buffer.
+        """
+        T, B, N, A = agent_actions.shape[:4]  # (B,N,A)
+        all_joint_actions = []
+        for i in range(N):  # type: ignore
+            one_hot = tf.expand_dims(
+                tf.cast(tf.stack([tf.stack([tf.one_hot(i, N)] * B, axis=0)] * T, axis=0), "bool"),  # type: ignore
+                axis=-1,
+            )
+            joint_action = tf.where(one_hot, agent_actions, other_actions)
+            joint_action = tf.reshape(joint_action, (T, B, N * A))  # type: ignore
+            all_joint_actions.append(joint_action)
+        all_joint_actions: Tensor = tf.stack(all_joint_actions, axis=2)
+
+        return all_joint_actions
+
+
+class DiscreteHADDPGCQLSystem(BaseOfflineSystem):
     """Multi-Agent Deep Deterministic Policy Gradients with CQL."""
 
     def __init__(
@@ -100,7 +224,7 @@ class DiscreteMADDPGCQLSystem(BaseOfflineSystem):
         self.discount = discount
 
         # Policy network
-        self.policy_network = snt.DeepRNN(
+        policy_network = snt.DeepRNN(
             [
                 snt.Linear(linear_layer_dim),
                 tf.nn.relu,
@@ -108,10 +232,12 @@ class DiscreteMADDPGCQLSystem(BaseOfflineSystem):
                 tf.nn.relu,
                 snt.Linear(self.environment.num_actions),
             ]
-        )  # shared network for all agents
+        )
+        # Independent networks for each agent
+        self.policy_networks = [copy.deepcopy(policy_network) for i in range(len(self.agents))]
 
-        # Target policy network
-        self.target_policy_network = copy.deepcopy(self.policy_network)
+        # Target policy networks
+        self.target_policy_networks = copy.deepcopy(self.policy_networks)
 
         self.gradient_estimator = DiscreteGradientEstimator(temperature=0.7)
 
@@ -132,7 +258,7 @@ class DiscreteMADDPGCQLSystem(BaseOfflineSystem):
 
         # Reset the recurrent neural network
         self.rnn_states = {
-            agent: self.policy_network.initial_state(1) for agent in self.environment.agents
+            agent: self.policy_networks[i].initial_state(1) for i, agent in enumerate(self.agents)
         }
 
         # CQL
@@ -147,7 +273,7 @@ class DiscreteMADDPGCQLSystem(BaseOfflineSystem):
         """Called at the start of a new episode."""
         # Reset the recurrent neural network
         self.rnn_states = {
-            agent: self.policy_network.initial_state(1) for agent in self.environment.agents
+            agent: self.policy_networks[i].initial_state(1) for i, agent in enumerate(self.environment.agents)
         }
         return
 
@@ -167,7 +293,7 @@ class DiscreteMADDPGCQLSystem(BaseOfflineSystem):
         self,
         observations: Dict[str, Tensor],
         rnn_states: Dict[str, Tensor],
-        legals: Dict[str, Tensor],
+        legals: Dict[str, Tensor]
     ) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
         actions = {}
         next_rnn_states = {}
@@ -178,7 +304,7 @@ class DiscreteMADDPGCQLSystem(BaseOfflineSystem):
                     agent_observation, i, len(self.environment.agents)
                 )
             agent_observation = tf.expand_dims(agent_observation, axis=0)  # add batch dimension
-            logits, next_rnn_states[agent] = self.policy_network(
+            logits, next_rnn_states[agent] = self.policy_networks[i](
                 agent_observation, rnn_states[agent]
             )
 
@@ -198,9 +324,9 @@ class DiscreteMADDPGCQLSystem(BaseOfflineSystem):
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
-        actions = experience["actions"]  # (B,T,N) 
+        actions = experience["actions"]  # (B,T,N)
         env_states = experience["infos"]["state"]  # (B,T,S)
-        legals = experience["infos"]["legals"]  # (B,T,S,A)
+        legals = experience["infos"]["legals"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
         truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
         terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
@@ -219,7 +345,7 @@ class DiscreteMADDPGCQLSystem(BaseOfflineSystem):
 
         # Make time-major
         observations = switch_two_leading_dims(observations)
-        one_hot_actions = switch_two_leading_dims(one_hot_actions)
+        replay_actions = switch_two_leading_dims(one_hot_actions)
         rewards = switch_two_leading_dims(rewards)
         terminals = switch_two_leading_dims(terminals)
         env_states = switch_two_leading_dims(env_states)
@@ -227,12 +353,11 @@ class DiscreteMADDPGCQLSystem(BaseOfflineSystem):
         legals = switch_two_leading_dims(legals)
 
         # Unroll target policy
-        target_logits = unroll_rnn(
-            self.target_policy_network,
-            merge_batch_and_agent_dim_of_time_major_sequence(observations),
-            merge_batch_and_agent_dim_of_time_major_sequence(resets),
+        target_logits = ha_unroll_rnn(
+            self.target_policy_networks,
+            observations,
+            resets,
         )
-        target_logits = expand_batch_and_agent_dim_of_time_major_sequence(target_logits, B, N)
         target_logits = tf.where(legals==1.0, target_logits, -np.inf)
         target_actions = self.gradient_estimator(target_logits, need_gradients=False)
 
@@ -249,14 +374,14 @@ class DiscreteMADDPGCQLSystem(BaseOfflineSystem):
         )
 
         # Do forward passes through the networks and calculate the losses
-        with tf.GradientTape(persistent=True) as tape:
+        with tf.GradientTape() as tape:
             # Online critics
             qs_1 = tf.squeeze(
-                self.critic_network_1(env_states, one_hot_actions, one_hot_actions),
+                self.critic_network_1(env_states, replay_actions, replay_actions),
                 axis=-1,
             )
             qs_2 = tf.squeeze(
-                self.critic_network_2(env_states, one_hot_actions, one_hot_actions),
+                self.critic_network_2(env_states, replay_actions, replay_actions),
                 axis=-1,
             )
 
@@ -267,15 +392,6 @@ class DiscreteMADDPGCQLSystem(BaseOfflineSystem):
             ###########
             ### CQL ###
             ###########
-
-            online_logits = unroll_rnn(
-                self.policy_network,
-                merge_batch_and_agent_dim_of_time_major_sequence(observations),
-                merge_batch_and_agent_dim_of_time_major_sequence(resets),
-            )
-            online_logits = expand_batch_and_agent_dim_of_time_major_sequence(online_logits, B, N)
-            online_logits = tf.where(legals==1.0, online_logits, -np.inf)
-            online_one_hot_actions = self.gradient_estimator(online_logits, need_gradients=True)
 
             # Sample legal random actions
             repeated_legals = tf.stack([legals] * self.num_ood_actions, axis=0)
@@ -316,21 +432,6 @@ class DiscreteMADDPGCQLSystem(BaseOfflineSystem):
 
             ### END CQL ###
 
-            # Policy Loss
-            policy_qs_1 = self.critic_network_1(env_states, online_one_hot_actions, one_hot_actions)
-            policy_qs_2 = self.critic_network_2(env_states, online_one_hot_actions, one_hot_actions)
-            policy_qs = tf.minimum(policy_qs_1, policy_qs_2)
-
-            bc_loss = tf.keras.metrics.categorical_crossentropy(
-                    one_hot_actions, online_logits, from_logits=True
-            )
-            bc_loss = tf.reduce_mean(bc_loss)
-
-            self.train_step_cnt.assign_add(1.0)
-            decay = tf.maximum(1.0 - (1.0/50_000.0) * self.train_step_cnt, 0.0)
-
-            policy_loss = -(self.bc_alpha / tf.reduce_mean(tf.abs(tf.stop_gradient(policy_qs)))) * tf.reduce_mean(policy_qs) + decay * bc_loss
-
         # Train critics
         variables = (
             *self.critic_network_1.trainable_variables,
@@ -339,22 +440,75 @@ class DiscreteMADDPGCQLSystem(BaseOfflineSystem):
         gradients = tape.gradient(critic_loss, variables)
         self.critic_optimizer.apply(gradients, variables)
 
-        # Train policy
-        variables = (*self.policy_network.trainable_variables,)
-        gradients = tape.gradient(policy_loss, variables)
-        self.policy_optimizer.apply(gradients, variables)
+
+        ### POLICY ###
+
+        online_logits = ha_unroll_rnn(
+            self.policy_networks,
+            observations,
+            resets,
+        )
+        online_logits = tf.where(legals==1.0, online_logits, -np.inf)
+        online_one_hot_actions = self.gradient_estimator(online_logits, need_gradients=True)
+
+        # agent_ids = list()
+        # np.random.shuffle(agent_ids)
+        latest_online_actions = []
+        for i in range(len(self.agents)):
+            
+
+            with tf.GradientTape() as tape:
+                agent_logits = ha_unroll_rnn(
+                    self.policy_networks,
+                    observations,
+                    resets,
+                    agent_idx=i
+                )
+                agent_legals = tf.expand_dims(legals[:,:,i], axis=2)
+                agent_logits = tf.where(agent_legals==1.0, agent_logits, -np.inf)
+                agent_latest_action = self.gradient_estimator(agent_logits, need_gradients=True)
+                latest_online_actions.append(agent_latest_action)
+
+                joint_action = []
+                for x in range(N):
+                    if x < len(latest_online_actions):
+                        joint_action.append(latest_online_actions[x])
+                    else:
+                        joint_action.append(tf.expand_dims(online_one_hot_actions[:,:,x], axis=2))
+                joint_action = tf.concat(joint_action, axis=3)
+
+                # Policy Loss
+                policy_qs_1 = self.critic_network_1(env_states, joint_action, joint_action, agent_idx=x)
+                policy_qs_2 = self.critic_network_2(env_states, joint_action, joint_action, agent_idx=x)
+                policy_qs = tf.minimum(policy_qs_1, policy_qs_2)
+
+                bc_loss = tf.keras.metrics.categorical_crossentropy(
+                    tf.expand_dims(replay_actions[:,:,i], axis=2), agent_logits, from_logits=True
+                )
+                bc_loss = tf.reduce_mean(bc_loss)
+
+                self.train_step_cnt.assign_add(1.0)
+                decay = tf.maximum(1.0 - (1.0/50_000.0) * self.train_step_cnt, 0.0)
+                policy_loss = -(self.bc_alpha / tf.reduce_mean(tf.abs(tf.stop_gradient(policy_qs)))) * tf.reduce_mean(policy_qs) + decay * bc_loss
+
+            # Train policy
+            variables = (*self.policy_networks[i].trainable_variables,)
+            gradients = tape.gradient(policy_loss, variables)
+            self.policy_optimizer.apply(gradients, variables)
 
         # Update target networks
-        online_variables = (
+        online_variables = [
             *self.critic_network_1.variables,
             *self.critic_network_2.variables,
-            *self.policy_network.variables,
-        )
-        target_variables = (
+        ]
+        target_variables = [
             *self.target_critic_network_1.variables,
             *self.target_critic_network_2.variables,
-            *self.target_policy_network.variables,
-        )
+        ]
+
+        for n in range(N):
+            online_variables += [*self.policy_networks[n].variables,]
+            target_variables += [*self.target_policy_networks[n].variables,]
 
         # Soft target update
         tau = self.target_update_rate
@@ -366,7 +520,6 @@ class DiscreteMADDPGCQLSystem(BaseOfflineSystem):
         logs = {
             "mean_dataset_q_values": tf.reduce_mean((qs_1 + qs_2) / 2),
             "critic_loss": critic_loss,
-            "td_loss": (td_error_1 + td_error_2) / 2,
             "cql_loss": (cql_loss_1 + cql_loss_2) / 2.0,
             "policy_loss": policy_loss,
             "mean_chosen_q_values": tf.reduce_mean((policy_qs_1 + policy_qs_2) / 2),
@@ -375,13 +528,11 @@ class DiscreteMADDPGCQLSystem(BaseOfflineSystem):
         return logs
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="discrete_maddpg_cql")
+@hydra.main(version_base=None, config_path="configs", config_name="discrete_haddpg_cql")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
 
-    env = get_environment(
-        cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"]
-    )
+    env = get_environment(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"])
 
     buffer = FlashbaxReplayBuffer(
         sequence_length=cfg["replay"]["sequence_length"],
@@ -391,9 +542,7 @@ def run_experiment(cfg: DictConfig) -> None:
 
     download_and_unzip_vault(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"])
 
-    buffer.populate_from_vault(
-        cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], cfg["task"]["dataset"]
-    )
+    buffer.populate_from_vault(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], cfg["task"]["dataset"])
 
     wandb_config = {
         "system": cfg["system_name"],
@@ -405,7 +554,7 @@ def run_experiment(cfg: DictConfig) -> None:
     }
     logger = WandbLogger(project=cfg["wandb_project"], config=wandb_config)
 
-    system = DiscreteMADDPGCQLSystem(env, logger, **cfg["system"])
+    system = DiscreteHADDPGCQLSystem(env, logger, **cfg["system"])
 
     tf.random.set_seed(cfg["seed"])
 

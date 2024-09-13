@@ -30,14 +30,16 @@ COPY ./og_marl ./og_marl
 COPY setup.py .
 COPY requirements.txt .
 COPY ./run_exps.py .
+COPY ./run_smac_exps.py .
 
 RUN echo "Installing requirements..."
 RUN pip install --quiet --upgrade pip setuptools wheel &&  \
     pip install -r requirements.txt && \
     pip install -e .
 
-# ENV SC2PATH "~/StarCraftII"
-# RUN ./install_environments/smacv1.sh
+ENV SC2PATH "~/StarCraftII"
+RUN ./install_environments/smacv1.sh
+RUN pip install -r install_environments/requirements/smacv1.txt
 # RUN ./install_environments/smacv2.sh
 
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
