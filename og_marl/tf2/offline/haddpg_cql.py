@@ -220,8 +220,8 @@ class HACQLSystem(BaseOfflineSystem):
         self.target_update_rate = target_update_rate
 
         # Optimizers
-        self.critic_optimizer = snt.optimizers.RMSProp(learning_rate=critic_learning_rate)
-        self.policy_optimizer = snt.optimizers.RMSProp(learning_rate=policy_learning_rate)
+        self.critic_optimizer = snt.optimizers.Adam(learning_rate=critic_learning_rate)
+        self.policy_optimizer = snt.optimizers.Adam(learning_rate=policy_learning_rate)
 
         # Reset the recurrent neural network
         self.rnn_states = {
@@ -485,7 +485,7 @@ class HACQLSystem(BaseOfflineSystem):
         gradients = tape.gradient(critic_loss, variables)
         self.critic_optimizer.apply(gradients, variables)
 
-        # agent_ids = list()
+        # agent_ids = list(range(len(self.agents)))
         # np.random.shuffle(agent_ids)
         latest_online_actions = []
         for i in range(len(self.agents)):

@@ -314,8 +314,8 @@ class DiscreteMADDPGCQLSystem(BaseOfflineSystem):
             ### END CQL ###
 
             # Policy Loss
-            policy_qs_1 = self.critic_network_1(env_states, online_one_hot_actions, tf.stop_gradient(target_actions))
-            policy_qs_2 = self.critic_network_2(env_states, online_one_hot_actions, tf.stop_gradient(target_actions))
+            policy_qs_1 = self.critic_network_1(env_states, online_one_hot_actions, one_hot_actions)
+            policy_qs_2 = self.critic_network_2(env_states, online_one_hot_actions, one_hot_actions)
             policy_qs = tf.minimum(policy_qs_1, policy_qs_2)
 
             policy_loss = -tf.reduce_mean(policy_qs)
