@@ -67,7 +67,7 @@ TASKS = [
 training_steps = int(3e5)
 
 
-SEEDS = [6] 
+SEEDS = [5] 
 
 
 def main():
