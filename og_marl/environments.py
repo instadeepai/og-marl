@@ -34,5 +34,9 @@ def get_environment(source: str, env_name: str, scenario: str, seed: int = 42) -
         from og_marl.environment_wrappers.flatland_wrapper import Flatland
 
         return Flatland(scenario)
+    elif env_name == "citylearn":
+        from og_marl.environment_wrappers.citylearn_wrapper import CityLearn
+
+        return CityLearn(scenario)
     else:
         raise ValueError("Environment not recognised.")

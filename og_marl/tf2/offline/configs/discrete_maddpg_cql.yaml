@@ -1,12 +1,12 @@
-system_name: iql+cql
+system_name: discrete+maddpg+cql
 seed: 42
 wandb_project: og-marl
-training_steps: 1e5
+training_steps: 5e5
 
 task:
   source: og_marl
   env: smac_v1
-  scenario: 3m
+  scenario: 5m_vs_6m
   dataset: Good
 
 replay:
@@ -14,10 +14,12 @@ replay:
   sample_period: 1
 
 system:
-  learning_rate: 1e-3
   linear_layer_dim: 64
   recurrent_layer_dim: 64
   discount: 0.99
-  target_update_period: 200
+  target_update_rate: 0.01
+  critic_learning_rate: 1e-3
+  policy_learning_rate: 1e-3
   add_agent_id_to_obs: True
+  num_ood_actions: 10
   cql_weight: 5.0

@@ -14,11 +14,13 @@
 
 from typing import Any, Dict
 
+import time
 import flashbax as fbx
 import jax
 import jax.numpy as jnp
 import numpy as np
 import tree
+import chex
 from chex import Array
 from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 from flashbax.vault import Vault
@@ -59,7 +61,7 @@ class FlashbaxReplayBuffer:
         )
 
         self._buffer_sample_fn = jax.jit(self._replay_buffer.sample)
-        self._buffer_add_fn = jax.jit(self._replay_buffer.add)
+        self._buffer_add_fn = jax.jit(self._replay_buffer.add, donate_argnums=[0])
 
         self._buffer_state: TrajectoryBufferState = None
         self._rng_key = jax.random.PRNGKey(seed)
@@ -73,6 +75,7 @@ class FlashbaxReplayBuffer:
         truncations: Dict[str, np.ndarray],
         infos: Dict[str, Any],
     ) -> None:
+        
         stacked_infos = {}
         for key, value in infos.items():
             if isinstance(value, dict):
