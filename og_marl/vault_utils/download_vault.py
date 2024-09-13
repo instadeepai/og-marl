@@ -43,6 +43,9 @@ VAULT_INFO = {
             "terran_5_vs_5": {
                 "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v2/terran_5_vs_5.zip"
             },
+            "terran_10_vs_10": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v2/terran_10_vs_10.zip"
+            },
             "zerg_5_vs_5": {
                 "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v2/zerg_5_vs_5.zip"
             },
