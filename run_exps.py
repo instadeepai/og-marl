@@ -50,8 +50,12 @@ SCRIPTS = [
 ]
 
 TASKS = [
-    # "task.env=gymnasium_mamujoco task.scenario=3hopper task.dataset=Replay",
-    "task.env=gymnasium_mamujoco task.scenario=2halfcheetah task.dataset=Replay",
+    "task.env=gymnasium_mamujoco task.scenario=3hopper task.dataset=Replay_Uniform_1000episodes",
+    "task.env=gymnasium_mamujoco task.scenario=2halfcheetah task.dataset=Replay_Uniform_200episodes",
+    "task.env=gymnasium_mamujoco task.scenario=2ant task.dataset=Replay_Uniform_500episodes",
+    "task.env=gymnasium_mamujoco task.scenario=2walker task.dataset=Replay_Uniform_1000episodes",
+    "task.env=gymnasium_mamujoco task.scenario=6halfcheetah task.dataset=Replay_Uniform_400episodes",
+    "task.env=gymnasium_mamujoco task.scenario=4ant task.dataset=Replay_Uniform_1000episodes",
 ]
 
 training_steps = int(5e5)
