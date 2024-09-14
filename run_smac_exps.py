@@ -40,9 +40,10 @@ WANDB_PROJECT = "haddpg+cql-vs-maddpg+cql-smacv1"
 SCRIPTS = [
     # "og_marl/tf2/systems/iddpg_cql.py",
     # "og_marl/tf2/systems/iddpg_bc.py",
-    "og_marl/tf2/offline/discrete_maddpg_cql.py",
+    "og_marl/tf2/offline/iql_cql.py",
+    # "og_marl/tf2/offline/discrete_maddpg_cql.py",
     # "og_marl/tf2/offline/omar.py",
-    "og_marl/tf2/offline/discrete_haddpg_cql.py",
+    # "og_marl/tf2/offline/discrete_haddpg_cql.py",
     # "og_marl/tf2/systems/continuous_bc.py",
     # "og_marl/tf2/systems/haddpg_cql.py",
     # "og_marl/tf2/systems/maddpg_cql_non_shared.py",
@@ -67,7 +68,7 @@ TASKS = [
 training_steps = int(3e5)
 
 
-SEEDS = [1] 
+SEEDS = [1,2] 
 
 
 def main():
