@@ -1,0 +1,32 @@
+{
+    "og_marl": {
+        "smac_v1": {
+            "3m": {
+                "Good": {
+                    "environment_name": "SMAC",
+                    "scenario_name": "3m",
+                    "dataset_name": "Good",
+                    "number_of_agents": "3",
+                    "action_space": "Discrete",
+                    "motivation": "A simple SMAC scenario and good samples as a easy starting point.",
+                    "generation_procedure": "A QMIX system was trained to a performance greater than 15. The learnt policy was then rolled out to collect aprox 250k transitions. And epsilon greedy policy with eps=0.05 was used. This procedure was repeated 4 times and the data was combined.",
+                    "mean_episode_return": 15.1,
+                    "stddev_episode_return": 2.1,
+                    "url_to_histogram_plot": "https://...."
+                },
+                "Medium": {
+                    "environment_name": "SMAC",
+                    "scenario_name": "3m",
+                    "dataset_name": "Medium",
+                    "number_of_agents": "3",
+                    "action_space": "Discrete",
+                    "motivation": "A simple SMAC scenario and good samples as a easy starting point.",
+                    "generation_procedure": "A QMIX system was trained to a performance greater than 10 but less than 15. The learnt policy was then rolled out to collect aprox 250k transitions. And epsilon greedy policy with eps=0.05 was used. This procedure was repeated 4 times and the data was combined.",
+                    "mean_episode_return": 15.1,
+                    "stddev_episode_return": 2.1,
+                    "url_to_histogram_plot": "https://...."
+                }
+            }
+        }
+    }
+}
