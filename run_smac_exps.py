@@ -35,12 +35,17 @@ from og_marl.tf2.utils import set_growing_gpu_memory
 
 set_growing_gpu_memory()
 
-WANDB_PROJECT = "haddpg+cql-vs-maddpg+cql-smacv1"
+WANDB_PROJECT = "smacv1-baselines-september-24"
 
 SCRIPTS = [
     # "og_marl/tf2/systems/iddpg_cql.py",
     # "og_marl/tf2/systems/iddpg_bc.py",
     "og_marl/tf2/offline/iql_cql.py",
+    "og_marl/tf2/offline/qmix_cql.py",
+    "og_marl/tf2/offline/iql_bcq.py",
+    "og_marl/tf2/offline/qmix_bcq.py",
+    "og_marl/tf2/offline/discrete_bc.py",
+    "og_marl/tf2/offline/maicq.py",
     # "og_marl/tf2/offline/discrete_maddpg_cql.py",
     # "og_marl/tf2/offline/omar.py",
     # "og_marl/tf2/offline/discrete_haddpg_cql.py",
@@ -63,12 +68,15 @@ TASKS = [
     "task.env=smac_v1 task.scenario=3s5z_vs_3s6z task.dataset=Good",
     "task.env=smac_v1 task.scenario=3s5z_vs_3s6z task.dataset=Medium",
     "task.env=smac_v1 task.scenario=3s5z_vs_3s6z task.dataset=Poor",
+    "task.env=smac_v1 task.scenario=2s3z task.dataset=Good",
+    "task.env=smac_v1 task.scenario=2s3z task.dataset=Medium",
+    "task.env=smac_v1 task.scenario=2s3z task.dataset=Poor",
 ]
 
 training_steps = int(3e5)
 
 
-SEEDS = [9,10] 
+SEEDS = [1] 
 
 
 def main():

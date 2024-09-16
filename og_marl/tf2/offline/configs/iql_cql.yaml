@@ -10,7 +10,7 @@ task:
   dataset: Good
 
 replay:
-  sequence_length: 10
+  sequence_length: 20
   sample_period: 1
 
 system:
@@ -20,4 +20,4 @@ system:
   discount: 0.99
   target_update_period: 200
   add_agent_id_to_obs: True
-  cql_weight: 5.0
+  cql_weight: 3.0

@@ -14,7 +14,7 @@ replay:
   sample_period: 1
 
 system:
-  learning_rate: 3e-4
+  learning_rate: 1e-3
   linear_layer_dim: 64
   recurrent_layer_dim: 64
   mixer_embed_dim: 32
