@@ -42,14 +42,16 @@ nav:
     - "": research/index.md
     - "Coordination Failure in Cooperative Offline MARL": research/polygames.md
     - "Selective Reincarnation in Multi-Agent Reinforcement Learning": research/selective-reincarnation.md
+  - "Datasets":
+      - "": datasets.md
   - "Baseline Results":
     - "SMACv1": baselines/smac_v1.md
     - "SMACv2": baselines/smac_v2.md
     - "MAMuJoCo": baselines/mamujoco.md
     - "PettingZoo": baselines/pettingzoo.md
     - "Flatland": baselines/flatland.md
-  - "Updates": 'updates.md'
-  - "API Reference": 'api.md'
+  # - "Updates": 'updates.md'
+  # - "API Reference": 'api.md'
 
 markdown_extensions:
   - attr_list
