@@ -43,7 +43,11 @@ nav:
     - "Coordination Failure in Cooperative Offline MARL": research/polygames.md
     - "Selective Reincarnation in Multi-Agent Reinforcement Learning": research/selective-reincarnation.md
   - "Datasets":
-      - "": datasets.md
+      - "OG MARL": dataset_cards/og_marl.md
+      - "CFCQL": dataset_cards/cfcql.md
+      - "OMIGA": dataset_cards/omiga.md
+      - "OMAR": dataset_cards/omar.md
+      - "Alberdice": dataset_cards/alberdice.md
   - "Baseline Results":
     - "SMACv1": baselines/smac_v1.md
     - "SMACv2": baselines/smac_v2.md
