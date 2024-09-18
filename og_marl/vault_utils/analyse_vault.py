@@ -294,7 +294,8 @@ def get_saco(experience: Dict[str, Array]) -> Tuple[float, Array, Array]:
     num_tot = states.shape[1]
 
     reshaped_actions = experience["actions"].reshape((*experience["actions"].shape[:2], -1))
-    state_pairs = np.concatenate((states, reshaped_actions), axis=-1)
+    reshaped_states = states.reshape((*experience["infos"]["state"].shape[:2], -1))
+    state_pairs = np.concatenate((reshaped_states, reshaped_actions), axis=-1)
 
     unique_vals, counts = np.unique(state_pairs, axis=1, return_counts=True)
     count_vals, count_freq = np.unique(counts, return_counts=True)
