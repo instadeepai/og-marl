@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: python baselines/main.py
+  command: wandb agent henryraubenheimer64-university-of-stellenbosch/QMIX_CQL_EXPS/qrswv28d
   types:
     Worker:
       count: 1
