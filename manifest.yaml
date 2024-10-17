@@ -16,7 +16,7 @@ spec:
   command: wandb agent henryraubenheimer64-university-of-stellenbosch/QMIX_CQL_EXPS/qrswv28d
   types:
     Worker:
-      count: 1
+      count: 2
 
       resources:
         # 10-15 cpus for single process
