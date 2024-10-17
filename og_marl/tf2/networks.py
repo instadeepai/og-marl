@@ -4,124 +4,6 @@ import tensorflow as tf
 from tensorflow import Tensor
 import sonnet as snt
 
-from og_marl.tf2.utils import batch_concat_agent_id_to_obs
-
-
-class StateAndJointActionCritic(snt.Module):
-    def __init__(self, num_agents: int, num_actions: int):
-        self.N = num_agents
-        self.A = num_actions
-
-        self._critic_network = snt.Sequential(
-            [
-                snt.Linear(128),
-                tf.nn.relu,
-                snt.Linear(128),
-                tf.nn.relu,
-                snt.Linear(1),
-            ]
-        )
-
-        super().__init__()
-
-    def __call__(
-        self,
-        states: Tensor,
-        agent_actions: Tensor,
-        other_actions: Tensor,
-        stop_other_actions_gradient: bool = True,
-    ) -> Tensor:
-        """Forward pass of critic network.
-
-        observations [T,B,N,O]
-        states [T,B,S]
-        agent_actions [T,B,N,A]: the actions the agent took.
-        other_actions [T,B,N,A]: the actions the other agents took.
-        """
-        if stop_other_actions_gradient:
-            other_actions = tf.stop_gradient(other_actions)
-
-        # Make joint action
-        joint_actions = self.make_joint_action(agent_actions, other_actions)
-
-        # Repeat states for each agent
-        states = tf.stack([states] * self.N, axis=2)  # [T,B,S] -> [T,B,N,S]
-
-        # Concat states and joint actions
-        critic_input = tf.concat([states, joint_actions], axis=-1)
-
-        # Concat agent IDs to critic input
-        # critic_input = batch_concat_agent_id_to_obs(critic_input)
-
-        q_values: Tensor = self._critic_network(critic_input)
-
-        return q_values
-
-    def make_joint_action(self, agent_actions: Tensor, other_actions: Tensor) -> Tensor:
-        """Method to construct the joint action.
-
-        agent_actions [T,B,N,A]: tensor of actions the agent took. Usually
-            the actions from the learnt policy network.
-        other_actions [[T,B,N,A]]: tensor of actions the agent took. Usually
-            the actions from the replay buffer.
-        """
-        T, B, N, A = agent_actions.shape[:4]  # (B,N,A)
-        all_joint_actions = []
-        for i in range(N):  # type: ignore
-            one_hot = tf.expand_dims(
-                tf.cast(tf.stack([tf.stack([tf.one_hot(i, N)] * B, axis=0)] * T, axis=0), "bool"),  # type: ignore
-                axis=-1,
-            )
-            joint_action = tf.where(one_hot, agent_actions, other_actions)
-            joint_action = tf.reshape(joint_action, (T, B, N * A))  # type: ignore
-            all_joint_actions.append(joint_action)
-        all_joint_actions: Tensor = tf.stack(all_joint_actions, axis=2)
-
-        return all_joint_actions
-
-
-class StateAndActionCritic(snt.Module):
-    def __init__(self, num_agents: int, num_actions: int, add_agent_id: bool = True):
-        self.N = num_agents
-        self.A = num_actions
-        self.add_agent_id = add_agent_id
-
-        self._critic_network = snt.Sequential(
-            [
-                snt.Linear(128),
-                tf.nn.relu,
-                snt.Linear(128),
-                tf.nn.relu,
-                snt.Linear(1),
-            ]
-        )
-
-        super().__init__()
-
-    def __call__(
-        self,
-        states: Tensor,
-        agent_actions: Tensor,
-    ) -> Tensor:
-        """Forward pass of critic network.
-
-        states [T,B,S]
-        agent_actions [T,B,N,A]: the actions the agent took.
-        """
-        # Repeat states for each agent
-        states = tf.stack([states] * self.N, axis=2)
-
-        # Concat states and joint actions
-        critic_input = tf.concat([states, agent_actions], axis=-1)
-
-        # Concat agent IDs to critic input
-        if self.add_agent_id:
-            critic_input = batch_concat_agent_id_to_obs(critic_input)
-
-        q_values: Tensor = self._critic_network(critic_input)
-
-        return q_values
-
 
 class QMixer(snt.Module):
 
@@ -185,7 +67,8 @@ class QMixer(snt.Module):
         b1 = self.hyper_b_1(states)
         w1 = tf.reshape(w1, (-1, self.num_agents, self.embed_dim))
         b1 = tf.reshape(b1, (-1, 1, self.embed_dim))
-        hidden = tf.nn.elu(tf.matmul(agent_qs, w1) + b1)
+        hidden = tf.matmul(agent_qs, w1) + b1
+        hidden = tf.nn.elu(hidden)
 
         # Second layer
         w_final = self.hyper_w_final(states)

@@ -28,24 +28,26 @@ WORKDIR ${folder}
 COPY ./install_environments ./install_environments
 COPY ./og_marl ./og_marl
 COPY setup.py .
-COPY requirements.txt .
-COPY ./run_exps.py .
-COPY ./run_smac_exps.py .
+COPY ./baselines ./baselines
+# COPY requirements.txt .
+# COPY ./run_exps.py .
+# COPY ./run_smac_exps.py .
 
 RUN echo "Installing requirements..."
 RUN pip install --quiet --upgrade pip setuptools wheel &&  \
-    pip install -r requirements.txt && \
-    pip install -e .
+    # pip install -r requirements.txt && \
+    pip install -e . && \
+    pip install flashbax==0.1.2
 
 ENV SC2PATH "~/StarCraftII"
 RUN ./install_environments/smacv1.sh
-RUN pip install -r install_environments/requirements/smacv1.txt
+# RUN pip install -r install_environments/requirements/smacv1.txt
 # RUN ./install_environments/smacv2.sh
 
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
-# ENV SUPPRESS_GR_PROMPT 1
-RUN ./install_environments/mujoco210.sh
-RUN pip install gymnasium_robotics
+# ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
+# # ENV SUPPRESS_GR_PROMPT 1
+# RUN ./install_environments/mujoco210.sh
+# RUN pip install gymnasium_robotics
 
 # RUN ./install_environments/pettingzoo.sh
 

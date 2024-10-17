@@ -2,8 +2,6 @@
 # Install SC2 and add the custom maps
 # Script adapted from https://github.com/oxwhirl/pymarl
 
-export SC2PATH=~/StarCraftII
-
 echo 'StarCraftII is not installed. Installing now ...';
 wget --progress=dot:mega http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.10.zip
 unzip -oP iagreetotheeula SC2.4.10.zip
@@ -22,3 +20,5 @@ rm -rf SMAC_Maps.zip
 
 echo 'StarCraft II is installed.'
 
+# Install SMAC
+pip install -r install_environments/requirements/smacv2.txt

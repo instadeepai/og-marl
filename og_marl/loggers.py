@@ -54,7 +54,6 @@ class TerminalLogger(BaseLogger):
 class WandbLogger(BaseLogger):
     def __init__(
         self,
-        name: Optional[str] = None,
         config: Dict = {},  # noqa: B006
         project: str = "default_project",
         notes: str = "",
@@ -62,7 +61,7 @@ class WandbLogger(BaseLogger):
         entity: Optional[str] = None,
         log_every: int = 2,  # seconds
     ):
-        wandb.init(name=name, project=project, notes=notes, tags=tags, entity=entity, config=config)
+        wandb.init(project=project, notes=notes, tags=tags, entity=entity, config=config)
 
         self._log_every = log_every
         self._ctr = 0
@@ -72,14 +71,17 @@ class WandbLogger(BaseLogger):
         if time.time() - self._last_log > self._log_every or force:
             wandb.log(logs)
 
-            for key, log in logs.items():
-                print(f"{key}: {float(log)} |", end=" ")
-            print()
+            # for key, log in logs.items():
+            #     print(f"{key}: {float(log)} |", end=" ")
+            # print()
 
             if not force:
                 self._last_log = time.time()
 
         self._ctr += 1
+
+        if self._ctr % 1000 == 0:
+            print(self._ctr)
 
     def close(self) -> None:
         wandb.finish()
