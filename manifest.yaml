@@ -16,7 +16,7 @@ spec:
   command: wandb agent henryraubenheimer64-university-of-stellenbosch/QMIX_CQL_EXPS/x3krb2vc
   types:
     Worker:
-      count: 20
+      count: 12
 
       resources:
         # 10-15 cpus for single process
@@ -29,4 +29,4 @@ spec:
             count: 1
             # mandatory (if gpus amount is > 0): gpu type wanted
             type: gpu
-            product: Quadro-RTX-4000 # NVIDIA-A100-SXM4-80GB-MIG-3g.40gb | Quadro-RTX-4000 | Tesla-V100-SXM3-32GB
+            product: Tesla-V100-SXM3-32GB # NVIDIA-A100-SXM4-80GB-MIG-3g.40gb | Quadro-RTX-4000 | Tesla-V100-SXM3-32GB
