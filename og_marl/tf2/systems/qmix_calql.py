@@ -51,6 +51,7 @@ class QMIXCALQLSystem(QMIXSystem):
         mixer_hyper_dim: int = 64,
         discount: float = 0.99,
         eps_decay_timesteps: int = 50000,
+        eps_min = 0.05,
         target_update_period: int = 200,
         learning_rate: float = 3e-4,
         add_agent_id_to_obs: bool = False,
@@ -69,6 +70,7 @@ class QMIXCALQLSystem(QMIXSystem):
             eps_decay_timesteps=eps_decay_timesteps,
             target_update_period=target_update_period,
             learning_rate=learning_rate,
+            eps_min=eps_min,
             observation_embedding_network=observation_embedding_network,
             state_embedding_network=state_embedding_network,
         )

@@ -13,7 +13,7 @@ builder:
 spec:
   operator: tf
   image: og-marl
-  command: wandb agent henryraubenheimer64-university-of-stellenbosch/QMIX_CQL_EXPS/aj8dna7j
+  command: wandb agent henryraubenheimer64-university-of-stellenbosch/QMIX_CQL_EXPS/x3krb2vc
   types:
     Worker:
       count: 20
