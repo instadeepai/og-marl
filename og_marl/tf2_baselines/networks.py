@@ -4,7 +4,7 @@ import tensorflow as tf
 from tensorflow import Tensor
 import sonnet as snt
 
-from og_marl.tf2.utils import batch_concat_agent_id_to_obs
+from og_marl.tf2_baselines.utils import batch_concat_agent_id_to_obs
 
 
 class StateAndJointActionCritic(snt.Module):

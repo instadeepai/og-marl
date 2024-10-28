@@ -27,8 +27,8 @@ from og_marl.environments import get_environment, BaseEnvironment
 from og_marl.loggers import BaseLogger, WandbLogger
 from og_marl.vault_utils.download_vault import download_and_unzip_vault
 from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
-from og_marl.tf2.systems.base import BaseOfflineSystem
-from og_marl.tf2.utils import (
+from og_marl.tf2_baselines.systems.base import BaseOfflineSystem
+from og_marl.tf2_baselines.utils import (
     batch_concat_agent_id_to_obs,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,

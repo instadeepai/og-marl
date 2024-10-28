@@ -11,32 +11,32 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-"""Implementation of IQL+BCQ"""
+"""Implementation of IQL+CQL"""
 from typing import Any, Dict, Tuple
 
 import copy
+import numpy as np
+import tensorflow as tf
+import sonnet as snt
+import tree
 import hydra
 from omegaconf import DictConfig
-import sonnet as snt
-import tensorflow as tf
-import numpy as np
-from tensorflow import Tensor
 from chex import Numeric
-import tree
+from tensorflow import Tensor
 
 from og_marl.environments import get_environment, BaseEnvironment
-from og_marl.loggers import BaseLogger, WandbLogger
-from og_marl.vault_utils.download_vault import download_and_unzip_vault
+from og_marl.loggers import BaseLogger
 from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
-from og_marl.tf2.systems.base import BaseOfflineSystem
-from og_marl.tf2.utils import (
+from og_marl.tf2_baselines.systems.base import BaseOfflineSystem
+from og_marl.loggers import WandbLogger
+from og_marl.vault_utils.download_vault import download_and_unzip_vault
+from og_marl.tf2_baselines.utils import set_growing_gpu_memory
+from og_marl.tf2_baselines.utils import (
     batch_concat_agent_id_to_obs,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
     gather,
     merge_batch_and_agent_dim_of_time_major_sequence,
-    set_growing_gpu_memory,
     switch_two_leading_dims,
     unroll_rnn,
 )
@@ -44,26 +44,25 @@ from og_marl.tf2.utils import (
 set_growing_gpu_memory()
 
 
-class IQLBCQSystem(BaseOfflineSystem):
+class IQLCQLSystem(BaseOfflineSystem):
+    """IQL+CQL System.
 
-    """IQL+BCQ System"""
+    Independent Q-Learners with Conservative Q-Learning for stable offline training.
+    """
 
     def __init__(
         self,
         environment: BaseEnvironment,
         logger: BaseLogger,
+        cql_weight: float = 2.0,
         linear_layer_dim: int = 64,
         recurrent_layer_dim: int = 64,
         discount: float = 0.99,
         target_update_period: int = 200,
         learning_rate: float = 3e-4,
         add_agent_id_to_obs: bool = True,
-        bc_threshold: float = 0.4,
     ):
-        super().__init__(
-            environment,
-            logger,
-        )
+        super().__init__(environment, logger)
 
         self.discount = discount
         self.add_agent_id_to_obs = add_agent_id_to_obs
@@ -83,26 +82,16 @@ class IQLBCQSystem(BaseOfflineSystem):
         self.target_q_network = copy.deepcopy(self.q_network)
         self.target_update_period = target_update_period
 
-        # Optimizers
+        # Optimizer
         self.optimizer = snt.optimizers.Adam(learning_rate=learning_rate)
-        self.bc_optimizer = snt.optimizers.Adam(learning_rate=learning_rate)
 
         # Recurrent neural network hidden states for evaluation
         self.rnn_states = {
             agent: self.q_network.initial_state(1) for agent in self.environment.agents
         }
 
-        self.bc_threshold = bc_threshold
-        self.behaviour_cloning_network = snt.DeepRNN(
-            [
-                snt.Linear(linear_layer_dim),
-                tf.nn.relu,
-                snt.GRU(recurrent_layer_dim),
-                tf.nn.relu,
-                snt.Linear(self.environment.num_actions),
-                tf.nn.softmax,
-            ]
-        )
+        # CQL
+        self.cql_weight = cql_weight
 
     def reset(self) -> None:
         """Called at the start of a new episode during evaluation."""
@@ -161,13 +150,13 @@ class IQLBCQSystem(BaseOfflineSystem):
 
     @tf.function(jit_compile=True)
     def _tf_train_step(self, train_step: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
-        # Unpack the batch
+        # Unpack the experience
         observations = tf.cast(experience["observations"], "float32")  # (B,T,N,O)
-        actions = experience["actions"]  # (B,T,N)
-        rewards = experience["rewards"]  # (B,T,N)
-        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
-        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
-        legal_actions = experience["infos"]["legals"]  # (B,T,N,A)
+        actions = tf.cast(experience["actions"], "int32")  # (B,T,N)
+        rewards = tf.cast(experience["rewards"], "float32")  # (B,T,N)
+        truncations = tf.cast(experience["truncations"], "float32")  # (B,T)
+        terminals = tf.cast(experience["terminals"], "float32")  # (B,T)
+        legal_actions = tf.cast(experience["infos"]["legals"], "bool")  # (B,T,N,A)
 
         # When to reset the RNN hidden state
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
@@ -196,7 +185,7 @@ class IQLBCQSystem(BaseOfflineSystem):
         # Make batch-major again
         target_qs_out = switch_two_leading_dims(target_qs_out)
 
-        with tf.GradientTape(persistent=True) as tape:
+        with tf.GradientTape() as tape:
             # Unroll online network
             qs_out = unroll_rnn(self.q_network, observations, resets)
 
@@ -209,41 +198,10 @@ class IQLBCQSystem(BaseOfflineSystem):
             # Pick the Q-Values for the actions taken by each agent
             chosen_action_qs = gather(qs_out, actions, axis=3, keepdims=False)
 
-            ###################
-            ####### BCQ #######
-            ###################
-
-            # Unroll behaviour cloning network
-            probs_out = unroll_rnn(self.behaviour_cloning_network, observations, resets)
-
-            # Expand batch and agent_dim
-            probs_out = expand_batch_and_agent_dim_of_time_major_sequence(probs_out, B, N)
-
-            # Make batch-major again
-            probs_out = switch_two_leading_dims(probs_out)
-
-            # Behaviour Cloning Loss
-            one_hot_actions = tf.one_hot(actions, depth=probs_out.shape[-1], axis=-1)
-            bc_loss = tf.keras.metrics.categorical_crossentropy(one_hot_actions, probs_out)
-            bc_loss = tf.reduce_mean(bc_loss)
-
-            # Legal action masking plus bc probs
-            masked_probs_out = probs_out * tf.cast(legal_actions, "float32")
-            masked_probs_out_sum = tf.reduce_sum(masked_probs_out, axis=-1, keepdims=True)
-            masked_probs_out = masked_probs_out / masked_probs_out_sum
-
-            # Behaviour cloning action mask
-            bc_action_mask = (
-                masked_probs_out / tf.reduce_max(masked_probs_out, axis=-1, keepdims=True)
-            ) >= self.bc_threshold
-
-            q_selector = tf.where(bc_action_mask, qs_out, -999999)
-            max_actions = tf.argmax(q_selector, axis=-1)
-            target_max_qs = gather(target_qs_out, max_actions, axis=-1)
-
-            ###################
-            ####### END #######
-            ###################
+            # Max over target Q-Values/ Double q learning
+            qs_out_selector = tf.where(legal_actions, qs_out, -9999999)  # legal action masking
+            cur_max_actions = tf.argmax(qs_out_selector, axis=3)
+            target_max_qs = gather(target_qs_out, cur_max_actions, axis=-1)
 
             # Compute targets
             targets = (
@@ -251,48 +209,54 @@ class IQLBCQSystem(BaseOfflineSystem):
             )
             targets = tf.stop_gradient(targets)
 
-            # Chop off last time step
-            chosen_action_qs = chosen_action_qs[:, :-1]  # shape=(B,T-1)
-
             # TD-Error Loss
-            td_loss = 0.5 * tf.reduce_mean(tf.square(targets - chosen_action_qs))
+            td_loss = tf.reduce_mean(0.5 * tf.square(targets - chosen_action_qs[:, :-1]))
+
+            #############
+            #### CQL ####
+            #############
+
+            cql_loss = tf.reduce_mean(
+                tf.reduce_logsumexp(qs_out, axis=-1, keepdims=True)[:, :-1]
+            ) - tf.reduce_mean(chosen_action_qs[:, :-1])
+
+            #############
+            #### end ####
+            #############
+
+            # Mask out zero-padded timesteps
+            loss = td_loss + self.cql_weight + cql_loss
 
         # Get trainable variables
         variables = (*self.q_network.trainable_variables,)
 
         # Compute gradients.
-        gradients = tape.gradient(td_loss, variables)
+        gradients = tape.gradient(loss, variables)
 
         # Apply gradients.
         self.optimizer.apply(gradients, variables)
 
-        # BC network update
-        variables = (*self.behaviour_cloning_network.trainable_variables,)
-        # Compute gradients.
-        gradients = tape.gradient(bc_loss, variables)
-        # Apply gradients.
-        self.bc_optimizer.apply(gradients, variables)
-
         # Online variables
         online_variables = (*self.q_network.variables,)
+
         # Get target variables
         target_variables = (*self.target_q_network.variables,)
+
         # Maybe update target network
         if train_step % self.target_update_period == 0:
             for src, dest in zip(online_variables, target_variables):
                 dest.assign(src)
 
-        del tape
-
         return {
+            "loss": loss,
+            "cql_loss": cql_loss,
             "td_loss": td_loss,
-            "bc_loss": bc_loss,
             "mean_q_values": tf.reduce_mean(qs_out),
             "mean_chosen_q_values": tf.reduce_mean(chosen_action_qs),
         }
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="iql_bcq")
+@hydra.main(version_base=None, config_path="configs", config_name="iql_cql")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
 
@@ -318,7 +282,7 @@ def run_experiment(cfg: DictConfig) -> None:
     }
     logger = WandbLogger(project=cfg["wandb_project"], config=wandb_config)
 
-    system = IQLBCQSystem(env, logger, **cfg["system"])
+    system = IQLCQLSystem(env, logger, **cfg["system"])
 
     tf.random.set_seed(cfg["seed"])
 
