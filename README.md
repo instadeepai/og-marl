@@ -115,11 +115,7 @@ Our datasets are now hosted on Hugging Face for improved accessibility for the c
 | 🐻PettingZoo | Pursuit  <br/> Co-op Pong | 8 <br/> 2 | Discrete <br/> Discrete  | Pixels <br/> Pixels | Dense | Homog <br/> Heterog | [source](https://pettingzoo.farama.org/) |
 
 ### Datasets from Prior Works 🥇
-We recently converted several datasets from prior works to Vaults and benchmarked our baseline algorithms on them. For more information, see our [technical report](https://arxiv.org/abs/2406.09068) on ArXiv. All of the code for re-running the experiments is available on the following branch of this repository:
-
-> [https://github.com/instadeepai/og-marl/tree/baselines-code](https://github.com/instadeepai/og-marl/tree/baselines-code).
-
-We include the following datasets from prior works.
+We recently converted several datasets from prior works to Vaults and benchmarked our baseline algorithms on them. For more information, see our [technical report](https://arxiv.org/abs/2406.09068) on ArXiv.
 
 | Paper | Environment | Scenario | Source |
 |-----|----|----|-----|
