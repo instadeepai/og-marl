@@ -18,7 +18,7 @@ from typing import Dict, List
 import numpy as np
 from smacv2.env.starcraft2.wrapper import StarCraftCapabilityEnvWrapper
 
-from og_marl.environment_wrappers.base import BaseEnvironment, ResetReturn, StepReturn
+from og_marl.wrapped_environments.base import BaseEnvironment, ResetReturn, StepReturn
 
 DISTRIBUTION_CONFIGS = {
     "terran_5_vs_5": {

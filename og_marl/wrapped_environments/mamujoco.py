@@ -14,31 +14,32 @@
 from typing import Any, Dict, Optional
 
 import numpy as np
-from og_marl.custom_environments.multiagent_mujoco.mujoco_multi import MujocoMulti
+from multiagent_mujoco.mujoco_multi import MujocoMulti
 
-from og_marl.environment_wrappers.base import BaseEnvironment, ResetReturn, StepReturn
+from og_marl.wrapped_environments.base import BaseEnvironment, ResetReturn, StepReturn
 
 
 def get_mamujoco_args(scenario: str) -> Dict[str, Any]:
     env_args = {
-        "agent_obsk": None,
+        "agent_obsk": 1,
         "episode_limit": 1000,
+        "global_categories": "qvel,qpos",
     }
-    if scenario.lower() == "3hopper":
-        env_args["scenario"] = "Hopper-v2"
-        env_args["agent_conf"] = "3x1"
+    if scenario.lower() == "4ant":
+        env_args["scenario"] = "Ant-v2"
+        env_args["agent_conf"] = "4x2"
     elif scenario.lower() == "2ant":
         env_args["scenario"] = "Ant-v2"
         env_args["agent_conf"] = "2x4"
-    elif scenario.lower() == "6halfcheetah":
+    elif scenario.lower() == "2halfcheetah":
         env_args["scenario"] = "HalfCheetah-v2"
-        env_args["agent_conf"] = "6x1"
+        env_args["agent_conf"] = "2x3"
     else:
-        raise ValueError("Not a valid omiga mamujoco scenario")
+        raise ValueError("Not a valid mamujoco scenario")
     return env_args
 
 
-class MAMuJoCoOMIGA(BaseEnvironment):
+class MAMuJoCo(BaseEnvironment):
 
     """Environment wrapper Multi-Agent MuJoCo."""
 
@@ -57,8 +58,6 @@ class MAMuJoCoOMIGA(BaseEnvironment):
         observations = {
             agent: observations[i].astype("float32") for i, agent in enumerate(self.agents)
         }
-
-        observations = self.add_agent_id_and_normalise(observations)
 
         info = {"state": self._environment.get_state()}
 
@@ -81,22 +80,10 @@ class MAMuJoCoOMIGA(BaseEnvironment):
         observations = {
             agent: observations[i].astype("float32") for i, agent in enumerate(self.agents)
         }
-        observations = self.add_agent_id_and_normalise(observations)
 
         info["state"] = self._environment.get_state()
 
         return observations, rewards, terminals, truncations, info  # type: ignore
-    
-    def add_agent_id_and_normalise(self, observations):
-        for i, agent in enumerate(self.agents):
-            one_hot = np.zeros((len(self.agents),), "float32")
-            one_hot[i] = 1
-            agent_obs = observations[agent].astype("float32")
-            agent_obs = np.concatenate([agent_obs, one_hot], axis=-1)
-            agent_obs = agent_obs - np.mean(agent_obs) / np.std(agent_obs)
-            observations[agent] = agent_obs
-        return observations
-
 
     def __getattr__(self, name: str) -> Any:
         """Expose any other attributes of the underlying environment."""

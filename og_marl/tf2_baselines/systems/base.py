@@ -18,7 +18,7 @@ from typing import Dict
 import numpy as np
 from chex import Numeric
 
-from og_marl.environment_wrappers.base import BaseEnvironment
+from og_marl.wrapped_environments.base import BaseEnvironment
 from og_marl.loggers import BaseLogger
 from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
 

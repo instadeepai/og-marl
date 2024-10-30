@@ -18,7 +18,7 @@ from typing import Dict, List, Optional
 import numpy as np
 from smac.env import StarCraft2Env
 
-from og_marl.environment_wrappers.base import BaseEnvironment, ResetReturn, StepReturn
+from og_marl.wrapped_environments.base import BaseEnvironment, ResetReturn, StepReturn
 
 
 class SMACv1(BaseEnvironment):

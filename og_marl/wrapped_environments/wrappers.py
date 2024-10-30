@@ -20,7 +20,7 @@ import jax
 import numpy as np
 from flashbax.vault import Vault
 
-from og_marl.environment_wrappers.base import BaseEnvironment, ResetReturn, StepReturn
+from og_marl.wrapped_environments.base import BaseEnvironment, ResetReturn, StepReturn
 
 BUFFER_TIME_AXIS_LEN = 100_000
 
