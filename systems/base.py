@@ -28,13 +28,15 @@ class BaseMARLSystem:
         self._env_step_ctr = 0.0
         self._eval_step_counter = 0.0
 
+        # For recoding win rate in SMAC
+        self._old_battles_won = 0
+
     def get_stats(self) -> Dict[str, Numeric]:
         return {}
 
     def evaluate(self, num_eval_episodes: int = 4) -> Dict[str, Numeric]:
         """Method to evaluate the system online (i.e. in the environment)."""
         episode_returns = []
-
         for _ in range(num_eval_episodes):
             self.reset()
             observations_ = self._environment.reset()
@@ -64,7 +66,14 @@ class BaseMARLSystem:
                 episode_return += np.mean(list(rewards.values()), dtype="float")
                 done = all(terminals.values()) or all(truncations.values())
             episode_returns.append(episode_return)
-        logs = {"evaluator/episode_return": np.mean(episode_returns)}
+
+        if "battles_won" in self._environment.get_stats():
+            new_battles_won = self._environment.get_stats()["battles_won"]
+            win_rate = (new_battles_won - self._old_battles_won) / num_eval_episodes
+            self._old_battles_won = new_battles_won
+            logs = {"evaluator/win_rate": win_rate}
+
+        logs = {"evaluator/episode_return": np.mean(episode_returns), **logs}
 
         return logs
 
