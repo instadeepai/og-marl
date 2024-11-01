@@ -3,11 +3,11 @@ numpy==1.26.4
 jax==0.4.30
 jaxlib==0.4.30
 flashbax>=0.1.2
-tensorflow[and-cuda]==2.15.1.*
-tensorflow-probability[tf]==0.23.0
-tensorflow_io
-dm_sonnet
+# tensorflow[and-cuda]==2.15.1.*
+# tensorflow-probability[tf]==0.23.0
+# tensorflow_io
+# dm_sonnet
 gymnasium
 requests
-wandb
+# wandb
 dm_tree
