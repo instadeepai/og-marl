@@ -11,4 +11,4 @@
 # requests
 # wandb
 # dm_tree
-git+https://github.com/oxwhirl/smac.git
+# git+https://github.com/oxwhirl/smac.git
