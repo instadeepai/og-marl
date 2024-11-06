@@ -26,7 +26,7 @@
 
 `pip install mujoco-py==2.0.2.5`
 
-> MAMuJoCo experiments on CFCQL or OMIGA datasets use an older version of MuJoCo. To run experiments on the OG-MARL datasets,
+> MAMuJoCo experiments on OMAR, CFCQL or OMIGA datasets use an older version of MuJoCo. To run experiments on the OG-MARL datasets,
 you will need to install a newer version of MuJoCo. Installing two versions of MuJoCo in the same conda environment can be complicated. We reccomend using seperate conda envs.
 
 ## Install MAMuJoCo210 in a new conda env
