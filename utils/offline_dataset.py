@@ -13,50 +13,81 @@ from flashbax.vault import Vault
 
 VAULT_INFO = {
     "smac_v1": {
-        "3m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3m.zip"},
-        "8m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/8m.zip"},
-        "5m_vs_6m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/5m_vs_6m.zip"},
-        "2s3z": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2s3z.zip"},
-        "3s5z_vs_3s6z": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3s5z_vs_3s6z.zip"
+        "3m": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/3m.zip"
         },
-        "2c_vs_64zg": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2c_vs_64zg.zip"
+        "8m": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/8m.zip"
+        },
+        "5m_vs_6m": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/5m_vs_6m.zip"
+        },
+        "2s3z": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/2s3z.zip"
+        },
+        "3s5z_vs_3s6z": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/smac_v1/3s5z_vs_3s6z.zip"
         },
     },
     "smac_v1_cfcql": {
-        "2s3z": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/cfcql/2s3z.zip"},
-        "3s_vs_5z": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/cfcql/3s_vs_5z.zip"},
-        "5m_vs_6m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/cfcql/5m_vs_6m.zip"},
-        "6h_vs_8z": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/cfcql/6h_vs_8z.zip"},
+        "6h_vs_8z": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/cfcql/smac_v1/6h_vs_8z.zip"
+        },
+        "3s_vs_5z": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/cfcql/smac_v1/3s_vs_5z.zip"
+        },
+        "5m_vs_6m": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/cfcql/smac_v1/5m_vs_6m.zip"
+        },
+        "2s3z": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/cfcql/smac_v1/2s3z.zip"
+        },
     },
     "smac_v1_omiga": {
-        "corridor": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/corridor.zip"},
-        "2c_vs_64zg": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/2c_vs_64zg.zip"},
-        "5m_vs_6m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/5m_vs_6m.zip"},
-        "6h_vs_8z": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/6h_vs_8z.zip"},
+        "2c_vs_64zg": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/smac_v1/2c_vs_64zg.zip"
+        },
+        "6h_vs_8z": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/smac_v1/6h_vs_8z.zip"
+        },
+        "5m_vs_6m": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/smac_v1/5m_vs_6m.zip"
+        },
+        "corridor": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/smac_v1/corridor.zip"
+        },
     },
     "mamujoco": {
-        "2ant": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2ant.zip"},
         "2halfcheetah": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/2halfcheetah.zip"
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/mamujoco/2halfcheetah.zip"
         },
-        "4ant": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/4ant.zip"},
     },
     "mamujoco_omiga": {
-        "2ant": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/2ant.zip"},
         "6halfcheetah": {
-            "url": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/6halfcheetah.zip"
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/mamujoco/6halfcheetah.zip"
         },
-        "3hopper": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omiga/3hopper.zip"},
+        "2ant": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/mamujoco/2ant.zip"
+        },
+        "3hopper": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omiga/mamujoco/3hopper.zip"
+        },
     },
     "mamujoco_omar": {
-        "2halfcheetah": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omar/2halfcheetah.zip"},
+        "2halfcheetah": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omar/mamujoco/2halfcheetah.zip"
+        },    
     },
     "mpe_omar": {
-        "simple_spread": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omar/simple_spread.zip"},
-        "simple_tag": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omar/simple_tag.zip"},
-        "simple_world": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/omar/simple_world.zip"},
+        "simple_spread": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omar/mpe/simple_spread.zip"
+        },
+        "simple_tag": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omar/mpe/simple_tag.zip"
+        },
+        "simple_world": {
+            "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/prior_work/omar/mpe/simple_world.zip"
+        },
     }
 }
 

@@ -67,11 +67,13 @@ class BaseMARLSystem:
                 done = all(terminals.values()) or all(truncations.values())
             episode_returns.append(episode_return)
 
+        logs = {}
+
         if "battles_won" in self._environment.get_stats():
             new_battles_won = self._environment.get_stats()["battles_won"]
             win_rate = (new_battles_won - self._old_battles_won) / num_eval_episodes
             self._old_battles_won = new_battles_won
-            logs = {"evaluator/win_rate": win_rate}
+            logs["evaluator/win_rate"] = win_rate
 
         logs = {"evaluator/episode_return": np.mean(episode_returns), **logs}
 
