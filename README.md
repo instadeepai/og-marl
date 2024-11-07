@@ -51,9 +51,7 @@ Clone this repository.
 
 Install `og-marl` and its requirements. We tested `og-marl` with Python 3.10 and Ubuntu 20.04. Consider using a `conda` virtual environment.
 
-`pip install -r requirements.txt`
-
-`pip install -e .`
+`pip install -e .[tf2_baselines]`
 
 Download environment files. We will use SMACv1 in this example. MAMuJoCo installation instructions are included near the bottom of the README.
 
@@ -65,13 +63,32 @@ Download environment requirements.
 
 Train an offline system. In this example we will run Independent Q-Learning with Conservative Q-Learning (iql+cql). The script will automatically download the neccessary dataset if it is not found locally.
 
-`python og_marl/tf2/systems/iql_cql.py task.source=og_marl task.env=smac_v1 task.scenario=3m task.dataset=Good`
+`python og_marl/tf2_systems/offline/iql_cql.py task.source=og_marl task.env=smac_v1 task.scenario=3m task.dataset=Good`
 
-You can find all offline systems at `og_marl/tf2/systems/` and they can be run similarly. Be careful, some systems only work on discrete action space environments and vice versa for continuous action space environments. The config files for systems are found at `og_marl/tf2/systems/configs/`. We use [hydra](https://hydra.cc/docs/intro/) for our config management. Config defaults can be overwritten as command line arguments like above.
+You can find all offline systems at `og_marl/tf2_systems/offline/` and they can be run similarly. Be careful, some systems only work on discrete action space environments and vice versa for continuous action space environments. The config files for systems are found at `og_marl/tf2_systems/offline/configs/`. We use [hydra](https://hydra.cc/docs/intro/) for our config management. Config defaults can be overwritten as command line arguments like above.
 
 ## Dataset API 🔌
 
-We provide a simple demonstrative notebook of how to use OG-MARL's dataset API here:
+To quickly start working with a dataset you do not even need to install `og-marl`. 
+Simply install Flashbax and download a dataset from [Hugging Face](https://huggingface.co/datasets/InstaDeepAI/og-marl). 
+
+`pip install flashbax`
+
+Then you should be able to do something like this.
+
+```
+from flashbax.vault import Vault
+import jax
+import numpy as np
+
+vault = Vault("og_marl/smac_v1/2s3z.vlt", vault_uid="Good")
+
+experience = vault.read().experience
+
+numpy_experience = jax.tree.map(lambda x: np.array(x), experience)
+```
+
+We also provide a simple demonstrative notebook of how to use OG-MARL's dataset API here:
 
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/instadeepai/og-marl/blob/main/examples/dataset_api_demo.ipynb)
 
@@ -125,6 +142,78 @@ We recently converted several datasets from prior works to Vaults and benchmarke
 | [Wang et al. (2023)](https://papers.nips.cc/paper_files/paper/2023/hash/a46c84276e3a4249ab7dbf3e069baf7f-Abstract-Conference.html) | 🔫SMAC v1 | 5m_vs_6m <br/> 6h_vs_8z <br/> 2c_vs_64zg <br/> corridor| [source](https://github.com/ZhengYinan-AIR/OMIGA) |
 | [Wang et al. (2023)](https://papers.nips.cc/paper_files/paper/2023/hash/a46c84276e3a4249ab7dbf3e069baf7f-Abstract-Conference.html) | 🐜MAMuJoCo | 6x1 HalfCheetah <br/> 3x1 Hopper <br/> 2x4 Ant| [source](https://github.com/ZhengYinan-AIR/OMIGA) |
 
+### Overview All Datasets
+
+```
+{"og_marl": {
+        "smac_v1": {
+            "3m": ["Good", "Medium", "Poor"],
+            "8m": ["Good", "Medium", "Poor"],
+            "5m_vs_6m": ["Good", "Medium", "Poor"],
+            "2s3z": ["Good", "Medium", "Poor"],
+            "3s5z_vs_3s6z": ["Good", "Medium", "Poor"],
+        },
+        "smac_v2": {
+            "terran_5_vs_5": ["Replay"],
+            "terran_10_vs_10": ["Replay"],
+            "zerg_5_vs_5": ["Replay"],
+        },
+        "mamujoco": {
+            "2halfcheetah": ["Good", "Medium", "Poor"]
+        },
+        "gymnasium_mamujoco": {
+            "2ant": ["Replay"],
+            "2halfcheetah": ["Replay"],
+            "2walker": ["Replay"],
+            "3hopper": ["Replay"],
+            "4ant": ["Replay"],
+            "6halfcheetah": ["Replay"],
+        },
+    },
+    "cfcql": {
+        "smac_v1": {
+            "6h_vs_8z": ["Expert", "Medium", "Medium-Replay", "Mixed"],
+            "3s_vs_5z": ["Expert", "Medium", "Medium-Replay", "Mixed"]
+            "5m_vs_6m": ["Expert", "Medium", "Medium-Replay", "Mixed"]
+            "2s3z": ["Expert", "Medium", "Medium-Replay", "Mixed"]
+        },
+    },
+    "alberdice": {
+        "rware": {
+            "small-2ag": ["Expert"],
+            "small-4ag": ["Expert"],
+            "small-6ag": ["Expert"],
+            "tiny-2ag": ["Expert"],
+            "tiny-4ag": ["Expert"],
+            "tiny-6ag": ["Expert"],
+        },
+    },
+    "omar": {
+        "mpe": {
+            "simple_spread": ["Expert", "Medium", "Medium-Replay", "Random"]
+            "simple_tag": ["Expert", "Medium", "Medium-Replay", "Random"]
+            "simple_world": ["Expert", "Medium", "Medium-Replay", "Random"]
+        },
+        "mamujoco": {
+            "2halfcheetah": ["Expert", "Medium", "Medium-Replay", "Random"]
+        },
+    },
+    "omiga": {
+        "smac_v1": {
+            "2c_vs_64zg": ["Good", "Medium", "Poor"],
+            "6h_vs_8z": ["Good", "Medium", "Poor"],
+            "5m_vs_6m": ["Good", "Medium", "Poor"],
+            "corridor": ["Good", "Medium", "Poor"],
+        },
+        "mamujoco": {
+            "6halfcheetah": ["Expert", "Medium", "Medium-Expert", "Medium-Replay"],
+            "2ant": ["Expert", "Medium", "Medium-Expert", "Medium-Replay"],
+            "3hopper": ["Expert", "Medium", "Medium-Expert", "Medium-Replay"],
+        },
+    },
+}
+```
+
 ## Installing MAMuJoCo 🐆
 
 The OG-MARL datasets use the latest version of MuJoCo (210). While the OMIGA and OMAR datasets use an older version (200). They each have different instalation instructions and should be installed in seperate virtual environments.
@@ -166,7 +255,7 @@ The OG-MARL datasets use the latest version of MuJoCo (210). While the OMIGA and
 
 ## Citing OG-MARL :pencil2:
 
-If you use OG-MARL in your work, please cite the library using:
+If you use OG-MARL Datasets in your work, please cite the library using:
 
 ```
 @inproceedings{formanek2023ogmarl,
@@ -179,6 +268,7 @@ If you use OG-MARL in your work, please cite the library using:
 ```
 
 <img src="docs/assets/aamas2023.png" alt="AAMAS 2023" width="20%"/>
+
 
 ## Acknowledgements 🙏
 

@@ -1,0 +1,8 @@
+numpy
+flashbax>=0.1.2
+gymnasium
+requests
+dm_tree
+matplotlib
+seaborn
+tabulate
