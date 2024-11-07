@@ -15,20 +15,21 @@
 """Implementation of Behaviour Cloning"""
 from typing import Any, Dict, Optional, Tuple
 
-import hydra
 import numpy as np
-from omegaconf import DictConfig
 import sonnet as snt
 import tensorflow as tf
+import tensorflow_probability as tfp
 import tree
+import hydra
+from omegaconf import DictConfig
 from chex import Numeric
 
 from og_marl.environments import get_environment, BaseEnvironment
 from og_marl.loggers import BaseLogger, WandbLogger
 from og_marl.vault_utils.download_vault import download_and_unzip_vault
 from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
-from og_marl.tf2_baselines.systems.base import BaseOfflineSystem
-from og_marl.tf2_baselines.utils import (
+from og_marl.tf2_systems.offline.base import BaseOfflineSystem
+from og_marl.tf2_systems.utils import (
     batch_concat_agent_id_to_obs,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
@@ -41,8 +42,8 @@ from og_marl.tf2_baselines.utils import (
 set_growing_gpu_memory()
 
 
-class ContinuousActionBehaviourCloning(BaseOfflineSystem):
-    """Behaviour cloning for continuous action spaces."""
+class DicreteActionBehaviourCloning(BaseOfflineSystem):
+    """Behaviour cloning for discrete action spaces."""
 
     def __init__(
         self,
@@ -91,9 +92,13 @@ class ContinuousActionBehaviourCloning(BaseOfflineSystem):
         observations: Dict[str, np.ndarray],
         legal_actions: Optional[Dict[str, np.ndarray]] = None,
     ) -> Dict[str, np.ndarray]:
-        observations = tree.map_structure(tf.convert_to_tensor, observations)
+        observations, legal_actions = tree.map_structure(
+            tf.convert_to_tensor, (observations, legal_actions)
+        )
 
-        actions, next_rnn_states = self._tf_select_actions(observations, self.rnn_states)
+        actions, next_rnn_states = self._tf_select_actions(
+            observations, self.rnn_states, legal_actions
+        )
         self.rnn_states = next_rnn_states
         return tree.map_structure(  # type: ignore
             lambda x: x[0].numpy(), actions
@@ -104,6 +109,7 @@ class ContinuousActionBehaviourCloning(BaseOfflineSystem):
         self,
         observations: Dict[str, tf.Tensor],
         rnn_states: Dict[str, tf.Tensor],
+        legal_actions: Optional[Dict[str, tf.Tensor]] = None,
     ) -> Tuple[Dict[str, tf.Tensor], Dict[str, tf.Tensor]]:
         actions = {}
         next_rnn_states = {}
@@ -116,12 +122,22 @@ class ContinuousActionBehaviourCloning(BaseOfflineSystem):
             agent_observation = tf.cast(
                 tf.expand_dims(agent_observation, axis=0), "float32"
             )  # add batch dimension
-            action, next_rnn_states[agent] = self.policy_network(
+            logits, next_rnn_states[agent] = self.policy_network(
                 agent_observation, rnn_states[agent]
             )
 
+            probs = tf.nn.softmax(logits)
+
+            if legal_actions is not None:
+                agent_legals = tf.cast(tf.expand_dims(legal_actions[agent], axis=0), "float32")
+                probs = (probs * agent_legals) / tf.reduce_sum(
+                    probs * agent_legals
+                )  # mask and renorm
+
+            action = tfp.distributions.Categorical(probs=probs).sample(1)
+
             # Store agent action
-            actions[agent] = action
+            actions[agent] = action[0]
 
         return actions, next_rnn_states
 
@@ -132,8 +148,8 @@ class ContinuousActionBehaviourCloning(BaseOfflineSystem):
     @tf.function(jit_compile=True)
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the relevant quantities
-        observations = tf.cast(experience["observations"], "float32")  # (B,T,N,O)
-        actions = tf.cast(experience["actions"], "float32")  # (B,T,N,A)
+        observations = tf.cast(experience["observations"], "float32")
+        actions = tf.cast(experience["actions"], "int32")
         truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
         terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
 
@@ -141,7 +157,7 @@ class ContinuousActionBehaviourCloning(BaseOfflineSystem):
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
 
         # Get batch size, max sequence length, num agents and num actions
-        B, T, N, A = experience["actions"].shape
+        B, T, N, A = experience["infos"]["legals"].shape
 
         # Maybe add agent ids to observation
         if self.add_agent_id_to_obs:
@@ -157,16 +173,19 @@ class ContinuousActionBehaviourCloning(BaseOfflineSystem):
         resets = merge_batch_and_agent_dim_of_time_major_sequence(resets)
 
         with tf.GradientTape() as tape:
-            policy_actions = unroll_rnn(
+            probs_out = unroll_rnn(
                 self.policy_network,
                 observations,
                 resets,
             )
-            policy_actions = expand_batch_and_agent_dim_of_time_major_sequence(policy_actions, B, N)
+            probs_out = expand_batch_and_agent_dim_of_time_major_sequence(probs_out, B, N)
 
             # Behaviour cloning loss
-            mse = (policy_actions - actions) ** 2
-            bc_loss = tf.reduce_mean(mse)
+            one_hot_actions = tf.one_hot(actions, depth=probs_out.shape[-1], axis=-1)
+            bc_loss = tf.keras.metrics.categorical_crossentropy(
+                one_hot_actions, probs_out, from_logits=True
+            )
+            bc_loss = tf.reduce_mean(bc_loss)
 
         # Apply gradients to policy
         variables = (*self.policy_network.trainable_variables,)  # Get trainable variables
@@ -179,7 +198,7 @@ class ContinuousActionBehaviourCloning(BaseOfflineSystem):
         return logs
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="continuous_bc")
+@hydra.main(version_base=None, config_path="configs", config_name="discrete_bc")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
 
@@ -205,7 +224,7 @@ def run_experiment(cfg: DictConfig) -> None:
     }
     logger = WandbLogger(project=cfg["wandb_project"], config=wandb_config)
 
-    system = ContinuousActionBehaviourCloning(env, logger, **cfg["system"])
+    system = DicreteActionBehaviourCloning(env, logger, **cfg["system"])
 
     tf.random.set_seed(cfg["seed"])
 

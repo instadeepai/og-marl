@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implementation of IDDPG+CQL"""
+"""Implementation of Multi-Agent DDPG"""
 from typing import Any, Dict, Optional, Tuple
 
 import copy
@@ -27,11 +27,10 @@ from chex import Numeric
 
 from og_marl.environments import get_environment, BaseEnvironment
 from og_marl.loggers import BaseLogger, WandbLogger
-from og_marl.vault_utils.download_vault import download_and_unzip_vault
 from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
-from og_marl.tf2_baselines.networks import StateAndActionCritic
-from og_marl.tf2_baselines.systems.base import BaseOfflineSystem
-from og_marl.tf2_baselines.utils import (
+from og_marl.tf2_systems.networks import StateAndJointActionCritic
+from og_marl.tf2_systems.online.base import BaseOnlineSystem
+from og_marl.tf2_systems.utils import (
     batch_concat_agent_id_to_obs,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
@@ -40,20 +39,18 @@ from og_marl.tf2_baselines.utils import (
     switch_two_leading_dims,
     unroll_rnn,
 )
+from og_marl.wrapped_environments.wrappers import ExperienceRecorder
 
 set_growing_gpu_memory()
 
 
-class IDDPGBCSystem(BaseOfflineSystem):
-    """Independent DDPG + BC.
-
-    NOTE: the critic conditions on states and individual agent actions.
-
-    """
+class MADDPGSystem(BaseOnlineSystem):
+    """Independent DDPG."""
 
     def __init__(
         self,
         environment: BaseEnvironment,
+        evaluation_environment: BaseEnvironment,
         logger: BaseLogger,
         linear_layer_dim: int = 64,
         recurrent_layer_dim: int = 64,
@@ -62,15 +59,22 @@ class IDDPGBCSystem(BaseOfflineSystem):
         critic_learning_rate: float = 3e-4,
         policy_learning_rate: float = 3e-4,
         add_agent_id_to_obs: bool = True,
-        bc_alpha: float = 2.5,  # BC
+        explore_stddev: float = 0.2,
+        env_steps_before_train: int = 5000,
+        train_period: int = 4,
     ):
         super().__init__(
             environment=environment,
+            evaluation_environment=evaluation_environment,
             logger=logger,
+            env_steps_before_train=env_steps_before_train,
+            train_period=train_period,
         )
 
+        self.explore_stddev = explore_stddev
         self.discount = discount
         self.add_agent_id_to_obs = add_agent_id_to_obs
+        self._random_explore_steps = tf.Variable(10_000.0, trainable=False)
 
         # Policy network
         self.policy_network = snt.DeepRNN(
@@ -88,8 +92,8 @@ class IDDPGBCSystem(BaseOfflineSystem):
         self.target_policy_network = copy.deepcopy(self.policy_network)
 
         # Critic network
-        self.critic_network_1 = StateAndActionCritic(
-            len(self.environment.agents), self.environment.num_actions, add_agent_id_to_obs
+        self.critic_network_1 = StateAndJointActionCritic(
+            len(self.environment.agents), self.environment.num_actions
         )  # shared network for all agents
         self.critic_network_2 = copy.deepcopy(self.critic_network_1)
 
@@ -99,15 +103,13 @@ class IDDPGBCSystem(BaseOfflineSystem):
         self.target_update_rate = target_update_rate
 
         # Optimizers
-        self.critic_optimizer = snt.optimizers.Adam(learning_rate=critic_learning_rate)
-        self.policy_optimizer = snt.optimizers.Adam(learning_rate=policy_learning_rate)
+        self.critic_optimizer = snt.optimizers.RMSProp(learning_rate=critic_learning_rate)
+        self.policy_optimizer = snt.optimizers.RMSProp(learning_rate=policy_learning_rate)
 
         # Reset the recurrent neural network
         self.rnn_states = {
             agent: self.policy_network.initial_state(1) for agent in self.environment.agents
         }
-
-        self.bc_alpha = bc_alpha
 
     def reset(self) -> None:
         """Called at the start of a new episode."""
@@ -121,8 +123,9 @@ class IDDPGBCSystem(BaseOfflineSystem):
         self,
         observations: Dict[str, np.ndarray],
         legal_actions: Optional[Dict[str, np.ndarray]] = None,
+        explore: bool = True,
     ) -> Dict[str, np.ndarray]:
-        actions, next_rnn_states = self._tf_select_actions(observations, self.rnn_states)
+        actions, next_rnn_states = self._tf_select_actions(observations, self.rnn_states, explore)
         self.rnn_states = next_rnn_states
         return tree.map_structure(  # type: ignore
             lambda x: x[0].numpy(), actions
@@ -130,9 +133,7 @@ class IDDPGBCSystem(BaseOfflineSystem):
 
     @tf.function(jit_compile=True)
     def _tf_select_actions(
-        self,
-        observations: Dict[str, Tensor],
-        rnn_states: Dict[str, Tensor],
+        self, observations: Dict[str, Tensor], rnn_states: Dict[str, Tensor], explore: bool
     ) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
         actions = {}
         next_rnn_states = {}
@@ -147,6 +148,14 @@ class IDDPGBCSystem(BaseOfflineSystem):
                 agent_observation, rnn_states[agent]
             )
 
+            if explore:
+                if self._random_explore_steps > 0:
+                    action = tf.random.uniform(action.shape, -1.0, 1.0)
+                    self._random_explore_steps.assign_sub(1.0)
+                else:
+                    action_noise = tf.random.normal(action.shape, 0.0, self.explore_stddev)
+                    action = tf.clip_by_value(action + action_noise, -1.0, 1.0)
+
             # Store agent action
             actions[agent] = action
 
@@ -159,12 +168,12 @@ class IDDPGBCSystem(BaseOfflineSystem):
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
-        observations = tf.cast(experience["observations"], "float32")  # (B,T,N,O)
-        replay_actions = tf.cast(
-            tf.clip_by_value(experience["actions"], -1.0, 1.0), "float32"
-        )  # (B,T,N,A)
-        env_states = tf.cast(experience["infos"]["state"], "float32")  # (B,T,S)
-        rewards = tf.cast(experience["rewards"], "float32")  # (B,T,N)
+        observations = experience["observations"]  # (B,T,N,O)
+        actions = tf.clip_by_value(
+            experience["actions"], -1.0, 1.0
+        )  # (B,T,N,A) clip for omiga datasets
+        env_states = experience["infos"]["state"]  # (B,T,S)
+        rewards = experience["rewards"]  # (B,T,N)
         truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
         terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
 
@@ -172,7 +181,7 @@ class IDDPGBCSystem(BaseOfflineSystem):
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
 
         # Get dims
-        B, T, N = replay_actions.shape[:3]
+        B, T, N = actions.shape[:3]
 
         # Maybe add agent ids to observation
         if self.add_agent_id_to_obs:
@@ -180,7 +189,7 @@ class IDDPGBCSystem(BaseOfflineSystem):
 
         # Make time-major
         observations = switch_two_leading_dims(observations)
-        replay_actions = switch_two_leading_dims(replay_actions)
+        replay_actions = switch_two_leading_dims(actions)
         rewards = switch_two_leading_dims(rewards)
         terminals = switch_two_leading_dims(terminals)
         env_states = switch_two_leading_dims(env_states)
@@ -195,8 +204,8 @@ class IDDPGBCSystem(BaseOfflineSystem):
         target_actions = expand_batch_and_agent_dim_of_time_major_sequence(target_actions, B, N)
 
         # Target critics
-        target_qs_1 = self.target_critic_network_1(env_states, target_actions)
-        target_qs_2 = self.target_critic_network_2(env_states, target_actions)
+        target_qs_1 = self.target_critic_network_1(env_states, target_actions, target_actions)
+        target_qs_2 = self.target_critic_network_2(env_states, target_actions, target_actions)
 
         # Take minimum between two target critics
         target_qs = tf.minimum(target_qs_1, target_qs_2)
@@ -210,11 +219,11 @@ class IDDPGBCSystem(BaseOfflineSystem):
         with tf.GradientTape(persistent=True) as tape:
             # Online critics
             qs_1 = tf.squeeze(
-                self.critic_network_1(env_states, replay_actions),
+                self.critic_network_1(env_states, replay_actions, replay_actions),
                 axis=-1,
             )
             qs_2 = tf.squeeze(
-                self.critic_network_2(env_states, replay_actions),
+                self.critic_network_2(env_states, replay_actions, replay_actions),
                 axis=-1,
             )
 
@@ -222,12 +231,9 @@ class IDDPGBCSystem(BaseOfflineSystem):
             critic_loss_1 = tf.reduce_mean(0.5 * (targets - qs_1[:-1]) ** 2)
             critic_loss_2 = tf.reduce_mean(0.5 * (targets - qs_2[:-1]) ** 2)
 
-            # Combine critic loss
             critic_loss = (critic_loss_1 + critic_loss_2) / 2
 
-            ###################
-            ### Policy Loss ###
-            ###################
+            # Unroll target policy
             online_actions = unroll_rnn(
                 self.policy_network,
                 merge_batch_and_agent_dim_of_time_major_sequence(observations),
@@ -235,16 +241,12 @@ class IDDPGBCSystem(BaseOfflineSystem):
             )
             online_actions = expand_batch_and_agent_dim_of_time_major_sequence(online_actions, B, N)
 
-            # Unroll online policy
-            policy_qs_1 = self.critic_network_1(env_states, online_actions)
-            policy_qs_2 = self.critic_network_2(env_states, online_actions)
+            # Policy Loss
+            policy_qs_1 = self.critic_network_1(env_states, online_actions, replay_actions)
+            policy_qs_2 = self.critic_network_2(env_states, online_actions, replay_actions)
             policy_qs = tf.minimum(policy_qs_1, policy_qs_2)
 
-            policy_loss = (
-                -(self.bc_alpha / tf.reduce_mean(tf.abs(policy_qs))) * tf.reduce_mean(policy_qs)
-                + 1e-3 * tf.reduce_mean(tf.square(online_actions))
-                + tf.reduce_mean(tf.square(online_actions - replay_actions))
-            )
+            policy_loss = -tf.reduce_mean(policy_qs) + 1e-3 * tf.reduce_mean(online_actions**2)
 
         # Train critics
         variables = (
@@ -288,37 +290,42 @@ class IDDPGBCSystem(BaseOfflineSystem):
         return logs
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="iddpg_bc")
+@hydra.main(version_base=None, config_path="configs", config_name="maddpg")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
 
-    env = get_environment(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"])
+    env = get_environment(
+        cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"]
+    )
+
+    eval_env = get_environment(
+        cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"] + 1
+    )
 
     buffer = FlashbaxReplayBuffer(
         sequence_length=cfg["replay"]["sequence_length"],
         sample_period=cfg["replay"]["sample_period"],
         seed=cfg["seed"],
+        max_size=cfg["replay"]["max_size"],
+        store_to_vault=cfg["replay"]["store_to_vault"],
+        vault_name=f"recorded_data/{cfg['task']['env']}/{cfg['task']['scenario']}.vlt"
     )
-
-    download_and_unzip_vault(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"])
-
-    buffer.populate_from_vault(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], cfg["task"]["dataset"])
 
     wandb_config = {
         "system": cfg["system_name"],
         "seed": cfg["seed"],
-        "training_steps": cfg["training_steps"],
+        "environment_steps": cfg["environment_steps"],
         **cfg["task"],
         **cfg["replay"],
         **cfg["system"],
     }
     logger = WandbLogger(project=cfg["wandb_project"], config=wandb_config)
 
-    system = IDDPGBCSystem(env, logger, **cfg["system"])
+    system = MADDPGSystem(env, eval_env, logger, **cfg["system"])
 
     tf.random.set_seed(cfg["seed"])
 
-    system.train(buffer, training_steps=int(cfg["training_steps"]))
+    system.train(buffer, num_eval_episodes=5, environment_steps=int(cfg["environment_steps"]))
 
 
 if __name__ == "__main__":

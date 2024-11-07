@@ -20,8 +20,10 @@ def get_environment(source: str, env_name: str, scenario: str, seed: int = 42) -
         return MPEOMAR(scenario, seed=seed)
     elif env_name == "mamujoco" and source == "og_marl":
         from og_marl.wrapped_environments.mamujoco import MAMuJoCo
+    elif env_name == "gymnasium_mamujoco" and source in "og_marl":
+        from og_marl.wrapped_environments.gymnasium_mamujoco import WrappedGymnasiumMAMuJoCo
 
-        return MAMuJoCo(scenario, seed=seed)
+        return WrappedGymnasiumMAMuJoCo(scenario, seed=seed)
     elif env_name == "mamujoco" and source=="omiga":
         from og_marl.wrapped_environments.mamujoco_omiga import MAMuJoCoOMIGA
 

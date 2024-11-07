@@ -89,7 +89,7 @@ class ExperienceRecorder:
             self._buffer_state = self._buffer.init(packed_timestep)
             self._vault = Vault(
                 vault_name=self.vault_name,
-                init_fbx_state=self._buffer_state,
+                experience_structure=self._buffer_state.experience,
             )
             self._has_initialised = True
 

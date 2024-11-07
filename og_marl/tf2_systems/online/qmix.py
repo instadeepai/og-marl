@@ -11,61 +11,70 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Implementation of IQL+CQL"""
-from typing import Any, Dict, Tuple
+
+"""Implementation of QMIX"""
+from typing import Any, Dict, Optional, Tuple
 
 import copy
+import hydra
 import numpy as np
+from omegaconf import DictConfig
 import tensorflow as tf
+from tensorflow import Tensor
 import sonnet as snt
 import tree
-import hydra
-from omegaconf import DictConfig
 from chex import Numeric
-from tensorflow import Tensor
 
 from og_marl.environments import get_environment, BaseEnvironment
-from og_marl.loggers import BaseLogger
+from og_marl.loggers import BaseLogger, WandbLogger
 from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
-from og_marl.tf2_baselines.systems.base import BaseOfflineSystem
-from og_marl.loggers import WandbLogger
-from og_marl.vault_utils.download_vault import download_and_unzip_vault
-from og_marl.tf2_baselines.utils import set_growing_gpu_memory
-from og_marl.tf2_baselines.utils import (
+from og_marl.tf2_systems.networks import QMixer
+from og_marl.tf2_systems.online.base import BaseOnlineSystem
+from og_marl.tf2_systems.utils import (
     batch_concat_agent_id_to_obs,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
-    gather,
     merge_batch_and_agent_dim_of_time_major_sequence,
+    set_growing_gpu_memory,
     switch_two_leading_dims,
     unroll_rnn,
+    gather
 )
 
 set_growing_gpu_memory()
 
 
-class IQLCQLSystem(BaseOfflineSystem):
-    """IQL+CQL System.
-
-    Independent Q-Learners with Conservative Q-Learning for stable offline training.
-    """
+class QMIXSystem(BaseOnlineSystem):
+    """QMIX"""
 
     def __init__(
         self,
         environment: BaseEnvironment,
+        evaluation_environment: BaseEnvironment,
         logger: BaseLogger,
-        cql_weight: float = 2.0,
         linear_layer_dim: int = 64,
         recurrent_layer_dim: int = 64,
+        mixer_embed_dim: int = 32,
+        mixer_hyper_dim: int = 64,
         discount: float = 0.99,
         target_update_period: int = 200,
         learning_rate: float = 3e-4,
+        eps_decay_steps: int = 10_000,
+        eps_min: float = 0.05,
         add_agent_id_to_obs: bool = True,
+        env_steps_before_train: int = 5000,
+        train_period: int = 4,
     ):
-        super().__init__(environment, logger)
+        super().__init__(
+            environment=environment,
+            evaluation_environment=evaluation_environment,
+            logger=logger,
+            env_steps_before_train=env_steps_before_train,
+            train_period=train_period,
+        )
 
-        self.discount = discount
         self.add_agent_id_to_obs = add_agent_id_to_obs
+        self.discount = discount
 
         # Q-network
         self.q_network = snt.DeepRNN(
@@ -81,6 +90,7 @@ class IQLCQLSystem(BaseOfflineSystem):
         # Target Q-network
         self.target_q_network = copy.deepcopy(self.q_network)
         self.target_update_period = target_update_period
+        self.train_step_ctr = tf.Variable(0.0, trainable=False)
 
         # Optimizer
         self.optimizer = snt.optimizers.Adam(learning_rate=learning_rate)
@@ -90,73 +100,79 @@ class IQLCQLSystem(BaseOfflineSystem):
             agent: self.q_network.initial_state(1) for agent in self.environment.agents
         }
 
-        # CQL
-        self.cql_weight = cql_weight
+        self.mixer = QMixer(len(self.environment.agents), mixer_embed_dim, mixer_hyper_dim)
+        self.target_mixer = QMixer(len(self.environment.agents), mixer_embed_dim, mixer_hyper_dim)
+
+        self.env_steps = tf.Variable(0.0, trainable=False)
+        self.eps_decay_steps = eps_decay_steps
+        self.eps_min = eps_min
+        self.eps_denominator = (1/(1-eps_min))*eps_decay_steps
 
     def reset(self) -> None:
-        """Called at the start of a new episode during evaluation."""
+        """Called at the start of a new episode."""
+        # Reset the recurrent neural network
         self.rnn_states = {
             agent: self.q_network.initial_state(1) for agent in self.environment.agents
-        }  # reset the rnn hidden states
+        }
+        return
 
     def select_actions(
         self,
         observations: Dict[str, np.ndarray],
-        legal_actions: Dict[str, np.ndarray],
+        legal_actions: Optional[Dict[str, np.ndarray]] = None,
+        explore: bool = True,
     ) -> Dict[str, np.ndarray]:
-        observations, legal_actions = tree.map_structure(
-            tf.convert_to_tensor, (observations, legal_actions)
-        )
-        actions, next_rnn_states = self._tf_select_actions(
-            observations, legal_actions, self.rnn_states
-        )
+        actions, next_rnn_states = self._tf_select_actions(observations, self.rnn_states, legal_actions, explore)
         self.rnn_states = next_rnn_states
         return tree.map_structure(  # type: ignore
-            lambda x: x.numpy(), actions
+            lambda x: x[0].numpy().astype("int32"), actions
         )  # convert to numpy and squeeze batch dim
 
     @tf.function(jit_compile=True)
     def _tf_select_actions(
-        self,
-        observations: Dict[str, Tensor],
-        legal_actions: Dict[str, Tensor],
-        rnn_states: Dict[str, Tensor],
+        self, observations: Dict[str, Tensor], rnn_states: Dict[str, Tensor], legals: Dict[str, Tensor], explore: bool
     ) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
         actions = {}
         next_rnn_states = {}
-        for i, agent in enumerate(self.agents):
+        for i, agent in enumerate(self.environment.agents):
             agent_observation = observations[agent]
             if self.add_agent_id_to_obs:
-                agent_observation = concat_agent_id_to_obs(agent_observation, i, len(self.agents))
+                agent_observation = concat_agent_id_to_obs(
+                    agent_observation, i, len(self.environment.agents)
+                )
             agent_observation = tf.expand_dims(agent_observation, axis=0)  # add batch dimension
-            q_values, next_rnn_states[agent] = self.q_network(agent_observation, rnn_states[agent])
-
-            agent_legal_actions = legal_actions[agent]
-            masked_q_values = tf.where(
-                tf.cast(agent_legal_actions, "bool"),
-                q_values[0],
-                -99999999,
+            q_values, next_rnn_states[agent] = self.q_network(
+                agent_observation, rnn_states[agent]
             )
-            greedy_action = tf.argmax(masked_q_values)
+            agent_legals = tf.expand_dims(legals[agent], axis=0)
+            q_values = tf.where(agent_legals==1, q_values, -np.inf)
+            action = tf.argmax(q_values, axis=-1)
 
-            actions[agent] = greedy_action
+            self.env_steps.assign_add(1.0)
+            eps = tf.maximum(1 - (1/self.eps_denominator) * self.env_steps, self.eps_min)
+            if explore and tf.random.uniform(()) < eps:
+                agent_log_probs = tf.math.log(agent_legals / tf.reduce_sum(agent_legals))
+                action = tf.random.categorical(logits=agent_log_probs, num_samples=1)[0]
+
+            # Store agent action
+            actions[agent] = action
 
         return actions, next_rnn_states
 
     def train_step(self, experience: Experience) -> Dict[str, Numeric]:
-        train_step = tf.convert_to_tensor(self.training_step_ctr)
-        logs = self._tf_train_step(train_step, experience)
+        logs = self._tf_train_step(experience)
         return logs  # type: ignore
 
-    @tf.function(jit_compile=True)
-    def _tf_train_step(self, train_step: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
-        # Unpack the experience
-        observations = tf.cast(experience["observations"], "float32")  # (B,T,N,O)
-        actions = tf.cast(experience["actions"], "int32")  # (B,T,N)
-        rewards = tf.cast(experience["rewards"], "float32")  # (B,T,N)
-        truncations = tf.cast(experience["truncations"], "float32")  # (B,T)
-        terminals = tf.cast(experience["terminals"], "float32")  # (B,T)
-        legal_actions = tf.cast(experience["infos"]["legals"], "bool")  # (B,T,N,A)
+    @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
+    def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
+        # Unpack the batch
+        observations = experience["observations"]  # (B,T,N,O)
+        actions = experience["actions"]  # (B,T,N)
+        env_states = experience["infos"]["state"]  # (B,T,S)
+        rewards = experience["rewards"]  # (B,T,N)
+        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
+        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
+        legal_actions = experience["infos"]["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
@@ -199,9 +215,19 @@ class IQLCQLSystem(BaseOfflineSystem):
             chosen_action_qs = gather(qs_out, actions, axis=3, keepdims=False)
 
             # Max over target Q-Values/ Double q learning
-            qs_out_selector = tf.where(legal_actions, qs_out, -9999999)  # legal action masking
+            qs_out_selector = tf.where(
+                tf.cast(legal_actions, "bool"), qs_out, -9999999
+            )  # legal action masking
             cur_max_actions = tf.argmax(qs_out_selector, axis=3)
             target_max_qs = gather(target_qs_out, cur_max_actions, axis=-1)
+
+            # Q-MIXING
+            chosen_action_qs, target_max_qs, rewards = self.mixing(
+                chosen_action_qs,
+                target_max_qs,
+                env_states,
+                rewards,
+            )
 
             # Compute targets
             targets = (
@@ -210,83 +236,98 @@ class IQLCQLSystem(BaseOfflineSystem):
             targets = tf.stop_gradient(targets)
 
             # TD-Error Loss
-            td_loss = tf.reduce_mean(0.5 * tf.square(targets - chosen_action_qs[:, :-1]))
+            td_loss = 0.5 * tf.reduce_mean(tf.square(targets - chosen_action_qs[:, :-1]))
 
-            #############
-            #### CQL ####
-            #############
-
-            cql_loss = tf.reduce_mean(
-                tf.reduce_logsumexp(qs_out, axis=-1, keepdims=True)[:, :-1]
-            ) - tf.reduce_mean(chosen_action_qs[:, :-1])
-
-            #############
-            #### end ####
-            #############
-
-            # Mask out zero-padded timesteps
-            loss = td_loss + self.cql_weight + cql_loss
 
         # Get trainable variables
-        variables = (*self.q_network.trainable_variables,)
+        variables = (
+            *self.q_network.trainable_variables,
+            *self.mixer.trainable_variables,
+        )
 
         # Compute gradients.
-        gradients = tape.gradient(loss, variables)
+        gradients = tape.gradient(td_loss, variables)
 
         # Apply gradients.
         self.optimizer.apply(gradients, variables)
 
         # Online variables
-        online_variables = (*self.q_network.variables,)
+        online_variables = (
+            *self.q_network.variables,
+            *self.mixer.variables,
+        )
 
         # Get target variables
-        target_variables = (*self.target_q_network.variables,)
+        target_variables = (
+            *self.target_q_network.variables,
+            *self.target_mixer.variables,
+        )
 
         # Maybe update target network
-        if train_step % self.target_update_period == 0:
+        self.train_step_ctr.assign_add(1.0)
+        if self.train_step_ctr % self.target_update_period == 0:
             for src, dest in zip(online_variables, target_variables):
                 dest.assign(src)
 
         return {
-            "loss": loss,
-            "cql_loss": cql_loss,
             "td_loss": td_loss,
             "mean_q_values": tf.reduce_mean(qs_out),
             "mean_chosen_q_values": tf.reduce_mean(chosen_action_qs),
         }
 
+    def mixing(
+        self,
+        chosen_action_qs: Tensor,
+        target_max_qs: Tensor,
+        states: Tensor,
+        rewards: Tensor,
+    ) -> Tuple[Tensor, Tensor, Tensor]:
+        """QMIX"""
+        # VDN
+        # chosen_action_qs = tf.reduce_sum(chosen_action_qs, axis=2, keepdims=True)
+        # target_max_qs = tf.reduce_sum(target_max_qs, axis=2, keepdims=True)
+        # VDN
 
-@hydra.main(version_base=None, config_path="configs", config_name="iql_cql")
+        chosen_action_qs = self.mixer(chosen_action_qs, states)
+        target_max_qs = self.target_mixer(target_max_qs, states)
+        rewards = tf.reduce_mean(rewards, axis=2, keepdims=True)
+        return chosen_action_qs, target_max_qs, rewards
+
+
+@hydra.main(version_base=None, config_path="configs", config_name="qmix")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
 
-    env = get_environment(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"])
+    env = get_environment(
+        cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"]
+    )
+    eval_env = get_environment(
+        cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"] + 1
+    )
 
     buffer = FlashbaxReplayBuffer(
         sequence_length=cfg["replay"]["sequence_length"],
         sample_period=cfg["replay"]["sample_period"],
         seed=cfg["seed"],
+        store_to_vault=cfg["replay"]["store_to_vault"],
+        vault_name=f"recorded_data/{cfg['task']['env']}/{cfg['task']['scenario']}.vlt"
     )
-
-    download_and_unzip_vault(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"])
-
-    buffer.populate_from_vault(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], cfg["task"]["dataset"])
 
     wandb_config = {
         "system": cfg["system_name"],
         "seed": cfg["seed"],
-        "training_steps": cfg["training_steps"],
+        "environment_steps": cfg["environment_steps"],
         **cfg["task"],
         **cfg["replay"],
         **cfg["system"],
     }
     logger = WandbLogger(project=cfg["wandb_project"], config=wandb_config)
 
-    system = IQLCQLSystem(env, logger, **cfg["system"])
+    system = QMIXSystem(env, eval_env, logger, **cfg["system"])
 
     tf.random.set_seed(cfg["seed"])
 
-    system.train(buffer, training_steps=int(cfg["training_steps"]))
+    system.train(buffer, evaluation_every=5000, num_eval_episodes=10, environment_steps=int(cfg["environment_steps"]))
 
 
 if __name__ == "__main__":

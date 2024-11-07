@@ -1,0 +1,27 @@
+system_name: iddpg
+seed: 42
+wandb_project: og-marl
+environment_steps: 2e6
+
+task:
+  source: og_marl
+  env: gymnasium_mamujoco
+  scenario: 6halfcheetah
+
+replay:
+  sequence_length: 10
+  sample_period: 1
+  max_size: 10000
+  store_to_vault: False
+
+system:
+  train_period: 4
+  env_steps_before_train: 5000
+  linear_layer_dim: 64
+  recurrent_layer_dim: 64
+  discount: 0.99
+  target_update_rate: 0.005
+  critic_learning_rate: 3e-4
+  policy_learning_rate: 3e-4
+  add_agent_id_to_obs: True
+  explore_stddev: 0.2
