@@ -63,9 +63,9 @@ Download environment requirements.
 
 Train an offline system. In this example we will run Independent Q-Learning with Conservative Q-Learning (iql+cql). The script will automatically download the neccessary dataset if it is not found locally.
 
-`python og_marl/tf2_baselines/offline/iql_cql.py task.source=og_marl task.env=smac_v1 task.scenario=3m task.dataset=Good`
+`python og_marl/tf2_systems/offline/iql_cql.py task.source=og_marl task.env=smac_v1 task.scenario=3m task.dataset=Good`
 
-You can find all offline systems at `og_marl/tf2_baselines/offline/` and they can be run similarly. Be careful, some systems only work on discrete action space environments and vice versa for continuous action space environments. The config files for systems are found at `og_marl/tf2_baselines/offline/configs/`. We use [hydra](https://hydra.cc/docs/intro/) for our config management. Config defaults can be overwritten as command line arguments like above.
+You can find all offline systems at `og_marl/tf2_systems/offline/` and they can be run similarly. Be careful, some systems only work on discrete action space environments and vice versa for continuous action space environments. The config files for systems are found at `og_marl/tf2_systems/offline/configs/`. We use [hydra](https://hydra.cc/docs/intro/) for our config management. Config defaults can be overwritten as command line arguments like above.
 
 ## Dataset API 🔌
 
