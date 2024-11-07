@@ -1,2 +1,1 @@
-gymnasium_robotics
-mujoco
+gymnasium_robotics[mamujoco]
