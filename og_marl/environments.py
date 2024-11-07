@@ -2,7 +2,7 @@ from og_marl.wrapped_environments.base import BaseEnvironment
 
 
 def get_environment(source: str, env_name: str, scenario: str, seed: int = 42) -> BaseEnvironment:  # noqa: C901
-    if env_name=="smac_v1" and source in ["cfcql", "og_marl"]:
+    if env_name=="smac_v1" and source != "omiga":
         from og_marl.wrapped_environments.smacv1 import SMACv1
 
         return SMACv1(scenario, seed=seed)
@@ -20,7 +20,9 @@ def get_environment(source: str, env_name: str, scenario: str, seed: int = 42) -
         return MPEOMAR(scenario, seed=seed)
     elif env_name == "mamujoco" and source == "og_marl":
         from og_marl.wrapped_environments.mamujoco import MAMuJoCo
-    elif env_name == "gymnasium_mamujoco" and source in "og_marl":
+
+        return MAMuJoCo(scenario, seed=seed)
+    elif env_name == "gymnasium_mamujoco":
         from og_marl.wrapped_environments.gymnasium_mamujoco import WrappedGymnasiumMAMuJoCo
 
         return WrappedGymnasiumMAMuJoCo(scenario, seed=seed)
