@@ -1,5 +1,5 @@
 numpy
-flashbax>=0.1.2
+flashbax
 gymnasium
 requests
 dm_tree

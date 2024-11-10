@@ -12,7 +12,7 @@ replay:
   sequence_length: 10
   sample_period: 1
   max_size: 10000
-  store_to_vault: True
+  store_to_vault: False
 
 system:
   train_period: 4
