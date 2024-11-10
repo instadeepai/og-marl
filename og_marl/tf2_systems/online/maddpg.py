@@ -18,6 +18,7 @@ from typing import Any, Dict, Optional, Tuple
 import copy
 import hydra
 import numpy as np
+import jax
 from omegaconf import DictConfig
 import tensorflow as tf
 from tensorflow import Tensor
@@ -293,6 +294,8 @@ class MADDPGSystem(BaseOnlineSystem):
 @hydra.main(version_base=None, config_path="configs", config_name="maddpg")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
+
+    jax.config.update('jax_platform_name', 'cpu')
 
     env = get_environment(
         cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"]

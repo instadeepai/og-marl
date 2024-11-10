@@ -17,6 +17,7 @@ from typing import Any, Dict, Tuple
 
 import copy
 import hydra
+import jax
 from omegaconf import DictConfig
 import sonnet as snt
 import tensorflow as tf
@@ -295,6 +296,8 @@ class IQLBCQSystem(BaseOfflineSystem):
 @hydra.main(version_base=None, config_path="configs", config_name="iql_bcq")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
+
+    jax.config.update('jax_platform_name', 'cpu')
 
     env = get_environment(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"])
 

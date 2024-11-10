@@ -18,6 +18,7 @@ from typing import Any, Dict, Optional, Tuple
 import copy
 import hydra
 import numpy as np
+import jax
 from omegaconf import DictConfig
 import tensorflow as tf
 from tensorflow import Tensor
@@ -413,6 +414,8 @@ class IDDPGCQLSystem(BaseOfflineSystem):
 @hydra.main(version_base=None, config_path="configs", config_name="iddpg_cql")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
+
+    jax.config.update('jax_platform_name', 'cpu')
 
     env = get_environment(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"])
 

@@ -19,6 +19,7 @@ import hydra
 from omegaconf import DictConfig
 import tree
 import numpy as np
+import jax
 import tensorflow as tf
 from tensorflow import Tensor
 import sonnet as snt
@@ -330,6 +331,8 @@ class QMIXCQLSystem(BaseOfflineSystem):
 @hydra.main(version_base=None, config_path="configs", config_name="qmix_cql")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
+
+    jax.config.update('jax_platform_name', 'cpu')
 
     env = get_environment(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"])
 

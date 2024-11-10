@@ -18,6 +18,7 @@ import copy
 
 import hydra
 import numpy as np
+import jax
 import sonnet as snt
 from omegaconf import DictConfig
 import tensorflow as tf
@@ -407,6 +408,8 @@ class MADDPGCQLSystem(BaseOfflineSystem):
 @hydra.main(version_base=None, config_path="configs", config_name="maddpg_cql")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
+
+    jax.config.update('jax_platform_name', 'cpu')
 
     env = get_environment(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"])
 

@@ -18,6 +18,7 @@ from typing import Any, Dict, Optional, Tuple
 import numpy as np
 import sonnet as snt
 import tensorflow as tf
+import jax
 import tensorflow_probability as tfp
 import tree
 import hydra
@@ -201,6 +202,8 @@ class DicreteActionBehaviourCloning(BaseOfflineSystem):
 @hydra.main(version_base=None, config_path="configs", config_name="discrete_bc")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
+
+    jax.config.update('jax_platform_name', 'cpu')
 
     env = get_environment(cfg["task"]["source"], cfg["task"]["env"], cfg["task"]["scenario"], seed=cfg["seed"])
 
