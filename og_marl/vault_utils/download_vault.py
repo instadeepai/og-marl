@@ -54,6 +54,9 @@ VAULT_INFO = {
             "2halfcheetah": {
                 "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/mamujoco/2halfcheetah.zip"
             },
+            "2ant": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/mamujoco/2ant.zip"
+            },
         },
         "gymnasium_mamujoco": {
             "2ant": {
