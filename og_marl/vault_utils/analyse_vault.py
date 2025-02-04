@@ -21,6 +21,7 @@ import seaborn as sns
 from chex import Array
 from flashbax.vault import Vault
 import numpy as np
+from scipy import stats
 from og_marl.vault_utils.download_vault import get_available_uids
 from tabulate import tabulate
 
@@ -93,8 +94,18 @@ def get_episode_return_descriptors(
 
     mean = jnp.mean(episode_returns)
     stddev = jnp.std(episode_returns)
+    mini = jnp.min(episode_returns)
+    maxi = jnp.max(episode_returns)
+    # extra
+    mode = stats.mode(episode_returns)
+    median = np.median(episode_returns)
+    kurt = stats.kurtosis(episode_returns)
+    range = maxi-mini
+    quartile_1, quartile_3 = np.percentile(episode_returns,[25,75])
+    interquartile_range = quartile_3 - quartile_1
+    skewness = stats.skew(episode_returns)
 
-    return mean, stddev, jnp.max(episode_returns), jnp.min(episode_returns), episode_returns
+    return mean, stddev, maxi, mini, mode, median, kurt, range, interquartile_range, skewness, episode_returns
 
 
 def plot_eps_returns_violin(
@@ -183,12 +194,12 @@ def describe_episode_returns(
         vlt = Vault(vault_name=vault_name, rel_dir=rel_dir, vault_uid=uid)
         exp = vlt.read().experience
 
-        mean, stddev, max_ret, min_ret, episode_returns = get_episode_return_descriptors(exp, done_flags)
+        mean, stddev, max_ret, min_ret, mode, median, kurt, range, interquartile_range, skewness, episode_returns = get_episode_return_descriptors(exp, done_flags)
         all_uid_eps_returns[uid] = episode_returns
 
-        single_values.append([uid, mean, stddev, max_ret, min_ret])
+        single_values.append([uid, mean, stddev, max_ret, min_ret, mode, median, kurt, range, interquartile_range, skewness])
 
-    print(tabulate(single_values, headers=["Uid", "Mean", "Stddev", "Max", "Min"]))
+    print(tabulate(single_values, headers=["Uid", "Mean", "Stddev", "Max", "Min", "Mode", "Median", "Kurtosis", "Range", "Interquartile_range", "Skewness"]))
 
     if plot_saving_rel_dir == "vaults":
         plot_saving_rel_dir = rel_dir
