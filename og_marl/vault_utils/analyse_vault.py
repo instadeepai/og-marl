@@ -462,11 +462,11 @@ def descriptive_summary(
         exp = vlt.read().experience
 
         saco, _, _ = get_saco(exp)
-        mean, stddev, max_ret, min_ret, episode_returns = get_episode_return_descriptors(exp, done_flags)
+        mean, stddev, max_ret, min_ret, mode, median, kurt, range, interquartile_range, skewness, episode_returns = get_episode_return_descriptors(exp, done_flags)
         n_traj = len(episode_returns)
         n_trans = exp["actions"].shape[1]
 
-        single_values.append([uid, mean, stddev, min_ret, max_ret, n_trans, n_traj, saco])
+        single_values.append([uid, mean, stddev, min_ret, max_ret, mode, median, kurt, range, interquartile_range, skewness, n_trans, n_traj, saco])
         all_returns[uid] = episode_returns
 
     print(
@@ -478,6 +478,12 @@ def descriptive_summary(
                 "Stddev",
                 "Min return",
                 "Max return",
+                "Mode", 
+                "Median", 
+                "Kurtosis", 
+                "Range", 
+                "Interquartile_range", 
+                "Skewness",
                 "Transitions",
                 "Trajectories",
                 "Joint SACo",
