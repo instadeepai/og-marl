@@ -2,6 +2,7 @@
 import numpy as np
 from flashbax.vault import Vault
 import pickle
+import os
 
 def get_prepruned_count_information(countables, linked_stats):
     """ 
@@ -32,13 +33,13 @@ def get_prepruned_count_information(countables, linked_stats):
     for i, idx in enumerate(indices):
         if counts[idx]>1:
             try:
-                bucketed_stats[tuple(vals[0,idx].flatten())].append(float(linked_stats[i]))
+                bucketed_stats[idx].append(tuple(linked_stats[i])) # maybe this needs to change, but unsure
             except:
-                bucketed_stats[tuple(vals[0,idx].flatten())] = [float(linked_stats[i])]
+                bucketed_stats[idx] = [tuple(linked_stats[i])]
             
     return num_unique, count_vals, count_counts, bucketed_stats, top_five_vals, top_five_counts
 
-def get_unique_obs_actions_with_reward(offline_data, return_per_agent):
+def get_unique_obs_actions_with_reward(offline_data, return_per_agent, stat_add_to_state="", stat_get_variation='actions'):
     '''
     Here, we concatenate actions to observations, states.
     API:
@@ -48,21 +49,33 @@ def get_unique_obs_actions_with_reward(offline_data, return_per_agent):
     offline_data['infos']["state"]: must be of form (B,T,x)
     '''
 
-    observations = offline_data["observations"]
-    rewards = offline_data['rewards'][0, :, 0] # rewards are to be bucketed and so need low dimensionality
-    actions = offline_data["actions"]
-    states = offline_data['infos']["state"]
+
+    # Make the blocks to be counted
 
     # match observation shape to action shape for concatenation. Could be B,T,A,x, with any form of x.
     # If actions have shape x > 1, flatten it.
+    if len(stat_add_to_state)>0:
+        # stat_add_to_state = stat_add_to_state[0] # for some reason it makes it a tuple automatically
+        # works for actions - try generalise in future
+        if len(offline_data[stat_add_to_state].shape)==3:
+            # expand the actions dimensions for easy adding
+            stat_block = np.expand_dims(offline_data[stat_add_to_state],axis=-1)
 
-    if len(actions.shape)==3:
-        # expand the actions dimensions for easy adding
-        actions = np.expand_dims(offline_data["actions"],axis=-1)
-    joint_obs_pairs = np.concatenate((observations,actions),axis=-1)
+        joint_obs_pairs = np.concatenate((offline_data["observations"],stat_block),axis=-1)
 
-    reshaped_actions = offline_data["actions"].reshape((*offline_data["actions"].shape[:2],-1))
-    state_pairs = np.concatenate((states,reshaped_actions),axis=-1)
+
+        stat_block_without_agent_dim = offline_data[stat_add_to_state].reshape((*offline_data[stat_add_to_state].shape[:2],-1))
+        state_pairs = np.concatenate((offline_data['infos']["state"],stat_block_without_agent_dim),axis=-1)
+    else:
+        joint_obs_pairs = offline_data["observations"]
+        state_pairs = offline_data['infos']["state"]
+
+    # Correctly shape the things where variance is measured. Improve to be mre general soon
+    if stat_get_variation=='rewards':
+        stat_to_bucket = offline_data[stat_get_variation][0, :, 0][...,np.newaxis] # rewards are to be bucketed and so need low dimensionality
+    elif stat_get_variation=='actions':
+        stat_to_bucket = offline_data[stat_get_variation].reshape((*offline_data[stat_get_variation].shape[:2],-1))
+
 
     keys = []
     num_unique = {}
@@ -73,28 +86,27 @@ def get_unique_obs_actions_with_reward(offline_data, return_per_agent):
     top_5_counts = {}
 
     if return_per_agent:
-        for agent_id in range(actions.shape[2]):
+        for agent_id in range(offline_data['actions'].shape[2]):
 
             # add to dicts
             new_key = "agent_"+str(agent_id)
             keys.append(new_key)
 
             # get count, indices, vals
-            num_unique[new_key], count_vals[new_key], count_counts[new_key], bucketed_stats[new_key], top_5_vals[new_key], top_5_counts[new_key] = get_prepruned_count_information(joint_obs_pairs[:,:,agent_id,:],rewards)
+            num_unique[new_key], count_vals[new_key], count_counts[new_key], bucketed_stats[new_key], top_5_vals[new_key], top_5_counts[new_key] = get_prepruned_count_information(joint_obs_pairs[:,:,agent_id,:],stat_to_bucket)
 
     new_key = "joint"
     keys.append(new_key)
-    num_unique[new_key], count_vals[new_key], count_counts[new_key], bucketed_stats[new_key], top_5_vals[new_key], top_5_counts[new_key] = get_prepruned_count_information(joint_obs_pairs,rewards)
+    num_unique[new_key], count_vals[new_key], count_counts[new_key], bucketed_stats[new_key], top_5_vals[new_key], top_5_counts[new_key] = get_prepruned_count_information(joint_obs_pairs,stat_to_bucket)
 
     new_key = 'state'
     keys.append(new_key)
-    num_unique[new_key], count_vals[new_key], count_counts[new_key], bucketed_stats[new_key], top_5_vals[new_key], top_5_counts[new_key] = get_prepruned_count_information(state_pairs,rewards)
+    num_unique[new_key], count_vals[new_key], count_counts[new_key], bucketed_stats[new_key], top_5_vals[new_key], top_5_counts[new_key] = get_prepruned_count_information(state_pairs,stat_to_bucket)
 
     return num_unique, count_vals, count_counts, bucketed_stats, top_5_vals, top_5_counts, keys
 
 
-
-def get_prob_of_varying(bucketed_stats,keys):
+def get_dist_(bucketed_stats,keys):
     probs = {}
     num_repeated_occurrences = {}
     for k,key in enumerate(keys):
@@ -123,31 +135,35 @@ def get_prob_of_varying(bucketed_stats,keys):
     return probs, num_repeated_occurrences
 
 
-def create_count_information(rel_dir,vault_name,uid,store_raw_reward_info=False):
+def create_count_information(rel_dir,vault_name,uid,get_variability_of,add_to_state,store_raw_reward_info=False):
+    print(f"{rel_dir}/{vault_name}/{uid}")
     vlt = Vault(rel_dir=rel_dir, vault_name=vault_name, vault_uid=uid)
     all_data = vlt.read()
     offline_data = all_data.experience
     del vlt
     del all_data
 
-    num_unique, count_vals, count_counts, bucketed_stats, top_5_vals, top_5_counts, keys = get_unique_obs_actions_with_reward(offline_data,return_per_agent=True)
+    num_unique, count_vals, count_counts, bucketed_stats, top_5_vals, top_5_counts, keys = get_unique_obs_actions_with_reward(offline_data,stat_get_variation=get_variability_of,stat_add_to_state=add_to_state,return_per_agent=True)
 
-    with open(rel_dir+"/"+vault_name+"/"+uid+"/number_unique.pickle","wb") as f:
+    base_dir_for_file = rel_dir+"/"+vault_name+"/"+uid+"/"+f"var_{get_variability_of}_wrt_{add_to_state}"
+    os.makedirs(base_dir_for_file,exist_ok=True)
+
+    with open(base_dir_for_file+"/number_unique.pickle","wb") as f:
         pickle.dump(num_unique,f)
 
-    with open(rel_dir+"/"+vault_name+"/"+uid+"/top_five.pickle","wb") as f:
+    with open(base_dir_for_file+"/top_five.pickle","wb") as f:
         pickle.dump((top_5_vals, top_5_counts),f)
 
-    with open(rel_dir+"/"+vault_name+"/"+uid+"/count_frequencies.pickle","wb") as f:
+    with open(base_dir_for_file+"/count_frequencies.pickle","wb") as f:
         pickle.dump((count_vals, count_counts),f)
 
     if store_raw_reward_info:
-        with open(rel_dir+"/"+vault_name+"/"+uid+"/bucketed_rewards.pickle","wb") as f:
+        with open(base_dir_for_file+"/bucketed_rewards.pickle","wb") as f:
             pickle.dump(bucketed_stats,f)
 
-    prob, repeated_occurrences = get_prob_of_varying(bucketed_stats,keys)
+    prob, repeated_occurrences = get_dist_(bucketed_stats,keys)
 
-    with open(rel_dir+"/"+vault_name+"/"+uid+"/processed_reward_info.pickle","wb") as f:
+    with open(base_dir_for_file+"/processed_reward_info.pickle","wb") as f:
         pickle.dump((prob, repeated_occurrences),f)
 
     return keys

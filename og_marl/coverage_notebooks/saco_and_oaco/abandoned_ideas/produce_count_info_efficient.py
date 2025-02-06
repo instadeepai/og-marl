@@ -1,13 +1,6 @@
-import jax
-import jax.numpy as jnp
+
 import numpy as np
-import flashbax as fbx
 from flashbax.vault import Vault
-from scipy.stats import norm
-import matplotlib.pyplot as plt
-import copy
-import flashbax
-from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
 import pickle
 
 def get_prepruned_count_information(countables, linked_stats):
@@ -21,31 +14,29 @@ def get_prepruned_count_information(countables, linked_stats):
 
     vals, indices, counts = np.unique(countables,axis=1, return_inverse=True,return_counts=True)
 
+    # get top five and their respective counts
+    top_five_indices = np.argpartition(counts,-5)[-5:]
+    # print(top_five_indices)
+    top_five_vals = vals[0,top_five_indices]
+    top_five_counts = counts[top_five_indices]
+
     # Want power law information? This is what you need! Many transitions only appear once.
     count_vals, count_counts = np.unique(counts, return_counts=True)
 
+    # this should be universal-check
     num_unique = vals.shape[1]
 
-    # okay, now for part 2: WHEN we have repeats, what does the associated stat look like?
+    bucketed_stats = {}
 
-    permutation_to_sort_by_counts = np.argsort(counts)[::-1]
-
-    counts_sorted = counts[permutation_to_sort_by_counts]
-    vals_sorted = vals[permutation_to_sort_by_counts]
-
-    sorted_indices = copy.deepcopy(indices)
-
-    for i,x in enumerate(permutation_to_sort_by_counts):
-        sorted_indices[np.where(sorted_indices==x)]==i
-
-    # chop off
-
-    bucketed_stats = [[] for _ in range(num_unique)]
-
+    # vals must be more than a single value, since it's cast to tuples
     for i, idx in enumerate(indices):
-        bucketed_stats[idx].append(float(linked_stats[i]))
-        
-    return num_unique, count_vals, count_counts, bucketed_stats
+        if counts[idx]>1:
+            try:
+                bucketed_stats[tuple(vals[0,idx].flatten())].append(float(linked_stats[i]))
+            except:
+                bucketed_stats[tuple(vals[0,idx].flatten())] = [float(linked_stats[i])]
+            
+    return num_unique, count_vals, count_counts, bucketed_stats, top_five_vals, top_five_counts
 
 def get_unique_obs_actions_with_reward(offline_data, return_per_agent):
     '''
@@ -74,10 +65,12 @@ def get_unique_obs_actions_with_reward(offline_data, return_per_agent):
     state_pairs = np.concatenate((states,reshaped_actions),axis=-1)
 
     keys = []
-    unique_pairs = {}
-    indices_inverse = {}
-    unique_obs_act_counts = {}
-    rewards_per_pair = {}
+    num_unique = {}
+    count_vals = {}
+    count_counts = {}
+    bucketed_stats = {}
+    top_5_vals = {}
+    top_5_counts = {}
 
     if return_per_agent:
         for agent_id in range(actions.shape[2]):
@@ -87,30 +80,74 @@ def get_unique_obs_actions_with_reward(offline_data, return_per_agent):
             keys.append(new_key)
 
             # get count, indices, vals
-            unique_pairs[new_key], indices_inverse[new_key], unique_obs_act_counts[new_key], rewards_per_pair[new_key] = get_vals_counts_infos(joint_obs_pairs[:,:,agent_id,:],rewards)
+            num_unique[new_key], count_vals[new_key], count_counts[new_key], bucketed_stats[new_key], top_5_vals[new_key], top_5_counts[new_key] = get_prepruned_count_information(joint_obs_pairs[:,:,agent_id,:],rewards)
 
     new_key = "joint"
     keys.append(new_key)
-    unique_pairs[new_key], indices_inverse[new_key], unique_obs_act_counts[new_key], rewards_per_pair[new_key] = get_vals_counts_infos(joint_obs_pairs,rewards)
+    num_unique[new_key], count_vals[new_key], count_counts[new_key], bucketed_stats[new_key], top_5_vals[new_key], top_5_counts[new_key] = get_prepruned_count_information(joint_obs_pairs,rewards)
 
     new_key = 'state'
     keys.append(new_key)
-    unique_pairs[new_key], indices_inverse[new_key], unique_obs_act_counts[new_key], rewards_per_pair[new_key] = get_vals_counts_infos(state_pairs,rewards)
+    num_unique[new_key], count_vals[new_key], count_counts[new_key], bucketed_stats[new_key], top_5_vals[new_key], top_5_counts[new_key] = get_prepruned_count_information(state_pairs,rewards)
 
-    return unique_pairs, indices_inverse, unique_obs_act_counts, rewards_per_pair, keys
+    return num_unique, count_vals, count_counts, bucketed_stats, top_5_vals, top_5_counts, keys
 
 
-def create_count_information(rel_dir,vault_name,uid,need_to_reconstruct=False):
+
+def get_prob_of_varying(bucketed_stats,keys):
+    probs = {}
+    num_repeated_occurrences = {}
+    for k,key in enumerate(keys):
+        these_rewards = bucketed_stats[key]
+        total_transitions_available = np.sum([len(bucket) for bucket in these_rewards.values()])
+        prob_of_repeat = 0
+
+        for reward_bucket in these_rewards.values():
+            len_bucket = len(reward_bucket)
+            prob_of_bucket = len_bucket/total_transitions_available
+            _, reward_counts = np.unique(reward_bucket,return_counts=True)
+
+            prob_2_rewards_the_same = 0
+
+            for reward_count in reward_counts:
+                prob_of_reward_given_bucket = reward_count/len_bucket
+                prob_of_second_chosen_reward_same_as_first = (reward_count-1)/(len_bucket-1)
+
+                prob_2_rewards_the_same +=  prob_of_reward_given_bucket*prob_of_second_chosen_reward_same_as_first
+            
+            prob_of_repeat += prob_of_bucket*prob_2_rewards_the_same
+            
+        probs[key] = prob_of_repeat
+        num_repeated_occurrences[key] = total_transitions_available
+
+    return probs, num_repeated_occurrences
+
+
+def create_count_information(rel_dir,vault_name,uid,store_raw_reward_info=False):
     vlt = Vault(rel_dir=rel_dir, vault_name=vault_name, vault_uid=uid)
     all_data = vlt.read()
     offline_data = all_data.experience
     del vlt
     del all_data
 
-    vals, indices, counts, rewards, keys = get_unique_obs_actions_with_reward(offline_data,return_per_agent=True)
+    num_unique, count_vals, count_counts, bucketed_stats, top_5_vals, top_5_counts, keys = get_unique_obs_actions_with_reward(offline_data,return_per_agent=True)
 
-    with open(rel_dir+"/"+vault_name+"/"+uid+"/count_info.pickle","wb") as f:
-        if need_to_reconstruct:
-            pickle.dump((vals,indices,counts, rewards),f)            
-        else:
-            pickle.dump((counts, rewards),f)
+    with open(rel_dir+"/"+vault_name+"/"+uid+"/number_unique.pickle","wb") as f:
+        pickle.dump(num_unique,f)
+
+    with open(rel_dir+"/"+vault_name+"/"+uid+"/top_five.pickle","wb") as f:
+        pickle.dump((top_5_vals, top_5_counts),f)
+
+    with open(rel_dir+"/"+vault_name+"/"+uid+"/count_frequencies.pickle","wb") as f:
+        pickle.dump((count_vals, count_counts),f)
+
+    if store_raw_reward_info:
+        with open(rel_dir+"/"+vault_name+"/"+uid+"/bucketed_rewards.pickle","wb") as f:
+            pickle.dump(bucketed_stats,f)
+
+    prob, repeated_occurrences = get_prob_of_varying(bucketed_stats,keys)
+
+    with open(rel_dir+"/"+vault_name+"/"+uid+"/processed_reward_info.pickle","wb") as f:
+        pickle.dump((prob, repeated_occurrences),f)
+
+    return keys

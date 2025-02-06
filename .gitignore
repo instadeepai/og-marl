@@ -147,3 +147,5 @@ dmypy.json
 
 # MacOS
 *.DS_Store
+
+og_marl/coverage_notebooks/vaults

@@ -3,11 +3,12 @@ import matplotlib.pyplot as plt
 import pickle
 import seaborn as sns
 import pandas as pd
+import os
 
-def plot_oaco(rel_dir,vault_name,vault_uids,random_dataset_pos=-2,norm_wrt_state=False):
+def plot_oaco(rel_dir,vault_name,vault_uids,random_dataset_pos=-2,norm_wrt_state=False,variability_type="var_actions_wrt_None"):
     num_unique = {}
     for uid in vault_uids:
-        with open(rel_dir+"/"+vault_name+"/"+uid+"/number_unique.pickle","rb") as f:
+        with open(os.path.join(rel_dir,vault_name,uid,variability_type,"number_unique.pickle"),"rb") as f:
             num_unique[uid] = pickle.load(f)
 
     unique_df = pd.DataFrame(num_unique)
@@ -23,19 +24,19 @@ def plot_oaco(rel_dir,vault_name,vault_uids,random_dataset_pos=-2,norm_wrt_state
 
     sns.heatmap(unique_df,annot=True,fmt=".2f",square=False)
     # plt.title(vault_name)
-    plt.savefig(rel_dir+"/"+vault_name+"/"+"OACo_heatmap.pdf",format='pdf',bbox_inches='tight')
+    plt.savefig(os.path.join(rel_dir,vault_name,f"{variability_type}_OACo_heatmap.pdf"),format='pdf',bbox_inches='tight')
     plt.show()
     return
 
-def plot_top_five(rel_dir,vault_name,vault_uids):
+def plot_top_five(rel_dir,vault_name,vault_uids,variability_type):
     num_unique = {}
     top_5_vals = {}
     top_5_counts = {}
     for uid in vault_uids:
-        with open(rel_dir+"/"+vault_name+"/"+uid+"/number_unique.pickle","rb") as f:
+        with open(os.path.join(rel_dir,vault_name,uid,variability_type,"number_unique.pickle"),"rb") as f:
             num_unique[uid] = pickle.load(f)
 
-        with open(rel_dir+"/"+vault_name+"/"+uid+"/top_five.pickle","rb") as f:
+        with open(os.path.join(rel_dir,vault_name,uid,variability_type,"top_five.pickle"),"rb") as f:
            (top_5_vals, top_5_counts) = pickle.load(f)
 
     
@@ -43,11 +44,11 @@ def plot_top_five(rel_dir,vault_name,vault_uids):
     return
 
 
-def plot_count_frequencies(rel_dir,vault_name,vault_uids):
+def plot_count_frequencies(rel_dir,vault_name,vault_uids,variability_type):
     count_vals = {}
     count_counts = {}
     for uid in vault_uids:
-        with open(rel_dir+"/"+vault_name+"/"+uid+"/count_frequencies.pickle","rb") as f:
+        with open(os.path.join(rel_dir,vault_name,uid,variability_type,"count_frequencies.pickle"),"rb") as f:
             (count_vals[uid], count_counts[uid]) = pickle.load(f)
 
     keys = list(count_vals[uid].keys())
@@ -65,7 +66,7 @@ def plot_count_frequencies(rel_dir,vault_name,vault_uids):
 
     ax[j].legend(bbox_to_anchor = (1,1))
 
-    plt.savefig(rel_dir+"/"+vault_name+"/"+"per_agent_loglog.pdf",format='pdf',bbox_inches="tight")
+    plt.savefig(os.path.join(rel_dir,vault_name,f"{variability_type}_per_agent_loglog.pdf"),format='pdf',bbox_inches="tight")
     plt.show()
 
     # plot per-dataset
@@ -78,15 +79,15 @@ def plot_count_frequencies(rel_dir,vault_name,vault_uids):
             ax[i].set_title(uid)
     ax[i].legend(bbox_to_anchor=(1,1))
 
-    plt.savefig(rel_dir+"/"+vault_name+"/"+"per_dataset_loglog.pdf",format='pdf',bbox_inches='tight')
+    plt.savefig(os.path.join(rel_dir,vault_name,f"{variability_type}_per_dataset_loglog.pdf"),format='pdf',bbox_inches='tight')
     plt.show()
     return
 
 
-def plot_reward_variability(rel_dir,vault_name,vault_uids):
+def plot_reward_variability(rel_dir,vault_name,vault_uids,variability_type):
     probs = {}
     for uid in vault_uids:
-        with open(rel_dir+"/"+vault_name+"/"+uid+"/processed_reward_info.pickle","rb") as f:
+        with open(os.path.join(rel_dir,vault_name,uid,variability_type,"processed_reward_info.pickle"),"rb") as f:
             (probs[uid], _) = pickle.load(f)
 
     probs_df = pd.DataFrame(probs)
@@ -94,6 +95,6 @@ def plot_reward_variability(rel_dir,vault_name,vault_uids):
 
     sns.heatmap(probs_df,annot=True)
     # plt.title(vault_name)
-    plt.savefig(rel_dir+"/"+vault_name+"/"+"reward_variability_heatmap.pdf",format='pdf',bbox_inches='tight')
+    plt.savefig(os.path.join(rel_dir,vault_name,f"{variability_type}_reward_variability_heatmap.pdf"),format='pdf',bbox_inches='tight')
     plt.show()
     return
