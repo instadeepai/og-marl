@@ -1,3 +1,29 @@
+# This file provides the necessary functions for 
+#   taking a Vault (by specifying its name, relative directory and uid)
+#   for each transition, taking the state, per-agent observation and joint obs
+#   for each transition, optionally adding to that state, obs or joint obs another part of the transition
+#   for each transition, having some target that you want to bucket according to the appended state, obs or joint obs pairs
+#   storing all the information you get with pickle in the uid folder
+
+# Example: I want to know which rewards were linked to unique state-action, obs-action and joint-obs-action pairs.
+# I use the main function create_count_information
+# I specify that add_to_state is "actions"
+# And that get_variability_of is "rewards"
+# as output of get_unique_obs_actions_with_reward, you will get:
+#   num_unique: number of unique state-action pairs, obs-action pairs and joint-obs-action pairs, 
+#   count_vals: the set of counts of the unique pairs (i.e. if ab came up twice, cd came up three times and ef came up twice, count_vals={2,3}), 
+#   count_counts: the number of times each count value appeared (i.e. if ab came up twice, cd came up three times and ef came up twice, count_counts=(2,1)), 
+#   bucketed_stats: per-unique-state-action-pair, what are the rewards experienced for those? we only care about the pairs that repeat at least once, 
+#   top_5_vals: what are the top 5 most-occurring pairs?,
+#   top_5_counts: how often do the 5 most-frequent pairs appear?, 
+#   keys: just the keys for the different types of pairs ("state","joint","agent_0" etc) The main reason why we have this is to abstract the number of agents away
+# These values get stored.
+# Finally, we have the processed_rewards_info
+# This is basically figuring out the prob of the same state-action pair giving rise to the same reward, when the state action pair is seen for a second time
+# This number is highly influenced though by the number of repeats
+# For example, you may have that (s1,a1) appears twice, and its reward is the same.
+# And then you have (s2,a2), which appears fifteen times - much more likely that the rewards won't be the same.
+
 
 import numpy as np
 from flashbax.vault import Vault
