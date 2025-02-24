@@ -21,3 +21,7 @@ system:
   discount: 0.99
   target_update_period: 200
   add_agent_id_to_obs: True
+  eps_decay_steps: 10000
+  eps_min: 0.05
+  env_steps_before_train: 5000
+  train_period: 4
