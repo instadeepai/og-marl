@@ -42,6 +42,8 @@ OG-MARL forms part of the [InstaDeep](https://www.instadeep.com/) MARL [ecosyste
 community. To join us in these efforts, reach out, raise issues or just
 🌟 to stay up to date with the latest developments! 📢 You can contribute to the conversation around OG-MARL in the [Discussion tab](https://github.com/instadeepai/og-marl/discussions). Please don't hesitate to leave a comment. We will be happy to reply.
 
+> 📹 NeurIPS video: [https://neurips.cc/virtual/2024/poster/97812](https://neurips.cc/virtual/2024/poster/97812)
+
 > 📢 We recently moved our datasets to Hugging Face. This means that previous download links for the datasets may no longer work. Datasets can now be downloaded directly from [Hugging Face](https://huggingface.co/datasets/InstaDeepAI/og-marl).
 
 ## Quickstart 🏎️
@@ -255,7 +257,7 @@ The OG-MARL datasets use the latest version of MuJoCo (210). While the OMIGA and
 
 ## Citing OG-MARL :pencil2:
 
-If you use OG-MARL Datasets in your work, please cite the library using:
+#### If you use OG-MARL Datasets in your work, please cite the library using:
 
 ```
 @inproceedings{formanek2023ogmarl,
@@ -268,6 +270,23 @@ If you use OG-MARL Datasets in your work, please cite the library using:
 ```
 
 <img src="docs/assets/aamas2023.png" alt="AAMAS 2023" width="20%"/>
+
+
+#### If you use OG-MARL Baselines in your work, please cite the library using:
+
+```
+@inproceedings{NEURIPS2024_fc6247c3,
+ author = {Formanek, Juan and Tilbury, Callum R. and Beyers, Louise and Shock, Jonathan and Pretorius, Arnu},
+ booktitle = {Advances in Neural Information Processing Systems},
+ pages = {139650--139672},
+ publisher = {Curran Associates, Inc.},
+ title = {Dispelling the Mirage of Progress in Offline MARL through Standardised Baselines and Evaluation},
+ volume = {37},
+ year = {2024}
+}
+```
+
+<img src="docs/assets/neurips2024.png" alt="NeurIPS 2024" width="20%"/>
 
 
 ## Acknowledgements 🙏
