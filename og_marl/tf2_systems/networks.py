@@ -258,3 +258,74 @@ class CNNEmbeddingNetwork(snt.Module):
         embed = self.conv_net(x)
         embed = tf.reshape(embed, shape=(*leading_dims, -1))
         return embed
+
+
+class RecurrentCategoricalQNetwork(snt.Module):
+    """Categorical Q-network with a recurrent layer."""
+
+    def __init__(
+            self, 
+            num_actions: int, 
+            n_atoms: int = 51, 
+            linear_layer_dim: int = 128, 
+            recurrent_layer_dim: int = 128
+        ) -> None:
+        """Initialise the network."""
+
+        super().__init__()
+        self.num_actions = num_actions
+        self.n_atoms = n_atoms
+
+        self._base_core = snt.DeepRNN([
+            snt.Linear(linear_layer_dim),
+            tf.nn.relu,
+            snt.GRU(recurrent_layer_dim),
+            tf.nn.relu,
+            snt.Linear(num_actions * n_atoms),
+        ])
+
+    def __call__(self, inputs, state):
+        """Forward method."""
+        outputs, next_state = self._base_core(inputs, state)
+        # Reshape and apply softmax to get distributions over atoms
+        outputs = tf.reshape(outputs, (-1, self.num_actions, self.n_atoms))
+        distributions = tf.nn.softmax(outputs, axis=-1)
+        return distributions, next_state
+
+    def initial_state(self, batch_size, **kwargs):
+        return self._base_core.initial_state(batch_size, **kwargs)
+
+
+class RecurrentQuantileQNetwork(snt.Module):
+    """Quantile Q-network with a recurrent layer."""
+
+    def __init__(
+            self, 
+            num_actions: int, 
+            n_quantiles: int = 100, 
+            linear_layer_dim: int = 128, 
+            recurrent_layer_dim: int = 128
+        ) -> None:
+        """Initialise the network."""
+
+        super().__init__()
+        self.num_actions = num_actions
+        self.n_quantiles = n_quantiles
+
+        self._base_core = snt.DeepRNN([
+            snt.Linear(linear_layer_dim),
+            tf.nn.relu,
+            snt.GRU(recurrent_layer_dim),
+            tf.nn.relu,
+            snt.Linear(num_actions * n_quantiles),
+        ])
+
+    def __call__(self, inputs, state):
+        """Forward method."""
+        outputs, next_state = self._base_core(inputs, state)
+        # Reshape output to (batch_size, num_actions, n_quantiles)
+        quantile_values = tf.reshape(outputs, (-1, self.num_actions, self.n_quantiles))
+        return quantile_values, next_state
+
+    def initial_state(self, batch_size, **kwargs):
+        return self._base_core.initial_state(batch_size, **kwargs)
