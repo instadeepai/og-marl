@@ -1,0 +1,29 @@
+system_name: iqrdqn
+seed: 5
+wandb_project: og-marl
+environment_steps: 1e6
+
+task:
+  source: og_marl
+  env: smac_v1
+  scenario: 5m_vs_6m
+
+replay:
+  sequence_length: 20
+  sample_period: 1
+  max_size: 50000
+  store_to_vault: False
+
+system:
+  learning_rate: 3e-4
+  linear_layer_dim: 128
+  recurrent_layer_dim: 128
+  discount: 0.99
+  target_update_period: 200
+  add_agent_id_to_obs: True
+  eps_decay_steps: 10000
+  eps_min: 0.03
+  env_steps_before_train: 5000
+  train_period: 4
+  n_quantiles: 100
+  huber_kappa: 1.0
