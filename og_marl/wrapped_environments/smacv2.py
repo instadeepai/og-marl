@@ -131,7 +131,7 @@ class SMACv2(BaseEnvironment):
             smac_actions.append(actions[agent])
 
         # Step the SMAC environment
-        reward, done, _ = self._environment.step(smac_actions)
+        reward, done, info = self._environment.step(smac_actions)
 
         # Get the next observations
         observations = self._environment.get_obs()
@@ -148,7 +148,7 @@ class SMACv2(BaseEnvironment):
         terminals = {agent: np.array(done) for agent in self.agents}
         truncations = {agent: np.array(False) for agent in self.agents}
 
-        info = {"legals": legals, "state": env_state}
+        info.update({"legals": legals, "state": env_state})
 
         return observations, rewards, terminals, truncations, info
 
