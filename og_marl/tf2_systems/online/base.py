@@ -47,12 +47,15 @@ class BaseOnlineSystem:
     def evaluate(self, num_eval_episodes: int = 32) -> Dict[str, Numeric]:
         """Method to evaluate the system in the environment."""
         episode_returns = []
+        num_wins = 0
         for _ in range(num_eval_episodes):
             self.reset()
             observations, infos = self.evaluation_environment.reset()
 
             done = False
             episode_return = 0.0
+            battle_won = False
+
             while not done:
                 if "legals" in infos:
                     legal_actions = infos["legals"]
@@ -73,9 +76,15 @@ class BaseOnlineSystem:
 
                 done = all(terminal.values()) or all(truncation.values())
 
+                if "battle_won" in infos and not battle_won:
+                    battle_won = infos["battle_won"]
+                
+            num_wins += int(battle_won)
+
             episode_returns.append(episode_return)
 
         logs = {
+            "evaluation/win_rate": num_wins / num_eval_episodes,
             "evaluation/mean_episode_return": np.mean(episode_returns),
             "evaluation/max_episode_return": np.max(episode_returns),
             "evaluation/min_episode_return": np.min(episode_returns),
@@ -119,7 +128,13 @@ class BaseOnlineSystem:
             time_to_step_env = end_time - start_time
 
             start_time = time.time()
-            replay_buffer.add(observations, actions, rewards, terminals, truncations, infos)
+            infos_to_add = {}
+            if "legals" in infos:
+                infos_to_add["legals"] = infos["legals"]
+            if "state" in infos:
+                infos_to_add["state"] = infos["state"]
+            
+            replay_buffer.add(observations, actions, rewards, terminals, truncations, infos_to_add)
             end_time = time.time()
             time_to_add_to_rb = end_time - start_time
 
