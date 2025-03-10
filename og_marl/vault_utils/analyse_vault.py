@@ -112,15 +112,17 @@ def plot_eps_returns_violin(
     all_uid_returns: Dict[str, Array], vault_name: str, save_path: str = ""
 ) -> None:
     sns.set_theme(style="whitegrid")  # Set seaborn theme with a light blue background
-    plt.figure(figsize=(8, 6))  # Adjust figsize as needed
+    plt.figure(figsize=(6, 6))  # Adjust figsize as needed
 
-    sns.violinplot(data=list(all_uid_returns.values()), inner="point")
-    plt.xlabel("Dataset Quality")
-    plt.ylabel("Episode Returns")
-    plt.xticks(range(len(all_uid_returns)), list(all_uid_returns.keys()))
+    sns.kdeplot(data=list(all_uid_returns.values()), fill=True)
+    plt.xlabel("Episode Return")
+    plt.ylabel("Density")
+    plt.legend().set_visible(False)
+    plt.title(f"Density Estimation")
+    # plt.xticks()
     if len(save_path) > 0:
         plt.savefig(save_path, format="pdf", bbox_inches="tight")
-    plt.title(f"Violin Distributions of Returns for {vault_name}")
+
     plt.show()
     return
 
@@ -139,7 +141,7 @@ def plot_eps_returns_hist(
     fig, ax = plt.subplots(
         1,
         len(vault_uids),
-        figsize=(0.5 + 2.5 * len(vault_uids), 3),
+        figsize=(6, 6),
         sharex=True,
         sharey=True,
         squeeze=False,
@@ -152,13 +154,13 @@ def plot_eps_returns_hist(
             all_uid_returns[uid], bins=n_bins, range=(min_return, max_return)
         )
         ax[0, i].stairs(counts, bins, fill=True, color=colors[i])
-        ax[0, i].set_title(uid)
+        ax[0, i].set_title("Histogram")
         ax[0, i].set_xlabel("Episode return")
     ax[0, 0].set_ylabel("Frequency")
     fig.tight_layout()
     if len(save_path) > 0:
         plt.savefig(save_path, bbox_inches="tight")
-    fig.suptitle(f"Histogram of distributions of episode returns for {vault_name}")
+    # fig.suptitle(f"Histogram of distributions of episode returns for {vault_name}")
     fig.tight_layout()
     plt.show()
     return
@@ -205,8 +207,8 @@ def describe_episode_returns(
         plot_saving_rel_dir = rel_dir
 
     if plot_hist:
-        min_of_all = min([x[-1] for x in single_values])
-        max_of_all = max([x[-2] for x in single_values])
+        min_of_all = min([x[4] for x in single_values])
+        max_of_all = max([x[3] for x in single_values])
         if save_hist:
             plot_eps_returns_hist(
                 all_uid_eps_returns,
@@ -507,3 +509,27 @@ def descriptive_summary(
             plot_eps_returns_hist(all_returns, vault_name, n_bins, min_of_all, max_of_all)
 
     return all_returns
+
+def compare_vaults_qq_plots(vault_1_name, vault_1_uid, rel_dir="vaults/", save_plot=False):
+
+    vlt1 = Vault(vault_name=vault_1_name, rel_dir=rel_dir, vault_uid=vault_1_uid)
+    exp1 = vlt1.read().experience
+    data1 = calculate_returns(exp1)
+
+    # Create QQ plot
+    sns.set_theme(style="whitegrid")  # Set seaborn theme with a light blue background
+    fig, ax = plt.subplots(figsize=(6, 6))
+    stats.probplot(data1, dist="norm", plot=ax)
+
+    # Customize axis labels
+    ax.set_xlabel("Theoretical Quantiles (Normal Distribution)")
+    ax.set_ylabel("Empirical Quantiles (Sample Data)")
+    ax.set_title("QQ Plot")
+    
+    if save_plot:
+        plt.savefig(f"{rel_dir}/qq_plot.pdf", bbox_inches="tight")
+
+    plt.show()
+
+
+
