@@ -29,7 +29,7 @@ COPY . .
 
 RUN echo "Installing requirements..."
 RUN pip install --quiet --upgrade pip setuptools wheel &&  \
-    pip install -e . && \
+    pip install -e .[tf2_baselines] && \
     pip install flashbax==0.1.2
 
 # ENV SC2PATH "~/StarCraftII"
