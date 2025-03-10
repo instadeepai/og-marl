@@ -1,7 +1,7 @@
 system_name: iqrdqn
 seed: 5
-wandb_project: og-marl
-environment_steps: 1e6
+wandb_project: og-marl-dist
+environment_steps: 3e6
 
 task:
   source: og_marl
@@ -21,9 +21,9 @@ system:
   discount: 0.99
   target_update_period: 200
   add_agent_id_to_obs: True
-  eps_decay_steps: 10000
-  eps_min: 0.03
+  eps_decay_steps: 50000
+  eps_min: 0.05
   env_steps_before_train: 5000
   train_period: 4
-  n_quantiles: 100
+  n_quantiles: 50
   huber_kappa: 1.0

@@ -1,6 +1,6 @@
 system_name: iql
 seed: 42
-wandb_project: og-marl
+wandb_project: og-marl-dist
 environment_steps: 3e6
 
 task:
@@ -21,7 +21,7 @@ system:
   discount: 0.99
   target_update_period: 200
   add_agent_id_to_obs: True
-  eps_decay_steps: 10000
+  eps_decay_steps: 50000
   eps_min: 0.05
   env_steps_before_train: 5000
   train_period: 4

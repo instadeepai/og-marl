@@ -25,10 +25,7 @@ ARG folder=/home/app/og-marl
 WORKDIR ${folder}
 
 # Copy all code needed to install dependencies
-COPY ./install_environments ./install_environments
-COPY ./og_marl ./og_marl
-COPY setup.py .
-COPY ./run_exps.py .
+COPY . .
 
 RUN echo "Installing requirements..."
 RUN pip install --quiet --upgrade pip setuptools wheel &&  \
@@ -36,7 +33,7 @@ RUN pip install --quiet --upgrade pip setuptools wheel &&  \
     pip install flashbax==0.1.2
 
 # ENV SC2PATH "~/StarCraftII"
-# RUN ./install_environments/smacv1.sh
+RUN ./install_environments/smacv1.sh
 # RUN ./install_environments/smacv2.sh
 
 # ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
