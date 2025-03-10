@@ -8,8 +8,8 @@ ENV PYTHONUNBUFFERED=1
 RUN apt-get update -y && \
     apt-get install -y software-properties-common && \
     add-apt-repository -y ppa:deadsnakes/ppa && \
-    apt-get install -y python3.9 python3.9-dev python3-pip python3.9-venv python3-dev python3-opencv swig ffmpeg git unzip wget libosmesa6-dev libgl1-mesa-glx libglfw3 patchelf && \
-    update-alternatives --install /usr/bin/python python /usr/bin/python3.9 10 && \
+    apt-get install -y python3.10 python3.10-dev python3-pip python3.10-venv python3-dev python3-opencv swig ffmpeg git unzip wget libosmesa6-dev libgl1-mesa-glx libglfw3 patchelf && \
+    update-alternatives --install /usr/bin/python python /usr/bin/python3.10 10 && \
     python -m venv og-marl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
