@@ -226,7 +226,7 @@ class IQLCQLSystem(BaseOfflineSystem):
             #############
 
             # Mask out zero-padded timesteps
-            loss = td_loss + self.cql_weight + cql_loss
+            loss = td_loss + self.cql_weight * cql_loss
 
         # Get trainable variables
         variables = (*self.q_network.trainable_variables,)
