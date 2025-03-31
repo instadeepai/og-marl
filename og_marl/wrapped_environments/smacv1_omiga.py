@@ -34,29 +34,29 @@ class SMACv1OMIGA(BaseEnvironment):
         map_name: str,
         seed: int = 0,
     ):
-        self.environment = StarCraft2Env(
+        self._environment = StarCraft2Env(
             args=OmigaConf(map_name=map_name),
             seed=seed,
         )
-        self.agents = [f"agent_{n}" for n in range(self.environment.n_agents)]
+        self.agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
 
         self.num_agents = len(self.agents)
-        self.num_actions = self.environment.n_actions
+        self.num_actions = self._environment.n_actions
 
     def reset(self) -> ResetReturn:
         """Resets the env."""
         # Reset the environment
-        self.environment.reset()
+        self._environment.reset()
         self.done = False
 
         # Get observation from env
-        observations = self.environment.get_obs()
+        observations = self._environment.get_obs()
         observations = {agent: observations[i] for i, agent in enumerate(self.agents)}
 
         legal_actions = self._get_legal_actions()
         legals = {agent: legal_actions[i] for i, agent in enumerate(self.agents)}
 
-        env_state = self.environment.get_state(agent_id=0).astype("float32")
+        env_state = self._environment.get_state(agent_id=0).astype("float32")
 
         info = {"legals": legals, "state": env_state}
 
@@ -69,7 +69,7 @@ class SMACv1OMIGA(BaseEnvironment):
         for agent in self.agents:
             smac_actions.append(actions[agent])
 
-        o, g, r, d, i, ava = self.environment.step(smac_actions)
+        o, g, r, d, i, ava = self._environment.step(smac_actions)
 
         observations = {agent: o[i] for i, agent in enumerate(self.agents)}
         rewards = {
@@ -89,6 +89,6 @@ class SMACv1OMIGA(BaseEnvironment):
         legal_actions = []
         for i, _ in enumerate(self.agents):
             legal_actions.append(
-                np.array(self.environment.get_avail_agent_actions(i), dtype="float32")
+                np.array(self._environment.get_avail_agent_actions(i), dtype="float32")
             )
         return legal_actions
