@@ -34,5 +34,9 @@ def get_environment(source: str, env_name: str, scenario: str, seed: int = 42) -
         from og_marl.wrapped_environments.flatland_wrapper import Flatland
 
         return Flatland(scenario)
+    elif env_name == "rware" and source=="alberdice":
+        from og_marl.wrapped_environments.rware_alberdice import RWAREAlberDICE
+
+        return RWAREAlberDICE(scenario)
     else:
         raise ValueError("Environment not recognised.")
