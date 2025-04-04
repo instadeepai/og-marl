@@ -158,7 +158,7 @@ class IQLSystem(BaseOnlineSystem):
         logs = self._tf_train_step(experience)
         return logs  # type: ignore
 
-    @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
+    # @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
@@ -293,7 +293,7 @@ def run_experiment(cfg: DictConfig) -> None:
 
     tf.random.set_seed(cfg["seed"])
 
-    system.train(buffer, evaluation_every=5000, num_eval_episodes=10, environment_steps=int(cfg["environment_steps"]))
+    system.train(buffer, evaluation_every=5000, num_eval_episodes=1, environment_steps=int(cfg["environment_steps"]))
 
 
 if __name__ == "__main__":

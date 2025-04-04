@@ -1,13 +1,13 @@
 system_name: maicq
 seed: 42
-wandb_project: og-marl
+wandb_project: og-marl-rware
 training_steps: 1e5
 
 task:
-  source: og_marl
-  env: smac_v1
-  scenario: 3m
-  dataset: Good
+  source: alberdice
+  env: rware
+  scenario: small-4ag
+  dataset: Expert
 
 replay:
   sequence_length: 20

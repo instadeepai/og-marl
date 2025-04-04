@@ -72,7 +72,7 @@ class BaseOnlineSystem:
                 episode_return += np.mean(list(rewards.values()), dtype="float")
 
                 done = all(terminal.values()) or all(truncation.values())
-
+                
             episode_returns.append(episode_return)
 
         logs = {

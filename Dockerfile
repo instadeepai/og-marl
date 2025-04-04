@@ -28,12 +28,18 @@ WORKDIR ${folder}
 COPY ./install_environments ./install_environments
 COPY ./og_marl ./og_marl
 COPY setup.py .
-COPY ./run_exps.py .
+COPY ./run.sh .
 
 RUN echo "Installing requirements..."
 RUN pip install --quiet --upgrade pip setuptools wheel &&  \
     pip install -e . && \
     pip install flashbax==0.1.2
+
+RUN pip uninstall opencv-python
+RUN pip install setuptools==65.5.0 pip==21 
+RUN pip install wheel==0.38.0 
+RUN pip install opencv-python
+RUN pip install gym==0.21.0 rware==1.0.3
 
 # ENV SC2PATH "~/StarCraftII"
 # RUN ./install_environments/smacv1.sh

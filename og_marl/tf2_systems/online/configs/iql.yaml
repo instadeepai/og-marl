@@ -4,9 +4,9 @@ wandb_project: og-marl
 environment_steps: 3e6
 
 task:
-  source: og_marl
-  env: smac_v1
-  scenario: 3m 
+  source: alberdice
+  env: rware
+  scenario: small-2ag
 
 replay:
   sequence_length: 20

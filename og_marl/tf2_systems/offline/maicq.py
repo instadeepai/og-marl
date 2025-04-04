@@ -181,7 +181,7 @@ class MAICQSystem(BaseOfflineSystem):
     ) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
-        actions = experience["actions"]  # (B,T,N)
+        actions = tf.squeeze(tf.cast(experience["actions"], "int32"), -1)  # (B,T,N)
         env_states = experience["infos"]["state"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
         truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
@@ -250,7 +250,8 @@ class MAICQSystem(BaseOfflineSystem):
             pi_taken = gather(probs_out, actions, keepdims=False)
             log_pi_taken = tf.math.log(pi_taken)
 
-            coe = self.mixer.k(env_states)
+            # coe = self.mixer.k(env_states)
+            coe = 1.
 
             coma_loss = -tf.reduce_mean(coe * (len(advantages) * advantages * log_pi_taken))
 
@@ -259,8 +260,8 @@ class MAICQSystem(BaseOfflineSystem):
             target_q_taken = gather(target_q_vals, actions, axis=-1)
 
             # Mixing critics
-            q_taken = self.mixer(q_taken, env_states)
-            target_q_taken = self.target_mixer(target_q_taken, env_states)
+            # q_taken = self.mixer(q_taken, env_states)
+            # target_q_taken = self.target_mixer(target_q_taken, env_states)
 
             advantage_Q = tf.nn.softmax(target_q_taken / self.icq_target_q_taken_beta, axis=0)
             target_q_taken = len(advantage_Q) * advantage_Q * target_q_taken
@@ -285,7 +286,7 @@ class MAICQSystem(BaseOfflineSystem):
         variables = (
             *self.policy_network.trainable_variables,
             *self.q_network.trainable_variables,
-            *self.mixer.trainable_variables,
+            # *self.mixer.trainable_variables,
         )  # Get trainable variables
 
         gradients = tape.gradient(loss, variables)  # Compute gradients.
@@ -295,13 +296,13 @@ class MAICQSystem(BaseOfflineSystem):
         # Online variables
         online_variables = (
             *self.q_network.variables,
-            *self.mixer.variables,
+            # *self.mixer.variables,
         )
 
         # Get target variables
         target_variables = (
             *self.target_q_network.variables,
-            *self.target_mixer.variables,
+            # *self.target_mixer.variables,
         )
 
         # Maybe update target network

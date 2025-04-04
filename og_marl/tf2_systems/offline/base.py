@@ -39,6 +39,12 @@ class BaseOfflineSystem:
     def evaluate(self, num_eval_episodes: int = 32) -> Dict[str, Numeric]:
         """Method to evaluate the system in the environment."""
         episode_returns = []
+
+        try:
+            prev_wins = self.environment._environment.get_stats()["battles_won"]
+        except:
+            prev_wins = 0
+
         for _ in range(num_eval_episodes):
             self.reset()
             observations, infos = self.environment.reset()
@@ -61,11 +67,18 @@ class BaseOfflineSystem:
 
             episode_returns.append(episode_return)
 
+        try:
+            wins = (self.environment._environment.get_stats()["battles_won"] - prev_wins) / num_eval_episodes
+        except:
+            wins = 0
+
         logs = {
+            "evaluation/win_rate": wins,
             "evaluation/mean_episode_return": np.mean(episode_returns),
             "evaluation/max_episode_return": np.max(episode_returns),
             "evaluation/min_episode_return": np.min(episode_returns),
         }
+
         return logs
 
     def train(
