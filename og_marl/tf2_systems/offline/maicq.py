@@ -263,8 +263,8 @@ class MAICQSystem(BaseOfflineSystem):
             # q_taken = self.mixer(q_taken, env_states)
             # target_q_taken = self.target_mixer(target_q_taken, env_states)
 
-            advantage_Q = tf.nn.softmax(target_q_taken / self.icq_target_q_taken_beta, axis=0)
-            target_q_taken = len(advantage_Q) * advantage_Q * target_q_taken
+            # advantage_Q = tf.nn.softmax(target_q_taken / self.icq_target_q_taken_beta, axis=0)
+            # target_q_taken = len(advantage_Q) * advantage_Q * target_q_taken
 
             # Compute targets
             targets = (

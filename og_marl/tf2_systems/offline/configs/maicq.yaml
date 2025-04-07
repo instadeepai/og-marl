@@ -1,6 +1,6 @@
 system_name: maicq
 seed: 42
-wandb_project: og-marl-rware
+wandb_project: og-marl-rware-no-critic-temp
 training_steps: 1e5
 
 task:
