@@ -4,9 +4,9 @@ wandb_project: og-marl
 environment_steps: 2e6
 
 task:
-  source: og_marl
-  env: gymnasium_mamujoco
-  scenario: 6halfcheetah
+  source: omar
+  env: mpe
+  scenario: simple_tag
 
 replay:
   sequence_length: 10

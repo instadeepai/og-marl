@@ -1,6 +1,6 @@
 import numpy as np
-from multiagent.core import World, Agent, Landmark
-from multiagent.scenario import BaseScenario
+from og_marl.custom_environments.multiagent_particle_envs.multiagent.core import World, Agent, Landmark
+from og_marl.custom_environments.multiagent_particle_envs.multiagent.scenario import BaseScenario
 
 
 class Scenario(BaseScenario):
