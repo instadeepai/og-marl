@@ -23,7 +23,7 @@ def get_mamujoco_args(scenario: str) -> Dict[str, Any]:
     env_args = {
         "agent_obsk": 1,
         "episode_limit": 1000,
-        "global_categories": "qvel,qpos",
+        # "global_categories": "qvel,qpos",
     }
     if scenario.lower() == "4ant":
         env_args["scenario"] = "Ant-v2"

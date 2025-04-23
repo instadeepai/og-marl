@@ -4,10 +4,10 @@ wandb_project: og-marl
 training_steps: 5e5
 
 task:
-  source: my_datasets
-  env: gymnasium_mamujoco
-  scenario: 2reacher
-  dataset: replay
+  source: omiga
+  env: mamujoco
+  scenario: 3hopper
+  dataset: Expert
 
 replay:
   sequence_length: 20

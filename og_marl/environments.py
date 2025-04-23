@@ -22,6 +22,10 @@ def get_environment(source: str, env_name: str, scenario: str, seed: int = 42) -
         from og_marl.wrapped_environments.mamujoco import MAMuJoCo
 
         return MAMuJoCo(scenario, seed=seed)
+    elif env_name == "mamujoco" and source == "omar":
+        from og_marl.wrapped_environments.mamujoco_omar import MAMuJoCo
+
+        return MAMuJoCo(scenario, seed=seed)
     elif env_name == "gymnasium_mamujoco":
         from og_marl.wrapped_environments.gymnasium_mamujoco import WrappedGymnasiumMAMuJoCo
 
