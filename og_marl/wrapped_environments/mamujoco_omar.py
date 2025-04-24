@@ -39,7 +39,7 @@ class MAMuJoCo(BaseEnvironment):
         observations = self._environment.get_obs()
 
         observations = {
-            agent: observations[i].astype("float32") for i, agent in enumerate(self.possible_agents)
+            agent: observations[i].astype("float32") for i, agent in enumerate(self.agents)
         }
 
         info = {"state": self._environment.get_state()}
@@ -48,20 +48,20 @@ class MAMuJoCo(BaseEnvironment):
 
     def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         mujoco_actions = []
-        for agent in self.possible_agents:
+        for agent in self.agents:
             mujoco_actions.append(actions[agent])
 
         reward, done, info = self._environment.step(mujoco_actions)
 
-        terminals = {agent: done for agent in self.possible_agents}
-        trunctations = {agent: False for agent in self.possible_agents}
+        terminals = {agent: done for agent in self.agents}
+        trunctations = {agent: False for agent in self.agents}
 
-        rewards = {agent: reward for agent in self.possible_agents}
+        rewards = {agent: reward for agent in self.agents}
 
         observations = self._environment.get_obs()
 
         observations = {
-            agent: observations[i].astype("float32") for i, agent in enumerate(self.possible_agents)
+            agent: observations[i].astype("float32") for i, agent in enumerate(self.agents)
         }
 
         info = {}
