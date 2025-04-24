@@ -16,8 +16,8 @@ class MAMuJoCo(BaseEnvironment):
 
         self._environment = MujocoMulti(env_args=env_args)
 
-        self.possible_agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
-        self._num_actions = self._environment.n_actions
+        self.agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
+        self.num_actions = self._environment.n_actions
 
         self.max_episode_length = 1000
 
