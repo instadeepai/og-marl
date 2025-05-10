@@ -26,18 +26,46 @@ from gymnasium.spaces import Box, Discrete
 from og_marl.wrapped_environments.base import BaseEnvironment, Observations, ResetReturn, StepReturn
 
 FLATLAND_MAP_CONFIGS = {
-    "3trains": {
+    "3_trains": {
         "num_trains": 3,
         "num_cities": 2,
         "width": 25,
         "height": 25,
         "max_episode_len": 80,
     },
-    "5trains": {
+    "5_trains": {
         "num_trains": 5,
         "num_cities": 2,
         "width": 25,
         "height": 25,
+        "max_episode_len": 100,
+    },
+    "20_trains": {
+        "num_trains": 20,
+        "num_cities": 3,
+        "width": 30,
+        "height": 30,
+        "max_episode_len": 100,
+    },
+    "30_trains": {
+        "num_trains": 30,
+        "num_cities": 3,
+        "width": 35,
+        "height": 30,
+        "max_episode_len": 100,
+    },
+    "40_trains": {
+        "num_trains": 40,
+        "num_cities": 4,
+        "width": 35,
+        "height": 35,
+        "max_episode_len": 100,
+    },
+    "50_trains": {
+        "num_trains": 50,
+        "num_cities": 4,
+        "width": 35,
+        "height": 35,
         "max_episode_len": 100,
     },
 }
@@ -47,14 +75,14 @@ class Flatland(BaseEnvironment):
     def __init__(self, map_name: str = "5_trains"):
         map_config = FLATLAND_MAP_CONFIGS[map_name]
 
-        self._num_actions = 5
+        self.num_actions = 5
         self.num_agents = map_config["num_trains"]
         self._num_cities = map_config["num_cities"]
         self._map_width = map_config["width"]
         self._map_height = map_config["height"]
         self._tree_depth = 2
 
-        self.possible_agents = [f"{i}" for i in range(self.num_agents)]
+        self.agents = [f"{i}" for i in range(self.num_agents)]
 
         self.rail_generator = sparse_rail_generator(max_num_cities=self._num_cities)
 
@@ -75,19 +103,22 @@ class Flatland(BaseEnvironment):
 
         self._obs_dim = 11 * sum(4**i for i in range(self._tree_depth + 1)) + 7
 
-        self.action_spaces = {agent: Discrete(self._num_actions) for agent in self.possible_agents}
+        self.action_spaces = {agent: Discrete(self.num_actions) for agent in self.agents}
         self.observation_spaces = {
-            agent: Box(-np.inf, np.inf, (self._obs_dim,)) for agent in self.possible_agents
+            agent: Box(-np.inf, np.inf, (self._obs_dim,)) for agent in self.agents
         }
 
         self.info_spec = {
             "state": np.zeros((11 * self.num_agents,), "float32"),
             "legals": {
-                agent: np.zeros((self._num_actions,), "int64") for agent in self.possible_agents
+                agent: np.zeros((self.num_actions,), "int64") for agent in self.agents
             },
         }
 
-        self.max_episode_length = map_config["max_episode_len"]
+
+    def render(self) -> Any:
+        """Return frame for rendering"""
+        return self._environment.render()
 
     def reset(self) -> ResetReturn:
         self._done = False
@@ -116,7 +147,7 @@ class Flatland(BaseEnvironment):
         # Rewards
         rewards = {
             agent: np.array(all_rewards[int(agent)], dtype="float32")
-            for agent in self.possible_agents
+            for agent in self.agents
         }
 
         # Legal actions
@@ -130,21 +161,25 @@ class Flatland(BaseEnvironment):
 
         info = {"state": state, "legals": legal_actions}
 
-        terminals = {agent: np.array(self._done) for agent in self.possible_agents}
-        truncations = {agent: np.array(False) for agent in self.possible_agents}
+        if self._done:
+            num_arrived = sum(self._environment.agents[int(agent)].state == 6 for agent in self.agents)
+            info["arrived"] = num_arrived
+
+        terminals = {agent: np.array(self._done) for agent in self.agents}
+        truncations = {agent: np.array(False) for agent in self.agents}
 
         return next_observations, rewards, terminals, truncations, info
 
     def _get_legal_actions(self) -> Dict[str, np.ndarray]:
         legal_actions = {}
-        for agent in self.possible_agents:
+        for agent in self.agents:
             agent_id = int(agent)
             flatland_agent = self._environment.agents[agent_id]
 
             if not self._environment.action_required(
-                flatland_agent.state, flatland_agent.speed_counter.is_cell_entry
+                flatland_agent
             ):
-                legals = np.zeros(self._num_actions, "float32")
+                legals = np.zeros(self.num_actions, "float32")
                 legals[0] = 1  # can only do nothng
             else:
                 legals = np.ones(5, "float32")
@@ -155,7 +190,7 @@ class Flatland(BaseEnvironment):
 
     def _make_state_representation(self) -> np.ndarray:
         state = []
-        for i, _ in enumerate(self.possible_agents):
+        for i, _ in enumerate(self.agents):
             agent = self._environment.agents[i]
             state.append(np.array(agent.target, "float32"))
 
@@ -179,7 +214,7 @@ class Flatland(BaseEnvironment):
         info: Dict[str, Dict[int, np.ndarray]],
     ) -> Observations:
         new_observations = {}
-        for i, agent in enumerate(self.possible_agents):
+        for i, agent in enumerate(self.agents):
             agent_id = i
             norm_observation = normalize_observation(
                 observations[agent_id],

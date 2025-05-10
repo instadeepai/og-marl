@@ -78,6 +78,14 @@ VAULT_INFO = {
                 "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/gymnasium_mamujoco/6halfcheetah.zip"
             },
         },
+        "flatland": {
+            "20_trains": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/flatland/20_trains.zip"
+            },
+            "30_trains": {
+                "url": "https://huggingface.co/datasets/InstaDeepAI/og-marl/resolve/main/core/flatland/30_trains.zip"
+            },
+        },
     },
     "cfcql": {
         "smac_v1": {
