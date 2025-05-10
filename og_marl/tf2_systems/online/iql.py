@@ -85,6 +85,10 @@ class IQLSystem(BaseOnlineSystem):
             ]
         )  # shared network for all agents
 
+        self.checkpoint = tf.train.Checkpoint(self.q_network)
+
+        self.checkpoint.restore("checkpoints_7/training_checkpoints-3726")
+
         # Target Q-network
         self.target_q_network = copy.deepcopy(self.q_network)
         self.target_update_period = target_update_period
@@ -157,6 +161,76 @@ class IQLSystem(BaseOnlineSystem):
     def train_step(self, experience: Experience) -> Dict[str, Numeric]:
         logs = self._tf_train_step(experience)
         return logs  # type: ignore
+    
+    # @tf.function(jit_compile=True)
+    # def _tf_select_actions(
+    #     self,
+    #     observations: Dict[str, tf.Tensor],
+    #     rnn_states: Dict[str, tf.Tensor],
+    #     legals: Dict[str, tf.Tensor],
+    #     explore: bool
+    # ) -> Tuple[Dict[str, tf.Tensor], Dict[str, tf.Tensor]]:
+    #     agents = self.environment.agents
+    #     n_agents = len(agents)
+
+    #     # 1) Build batched observations (and optionally concat one-hot agent IDs)
+    #     obs_list = [observations[a] for a in agents]
+    #     if self.add_agent_id_to_obs:
+    #         obs_list = [
+    #             concat_agent_id_to_obs(obs, idx, n_agents)
+    #             for idx, obs in enumerate(obs_list)
+    #         ]
+    #     batched_obs = tf.stack(obs_list, axis=0)              # [n_agents, …]
+
+    #     # 2) Build batched legal masks and rnn-states
+    #     batched_legals = tf.stack([legals[a] for a in agents], axis=0)  # [n_agents, n_actions]
+    #     batched_states = tf.concat([rnn_states[a][0] for a in agents], axis=0)
+
+    #     # 3) Single forward pass
+    #     q_values, next_states_batched = self.q_network(batched_obs, (batched_states,))
+    #     #    q_values:   [n_agents, n_actions]
+    #     #    next_states_batched: [n_agents, …state_dims…]
+
+    #     # 4) Mask out illegal actions
+    #     neg_inf = tf.constant(-np.inf, dtype=q_values.dtype)
+    #     masked_q = tf.where(batched_legals == 1, q_values, neg_inf)
+
+    #     # 5) Greedy actions
+    #     greedy_actions = tf.argmax(masked_q, axis=-1, output_type=tf.int32)  # [n_agents]
+
+    #     self.env_steps.assign_add(1)
+
+    #     # 7) Compute ε and (if exploring) sample random legal actions in batch
+    #     eps = tf.maximum(1 - (1.0 / self.eps_denominator) * self.env_steps,
+    #                     self.eps_min)
+    #     if explore:
+    #         # draw one uniform per agent
+    #         u = tf.random.uniform(shape=[n_agents])
+    #         # compute log-probs over legal actions
+    #         legal_probs = tf.cast(batched_legals, q_values.dtype)
+    #         legal_probs /= tf.reduce_sum(legal_probs, axis=-1, keepdims=True)
+    #         logp = tf.math.log(legal_probs)
+    #         # sample one action per agent
+    #         random_actions = tf.squeeze(tf.random.categorical(logp, 1), axis=-1)
+    #         # pick random vs greedy per agent
+    #         actions_vec = tf.where(u < eps, tf.cast(random_actions, tf.int64), tf.cast(greedy_actions, tf.int64))
+    #     else:
+    #         actions_vec = greedy_actions
+
+    #     # 8) Unpack back into dicts
+    #     expanded_actions = tf.expand_dims(actions_vec, axis=1)  # [n_agents, 1]
+    #     expanded_states = tf.expand_dims(next_states_batched[0], axis=1)  # [n_agents, 1, state_dim]
+        
+    #     # Create empty dictionaries
+    #     actions = {}
+    #     next_rnn_states = {}
+        
+    #     # Assign all tensors at once
+    #     for i, agent in enumerate(agents):
+    #         actions[agent] = expanded_actions[i]
+    #         next_rnn_states[agent] = (expanded_states[i],)
+
+    #     return actions, next_rnn_states
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
@@ -293,7 +367,7 @@ def run_experiment(cfg: DictConfig) -> None:
 
     tf.random.set_seed(cfg["seed"])
 
-    system.train(buffer, evaluation_every=5000, num_eval_episodes=10, environment_steps=int(cfg["environment_steps"]))
+    system.train(buffer, evaluation_every=1000, num_eval_episodes=4, environment_steps=int(cfg["environment_steps"]))
 
 
 if __name__ == "__main__":

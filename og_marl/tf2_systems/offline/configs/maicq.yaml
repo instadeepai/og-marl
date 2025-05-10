@@ -1,13 +1,13 @@
 system_name: maicq
-seed: 42
-wandb_project: og-marl
-training_steps: 1e5
+seed: 4822
+wandb_project: og-marl-cfcql-maicq
+training_steps: 2e4
 
 task:
-  source: og_marl
-  env: smac_v1
-  scenario: 3m
-  dataset: Good
+  source: omar
+  env: mpe
+  scenario: simple_spread
+  dataset: Medium
 
 replay:
   sequence_length: 20

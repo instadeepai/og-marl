@@ -15,6 +15,7 @@
 import time
 from typing import Dict
 
+import imageio
 import numpy as np
 from chex import Numeric
 
@@ -29,7 +30,7 @@ class BaseOnlineSystem:
         environment: BaseEnvironment,
         evaluation_environment: BaseEnvironment,
         logger: BaseLogger,
-        env_steps_before_train: int = 5000,
+        env_steps_before_train: int = 256,
         train_period: int = 4,
     ):
         self.environment = environment
@@ -46,13 +47,17 @@ class BaseOnlineSystem:
 
     def evaluate(self, num_eval_episodes: int = 32) -> Dict[str, Numeric]:
         """Method to evaluate the system in the environment."""
+        self.checkpoint.save('./checkpoints/training_checkpoints')
         episode_returns = []
-        for _ in range(num_eval_episodes):
+        episode_frames = []
+        num_arrived = []
+        for e in range(num_eval_episodes):
             self.reset()
             observations, infos = self.evaluation_environment.reset()
 
             done = False
             episode_return = 0.0
+            episode_frames.append([])
             while not done:
                 if "legals" in infos:
                     legal_actions = infos["legals"]
@@ -73,13 +78,27 @@ class BaseOnlineSystem:
 
                 done = all(terminal.values()) or all(truncation.values())
 
+                episode_frames[e].append(self.evaluation_environment.render())
+
             episode_returns.append(episode_return)
+            num_arrived.append(infos["arrived"])
 
         logs = {
             "evaluation/mean_episode_return": np.mean(episode_returns),
             "evaluation/max_episode_return": np.max(episode_returns),
             "evaluation/min_episode_return": np.min(episode_returns),
+            "evaluation/mean_num_arrived": np.mean(num_arrived),
+            "evaluation/max_num_arrived": np.max(num_arrived),
+            "evaluation/min_num_arrived": np.min(num_arrived),
         }
+
+        # Save episode frames into videos
+        for e in range(num_eval_episodes):
+            video_path = f"./videos/eval_episode_{e}.mp4"
+            with imageio.get_writer(video_path, fps=30) as writer:
+                for frame in episode_frames[e]:
+                    writer.append_data(frame)
+
         return logs
 
     def train(
@@ -107,7 +126,7 @@ class BaseOnlineSystem:
 
             start_time = time.time()
             legals = infos["legals"] if "legals" in infos else None
-            actions = self.select_actions(observations, legals, explore=True)
+            actions = self.select_actions(observations, legals, explore=False)
             end_time = time.time()
             time_to_select_actions = end_time - start_time
 

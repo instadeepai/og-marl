@@ -1,27 +1,27 @@
 system_name: iql
 seed: 42
 wandb_project: og-marl
-environment_steps: 3e6
+environment_steps: 1e6
 
 task:
   source: og_marl
-  env: smac_v1
-  scenario: 3m 
+  env: flatland
+  scenario: 50trains 
 
 replay:
-  sequence_length: 20
+  sequence_length: 5
   sample_period: 1
-  max_size: 50000
-  store_to_vault: False
+  max_size: 15000
+  store_to_vault: True
 
 system:
   learning_rate: 3e-4
   linear_layer_dim: 128
-  recurrent_layer_dim: 128
+  recurrent_layer_dim: 64
   discount: 0.99
   target_update_period: 200
-  add_agent_id_to_obs: True
-  eps_decay_steps: 10000
+  add_agent_id_to_obs: False
+  eps_decay_steps: 1000
   eps_min: 0.05
-  env_steps_before_train: 5000
+  env_steps_before_train: 20000
   train_period: 4

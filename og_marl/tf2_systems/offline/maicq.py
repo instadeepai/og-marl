@@ -181,7 +181,7 @@ class MAICQSystem(BaseOfflineSystem):
     ) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
-        actions = experience["actions"]  # (B,T,N)
+        actions = tf.cast(experience["actions"], "int32")  # (B,T,N)
         env_states = experience["infos"]["state"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
         truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
@@ -250,7 +250,7 @@ class MAICQSystem(BaseOfflineSystem):
             pi_taken = gather(probs_out, actions, keepdims=False)
             log_pi_taken = tf.math.log(pi_taken)
 
-            coe = self.mixer.k(env_states)
+            coe = 1 #self.mixer.k(env_states)
 
             coma_loss = -tf.reduce_mean(coe * (len(advantages) * advantages * log_pi_taken))
 
