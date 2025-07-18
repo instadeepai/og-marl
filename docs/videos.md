@@ -7,13 +7,13 @@
 <body>
 <h1>Videos about OG-MARL</h1>
 
-<h2> NeurIPS '24 Poster Presentation <h2>
+<h2> NeurIPS '24 Poster Presentation </h2>
 
 <a href="https://neurips.cc/virtual/2024/poster/97812">
   <img src="assets/louise_video_thumbnail.jpg" alt="OG-MARL NeurIPS Poster Presentation" width="480" />
 </a>
 
-<h2> AARG Reading Group Presentation <h2>
+<h2> AARG Reading Group Presentation </h2>
 
 <a href="https://www.youtube.com/watch?v=CgLCP7BErto">
   <img src="assets/video_thumbnail.jpg" alt="OG-MARL at AARG Reading Group" width="480" />
