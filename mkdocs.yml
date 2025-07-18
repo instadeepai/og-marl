@@ -40,11 +40,11 @@ nav:
   - "Home": 'index.md'
   - "Videos": 'videos.md'
   - "Research":
-    - "": research/index.md
     - "Oryx: Many-Agent Coordination in Offline MARL": research/oryx.md
     - "Coordination Failure in Cooperative Offline MARL": research/polygames.md
     - "Selective Reincarnation in Multi-Agent Reinforcement Learning": research/selective-reincarnation.md
   - "Datasets":
+      - " ": dataset_cards/overview.md
       - "OG MARL": dataset_cards/og_marl.md
       - "CFCQL": dataset_cards/cfcql.md
       - "OMIGA": dataset_cards/omiga.md
