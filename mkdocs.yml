@@ -38,10 +38,12 @@ theme:
 
 nav:
   - "Home": 'index.md'
+  - "Videos": 'videos.md'
   - "Research":
     - "": research/index.md
     - "Coordination Failure in Cooperative Offline MARL": research/polygames.md
     - "Selective Reincarnation in Multi-Agent Reinforcement Learning": research/selective-reincarnation.md
+    - "Oryx": research/oryx.md
   - "Datasets":
       - "OG MARL": dataset_cards/og_marl.md
       - "CFCQL": dataset_cards/cfcql.md
