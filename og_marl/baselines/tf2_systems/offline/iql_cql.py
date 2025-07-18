@@ -11,34 +11,33 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-"""Implementation of QMIX+CQL"""
+"""Implementation of IQL+CQL"""
 from typing import Any, Dict, Tuple
 
-import hydra
-from omegaconf import DictConfig
-import tree
+import copy
 import numpy as np
 import jax
 import tensorflow as tf
-from tensorflow import Tensor
 import sonnet as snt
+import tree
+import hydra
+from omegaconf import DictConfig
 from chex import Numeric
-import copy
+from tensorflow import Tensor
 
 from og_marl.environments import get_environment, BaseEnvironment
-from og_marl.loggers import BaseLogger, WandbLogger
-from og_marl.vault_utils.download_vault import download_and_unzip_vault
+from og_marl.loggers import BaseLogger
 from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
-from og_marl.tf2_systems.networks import QMixer
-from og_marl.tf2_systems.offline.base import BaseOfflineSystem
-from og_marl.tf2_systems.utils import (
+from og_marl.baselines.base import BaseOfflineSystem
+from og_marl.loggers import WandbLogger
+from og_marl.vault_utils.download_vault import download_and_unzip_vault
+from og_marl.baselines.tf2_systems.utils import set_growing_gpu_memory
+from og_marl.baselines.tf2_systems.utils import (
     batch_concat_agent_id_to_obs,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
     gather,
     merge_batch_and_agent_dim_of_time_major_sequence,
-    set_growing_gpu_memory,
     switch_two_leading_dims,
     unroll_rnn,
 )
@@ -46,29 +45,25 @@ from og_marl.tf2_systems.utils import (
 set_growing_gpu_memory()
 
 
-class QMIXCQLSystem(BaseOfflineSystem):
+class IQLCQLSystem(BaseOfflineSystem):
+    """IQL+CQL System.
 
-    """QMIX+CQL System"""
+    Independent Q-Learners with Conservative Q-Learning for stable offline training.
+    """
 
     def __init__(
         self,
         environment: BaseEnvironment,
         logger: BaseLogger,
+        cql_weight: float = 2.0,
         linear_layer_dim: int = 64,
         recurrent_layer_dim: int = 64,
-        mixer_embed_dim: int = 32,
-        mixer_hyper_dim: int = 64,
         discount: float = 0.99,
         target_update_period: int = 200,
         learning_rate: float = 3e-4,
         add_agent_id_to_obs: bool = True,
-        num_ood_actions: int = 20,  # CQL
-        cql_weight: float = 3.0,  # CQL
     ):
-        super().__init__(
-            environment,
-            logger,
-        )
+        super().__init__(environment, logger)
 
         self.discount = discount
         self.add_agent_id_to_obs = add_agent_id_to_obs
@@ -96,10 +91,7 @@ class QMIXCQLSystem(BaseOfflineSystem):
             agent: self.q_network.initial_state(1) for agent in self.environment.agents
         }
 
-        self.mixer = QMixer(len(self.environment.agents), mixer_embed_dim, mixer_hyper_dim)
-        self.target_mixer = QMixer(len(self.environment.agents), mixer_embed_dim, mixer_hyper_dim)
-
-        self.num_ood_actions = num_ood_actions
+        # CQL
         self.cql_weight = cql_weight
 
     def reset(self) -> None:
@@ -159,14 +151,13 @@ class QMIXCQLSystem(BaseOfflineSystem):
 
     @tf.function(jit_compile=True)
     def _tf_train_step(self, train_step: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
-        # Unpack the batch
-        observations = experience["observations"]  # (B,T,N,O)
-        actions = experience["actions"]  # (B,T,N)
-        env_states = experience["infos"]["state"]  # (B,T,S)
-        rewards = experience["rewards"]  # (B,T,N)
-        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
-        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
-        legal_actions = experience["infos"]["legals"]  # (B,T,N,A)
+        # Unpack the experience
+        observations = tf.cast(experience["observations"], "float32")  # (B,T,N,O)
+        actions = tf.cast(experience["actions"], "int32")  # (B,T,N)
+        rewards = tf.cast(experience["rewards"], "float32")  # (B,T,N)
+        truncations = tf.cast(experience["truncations"], "float32")  # (B,T)
+        terminals = tf.cast(experience["terminals"], "float32")  # (B,T)
+        legal_actions = tf.cast(experience["infos"]["legals"], "bool")  # (B,T,N,A)
 
         # When to reset the RNN hidden state
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
@@ -209,19 +200,9 @@ class QMIXCQLSystem(BaseOfflineSystem):
             chosen_action_qs = gather(qs_out, actions, axis=3, keepdims=False)
 
             # Max over target Q-Values/ Double q learning
-            qs_out_selector = tf.where(
-                tf.cast(legal_actions, "bool"), qs_out, -9999999
-            )  # legal action masking
+            qs_out_selector = tf.where(legal_actions, qs_out, -9999999)  # legal action masking
             cur_max_actions = tf.argmax(qs_out_selector, axis=3)
             target_max_qs = gather(target_qs_out, cur_max_actions, axis=-1)
-
-            # Q-MIXING
-            chosen_action_qs, target_max_qs, rewards = self.mixing(
-                chosen_action_qs,
-                target_max_qs,
-                env_states,
-                rewards,
-            )
 
             # Compute targets
             targets = (
@@ -230,53 +211,25 @@ class QMIXCQLSystem(BaseOfflineSystem):
             targets = tf.stop_gradient(targets)
 
             # TD-Error Loss
-            td_loss = 0.5 * tf.reduce_mean(tf.square(targets - chosen_action_qs[:, :-1]))
+            td_loss = tf.reduce_mean(0.5 * tf.square(targets - chosen_action_qs[:, :-1]))
 
             #############
             #### CQL ####
             #############
 
-            # Sample legal random actions
-            repeated_legals = tf.stack([legal_actions] * self.num_ood_actions, axis=0)
-            repeated_legals = tf.reshape(repeated_legals, (-1, A))
-            random_ood_actions = tf.random.categorical(
-                repeated_legals / tf.reduce_sum(repeated_legals, axis=-1, keepdims=True),
-                1,
-                dtype="int32",
-            )
-            random_ood_actions = tf.reshape(random_ood_actions, (self.num_ood_actions, B, T, N))
-
-            all_mixed_ood_qs = []
-            for i in range(self.num_ood_actions):
-                # Gather
-                one_hot_indices = tf.one_hot(random_ood_actions[i], depth=qs_out.shape[-1])
-                ood_qs = tf.reduce_sum(
-                    qs_out * one_hot_indices, axis=-1, keepdims=False
-                )  # [B, T, N]
-
-                # Mixing
-                mixed_ood_qs = self.mixer(ood_qs, env_states)  # [B, T, 1]
-                all_mixed_ood_qs.append(mixed_ood_qs)  # [B, T, Ra]
-
-            all_mixed_ood_qs.append(chosen_action_qs)  # [B, T, Ra + 1]
-            all_mixed_ood_qs = tf.concat(all_mixed_ood_qs, axis=-1)
-
             cql_loss = tf.reduce_mean(
-                tf.reduce_logsumexp(all_mixed_ood_qs, axis=-1, keepdims=True)
-            ) - tf.reduce_mean(chosen_action_qs)
+                tf.reduce_logsumexp(qs_out, axis=-1, keepdims=True)[:, :-1]
+            ) - tf.reduce_mean(chosen_action_qs[:, :-1])
 
             #############
             #### end ####
             #############
 
-            # Add cql_loss to loss
+            # Mask out zero-padded timesteps
             loss = td_loss + self.cql_weight * cql_loss
 
         # Get trainable variables
-        variables = (
-            *self.q_network.trainable_variables,
-            *self.mixer.trainable_variables,
-        )
+        variables = (*self.q_network.trainable_variables,)
 
         # Compute gradients.
         gradients = tape.gradient(loss, variables)
@@ -285,16 +238,10 @@ class QMIXCQLSystem(BaseOfflineSystem):
         self.optimizer.apply(gradients, variables)
 
         # Online variables
-        online_variables = (
-            *self.q_network.variables,
-            *self.mixer.variables,
-        )
+        online_variables = (*self.q_network.variables,)
 
         # Get target variables
-        target_variables = (
-            *self.target_q_network.variables,
-            *self.target_mixer.variables,
-        )
+        target_variables = (*self.target_q_network.variables,)
 
         # Maybe update target network
         if train_step % self.target_update_period == 0:
@@ -309,26 +256,8 @@ class QMIXCQLSystem(BaseOfflineSystem):
             "mean_chosen_q_values": tf.reduce_mean(chosen_action_qs),
         }
 
-    def mixing(
-        self,
-        chosen_action_qs: Tensor,
-        target_max_qs: Tensor,
-        states: Tensor,
-        rewards: Tensor,
-    ) -> Tuple[Tensor, Tensor, Tensor]:
-        """QMIX"""
-        # VDN
-        # chosen_action_qs = tf.reduce_sum(chosen_action_qs, axis=2, keepdims=True)
-        # target_max_qs = tf.reduce_sum(target_max_qs, axis=2, keepdims=True)
-        # VDN
 
-        chosen_action_qs = self.mixer(chosen_action_qs, states)
-        target_max_qs = self.target_mixer(target_max_qs, states)
-        rewards = tf.reduce_mean(rewards, axis=2, keepdims=True)
-        return chosen_action_qs, target_max_qs, rewards
-
-
-@hydra.main(version_base=None, config_path="configs", config_name="qmix_cql")
+@hydra.main(version_base=None, config_path="configs", config_name="iql_cql")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
 
@@ -356,7 +285,7 @@ def run_experiment(cfg: DictConfig) -> None:
     }
     logger = WandbLogger(project=cfg["wandb_project"], config=wandb_config)
 
-    system = QMIXCQLSystem(env, logger, **cfg["system"])
+    system = IQLCQLSystem(env, logger, **cfg["system"])
 
     tf.random.set_seed(cfg["seed"])
 

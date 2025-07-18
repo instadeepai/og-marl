@@ -95,20 +95,7 @@ class MujocoMulti(MultiAgentEnv):
 
         self.env_version = kwargs["env_args"].get("env_version", 2)
         if self.env_version == 2:
-            try:
-                self.wrapped_env = NormalizedActions(gym.make(self.scenario))
-            except gym.error.Error:  # env not in gym
-                if self.scenario in ["manyagent_ant"]:
-                    from .manyagent_ant import ManyAgentAntEnv as this_env
-                elif self.scenario in ["manyagent_swimmer"]:
-                    from .manyagent_swimmer import ManyAgentSwimmerEnv as this_env
-                elif self.scenario in ["coupled_half_cheetah"]:
-                    from .coupled_half_cheetah import CoupledHalfCheetah as this_env
-                else:
-                    raise NotImplementedError("Custom env not implemented!")
-                self.wrapped_env = NormalizedActions(
-                    TimeLimit(this_env(**kwargs["env_args"]), max_episode_steps=self.episode_limit)
-                )
+            self.wrapped_env = NormalizedActions(gym.make(self.scenario))
         else:
             assert False, "not implemented!"
         self.timelimit_env = self.wrapped_env.env

@@ -62,6 +62,8 @@ class WrappedGymnasiumMAMuJoCo(BaseEnvironment):
         self.wrapped_environment = PadObsandActs(Dtype(self.environment, "float32"))
         self.num_actions = self.wrapped_environment._num_actions
         self.agents = self.environment.agents
+        self.observation_shape = None # TODO: pytorch systems need this.
+        self.state_shape = None # TODO: pytorch systems need this.
 
     def reset(self) -> ResetReturn:
         return self.wrapped_environment.reset()

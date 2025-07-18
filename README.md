@@ -17,9 +17,9 @@
     <a href="https://arxiv.org/abs/2302.00521">
         <img src="https://img.shields.io/badge/PrePrint-ArXiv-red" alt="ArXiv">
     </a>
-    <!-- <a href="https://github.com/instadeepai/og-marl/actions/workflows/tests_linters.yml">
-        <img src="https://github.com/instadeepai/og-marl/actions/workflows/tests_linters.yml/badge.svg" alt="Tests and Linters">
-    </a> -->
+    <a href="https://instadeepai.github.io/og-marl/">
+        <img src="https://img.shields.io/badge/OGMARL-Website-blue" alt="Website">
+    </a>
     <!-- <a href="https://github.com/psf/black">
         <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
     </a> -->
@@ -65,7 +65,7 @@ Download environment requirements.
 
 Train an offline system. In this example we will run Independent Q-Learning with Conservative Q-Learning (iql+cql). The script will automatically download the neccessary dataset if it is not found locally.
 
-`python og_marl/tf2_systems/offline/iql_cql.py task.source=og_marl task.env=smac_v1 task.scenario=3m task.dataset=Good`
+`python og_marl/baselines/tf2_systems/offline/iql_cql.py task.source=og_marl task.env=smac_v1 task.scenario=3m task.dataset=Good`
 
 You can find all offline systems at `og_marl/tf2_systems/offline/` and they can be run similarly. Be careful, some systems only work on discrete action space environments and vice versa for continuous action space environments. The config files for systems are found at `og_marl/tf2_systems/offline/configs/`. We use [hydra](https://hydra.cc/docs/intro/) for our config management. Config defaults can be overwritten as command line arguments like above.
 
@@ -238,6 +238,10 @@ The OG-MARL datasets use the latest version of MuJoCo (210). While the OMIGA and
 
 `pip install -r install_environments/requirements/mamujoco200.txt`
 
+## Baselines Now in PyTorch
+The original OG-MARL baselines were implmented in TF2. We have now started to include PyTorch implementations. So far we have PyTorch varients of `iql_cql.py` and `iddpg_bc.py`.
+
+![PyTorch Logo](https://upload.wikimedia.org/wikipedia/commons/9/96/Pytorch_logo.png?20211003060202)
 
 ## See Also 🔎
 

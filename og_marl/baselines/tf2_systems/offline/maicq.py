@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implementation of QMIX+BCQ"""
+"""Implementation of MAICQ"""
 from typing import Any, Dict, Tuple
-import copy
 
+import copy
 import hydra
-import tree
 import numpy as np
 import jax
 from omegaconf import DictConfig
 import sonnet as snt
 import tensorflow as tf
+import tree
 from chex import Numeric
 from tensorflow import Tensor
 
@@ -30,22 +30,25 @@ from og_marl.environments import get_environment, BaseEnvironment
 from og_marl.loggers import BaseLogger, WandbLogger
 from og_marl.vault_utils.download_vault import download_and_unzip_vault
 from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
-from og_marl.tf2_systems.offline.base import BaseOfflineSystem
-from og_marl.tf2_systems.utils import (
+from og_marl.baselines.tf2_systems.networks import QMixer
+from og_marl.baselines.base import BaseOfflineSystem
+from og_marl.baselines.tf2_systems.utils import (
     batch_concat_agent_id_to_obs,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
     gather,
     merge_batch_and_agent_dim_of_time_major_sequence,
+    set_growing_gpu_memory,
     switch_two_leading_dims,
     unroll_rnn,
 )
-from og_marl.tf2_systems.networks import QMixer
+
+set_growing_gpu_memory()
 
 
-class QMIXBCQSystem(BaseOfflineSystem):
+class MAICQSystem(BaseOfflineSystem):
 
-    """QMIX+BCQ System"""
+    """MAICQ System"""
 
     def __init__(
         self,
@@ -59,7 +62,8 @@ class QMIXBCQSystem(BaseOfflineSystem):
         target_update_period: int = 200,
         learning_rate: float = 3e-4,
         add_agent_id_to_obs: bool = True,
-        bc_threshold: float = 0.4,  # BCQ parameter
+        icq_advantages_beta: float = 0.1,  # from MAICQ code
+        icq_target_q_taken_beta: int = 1000,  # from MAICQ code
     ):
         super().__init__(
             environment,
@@ -86,7 +90,6 @@ class QMIXBCQSystem(BaseOfflineSystem):
 
         # Optimizer
         self.optimizer = snt.optimizers.Adam(learning_rate=learning_rate)
-        self.bc_optimizer = snt.optimizers.Adam(learning_rate=learning_rate)
 
         # Recurrent neural network hidden states for evaluation
         self.rnn_states = {
@@ -96,8 +99,12 @@ class QMIXBCQSystem(BaseOfflineSystem):
         self.mixer = QMixer(len(self.environment.agents), mixer_embed_dim, mixer_hyper_dim)
         self.target_mixer = QMixer(len(self.environment.agents), mixer_embed_dim, mixer_hyper_dim)
 
-        self.bc_threshold = bc_threshold
-        self.behaviour_cloning_network = snt.DeepRNN(
+        # ICQ hyper-params
+        self.icq_advantages_beta = icq_advantages_beta
+        self.icq_target_q_taken_beta = icq_target_q_taken_beta
+
+        # Policy Network
+        self.policy_network = snt.DeepRNN(
             [
                 snt.Linear(linear_layer_dim),
                 tf.nn.relu,
@@ -109,19 +116,19 @@ class QMIXBCQSystem(BaseOfflineSystem):
         )
 
     def reset(self) -> None:
-        """Called at the start of a new episode during evaluation."""
+        """Called at the start of a new episode."""
+        # Reset the recurrent neural network
         self.rnn_states = {
-            agent: self.q_network.initial_state(1) for agent in self.environment.agents
-        }  # reset the rnn hidden states
+            agent: self.policy_network.initial_state(1) for agent in self.environment.agents
+        }
+        return
 
     def select_actions(
         self,
         observations: Dict[str, np.ndarray],
         legal_actions: Dict[str, np.ndarray],
     ) -> Dict[str, np.ndarray]:
-        observations, legal_actions = tree.map_structure(
-            tf.convert_to_tensor, (observations, legal_actions)
-        )
+        observations = tree.map_structure(tf.convert_to_tensor, observations)
         actions, next_rnn_states = self._tf_select_actions(
             observations, legal_actions, self.rnn_states
         )
@@ -139,22 +146,25 @@ class QMIXBCQSystem(BaseOfflineSystem):
     ) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
         actions = {}
         next_rnn_states = {}
-        for i, agent in enumerate(self.agents):
+        for i, agent in enumerate(self.environment.agents):
             agent_observation = observations[agent]
-            if self.add_agent_id_to_obs:
-                agent_observation = concat_agent_id_to_obs(agent_observation, i, len(self.agents))
+            agent_observation = concat_agent_id_to_obs(
+                agent_observation, i, len(self.environment.agents)
+            )
             agent_observation = tf.expand_dims(agent_observation, axis=0)  # add batch dimension
-            q_values, next_rnn_states[agent] = self.q_network(agent_observation, rnn_states[agent])
+            probs, next_rnn_states[agent] = self.policy_network(
+                agent_observation, rnn_states[agent]
+            )
 
             agent_legal_actions = legal_actions[agent]
-            masked_q_values = tf.where(
-                tf.cast(agent_legal_actions, "bool"),
-                q_values[0],
+            masked_probs = tf.where(
+                tf.equal(agent_legal_actions, 1),
+                probs[0],
                 -99999999,
             )
-            greedy_action = tf.argmax(masked_q_values)
 
-            actions[agent] = greedy_action
+            # Max Q-value over legal actions
+            actions[agent] = tf.argmax(masked_probs)
 
         return actions, next_rnn_states
 
@@ -164,14 +174,18 @@ class QMIXBCQSystem(BaseOfflineSystem):
         return logs  # type: ignore
 
     @tf.function(jit_compile=True)
-    def _tf_train_step(self, train_step: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
+    def _tf_train_step(
+        self,
+        train_step: int,
+        experience: Dict[str, Any],
+    ) -> Dict[str, Numeric]:
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N)
         env_states = experience["infos"]["state"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
-        truncations = experience["truncations"]  # (B,T,N)
-        terminals = experience["terminals"]  # (B,T,N)
+        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
+        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
         legal_actions = experience["infos"]["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state
@@ -199,7 +213,7 @@ class QMIXBCQSystem(BaseOfflineSystem):
         target_qs_out = expand_batch_and_agent_dim_of_time_major_sequence(target_qs_out, B, N)
 
         # Make batch-major again
-        target_qs_out = switch_two_leading_dims(target_qs_out)
+        target_q_vals = switch_two_leading_dims(target_qs_out)
 
         with tf.GradientTape(persistent=True) as tape:
             # Unroll online network
@@ -209,17 +223,10 @@ class QMIXBCQSystem(BaseOfflineSystem):
             qs_out = expand_batch_and_agent_dim_of_time_major_sequence(qs_out, B, N)
 
             # Make batch-major again
-            qs_out = switch_two_leading_dims(qs_out)
+            q_vals = switch_two_leading_dims(qs_out)
 
-            # Pick the Q-Values for the actions taken by each agent
-            chosen_action_qs = gather(qs_out, actions, axis=3, keepdims=False)
-
-            ###################
-            ####### BCQ #######
-            ###################
-
-            # Unroll behaviour cloning network
-            probs_out = unroll_rnn(self.behaviour_cloning_network, observations, resets)
+            # Unroll the policy
+            probs_out = unroll_rnn(self.policy_network, observations, resets)
 
             # Expand batch and agent_dim
             probs_out = expand_batch_and_agent_dim_of_time_major_sequence(probs_out, B, N)
@@ -227,65 +234,63 @@ class QMIXBCQSystem(BaseOfflineSystem):
             # Make batch-major again
             probs_out = switch_two_leading_dims(probs_out)
 
-            # Behaviour Cloning Loss
-            one_hot_actions = tf.one_hot(actions, depth=probs_out.shape[-1], axis=-1)
-            bc_loss = tf.keras.metrics.categorical_crossentropy(one_hot_actions, probs_out)
-            bc_loss = tf.reduce_mean(bc_loss)
+            # Mask illegal actions
+            probs_out = probs_out * tf.cast(legal_actions, "float32")
+            probs_sum = (
+                tf.reduce_sum(probs_out, axis=-1, keepdims=True) + 1e-10
+            )  # avoid div by zero
+            probs_out = probs_out / probs_sum
 
-            # Legal action masking plus bc probs
-            masked_probs_out = probs_out * tf.cast(legal_actions, "float32")
-            masked_probs_out_sum = tf.reduce_sum(masked_probs_out, axis=-1, keepdims=True)
-            masked_probs_out = masked_probs_out / masked_probs_out_sum
+            action_values = gather(q_vals, actions)
+            baseline = tf.reduce_sum(probs_out * q_vals, axis=-1)
+            advantages = action_values - baseline
+            advantages = tf.nn.softmax(advantages / self.icq_advantages_beta, axis=0)
+            advantages = tf.stop_gradient(advantages)
 
-            # Behaviour cloning action mask
-            bc_action_mask = (
-                masked_probs_out / tf.reduce_max(masked_probs_out, axis=-1, keepdims=True)
-            ) >= self.bc_threshold
+            pi_taken = gather(probs_out, actions, keepdims=False)
+            log_pi_taken = tf.math.log(pi_taken)
 
-            q_selector = tf.where(bc_action_mask, qs_out, -999999)
-            max_actions = tf.argmax(q_selector, axis=-1)
-            target_max_qs = gather(target_qs_out, max_actions, axis=-1)
+            coe = self.mixer.k(env_states)
 
-            ###################
-            ####### END #######
-            ###################
+            coma_loss = -tf.reduce_mean(coe * (len(advantages) * advantages * log_pi_taken))
 
-            # Q-MIXING
-            chosen_action_qs, target_max_qs, rewards = self.mixing(
-                chosen_action_qs,
-                target_max_qs,
-                env_states,
-                rewards,
-            )
+            # Critic learning
+            q_taken = gather(q_vals, actions, axis=-1)
+            target_q_taken = gather(target_q_vals, actions, axis=-1)
+
+            # Mixing critics
+            q_taken = self.mixer(q_taken, env_states)
+            target_q_taken = self.target_mixer(target_q_taken, env_states)
+
+            advantage_Q = tf.nn.softmax(target_q_taken / self.icq_target_q_taken_beta, axis=0)
+            target_q_taken = len(advantage_Q) * advantage_Q * target_q_taken
 
             # Compute targets
             targets = (
-                rewards[:, :-1] + (1 - terminals[:, :-1]) * self.discount * target_max_qs[:, 1:]
+                rewards[:, :-1] + (1 - terminals[:, :-1]) * self.discount * target_q_taken[:, 1:]
             )
             targets = tf.stop_gradient(targets)
 
-            # Chop off last time step
-            chosen_action_qs = chosen_action_qs[:, :-1]  # shape=(B,T-1)
+            # TD error
+            td_error = targets - q_taken[:, :-1]
+            q_loss = 0.5 * tf.square(td_error)
 
-            # TD-Error Loss
-            td_loss = 0.5 * tf.reduce_mean(tf.square(targets - chosen_action_qs))
+            # Masking
+            q_loss = tf.reduce_mean(q_loss)
 
-        # Get trainable variables
+            # Add losses together
+            loss = q_loss + coma_loss
+
+        # Apply gradients to policy
         variables = (
+            *self.policy_network.trainable_variables,
             *self.q_network.trainable_variables,
             *self.mixer.trainable_variables,
-        )
-        # Compute gradients.
-        gradients = tape.gradient(td_loss, variables)
-        # Apply gradients.
-        self.optimizer.apply(gradients, variables)
+        )  # Get trainable variables
 
-        # BC network update
-        variables = (*self.behaviour_cloning_network.trainable_variables,)
-        # Compute gradients.
-        gradients = tape.gradient(bc_loss, variables)
-        # Apply gradients.
-        self.bc_optimizer.apply(gradients, variables)
+        gradients = tape.gradient(loss, variables)  # Compute gradients.
+
+        self.optimizer.apply(gradients, variables)  # One optimizer for whole system
 
         # Online variables
         online_variables = (
@@ -305,32 +310,12 @@ class QMIXBCQSystem(BaseOfflineSystem):
                 dest.assign(src)
 
         return {
-            "td_loss": td_loss,
-            "bc_loss": bc_loss,
-            "mean_q_values": tf.reduce_mean(qs_out),
-            "mean_chosen_q_values": tf.reduce_mean(chosen_action_qs),
+            "critic_oss": q_loss,
+            "policy_loss": coma_loss,
         }
 
-    def mixing(
-        self,
-        chosen_action_qs: Tensor,
-        target_max_qs: Tensor,
-        states: Tensor,
-        rewards: Tensor,
-    ) -> Tuple[Tensor, Tensor, Tensor]:
-        """QMIX"""
-        # VDN
-        # chosen_action_qs = tf.reduce_sum(chosen_action_qs, axis=2, keepdims=True)
-        # target_max_qs = tf.reduce_sum(target_max_qs, axis=2, keepdims=True)
-        # VDN
 
-        chosen_action_qs = self.mixer(chosen_action_qs, states)
-        target_max_qs = self.target_mixer(target_max_qs, states)
-        rewards = tf.reduce_mean(rewards, axis=2, keepdims=True)
-        return chosen_action_qs, target_max_qs, rewards
-
-
-@hydra.main(version_base=None, config_path="configs", config_name="qmix_bcq")
+@hydra.main(version_base=None, config_path="configs", config_name="maicq")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
 
@@ -358,7 +343,7 @@ def run_experiment(cfg: DictConfig) -> None:
     }
     logger = WandbLogger(project=cfg["wandb_project"], config=wandb_config)
 
-    system = QMIXBCQSystem(env, logger, **cfg["system"])
+    system = MAICQSystem(env, logger, **cfg["system"])
 
     tf.random.set_seed(cfg["seed"])
 

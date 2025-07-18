@@ -103,6 +103,7 @@ class SMACv2(BaseEnvironment):
         self.agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
         self.num_agents = len(self.agents)
         self.num_actions = self._environment.n_actions
+        self.observation_shape = (self._environment.get_obs_size(),)
 
     def reset(self) -> ResetReturn:
         """Resets the env."""

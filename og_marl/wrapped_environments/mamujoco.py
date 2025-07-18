@@ -49,6 +49,8 @@ class MAMuJoCo(BaseEnvironment):
 
         self.agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
         self.num_actions = self._environment.n_actions
+        self.observation_shape = None # TODO: pytorch systems need this.
+        self.state_shape = None # TODO: pytorch systems need this.
 
     def reset(self) -> ResetReturn:
         self._environment.reset()

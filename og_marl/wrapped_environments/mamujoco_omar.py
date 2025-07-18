@@ -18,8 +18,8 @@ class MAMuJoCo(BaseEnvironment):
 
         self.agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
         self.num_actions = self._environment.n_actions
-
-        self.max_episode_length = 1000
+        self.observation_shape = (self._environment.get_obs_size(),)
+        self.state_shape = (self._environment.get_state_size(),)
 
     def _get_mamujoco_args(self, scenario: str) -> Dict[str, Any]:
         env_args = {

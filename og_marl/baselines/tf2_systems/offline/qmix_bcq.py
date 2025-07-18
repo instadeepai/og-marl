@@ -12,42 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implementation of IQL+BCQ"""
+"""Implementation of QMIX+BCQ"""
 from typing import Any, Dict, Tuple
-
 import copy
+
 import hydra
+import tree
+import numpy as np
 import jax
 from omegaconf import DictConfig
 import sonnet as snt
 import tensorflow as tf
-import numpy as np
-from tensorflow import Tensor
 from chex import Numeric
-import tree
+from tensorflow import Tensor
 
 from og_marl.environments import get_environment, BaseEnvironment
 from og_marl.loggers import BaseLogger, WandbLogger
 from og_marl.vault_utils.download_vault import download_and_unzip_vault
 from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
-from og_marl.tf2_systems.offline.base import BaseOfflineSystem
-from og_marl.tf2_systems.utils import (
+from og_marl.baselines.base import BaseOfflineSystem
+from og_marl.baselines.tf2_systems.utils import (
     batch_concat_agent_id_to_obs,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
     gather,
     merge_batch_and_agent_dim_of_time_major_sequence,
-    set_growing_gpu_memory,
     switch_two_leading_dims,
     unroll_rnn,
 )
+from og_marl.baselines.tf2_systems.networks import QMixer
 
-set_growing_gpu_memory()
 
+class QMIXBCQSystem(BaseOfflineSystem):
 
-class IQLBCQSystem(BaseOfflineSystem):
-
-    """IQL+BCQ System"""
+    """QMIX+BCQ System"""
 
     def __init__(
         self,
@@ -55,11 +53,13 @@ class IQLBCQSystem(BaseOfflineSystem):
         logger: BaseLogger,
         linear_layer_dim: int = 64,
         recurrent_layer_dim: int = 64,
+        mixer_embed_dim: int = 32,
+        mixer_hyper_dim: int = 64,
         discount: float = 0.99,
         target_update_period: int = 200,
         learning_rate: float = 3e-4,
         add_agent_id_to_obs: bool = True,
-        bc_threshold: float = 0.4,
+        bc_threshold: float = 0.4,  # BCQ parameter
     ):
         super().__init__(
             environment,
@@ -84,7 +84,7 @@ class IQLBCQSystem(BaseOfflineSystem):
         self.target_q_network = copy.deepcopy(self.q_network)
         self.target_update_period = target_update_period
 
-        # Optimizers
+        # Optimizer
         self.optimizer = snt.optimizers.Adam(learning_rate=learning_rate)
         self.bc_optimizer = snt.optimizers.Adam(learning_rate=learning_rate)
 
@@ -92,6 +92,9 @@ class IQLBCQSystem(BaseOfflineSystem):
         self.rnn_states = {
             agent: self.q_network.initial_state(1) for agent in self.environment.agents
         }
+
+        self.mixer = QMixer(len(self.environment.agents), mixer_embed_dim, mixer_hyper_dim)
+        self.target_mixer = QMixer(len(self.environment.agents), mixer_embed_dim, mixer_hyper_dim)
 
         self.bc_threshold = bc_threshold
         self.behaviour_cloning_network = snt.DeepRNN(
@@ -163,11 +166,12 @@ class IQLBCQSystem(BaseOfflineSystem):
     @tf.function(jit_compile=True)
     def _tf_train_step(self, train_step: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the batch
-        observations = tf.cast(experience["observations"], "float32")  # (B,T,N,O)
+        observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N)
+        env_states = experience["infos"]["state"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
-        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
-        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
+        truncations = experience["truncations"]  # (B,T,N)
+        terminals = experience["terminals"]  # (B,T,N)
         legal_actions = experience["infos"]["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state
@@ -246,6 +250,14 @@ class IQLBCQSystem(BaseOfflineSystem):
             ####### END #######
             ###################
 
+            # Q-MIXING
+            chosen_action_qs, target_max_qs, rewards = self.mixing(
+                chosen_action_qs,
+                target_max_qs,
+                env_states,
+                rewards,
+            )
+
             # Compute targets
             targets = (
                 rewards[:, :-1] + (1 - terminals[:, :-1]) * self.discount * target_max_qs[:, 1:]
@@ -259,11 +271,12 @@ class IQLBCQSystem(BaseOfflineSystem):
             td_loss = 0.5 * tf.reduce_mean(tf.square(targets - chosen_action_qs))
 
         # Get trainable variables
-        variables = (*self.q_network.trainable_variables,)
-
+        variables = (
+            *self.q_network.trainable_variables,
+            *self.mixer.trainable_variables,
+        )
         # Compute gradients.
         gradients = tape.gradient(td_loss, variables)
-
         # Apply gradients.
         self.optimizer.apply(gradients, variables)
 
@@ -275,15 +288,21 @@ class IQLBCQSystem(BaseOfflineSystem):
         self.bc_optimizer.apply(gradients, variables)
 
         # Online variables
-        online_variables = (*self.q_network.variables,)
+        online_variables = (
+            *self.q_network.variables,
+            *self.mixer.variables,
+        )
+
         # Get target variables
-        target_variables = (*self.target_q_network.variables,)
+        target_variables = (
+            *self.target_q_network.variables,
+            *self.target_mixer.variables,
+        )
+
         # Maybe update target network
         if train_step % self.target_update_period == 0:
             for src, dest in zip(online_variables, target_variables):
                 dest.assign(src)
-
-        del tape
 
         return {
             "td_loss": td_loss,
@@ -292,8 +311,26 @@ class IQLBCQSystem(BaseOfflineSystem):
             "mean_chosen_q_values": tf.reduce_mean(chosen_action_qs),
         }
 
+    def mixing(
+        self,
+        chosen_action_qs: Tensor,
+        target_max_qs: Tensor,
+        states: Tensor,
+        rewards: Tensor,
+    ) -> Tuple[Tensor, Tensor, Tensor]:
+        """QMIX"""
+        # VDN
+        # chosen_action_qs = tf.reduce_sum(chosen_action_qs, axis=2, keepdims=True)
+        # target_max_qs = tf.reduce_sum(target_max_qs, axis=2, keepdims=True)
+        # VDN
 
-@hydra.main(version_base=None, config_path="configs", config_name="iql_bcq")
+        chosen_action_qs = self.mixer(chosen_action_qs, states)
+        target_max_qs = self.target_mixer(target_max_qs, states)
+        rewards = tf.reduce_mean(rewards, axis=2, keepdims=True)
+        return chosen_action_qs, target_max_qs, rewards
+
+
+@hydra.main(version_base=None, config_path="configs", config_name="qmix_bcq")
 def run_experiment(cfg: DictConfig) -> None:
     print(cfg)
 
@@ -321,7 +358,7 @@ def run_experiment(cfg: DictConfig) -> None:
     }
     logger = WandbLogger(project=cfg["wandb_project"], config=wandb_config)
 
-    system = IQLBCQSystem(env, logger, **cfg["system"])
+    system = QMIXBCQSystem(env, logger, **cfg["system"])
 
     tf.random.set_seed(cfg["seed"])
 

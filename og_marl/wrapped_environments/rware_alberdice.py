@@ -21,6 +21,8 @@ class RWAREAlberDICE(BaseEnvironment):
         self.num_actions = 5
         self.num_agents = len(self.agents)
 
+        self.observation_shape = None # TODO: pytorch systems need this.
+
     def reset(self) -> ResetReturn:
         obs, state, info = self.environment.reset()
         self.ep_len = 0

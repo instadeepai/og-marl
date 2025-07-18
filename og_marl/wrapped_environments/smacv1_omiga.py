@@ -42,6 +42,7 @@ class SMACv1OMIGA(BaseEnvironment):
 
         self.num_agents = len(self.agents)
         self.num_actions = self._environment.n_actions
+        self.observation_shape = (self._environment.get_obs_size(),)
 
     def reset(self) -> ResetReturn:
         """Resets the env."""

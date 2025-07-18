@@ -48,6 +48,8 @@ class MAMuJoCoOMIGA(BaseEnvironment):
 
         self.agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
         self.num_actions = self._environment.n_actions
+        self.observation_shape = (self._environment.get_obs_size() + len(self.agents),) # NOTE: omiga adds agent id to obs
+        self.state_shape = (self._environment.get_state_size() + len(self.agents),) # NOTE: omiga adds agent id to state
 
     def reset(self) -> ResetReturn:
         self._environment.reset()
