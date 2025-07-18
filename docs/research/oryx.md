@@ -27,8 +27,8 @@ previous timesteps, and effective coordination to achieve a common goal
 ## Connector
 We generated a range of datasets on Connector, a very challenging coorination task amongst agents. In Connector, agents must travel from their spawn location to a target location without cutting each other off. The team is rewarded in proportion to how many agents successfully made it to their goals. Datasets with up to 50 agents were generated. 
 
-| ![Connector GIF](../assets/research/oryx/connector.gif) | ![Connector static](../assets/research/oryx/connector_50.jpg) |
-|:-------------------------------------------------------:|:-------------------------------------------------------------:|
+<p align="center"><img src="../assets/research/oryx/connector.gif" alt="" width="50%"/></p>
+<p align="center"><img src="../assets/research/oryx/connector_50.jpg" alt="" width="50%"/></p>
 
 | Task            | Samples  | Mean Return | Max Return | Min Return |
 |:--------------- |:--------:|:-----------:|:----------:|:----------:|
