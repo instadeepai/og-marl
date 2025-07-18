@@ -29,9 +29,9 @@ from tabulate import tabulate
 def get_structure_descriptors(
     experience: Dict[str, Array], n_head: int = 1, done_flags: tuple = ("terminals",),
 ) -> Tuple[Dict[str, Array], Dict[str, Array], int]:
-    struct = jax.tree_map(lambda x: x.shape, experience)
+    struct = jax.tree.map(lambda x: x.shape, experience)
 
-    head = jax.tree_map(lambda x: x[0, :n_head, ...], experience)
+    head = jax.tree.map(lambda x: x[0, :n_head, ...], experience)
 
     # allow for "terminals" and "truncations" to be combined into one "done"
     if len(done_flags)==1:
@@ -253,7 +253,7 @@ def calculate_returns(
     """
     # Experience is of dimension of (1, T, N, *E)
     # We want all the time data, but just from one agent
-    experience_one_agent = jax.tree_map(lambda x: x[0, :, 0, ...], experience)
+    experience_one_agent = jax.tree.map(lambda x: x[0, :, 0, ...], experience)
     rewards = experience_one_agent[reward_key]
     
     if len(done_flags)==1:
@@ -291,7 +291,7 @@ def calculate_returns(
     return episode_returns
 
 
-def get_saco(experience: Dict[str, Array]) -> Tuple[float, Array, Array]:
+def get_saco(experience: Dict[str, Array], decimals: int = 4) -> Tuple[float, Array, Array]:
     """Calculate the joint SACo in a dataset of experience.
 
     Args:
@@ -310,12 +310,41 @@ def get_saco(experience: Dict[str, Array]) -> Tuple[float, Array, Array]:
     reshaped_states = states.reshape((*experience["infos"]["state"].shape[:2], -1))
     state_pairs = np.concatenate((reshaped_states, reshaped_actions), axis=-1)
 
-    unique_vals, counts = np.unique(state_pairs, axis=1, return_counts=True)
+    unique_vals, counts = np.unique(state_pairs.round(decimals=decimals), axis=1, return_counts=True)
     count_vals, count_freq = np.unique(counts, return_counts=True)
 
     saco = unique_vals.shape[1] / num_tot
-    return saco, count_vals, count_freq
+    # return saco, count_vals, count_freq
+    return saco
 
+def get_average_oaco(experience: Dict[str, Array]) -> Tuple[float, Array, Array]:
+    """Calculate the joint SACo in a dataset of experience.
+
+    Args:
+        experience (Dict[str, Array]): experience coming from an OG-MARL vault.
+
+    Returns:
+        float: The joint SACo value for that dataset.
+        Array: numpy array containing the counts of unique pairs.
+        Array: numpy array containing the counts of counts of unique pairs.
+    """
+    states = experience["infos"]["state"]
+
+    obs = experience["observations"]
+    actions = experience["actions"]
+
+    T,N = obs.shape[1], obs.shape[2]
+
+    obs_act_pairs = np.concatenate((obs, actions[...,jnp.newaxis]), axis=-1)
+
+    oaco_sum = 0
+    for i in range(N):
+        unique_vals, counts = np.unique(obs_act_pairs[0,:,i], axis=0, return_counts=True)
+        oaco_sum += np.sum(unique_vals.shape[0] / T)
+
+    aoaco = oaco_sum / N
+
+    return aoaco
 
 def plot_count_frequencies(
     all_count_vals: Dict[str, Array], all_count_freq: Dict[str, Array], save_path: str = ""
@@ -468,7 +497,9 @@ def descriptive_summary(
         n_traj = len(episode_returns)
         n_trans = exp["actions"].shape[1]
 
-        single_values.append([uid, mean, stddev, min_ret, max_ret, mode, median, kurt, range, interquartile_range, skewness, n_trans, n_traj, saco])
+        aoaco = get_average_oaco(exp)
+
+        single_values.append([uid, mean, stddev, min_ret, max_ret, mode, median, kurt, range, interquartile_range, skewness, n_trans, n_traj, saco, aoaco])
         all_returns[uid] = episode_returns
 
     print(
@@ -489,6 +520,7 @@ def descriptive_summary(
                 "Transitions",
                 "Trajectories",
                 "Joint SACo",
+                "Average OACo",
             ],
         )
     )
