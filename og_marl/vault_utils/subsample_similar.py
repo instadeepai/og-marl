@@ -198,3 +198,14 @@ def subsample_similar(
             pickle.dump(sample_idxes[:, 0], f)
 
     return
+
+
+# get the vault and unpack its experience
+vlt = Vault(rel_dir="vaults", vault_name="og_marl/smac_v1/2s3z.vlt", vault_uid="Good")
+all_data = vlt.read()
+offline_data = all_data.experience
+
+# basic information about the vault
+returns, episode_end_idxes = get_episode_returns_and_term_idxes(offline_data, done_flags=["terminals", "truncations"])
+
+print(len(returns))

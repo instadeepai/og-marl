@@ -21,6 +21,7 @@ import seaborn as sns
 from chex import Array
 from flashbax.vault import Vault
 import numpy as np
+from scipy import stats
 from og_marl.vault_utils.download_vault import get_available_uids
 from tabulate import tabulate
 
@@ -28,9 +29,9 @@ from tabulate import tabulate
 def get_structure_descriptors(
     experience: Dict[str, Array], n_head: int = 1, done_flags: tuple = ("terminals",),
 ) -> Tuple[Dict[str, Array], Dict[str, Array], int]:
-    struct = jax.tree_map(lambda x: x.shape, experience)
+    struct = jax.tree.map(lambda x: x.shape, experience)
 
-    head = jax.tree_map(lambda x: x[0, :n_head, ...], experience)
+    head = jax.tree.map(lambda x: x[0, :n_head, ...], experience)
 
     # allow for "terminals" and "truncations" to be combined into one "done"
     if len(done_flags)==1:
@@ -93,23 +94,35 @@ def get_episode_return_descriptors(
 
     mean = jnp.mean(episode_returns)
     stddev = jnp.std(episode_returns)
+    mini = jnp.min(episode_returns)
+    maxi = jnp.max(episode_returns)
+    # extra
+    mode = stats.mode(episode_returns)
+    median = np.median(episode_returns)
+    kurt = stats.kurtosis(episode_returns)
+    range = maxi-mini
+    quartile_1, quartile_3 = np.percentile(episode_returns,[25,75])
+    interquartile_range = quartile_3 - quartile_1
+    skewness = stats.skew(episode_returns)
 
-    return mean, stddev, jnp.max(episode_returns), jnp.min(episode_returns), episode_returns
+    return mean, stddev, maxi, mini, mode, median, kurt, range, interquartile_range, skewness, episode_returns
 
 
 def plot_eps_returns_violin(
     all_uid_returns: Dict[str, Array], vault_name: str, save_path: str = ""
 ) -> None:
     sns.set_theme(style="whitegrid")  # Set seaborn theme with a light blue background
-    plt.figure(figsize=(8, 6))  # Adjust figsize as needed
+    plt.figure(figsize=(6, 6))  # Adjust figsize as needed
 
-    sns.violinplot(data=list(all_uid_returns.values()), inner="point")
-    plt.xlabel("Dataset Quality")
-    plt.ylabel("Episode Returns")
-    plt.xticks(range(len(all_uid_returns)), list(all_uid_returns.keys()))
+    sns.kdeplot(data=list(all_uid_returns.values()), fill=True)
+    plt.xlabel("Episode Return")
+    plt.ylabel("Density")
+    plt.legend().set_visible(False)
+    plt.title(f"Density Estimation")
+    # plt.xticks()
     if len(save_path) > 0:
         plt.savefig(save_path, format="pdf", bbox_inches="tight")
-    plt.title(f"Violin Distributions of Returns for {vault_name}")
+
     plt.show()
     return
 
@@ -128,7 +141,7 @@ def plot_eps_returns_hist(
     fig, ax = plt.subplots(
         1,
         len(vault_uids),
-        figsize=(0.5 + 2.5 * len(vault_uids), 3),
+        figsize=(6, 6),
         sharex=True,
         sharey=True,
         squeeze=False,
@@ -141,13 +154,13 @@ def plot_eps_returns_hist(
             all_uid_returns[uid], bins=n_bins, range=(min_return, max_return)
         )
         ax[0, i].stairs(counts, bins, fill=True, color=colors[i])
-        ax[0, i].set_title(uid)
+        ax[0, i].set_title("Histogram")
         ax[0, i].set_xlabel("Episode return")
     ax[0, 0].set_ylabel("Frequency")
     fig.tight_layout()
     if len(save_path) > 0:
         plt.savefig(save_path, bbox_inches="tight")
-    fig.suptitle(f"Histogram of distributions of episode returns for {vault_name}")
+    # fig.suptitle(f"Histogram of distributions of episode returns for {vault_name}")
     fig.tight_layout()
     plt.show()
     return
@@ -183,19 +196,19 @@ def describe_episode_returns(
         vlt = Vault(vault_name=vault_name, rel_dir=rel_dir, vault_uid=uid)
         exp = vlt.read().experience
 
-        mean, stddev, max_ret, min_ret, episode_returns = get_episode_return_descriptors(exp, done_flags)
+        mean, stddev, max_ret, min_ret, mode, median, kurt, range, interquartile_range, skewness, episode_returns = get_episode_return_descriptors(exp, done_flags)
         all_uid_eps_returns[uid] = episode_returns
 
-        single_values.append([uid, mean, stddev, max_ret, min_ret])
+        single_values.append([uid, mean, stddev, max_ret, min_ret, mode, median, kurt, range, interquartile_range, skewness])
 
-    print(tabulate(single_values, headers=["Uid", "Mean", "Stddev", "Max", "Min"]))
+    print(tabulate(single_values, headers=["Uid", "Mean", "Stddev", "Max", "Min", "Mode", "Median", "Kurtosis", "Range", "Interquartile_range", "Skewness"]))
 
     if plot_saving_rel_dir == "vaults":
         plot_saving_rel_dir = rel_dir
 
     if plot_hist:
-        min_of_all = min([x[-1] for x in single_values])
-        max_of_all = max([x[-2] for x in single_values])
+        min_of_all = min([x[4] for x in single_values])
+        max_of_all = max([x[3] for x in single_values])
         if save_hist:
             plot_eps_returns_hist(
                 all_uid_eps_returns,
@@ -240,7 +253,7 @@ def calculate_returns(
     """
     # Experience is of dimension of (1, T, N, *E)
     # We want all the time data, but just from one agent
-    experience_one_agent = jax.tree_map(lambda x: x[0, :, 0, ...], experience)
+    experience_one_agent = jax.tree.map(lambda x: x[0, :, 0, ...], experience)
     rewards = experience_one_agent[reward_key]
     
     if len(done_flags)==1:
@@ -278,7 +291,7 @@ def calculate_returns(
     return episode_returns
 
 
-def get_saco(experience: Dict[str, Array]) -> Tuple[float, Array, Array]:
+def get_saco(experience: Dict[str, Array], decimals: int = 4) -> Tuple[float, Array, Array]:
     """Calculate the joint SACo in a dataset of experience.
 
     Args:
@@ -297,12 +310,41 @@ def get_saco(experience: Dict[str, Array]) -> Tuple[float, Array, Array]:
     reshaped_states = states.reshape((*experience["infos"]["state"].shape[:2], -1))
     state_pairs = np.concatenate((reshaped_states, reshaped_actions), axis=-1)
 
-    unique_vals, counts = np.unique(state_pairs, axis=1, return_counts=True)
+    unique_vals, counts = np.unique(state_pairs.round(decimals=decimals), axis=1, return_counts=True)
     count_vals, count_freq = np.unique(counts, return_counts=True)
 
     saco = unique_vals.shape[1] / num_tot
-    return saco, count_vals, count_freq
+    # return saco, count_vals, count_freq
+    return saco
 
+def get_average_oaco(experience: Dict[str, Array]) -> Tuple[float, Array, Array]:
+    """Calculate the joint SACo in a dataset of experience.
+
+    Args:
+        experience (Dict[str, Array]): experience coming from an OG-MARL vault.
+
+    Returns:
+        float: The joint SACo value for that dataset.
+        Array: numpy array containing the counts of unique pairs.
+        Array: numpy array containing the counts of counts of unique pairs.
+    """
+    states = experience["infos"]["state"]
+
+    obs = experience["observations"]
+    actions = experience["actions"]
+
+    T,N = obs.shape[1], obs.shape[2]
+
+    obs_act_pairs = np.concatenate((obs, actions[...,jnp.newaxis]), axis=-1)
+
+    oaco_sum = 0
+    for i in range(N):
+        unique_vals, counts = np.unique(obs_act_pairs[0,:,i], axis=0, return_counts=True)
+        oaco_sum += np.sum(unique_vals.shape[0] / T)
+
+    aoaco = oaco_sum / N
+
+    return aoaco
 
 def plot_count_frequencies(
     all_count_vals: Dict[str, Array], all_count_freq: Dict[str, Array], save_path: str = ""
@@ -451,11 +493,13 @@ def descriptive_summary(
         exp = vlt.read().experience
 
         saco, _, _ = get_saco(exp)
-        mean, stddev, max_ret, min_ret, episode_returns = get_episode_return_descriptors(exp, done_flags)
+        mean, stddev, max_ret, min_ret, mode, median, kurt, range, interquartile_range, skewness, episode_returns = get_episode_return_descriptors(exp, done_flags)
         n_traj = len(episode_returns)
         n_trans = exp["actions"].shape[1]
 
-        single_values.append([uid, mean, stddev, min_ret, max_ret, n_trans, n_traj, saco])
+        aoaco = get_average_oaco(exp)
+
+        single_values.append([uid, mean, stddev, min_ret, max_ret, mode, median, kurt, range, interquartile_range, skewness, n_trans, n_traj, saco, aoaco])
         all_returns[uid] = episode_returns
 
     print(
@@ -467,9 +511,16 @@ def descriptive_summary(
                 "Stddev",
                 "Min return",
                 "Max return",
+                "Mode", 
+                "Median", 
+                "Kurtosis", 
+                "Range", 
+                "Interquartile_range", 
+                "Skewness",
                 "Transitions",
                 "Trajectories",
                 "Joint SACo",
+                "Average OACo",
             ],
         )
     )
@@ -490,3 +541,27 @@ def descriptive_summary(
             plot_eps_returns_hist(all_returns, vault_name, n_bins, min_of_all, max_of_all)
 
     return all_returns
+
+def compare_vaults_qq_plots(vault_1_name, vault_1_uid, rel_dir="vaults/", save_plot=False):
+
+    vlt1 = Vault(vault_name=vault_1_name, rel_dir=rel_dir, vault_uid=vault_1_uid)
+    exp1 = vlt1.read().experience
+    data1 = calculate_returns(exp1)
+
+    # Create QQ plot
+    sns.set_theme(style="whitegrid")  # Set seaborn theme with a light blue background
+    fig, ax = plt.subplots(figsize=(6, 6))
+    stats.probplot(data1, dist="norm", plot=ax)
+
+    # Customize axis labels
+    ax.set_xlabel("Theoretical Quantiles (Normal Distribution)")
+    ax.set_ylabel("Empirical Quantiles (Sample Data)")
+    ax.set_title("QQ Plot")
+    
+    if save_plot:
+        plt.savefig(f"{rel_dir}/qq_plot.pdf", bbox_inches="tight")
+
+    plt.show()
+
+
+

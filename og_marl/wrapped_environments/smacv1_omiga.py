@@ -46,7 +46,7 @@ class SMACv1OMIGA(BaseEnvironment):
     def reset(self) -> ResetReturn:
         """Resets the env."""
         # Reset the environment
-        self._environment.reset()
+        observations, env_state, available_actions = self.environment.reset()
         self.done = False
 
         # Get observation from env
@@ -54,9 +54,9 @@ class SMACv1OMIGA(BaseEnvironment):
         observations = {agent: observations[i] for i, agent in enumerate(self.agents)}
 
         legal_actions = self._get_legal_actions()
-        legals = {agent: legal_actions[i] for i, agent in enumerate(self.agents)}
+        legals = {agent: available_actions[i] for i, agent in enumerate(self.agents)}
 
-        env_state = self._environment.get_state(agent_id=0).astype("float32")
+        env_state = env_state[0]
 
         info = {"legals": legals, "state": env_state}
 
@@ -77,7 +77,7 @@ class SMACv1OMIGA(BaseEnvironment):
         }
         terminals = {agent: np.array(d[i]) for i, agent in enumerate(self.agents)}
         truncations = {agent: np.array(False) for agent in self.agents}
-        legals = {agent: np.array(ava[i], "int32") for i, agent in enumerate(self.agents)}
+        legals = {agent: np.array(ava[i]) for i, agent in enumerate(self.agents)}
         agent_states = {agent: np.array(g[i], "float32") for i, agent in enumerate(self.agents)}
         env_state = agent_states["agent_0"]
         info = {"legals": legals, "state": env_state}
