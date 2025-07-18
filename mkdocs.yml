@@ -44,7 +44,7 @@ nav:
     - "Coordination Failure in Cooperative Offline MARL": research/polygames.md
     - "Selective Reincarnation in Multi-Agent Reinforcement Learning": research/selective-reincarnation.md
   - "Datasets":
-      - "": dataset_cards/overview.md
+      - "": dataset_cards/index.md
       - "OG MARL": dataset_cards/og_marl.md
       - "CFCQL": dataset_cards/cfcql.md
       - "OMIGA": dataset_cards/omiga.md
