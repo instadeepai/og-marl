@@ -47,7 +47,7 @@ class SMACv1OMIGA(BaseEnvironment):
     def reset(self) -> ResetReturn:
         """Resets the env."""
         # Reset the environment
-        observations, env_state, available_actions = self.environment.reset()
+        observations, env_state, available_actions = self._environment.reset()
         self.done = False
 
         # Get observation from env
