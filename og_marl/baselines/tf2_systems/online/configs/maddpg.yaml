@@ -4,9 +4,9 @@ wandb_project: og-marl
 environment_steps: 3e6
 
 task:
-  source: og_marl
-  env: gymnasium_mamujoco
-  scenario: 2reacher 
+  source: omiga
+  env: mamujoco
+  scenario: 3hopper 
 
 replay:
   sequence_length: 10

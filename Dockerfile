@@ -27,8 +27,6 @@ WORKDIR ${folder}
 # Copy all code needed to install dependencies
 COPY ./install_environments ./install_environments
 COPY ./og_marl ./og_marl
-COPY setup.py .
-COPY ./run_exps.py .
 
 RUN echo "Installing requirements..."
 RUN pip install --quiet --upgrade pip setuptools wheel &&  \

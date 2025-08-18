@@ -2,5 +2,5 @@ tensorflow[and-cuda]
 tensorflow-probability[tf]
 tensorflow_io
 dm_sonnet
-wandb
+wandb==0.18.0
 hydra-core

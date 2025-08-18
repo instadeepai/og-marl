@@ -8,7 +8,7 @@ include = ['og_marl*']
 [tool.setuptools.dynamic]
 version = {attr = "og_marl.__version__"}
 dependencies = {file = ["requirements/datasets.txt"]}
-optional-dependencies = {tf2_baselines = { file = ["requirements/baselines.txt"] }}
+optional-dependencies = {tf2_baselines = { file = ["requirements/tf2_baselines.txt"] }, torch_baselines = { file = ["requirements/torch_baselines.txt"] }}
 
 [project]
 name = "og-marl"

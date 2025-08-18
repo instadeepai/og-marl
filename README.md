@@ -9,7 +9,7 @@
 </h2>
 <p align="center">
     <a href="https://www.python.org/doc/versions/">
-        <img src="https://img.shields.io/badge/python-3.9-blue" alt="Python Versions">
+        <img src="https://img.shields.io/badge/python-3.10-blue" alt="Python Versions">
     </a>
     <a href="https://opensource.org/licenses/Apache-2.0">
         <img src="https://img.shields.io/badge/License-Apache%202.0-orange.svg" alt="License">
