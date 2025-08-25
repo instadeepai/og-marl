@@ -1,50 +1,107 @@
-FROM nvidia/cuda:12.0.1-cudnn8-runtime-ubuntu22.04
+FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu24.04
 
-# Ensure no installs try to launch interactive screen
+# Ensure no installs try to launch interactive prompts
 ARG DEBIAN_FRONTEND=noninteractive
-ENV PYTHONUNBUFFERED=1
-
-# Update packages and install python3.9 and other dependencies
-RUN apt-get update -y && \
-    apt-get install -y software-properties-common && \
-    add-apt-repository -y ppa:deadsnakes/ppa && \
-    apt-get install -y python3.9 python3.9-dev python3-pip python3.9-venv python3-dev python3-opencv swig ffmpeg git unzip wget libosmesa6-dev libgl1-mesa-glx libglfw3 patchelf && \
-    update-alternatives --install /usr/bin/python python /usr/bin/python3.9 10 && \
-    python -m venv og-marl && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Setup virtual env and path
-ENV VIRTUAL_ENV /og-marl
-ENV PATH /og-marl/bin:$PATH
-
 # Location of og-marl folder
 ARG folder=/home/app/og-marl
 
 # Set working directory
 WORKDIR ${folder}
 
-# Copy all code needed to install dependencies
-COPY ./install_environments ./install_environments
+# Ensure Python output is sent straight to terminal (no buffering) for real-time logs
+ENV PYTHONUNBUFFERED=1
+
+# Install Python 3.12 + venv
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3.12 \
+    python3.12-venv \
+    python3.12-dev \
+    build-essential \
+    software-properties-common && \
+    rm -rf /var/lib/apt/lists/*
+
+# Setup virtual environment
+RUN python3.12 -m venv /opt/venv
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+RUN python -m ensurepip && \
+    pip install --upgrade pip setuptools wheel build
+
+# Copy requirements for better caching
+COPY ./requirements ./requirements
+COPY ./install_environments/requirements/mujoco.txt ./requirements
+COPY ./install_environments/requirements/mamujoco200.txt ./requirements
+
+# Install dependencies in one layer
+RUN echo "Installing og-marl dependencies..."
+RUN pip install -r ./requirements/datasets.txt
+RUN pip install -r ./requirements/tf2_baselines.txt
+
+# Dowload MuJoCo200
+RUN echo "Downloading MuJoCo..."
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    wget \
+    unzip \
+    libosmesa-dev \ 
+    patchelf \
+    libgl1-mesa-dev \
+    libglfw3 \
+    libglfw3-dev \
+    libglew-dev \
+    patchelf \
+    libosmesa6-dev \
+    libffi-dev && \
+    rm -rf /var/lib/apt/lists/*
+RUN pip install cffi
+
+ENV MUJOCOPATH=/root/.mujoco
+RUN mkdir -p $MUJOCOPATH \
+    && wget https://www.roboti.us/download/mujoco200_linux.zip -O mujoco.zip \
+    && unzip -d $MUJOCOPATH mujoco.zip \
+    && rm mujoco.zip \
+    && mv ${MUJOCOPATH}/mujoco200_linux ${MUJOCOPATH}/mujoco200 \
+    && wget https://www.roboti.us/file/mjkey.txt -O mjkey.txt \
+    && mv mjkey.txt $MUJOCOPATH
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MUJOCOPATH/mujoco200/bin
+
+# Install MAMuJoCo Requirements
+RUN pip install -r ./requirements/mujoco.txt
+RUN pip install -r ./requirements/mamujoco200.txt
+
+# Copy over og_marl code
 COPY ./og_marl ./og_marl
+COPY ./pyproject.toml ./pyproject.toml
 
-RUN echo "Installing requirements..."
-RUN pip install --quiet --upgrade pip setuptools wheel &&  \
-    pip install -e . && \
-    pip install flashbax==0.1.2
+# Install og-marl package
+RUN echo "Installing og-marl package..." && \
+    pip install -e .
 
-# ENV SC2PATH "~/StarCraftII"
-# RUN ./install_environments/smacv1.sh
-# RUN ./install_environments/smacv2.sh
+# Install SMAC
+ENV SC2PATH=/root/StarCraftII
+ENV MAP_DIR="$SC2PATH/Maps/"
 
-# ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin:/usr/lib/nvidia
-# ENV SUPPRESS_GR_PROMPT 1
-# RUN ./install_environments/mamujoco.sh
+RUN echo 'Downloading StarCraftII...' && \
+    wget --progress=dot:mega http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.10.zip && \
+    unzip -oP iagreetotheeula SC2.4.10.zip && \
+    mv StarCraftII $SC2PATH && \
+    rm -rf SC2.4.10.zip
+    
+RUN mkdir -p $MAP_DIR && \
+    wget https://github.com/oxwhirl/smacv2/releases/download/maps/SMAC_Maps.zip && \
+    unzip SMAC_Maps.zip -d SMAC_Maps
+   
+RUN mv SMAC_Maps $MAP_DIR && \
+    rm -rf SMAC_Maps.zip 
 
-# RUN ./install_environments/pettingzoo.sh
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    git && \
+    rm -rf /var/lib/apt/lists/*
 
-# RUN ./install_environments/flatland.sh
+RUN pip install git+https://github.com/oxwhirl/smac.git
+RUN pip install git+https://github.com/oxwhirl/smacv2.git
 
-# Copy all code
-# COPY ./examples ./examples
-# COPY ./baselines ./baselines
+RUN pip install protobuf==5.28.3
+ENV  PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python

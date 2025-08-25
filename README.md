@@ -69,6 +69,19 @@ Train an offline system. In this example we will run Independent Q-Learning with
 
 You can find all offline systems at `og_marl/tf2_systems/offline/` and they can be run similarly. Be careful, some systems only work on discrete action space environments and vice versa for continuous action space environments. The config files for systems are found at `og_marl/tf2_systems/offline/configs/`. We use [hydra](https://hydra.cc/docs/intro/) for our config management. Config defaults can be overwritten as command line arguments like above.
 
+### Alternative: Run using Docker
+We have created a Dockerfile to run `og-marl` in a reproducible way. Make sure you have docker installed on your system with the NVIDIA extension if you want to make use of a GPU. Then run the following to build the docker image:
+
+`sudo docker build -t og-marl .`
+
+Then start a docker contrainer with an interactive shell, using the image you just built:
+
+`sudo docker run --gpus all -it og-marl /bin/bash`
+
+From here you can run any of the `og-marl` baselines as above. For example:
+
+`python og_marl/baselines/tf2_systems/online/maddpg.py`
+
 ## Dataset API 🔌
 
 To quickly start working with a dataset you do not even need to install `og-marl`. 
