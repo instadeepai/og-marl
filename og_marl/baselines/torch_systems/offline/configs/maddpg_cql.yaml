@@ -22,7 +22,7 @@ system:
   policy_learning_rate: 3e-4
   add_agent_id_to_obs: True
   num_ood_actions: 10
-  cql_weight: 5
-  cql_sigma: 0.2
+  cql_weight: 2
+  cql_sigma: 0.3
   device: cuda
 
