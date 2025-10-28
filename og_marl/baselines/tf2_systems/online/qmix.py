@@ -29,9 +29,9 @@ from chex import Numeric
 from og_marl.environments import get_environment, BaseEnvironment
 from og_marl.loggers import BaseLogger, WandbLogger
 from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
-from og_marl.tf2_systems.networks import QMixer
-from og_marl.tf2_systems.online.base import BaseOnlineSystem
-from og_marl.tf2_systems.utils import (
+from og_marl.baselines.tf2_systems.networks import QMixer
+from og_marl.baselines.tf2_systems.online.base import BaseOnlineSystem
+from og_marl.baselines.tf2_systems.utils import (
     batch_concat_agent_id_to_obs,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,

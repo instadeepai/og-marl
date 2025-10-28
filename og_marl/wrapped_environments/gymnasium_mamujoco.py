@@ -62,14 +62,21 @@ class WrappedGymnasiumMAMuJoCo(BaseEnvironment):
         self.wrapped_environment = PadObsandActs(Dtype(self.environment, "float32"))
         self.num_actions = self.wrapped_environment._num_actions
         self.agents = self.environment.agents
-        self.observation_shape = None # TODO: pytorch systems need this.
-        self.state_shape = None # TODO: pytorch systems need this.
+        self.observation_shape = self.environment.observation_shape 
+        self.state_shape = self.environment.state_shape
 
     def reset(self) -> ResetReturn:
         return self.wrapped_environment.reset()
 
     def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         return self.wrapped_environment.step(actions)
+
+    def __getattr__(self, name: str) -> Any:
+        """Expose any other attributes of the underlying environment."""
+        if hasattr(self.__class__, name):
+            return self.__getattribute__(name)
+        else:
+            return getattr(self.environment, name)
 
 
 class GymnasiumMAMuJoCo(BaseEnvironment):
@@ -79,6 +86,8 @@ class GymnasiumMAMuJoCo(BaseEnvironment):
     def __init__(self, scenario: str, seed=None):
         env_config = get_env_config(scenario)
         self.environment = gymnasium_robotics.mamujoco_v1.parallel_env(**env_config)
+        self.observation_shape = list(self.environment.observation_spaces.values())[0].shape
+        self.state_shape = self.environment.state().shape
         self.agents = self.environment.agents
         self.num_actions = list(self.environment.action_spaces.values())[0].shape[0]
 
