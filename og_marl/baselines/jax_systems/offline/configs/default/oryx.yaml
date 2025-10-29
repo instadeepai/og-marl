@@ -1,0 +1,10 @@
+defaults:
+  - logger: logger
+  - system: oryx/oryx
+  - network: rec_retention
+  - env: tmaze # dummy
+  - _self_
+
+hydra:
+  searchpath:
+    - file://mava/configs

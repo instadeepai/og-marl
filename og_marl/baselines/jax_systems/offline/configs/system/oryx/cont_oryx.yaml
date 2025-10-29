@@ -1,0 +1,25 @@
+# --- Defaults Memory Oryx ---
+num_updates: 100000 # Number of updates.
+num_evaluation: 40 # number of evenly spaced out evaluations during training.
+num_eval_episodes: 32 # number of episodes to evaluate per evaluation.
+seed: 4 # random seed
+
+# --- RL hyperparameters ---
+lr: 3e-4 # Learning rate for Oryx network.
+gamma: 0.99 # Discount factor.
+tau: 0.005 # target update rate.
+max_grad_norm: 10.0 # Maximum norm of the gradients for a weight update.
+
+sample_sequence_length: 20 # Length of the sequence to sample from the buffer.
+sample_batch_size: 64 # Number of sequences to sample from the buffer.
+
+# ICQ hyper-params
+value_temperature: 10000 # Temperature for the softmax in the value loss.
+policy_temperature: 1. # Temperature for the softmax in the policy loss.
+critic_coef: .5 # Critic loss coefficient in total loss.
+
+# Dataset
+source: og_marl
+env_name: gymnasium_mamujoco
+scenario: 2halfcheetah
+dataset: Replay
