@@ -69,6 +69,28 @@ Train an offline system. In this example we will run Independent Q-Learning with
 
 You can find all offline systems at `og_marl/tf2_systems/offline/` and they can be run similarly. Be careful, some systems only work on discrete action space environments and vice versa for continuous action space environments. The config files for systems are found at `og_marl/tf2_systems/offline/configs/`. We use [hydra](https://hydra.cc/docs/intro/) for our config management. Config defaults can be overwritten as command line arguments like above.
 
+## Oryx: a Scalable Sequence Model for Offline MARL
+We have added the code for our recent work published at NeurIPS 2025. The preprint is available on [Arxiv](https://arxiv.org/abs/2505.22151).
+
+To run Oryx on discrete action environments run
+
+`og_marl/baselines/jax_systems/offline/discrete_oryx.py system.source=og_marl system.env_name=smac_v1 system.scenario=3m system.dataset=Good`
+
+To run Oryx on continuous action environments run
+
+`og_marl/baselines/jax_systems/offline/cont_oryx.py system.source=omiga system.env_name=mamujoco system.scenario=6halgcheetah system.dataset=Expert`
+
+If you use Oryx, please cite the following:
+
+```
+@article{formanek2025oryx,
+  title={Oryx: a Scalable Sequence Model for Many-Agent Coordination in Offline MARL},
+  author={Formanek, Claude and Mahjoub, Omayma and Nessir, Louay Ben and Abramowitz, Sasha and de Kock, Ruan and Khlifi, Wiem and Toit, Simon Du and Chalumeau, Felix and Rajaonarivonivelomanantsoa, Daniel and Fokam, Arnol and others},
+  journal={Advances in Neural Information Processing Systems},
+  year={2025}
+}
+```
+
 ## Dataset API 🔌
 
 To quickly start working with a dataset you do not even need to install `og-marl`. 
@@ -103,25 +125,6 @@ We have generated datasets on a diverse set of popular MARL environments. A list
 Our datasets are now hosted on Hugging Face for improved accessibility for the community: [https://huggingface.co/datasets/InstaDeepAI/og-marl](https://huggingface.co/datasets/InstaDeepAI/og-marl)
 
 > ⚠️ Some datasets have yet to be converted to the new dataset format (Vault). For available datasets, please refer to `og_marl/vault_utils/download_vault.py` or the Hugging Face datasets repository.
-
-<div class="collage">
-  <div class="row" align="center">
-    <img src="docs/assets/smacv2.png" alt="SMAC v2" width="16%"/>
-    <img src="docs/assets/pistonball.png" alt="Pistonball" width="16%"/>
-    <img src="docs/assets/coop_pong.png" alt="Cooperative Pong" width="16%"/>
-    <img src="docs/assets/pursuit.png" alt="Pursuit" width="16%"/>
-    <img src="docs/assets/kaz.png" alt="Pursuit" width="16%"/>
-  </div>
-  <div class="row" align="center">
-    <img src="docs/assets/flatland.png" alt="Flatland" width="16%"/>
-    <img src="docs/assets/mamujoco.png" alt="MAMuJoCo" width="16%"/>
-    <img src="docs/assets/city_learn.png" alt="CityLearn" width="16%"/>
-    <img src="docs/assets/voltage.png" alt="Voltage Control" width="16%"/>
-    <img src="docs/assets/mpe.png" alt="Pursuit" width="16%"/>
-  </div>
-</div>
-
-<br/>
 
 ### Environments and Scenarios in OG-MARL 🗺️
 
@@ -167,7 +170,7 @@ The OG-MARL datasets use the latest version of MuJoCo (210). While the OMIGA and
 `pip install -r install_environments/requirements/mamujoco200.txt`
 
 ## Baselines Now in PyTorch
-The original OG-MARL baselines were implmented in TF2. We have now started to include PyTorch implementations. So far we have PyTorch varients of `iql_cql.py` and `iddpg_bc.py`.
+The original OG-MARL baselines were implmented in TF2. We have now started to include PyTorch implementations. So far we have PyTorch varients of `iql_cql.py`, `iddpg_bc.py` and  `maddpg_cql.py`.
 
 ![PyTorch Logo](https://upload.wikimedia.org/wikipedia/commons/9/96/Pytorch_logo.png?20211003060202)
 

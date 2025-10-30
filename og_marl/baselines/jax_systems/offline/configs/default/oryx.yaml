@@ -1,0 +1,10 @@
+defaults:
+  - logger: logger
+  - system: oryx/oryx
+  - network: rec_retention
+  - env: smax # dummy
+  - _self_
+
+hydra:
+  searchpath:
+    - file://og_marl/baselines/jax_systems/offline/configs

@@ -4,10 +4,10 @@ wandb_project: og-marl
 training_steps: 1e5
 
 task:
-  source: omar
-  env: mamujoco
+  source: og_marl
+  env: gymnasium_mamujoco
   scenario: 2halfcheetah
-  dataset: Medium
+  dataset: Replay
 
 replay:
   sequence_length: 20
