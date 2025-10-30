@@ -1,0 +1,5 @@
+git+https://github.com/openai/gym.git@9180d12e1b66e7e2a1a622614f787a6ec147ac40 
+pip==21 
+setuptools==65.5.0 
+wheel==0.38.0 
+rware==1.0.3

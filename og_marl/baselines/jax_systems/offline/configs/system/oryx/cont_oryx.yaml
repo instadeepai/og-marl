@@ -19,7 +19,7 @@ policy_temperature: 1. # Temperature for the softmax in the policy loss.
 critic_coef: .5 # Critic loss coefficient in total loss.
 
 # Dataset
-source: og_marl
-env_name: gymnasium_mamujoco
-scenario: 2halfcheetah
-dataset: Replay
+source: omiga
+env_name: mamujoco
+scenario: 6halfcheetah
+dataset: Medium-Expert
