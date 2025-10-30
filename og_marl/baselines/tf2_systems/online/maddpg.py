@@ -29,9 +29,9 @@ from chex import Numeric
 from og_marl.environments import get_environment, BaseEnvironment
 from og_marl.loggers import BaseLogger, WandbLogger
 from og_marl.replay_buffers import Experience, FlashbaxReplayBuffer
-from og_marl.tf2_systems.networks import StateAndJointActionCritic
-from og_marl.tf2_systems.online.base import BaseOnlineSystem
-from og_marl.tf2_systems.utils import (
+from og_marl.baselines.tf2_systems.networks import StateAndJointActionCritic
+from og_marl.baselines.tf2_systems.online.base import BaseOnlineSystem
+from og_marl.baselines.tf2_systems.utils import (
     batch_concat_agent_id_to_obs,
     concat_agent_id_to_obs,
     expand_batch_and_agent_dim_of_time_major_sequence,
@@ -40,7 +40,6 @@ from og_marl.tf2_systems.utils import (
     switch_two_leading_dims,
     unroll_rnn,
 )
-from og_marl.wrapped_environments.wrappers import ExperienceRecorder
 
 set_growing_gpu_memory()
 
@@ -328,7 +327,7 @@ def run_experiment(cfg: DictConfig) -> None:
 
     tf.random.set_seed(cfg["seed"])
 
-    system.train(buffer, num_eval_episodes=5, environment_steps=int(cfg["environment_steps"]))
+    system.train(buffer, num_eval_episodes=16, environment_steps=int(cfg["environment_steps"]))
 
 
 if __name__ == "__main__":

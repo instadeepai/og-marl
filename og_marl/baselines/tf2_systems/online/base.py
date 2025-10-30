@@ -86,7 +86,7 @@ class BaseOnlineSystem:
         self,
         replay_buffer: FlashbaxReplayBuffer,
         environment_steps: int = int(1e6),
-        evaluation_every: int = 50_000,
+        evaluation_every: int = 25_000,
         num_eval_episodes: int = 32,
     ) -> None:
         """Method to train the system offline."""

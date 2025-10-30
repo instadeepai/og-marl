@@ -6,13 +6,13 @@ environment_steps: 3e6
 task:
   source: og_marl
   env: gymnasium_mamujoco
-  scenario: 2reacher 
+  scenario: 2halfcheetah
 
 replay:
   sequence_length: 10
   sample_period: 1
   max_size: 10000
-  store_to_vault: False
+  store_to_vault: True
 
 system:
   train_period: 4
