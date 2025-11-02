@@ -74,16 +74,16 @@ We have added the code for our recent work published at NeurIPS 2025. The prepri
 
 To run Oryx on discrete action environments run
 
-`og_marl/baselines/jax_systems/offline/discrete_oryx.py system.source=og_marl system.env_name=smac_v1 system.scenario=3m system.dataset=Good`
+`python og_marl/baselines/jax_systems/offline/discrete_oryx.py system.source=og_marl system.env_name=smac_v1 system.scenario=3m system.dataset=Good`
 
 To run Oryx on continuous action environments run
 
-`og_marl/baselines/jax_systems/offline/cont_oryx.py system.source=omiga system.env_name=mamujoco system.scenario=6halgcheetah system.dataset=Expert`
+`python og_marl/baselines/jax_systems/offline/cont_oryx.py system.source=omiga system.env_name=mamujoco system.scenario=6halgcheetah system.dataset=Expert`
 
 If you use Oryx, please cite the following:
 
 ```
-@article{formanek2025oryx,
+@inproceedings{formanek2025oryx,
   title={Oryx: a Scalable Sequence Model for Many-Agent Coordination in Offline MARL},
   author={Formanek, Claude and Mahjoub, Omayma and Nessir, Louay Ben and Abramowitz, Sasha and de Kock, Ruan and Khlifi, Wiem and Toit, Simon Du and Chalumeau, Felix and Rajaonarivonivelomanantsoa, Daniel and Fokam, Arnol and others},
   journal={Advances in Neural Information Processing Systems},
